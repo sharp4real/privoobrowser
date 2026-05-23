@@ -931,8 +931,7 @@ async function restoreSession(data) {
     if (spec.title) {
       tab.title = spec.title;
       const te = tab.tabEl.querySelector('.tab-title');
-      te.textContent = spec.title;
-      te.title = spec.title;
+      if (te) { te.textContent = spec.title; te.title = spec.title; }
     }
     applyGroupStyle(tab);
   }
@@ -1590,8 +1589,7 @@ function wireWebview(tab) {
 
   wv.addEventListener('page-title-updated', (e) => {
     tab.title = e.title || tab.url;
-    titleEl.textContent = tab.title;
-    titleEl.title = tab.title;
+    if (titleEl) { titleEl.textContent = tab.title; titleEl.title = tab.title; }
     if (tab.id === activeId) updateBookmarkButton();
   }, { signal });
 
@@ -1603,9 +1601,8 @@ function wireWebview(tab) {
   const onNav = () => {
     tab.url = wv.getURL();
     if (tab.url.startsWith('privoo://')) {
-      faviconEl.style.backgroundImage = 'url("privoo://newtab/logo.png")';
-      faviconEl.classList.remove('spin');
-      if (tab.url === NEWTAB_URL) titleEl.textContent = tab.title = 'New tab';
+      if (faviconEl) { faviconEl.style.backgroundImage = 'url("privoo://newtab/logo.png")'; faviconEl.classList.remove('spin'); }
+      if (tab.url === NEWTAB_URL && titleEl) titleEl.textContent = tab.title = 'New tab';
     }
     if (tab.id === activeId) {
       syncToolbar();
