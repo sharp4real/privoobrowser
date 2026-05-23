@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Extensions – Privoo</title>
+<link rel="icon" href="/logo.png"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+:root{
+  --accent:#8ab4f8; --accent-hover:#a0c2fa; --on-accent:#202124;
+  --accent-soft:rgba(138,180,248,.18);
+}
+body.dark{
+  --accent-soft:rgba(138,180,248,.14);
+}
+/* html is always transparent — body's solid fill covers it in normal mode,
+   and in transparency mode the see-through html lets the OS material reach
+   the corners. (A `body.transparent-ui html` selector can't work — html is
+   the ancestor of body, not a descendant.) */
+html{height:100%;background:transparent}
+body{height:100%;background:#f8f9fa;color:#1f1f1f;user-select:none}
+body.dark{background:#202124;color:#e8eaed;color-scheme:dark}
+/* Increase Transparency — every fill on this page drops to translucent so
+   the OS material shows through. Uses !important to override the generic
+   header/card rules below that have the same specificity but appear later
+   in the file. */
+body.transparent-ui{background:transparent !important;}
+body.transparent-ui main,
+body.transparent-ui header{background:transparent !important;border-bottom-color:rgba(0,0,0,.08) !important;}
+body.transparent-ui.dark header{border-bottom-color:rgba(255,255,255,.08) !important;}
+body.transparent-ui .ext-card{
+  background:rgba(255,255,255,.62) !important;
+  backdrop-filter:blur(12px) saturate(160%);
+  -webkit-backdrop-filter:blur(12px) saturate(160%);
+  border-color:rgba(255,255,255,.4) !important;
+}
+body.transparent-ui.dark .ext-card{
+  background:rgba(41,42,45,.62) !important;
+  border-color:rgba(255,255,255,.08) !important;
+}
+body.transparent-ui #empty{background:transparent !important;}
+
+/* Custom scrollbar — matches the rest of the app */
+html::-webkit-scrollbar{width:12px;height:12px}
+html::-webkit-scrollbar-track{background:transparent}
+html::-webkit-scrollbar-thumb{background:#dadce0;border-radius:8px;border:3px solid transparent;background-clip:padding-box}
+html::-webkit-scrollbar-thumb:hover{background:#bdc1c6;background-clip:padding-box;border:3px solid transparent}
+body.dark html::-webkit-scrollbar-thumb,body.dark::-webkit-scrollbar-thumb{background:#5f6368;background-clip:padding-box;border:3px solid transparent}
+
+header{
+  background:#fff;border-bottom:1px solid #dadce0;
+  padding:0 28px;height:60px;display:flex;align-items:center;gap:16px;
+  position:sticky;top:0;z-index:10;
+}
+body.dark header{background:#303134;border-color:#4a4d51}
+.logo-img{
+  width:28px;height:28px;border-radius:6px;
+  object-fit:contain;flex-shrink:0;
+  background:transparent;
+}
+h1{font-size:18px;font-weight:600;flex:1;line-height:1}
+.header-btn{
+  padding:7px 16px;border-radius:18px;border:1px solid #dadce0;
+  font-size:13px;font-weight:500;color:var(--accent);cursor:default;background:#fff;
+  transition:background .12s,border-color .12s;
+  display:flex;align-items:center;gap:6px;
+}
+.header-btn:hover{background:var(--accent-soft);border-color:var(--accent)}
+body.dark .header-btn{border-color:#5f6368;color:var(--accent);background:#303134}
+body.dark .header-btn:hover{background:#3c4043;border-color:var(--accent)}
+
+main{max-width:960px;margin:24px auto;padding:0 20px 40px}
+
+#empty{text-align:center;padding:80px 20px;color:#5f6368}
+#empty svg{width:64px;height:64px;fill:#dadce0;margin-bottom:16px}
+#empty h2{font-size:18px;font-weight:400;margin-bottom:8px;color:#3c4043}
+body.dark #empty,body.dark .ext-desc,body.dark .ext-version{color:#bdc1c6}
+body.dark #empty h2,body.dark .ext-name{color:#e8eaed}
+#empty p{margin-bottom:20px}
+#empty .btn{
+  display:inline-block;padding:10px 24px;border-radius:8px;
+  background:var(--accent);color:var(--on-accent);font-size:14px;font-weight:500;cursor:default;
+  transition:background .12s,box-shadow .12s;
+  box-shadow:0 1px 2px rgba(60,64,67,.15);
+}
+#empty .btn:hover{background:var(--accent-hover);box-shadow:0 1px 3px rgba(60,64,67,.25)}
+
+.ext-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+
+.ext-card{
+  background:#fff;border-radius:12px;padding:18px;
+  border:1px solid #e8eaed;display:flex;flex-direction:column;gap:12px;
+  transition:box-shadow .12s;position:relative;
+}
+body.dark .ext-card{background:#303134;border-color:#4a4d51}
+.ext-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.08)}
+body.dark .ext-card:hover{box-shadow:none}
+
+/* Compatibility warning shown in the install modal */
+.ext-compat-warn{
+  display:flex;gap:10px;align-items:flex-start;
+  padding:12px 14px;margin:12px 0 16px;
+  background:#fef7e0;color:#5f4400;
+  border:1px solid #fce8b3;border-radius:10px;
+  font-size:12.5px;line-height:1.5;
+}
+.ext-compat-warn svg{flex-shrink:0;margin-top:1px;fill:#a26a00}
+.ext-compat-warn code{
+  background:rgba(0,0,0,.06);padding:1px 5px;border-radius:4px;
+  font-family:ui-monospace,Consolas,monospace;font-size:11px;
+}
+body.dark .ext-compat-warn{
+  background:rgba(252,213,99,.08);color:#fdd663;
+  border-color:rgba(252,213,99,.25);
+}
+body.dark .ext-compat-warn svg{fill:#fdd663}
+body.dark .ext-compat-warn code{background:rgba(255,255,255,.06)}
+
+.ext-header{display:flex;align-items:flex-start;gap:12px}
+.ext-icon{
+  width:48px;height:48px;border-radius:10px;background:#f1f3f4;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:700;color:#5f6368;overflow:hidden;
+}
+body.dark .ext-icon{background:#3c4043;color:#e8eaed}
+.ext-icon img{width:100%;height:100%;object-fit:cover}
+
+.ext-info{flex:1;min-width:0}
+.ext-name{font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ext-version{font-size:11.5px;color:#9aa0a6;margin-top:2px}
+.ext-desc{font-size:13px;color:#5f6368;line-height:1.4;flex:1}
+
+.ext-footer{
+  display:flex;justify-content:space-between;align-items:center;
+  padding-top:8px;border-top:1px solid #f1f3f4;flex-wrap:wrap;gap:8px;
+}
+body.dark .ext-footer{border-color:#3c4043}
+
+.ext-toggle{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#5f6368}
+.switch{position:relative;width:36px;height:20px;flex-shrink:0;display:inline-block}
+.switch input{opacity:0;width:0;height:0;position:absolute}
+.slider{
+  position:absolute;inset:0;cursor:pointer;
+  background:#bdc1c6;border-radius:999px;
+  transition:background .18s cubic-bezier(.4,0,.2,1);
+}
+.slider::before{
+  content:"";position:absolute;width:14px;height:14px;
+  left:3px;top:3px;background:#fff;border-radius:50%;
+  transition:transform .18s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 1px 3px rgba(0,0,0,.2);
+}
+/* Light blue accent for toggles in both modes */
+input:checked+.slider{background:var(--accent)}
+input:checked+.slider::before{transform:translateX(16px)}
+body.dark .slider{background:#5f6368}
+body.dark input:checked+.slider{background:var(--accent)}
+
+.ext-actions{display:flex;align-items:center;gap:6px}
+
+.ext-pin-btn,.ext-remove,.ext-open-folder{
+  padding:5px 10px;border-radius:14px;font-size:11.5px;
+  border:1.5px solid #dadce0;cursor:default;background:transparent;
+  transition:background .1s;display:flex;align-items:center;gap:4px;color:#5f6368;
+}
+.ext-pin-btn:hover,.ext-open-folder:hover{background:#f1f3f4}
+.ext-pin-btn.pinned{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.ext-pin-btn.pinned:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.ext-remove{color:#d93025;border-color:#dadce0}
+.ext-remove:hover{background:#fce8e6}
+body.dark .ext-pin-btn,.ext-remove,.ext-open-folder{color:#bdc1c6}
+body.dark .ext-pin-btn,.body-dark .ext-open-folder{border-color:#5f6368;background:#303134}
+body.dark .ext-pin-btn:hover,body.dark .ext-open-folder:hover{background:#3c4043}
+body.dark .ext-remove{color:#f28b82;border-color:#5f6368;background:#303134}
+body.dark .ext-remove:hover{background:#4a2725}
+
+/* ── Install modal ── */
+#install-modal-bg{
+  position:fixed;inset:0;background:rgba(0,0,0,.35);
+  display:none;align-items:center;justify-content:center;z-index:200;padding:20px;
+}
+#install-modal-bg.open{display:flex}
+#install-modal{
+  background:#fff;border-radius:14px;padding:24px;
+  width:min(440px,100%);box-shadow:0 12px 40px rgba(0,0,0,.22);
+}
+body.dark #install-modal{background:#303134}
+#install-modal h3{font-size:16px;font-weight:600;margin-bottom:4px}
+.modal-sub{font-size:12.5px;color:#5f6368;margin-bottom:18px}
+body.dark .modal-sub{color:#bdc1c6}
+
+.choose-btns{display:flex;gap:10px;margin-bottom:16px}
+.choose-btn{
+  flex:1;padding:10px 12px;border-radius:10px;border:1.5px solid #dadce0;
+  background:#f8f9fa;font-size:13px;color:#3c4043;cursor:default;
+  display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;
+  transition:background .1s,border-color .1s;
+}
+.choose-btn:hover{background:#f1f3f4;border-color:#3c4043}
+body.dark .choose-btn{background:#3c4043;border-color:#5f6368;color:#e8eaed}
+body.dark .choose-btn:hover{background:#4a4d51;border-color:#9aa0a6}
+.choose-btn svg{color:#5f6368}
+body.dark .choose-btn svg{color:#bdc1c6}
+.choose-btn span{font-size:11px;color:#5f6368}
+body.dark .choose-btn span{color:#9aa0a6}
+
+#chosen-path-display{
+  font-size:11.5px;color:#5f6368;background:#f1f3f4;border-radius:6px;
+  padding:7px 10px;margin-bottom:14px;word-break:break-all;display:none;
+}
+body.dark #chosen-path-display{background:#3c4043;color:#bdc1c6}
+
+.crx-tip{
+  font-size:11.5px;line-height:1.55;color:#5f6368;
+  background:#f1f3f4;border-radius:8px;padding:10px 12px;margin-bottom:16px;
+}
+.crx-tip b{color:#3c4043;font-weight:600}
+.crx-tip .crx-tip-note{display:block;margin-top:4px;color:#9aa0a6;font-size:11px}
+body.dark .crx-tip{background:#3c4043;color:#bdc1c6}
+body.dark .crx-tip b{color:#e8eaed}
+body.dark .crx-tip .crx-tip-note{color:#9aa0a6}
+
+.modal-fields input,.modal-fields textarea{
+  width:100%;border:1.5px solid #dfe1e5;border-radius:8px;
+  padding:9px 12px;font-size:13.5px;outline:none;margin-bottom:10px;
+  background:#fff;color:#1f1f1f;font-family:inherit;user-select:text;
+}
+body.dark .modal-fields input,body.dark .modal-fields textarea{
+  background:#202124;border-color:#5f6368;color:#e8eaed;
+}
+.modal-fields input:focus,.modal-fields textarea:focus{border-color:#9aa0a6}
+.modal-fields textarea{resize:vertical;min-height:70px;font-size:13px}
+
+.pin-row{
+  display:flex;align-items:center;gap:10px;padding:10px 0;
+  border-top:1px solid #f1f3f4;margin-bottom:4px;
+}
+body.dark .pin-row{border-color:#4a4d51}
+/* Scope to the text label only — otherwise .pin-switch (also a <label>)
+   inherits flex:1 and stretches into a horizontal line. */
+.pin-row > label:not(.pin-switch){font-size:13px;flex:1}
+.pin-switch{position:relative;width:36px;height:20px;flex-shrink:0;flex-grow:0;flex-basis:36px;display:inline-block}
+.pin-switch input{opacity:0;width:0;height:0;position:absolute}
+.pin-slider{
+  position:absolute;inset:0;cursor:pointer;
+  background:#bdc1c6;border-radius:999px;
+  transition:background .18s cubic-bezier(.4,0,.2,1);
+}
+.pin-slider::before{
+  content:"";position:absolute;width:14px;height:14px;
+  left:3px;top:3px;background:#fff;border-radius:50%;
+  transition:transform .18s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 1px 3px rgba(0,0,0,.2);
+}
+.pin-switch input:checked+.pin-slider{background:var(--accent)}
+.pin-switch input:checked+.pin-slider::before{transform:translateX(16px)}
+body.dark .pin-slider{background:#5f6368}
+body.dark .pin-switch input:checked+.pin-slider{background:var(--accent)}
+
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.btn{padding:8px 18px;border-radius:8px;font-size:13px;cursor:default;border:1.5px solid transparent}
+.btn-cancel{border-color:#dfe1e5;color:#5f6368}
+.btn-cancel:hover{background:#f1f3f4}
+.btn-save{background:var(--accent);color:var(--on-accent);font-weight:500}
+.btn-save:hover{background:var(--accent-hover)}
+body.dark .btn-cancel{border-color:#5f6368;color:#bdc1c6;background:#303134}
+body.dark .btn-cancel:hover{background:#3c4043}
+
+/* Confirm modal */
+#confirm-modal-bg{
+  position:fixed;inset:0;background:rgba(0,0,0,.35);
+  display:none;align-items:center;justify-content:center;z-index:220;padding:20px;
+}
+#confirm-modal-bg.open{display:flex}
+#confirm-modal{
+  width:min(360px,100%);background:#fff;border-radius:12px;padding:22px;
+  box-shadow:0 12px 40px rgba(0,0,0,.22);
+}
+body.dark #confirm-modal{background:#303134}
+#confirm-modal h3{font-size:17px;font-weight:500;margin-bottom:10px}
+#confirm-modal p{font-size:13px;color:#5f6368;line-height:1.45;margin-bottom:18px}
+body.dark #confirm-modal p{color:#bdc1c6}
+
+#toast{
+  position:fixed;left:50%;bottom:22px;transform:translateX(-50%);
+  background:#202124;color:#fff;border-radius:8px;padding:10px 16px;
+  font-size:13px;opacity:0;pointer-events:none;transition:opacity .18s;z-index:260;
+}
+#toast.show{opacity:1}
+body.dark #toast{background:#e8eaed;color:#202124}
+</style>
+</head>
+<body>
+
+<header>
+  <img class="logo-img" src="/logo.png" alt="" onerror="this.style.display='none'"/>
+  <h1>Extensions</h1>
+  <button class="header-btn" id="install-btn">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+    Add extension
+  </button>
+</header>
+
+<main>
+  <div id="list" class="ext-grid"></div>
+  <div id="empty">
+    <svg viewBox="0 0 24 24"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11z"/></svg>
+    <h2>No extensions installed</h2>
+    <p>Install a .crx file or load an unpacked extension folder.</p>
+    <button class="btn" id="empty-install">Add extension</button>
+  </div>
+</main>
+
+<!-- Install modal -->
+<div id="install-modal-bg">
+  <div id="install-modal">
+    <h3>Add extension</h3>
+    <div class="modal-sub">Choose a .crx file or an unpacked extension folder</div>
+
+    <div class="ext-compat-warn">
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+      <div>
+        <b>Heads up — some extensions may not fully work.</b>
+        Privoo runs on Electron, which implements most but not all Chrome
+        extension APIs. Popups and content scripts usually work, but
+        features that rely on <code>contextMenus</code>, <code>privacy</code>,
+        <code>webNavigation</code>, or other advanced APIs may be limited
+        or no-op. Privoo's built-in ad &amp; tracker blocker already covers
+        most of what blockers like uBlock Origin do.
+      </div>
+    </div>
+
+    <div class="choose-btns">
+      <button type="button" class="choose-btn" id="choose-crx-btn">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 10h-2v-2h-2v-2h2v-2h2v2h2v2h-2v2z"/></svg>
+        <strong>.crx file</strong>
+        <span>Browser extension package</span>
+      </button>
+      <button type="button" class="choose-btn" id="choose-folder-btn">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+        <strong>Unpacked folder</strong>
+        <span>Load from source directory</span>
+      </button>
+    </div>
+
+    <div class="crx-tip">
+      <b>Where to get a .crx file?</b> Sites like <b>crx4chrome.com</b> let you
+      download extension packages using a Chrome Web Store ID or URL. Save the
+      .crx, then choose it above.
+      <span class="crx-tip-note">Privoo isn't affiliated with crx4chrome or any
+      third-party CRX site. Only install extensions from sources you trust.</span>
+    </div>
+
+    <div id="chosen-path-display"></div>
+
+    <div class="modal-fields">
+      <input id="modal-name" type="text" placeholder="Extension name" autocomplete="off"/>
+      <input id="modal-version" type="text" placeholder="Version (e.g. 1.0.0)" autocomplete="off"/>
+      <textarea id="modal-desc" placeholder="Description (optional)"></textarea>
+    </div>
+
+    <div class="pin-row">
+      <label for="modal-pin">Pin to toolbar</label>
+      <label class="pin-switch">
+        <input type="checkbox" id="modal-pin"/>
+        <span class="pin-slider"></span>
+      </label>
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn btn-cancel" id="modal-cancel">Cancel</button>
+      <button class="btn btn-save" id="modal-install">Install</button>
+    </div>
+  </div>
+</div>
+
+<div id="confirm-modal-bg">
+  <div id="confirm-modal">
+    <h3 id="confirm-title">Confirm</h3>
+    <p id="confirm-message">Are you sure?</p>
+    <div class="modal-btns">
+      <button class="btn btn-cancel" id="confirm-cancel">Cancel</button>
+      <button class="btn btn-save" id="confirm-ok">Remove</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast">Done</div>
+
+<script>
+const api = window.privooInternal;
+let extensions = [];
+let toastTimer = null;
+let confirmResolve = null;
+let pendingPath = null;
+let pendingCrxPath = null;
+let pendingIconUrl = null;
+
+function applyTheme(settings) {
+  document.body.classList.toggle('dark', !!settings?.darkMode);
+  document.body.classList.toggle('transparent-ui', !!settings?.increaseTransparency);
+  applyAccent(settings?.accentColor);
+}
+function applyAccent(hex){const r=document.documentElement;if(!hex){r.style.removeProperty('--accent');r.style.removeProperty('--accent-hover');r.style.removeProperty('--accent-soft');return;}r.style.setProperty('--accent',hex);const m=hex.replace('#','').match(/.{2}/g);if(m){const[rv,g,b]=m.map(x=>parseInt(x,16));const h=`rgb(${Math.min(255,Math.round(rv+(255-rv)*.18))},${Math.min(255,Math.round(g+(255-g)*.18))},${Math.min(255,Math.round(b+(255-b)*.18))})`;r.style.setProperty('--accent-hover',h);r.style.setProperty('--accent-soft',`rgba(${rv},${g},${b},.18)`);} }
+
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 1700);
+}
+
+function askConfirm(title, message, okLabel = 'Remove') {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-message').textContent = message;
+  document.getElementById('confirm-ok').textContent = okLabel;
+  document.getElementById('confirm-modal-bg').classList.add('open');
+  return new Promise((resolve) => { confirmResolve = resolve; });
+}
+
+function closeConfirm(result) {
+  document.getElementById('confirm-modal-bg').classList.remove('open');
+  if (confirmResolve) confirmResolve(result);
+  confirmResolve = null;
+}
+
+function escHtml(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function letterFor(name) { return ((name || 'E')[0]).toUpperCase(); }
+
+function render() {
+  const listEl = document.getElementById('list');
+  const emptyEl = document.getElementById('empty');
+  if (!extensions.length) { listEl.innerHTML = ''; emptyEl.style.display = ''; return; }
+  emptyEl.style.display = 'none';
+  listEl.innerHTML = '';
+
+  for (const ext of extensions) {
+    const card = document.createElement('div');
+    card.className = 'ext-card';
+    card.innerHTML =
+      `<div class="ext-header">` +
+        `<div class="ext-icon">${ext.iconUrl ? `<img src="${escHtml(ext.iconUrl)}" alt="" onerror="this.style.display='none'"/>` : letterFor(ext.name)}</div>` +
+        `<div class="ext-info">` +
+          `<div class="ext-name" title="${escHtml(ext.name)}">${escHtml(ext.name)}</div>` +
+          `<div class="ext-version">v${escHtml(ext.version || '1.0.0')}${ext.crxPath ? ' · .crx' : ext.path ? ' · unpacked' : ''}</div>` +
+        `</div>` +
+      `</div>` +
+      `<div class="ext-desc">${escHtml(ext.description || 'No description provided.')}</div>` +
+      `<div class="ext-footer">` +
+        `<div class="ext-toggle">` +
+          `<label class="switch"><input type="checkbox" ${ext.enabled ? 'checked' : ''} data-id="${escHtml(ext.id)}"/><span class="slider"></span></label>` +
+          `<span>${ext.enabled ? 'Enabled' : 'Disabled'}</span>` +
+        `</div>` +
+        `<div class="ext-actions">` +
+          (ext.path ? `<button type="button" class="ext-open-folder" data-id="${escHtml(ext.id)}" title="Open folder"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg></button>` : '') +
+          `<button type="button" class="ext-pin-btn ${ext.pinnedToToolbar ? 'pinned' : ''}" data-id="${escHtml(ext.id)}" title="${ext.pinnedToToolbar ? 'Unpin from toolbar' : 'Pin to toolbar'}">` +
+            `<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>` +
+            `${ext.pinnedToToolbar ? 'Pinned' : 'Pin'}` +
+          `</button>` +
+          `<button class="ext-remove" data-id="${escHtml(ext.id)}">Remove</button>` +
+        `</div>` +
+      `</div>`;
+
+    card.querySelector('.switch input').addEventListener('change', (e) => {
+      toggleExtension(ext.id, e.target.checked);
+    });
+
+    const pinBtn = card.querySelector('.ext-pin-btn');
+    pinBtn.addEventListener('click', () => togglePin(ext.id));
+
+    const openBtn = card.querySelector('.ext-open-folder');
+    if (openBtn) {
+      openBtn.addEventListener('click', () => {
+        const x = extensions.find(e => e.id === ext.id);
+        if (x?.path && api?.openDirectory) api.openDirectory(x.path);
+      });
+    }
+
+    card.querySelector('.ext-remove').addEventListener('click', () => removeExtension(ext.id));
+    listEl.appendChild(card);
+  }
+}
+
+async function toggleExtension(id, enabled) {
+  const ext = extensions.find(e => e.id === id);
+  if (!ext) return;
+  ext.enabled = enabled;
+  await saveExtensions();
+  if (enabled && ext.path && api?.loadExtension) {
+    const res = await api.loadExtension(ext.path);
+    if (res?.ok) ext.electronId = res.id;
+    else showToast(res?.error || 'Could not load extension');
+  }
+  render();
+  showToast(enabled ? 'Extension enabled' : 'Extension disabled');
+}
+
+async function togglePin(id) {
+  const ext = extensions.find(e => e.id === id);
+  if (!ext) return;
+  ext.pinnedToToolbar = !ext.pinnedToToolbar;
+  await saveExtensions();
+  render();
+  showToast(ext.pinnedToToolbar ? 'Pinned to toolbar' : 'Unpinned from toolbar');
+}
+
+async function removeExtension(id) {
+  const ok = await askConfirm('Remove extension?', 'This removes the extension from Privoo.', 'Remove');
+  if (!ok) return;
+  extensions = extensions.filter(e => e.id !== id);
+  await saveExtensions();
+  render();
+}
+
+async function saveExtensions() {
+  if (api) await api.setSettings({ extensions });
+}
+
+async function loadExtensions() {
+  if (!api) return;
+  const { settings } = await api.getSettings();
+  extensions = settings.extensions || [];
+  render();
+}
+
+// Modal
+function openModal() {
+  pendingPath = null;
+  pendingCrxPath = null;
+  pendingIconUrl = null;
+  document.getElementById('modal-name').value = '';
+  document.getElementById('modal-version').value = '';
+  document.getElementById('modal-desc').value = '';
+  document.getElementById('modal-pin').checked = false;
+  const dp = document.getElementById('chosen-path-display');
+  dp.style.display = 'none';
+  dp.textContent = '';
+  document.getElementById('install-modal-bg').classList.add('open');
+  document.getElementById('modal-name').focus();
+}
+
+function closeModal() {
+  document.getElementById('install-modal-bg').classList.remove('open');
+}
+
+async function handleManifestResult(result, filePath) {
+  const dp = document.getElementById('chosen-path-display');
+  if (result?.ok && result.manifest) {
+    const m = result.manifest;
+    document.getElementById('modal-name').value = m.name || '';
+    document.getElementById('modal-version').value = m.version || '';
+    document.getElementById('modal-desc').value = m.description || '';
+    pendingIconUrl = result.iconUrl || null;
+    dp.textContent = filePath;
+    dp.style.display = 'block';
+    showToast('Manifest loaded');
+  } else {
+    dp.textContent = filePath + (result?.error ? ` — ${result.error}` : '');
+    dp.style.display = 'block';
+    showToast(result?.error || 'Could not read manifest — fill in manually');
+  }
+}
+
+document.getElementById('install-btn').addEventListener('click', openModal);
+document.getElementById('empty-install').addEventListener('click', openModal);
+document.getElementById('modal-cancel').addEventListener('click', closeModal);
+
+document.getElementById('choose-crx-btn').addEventListener('click', async () => {
+  if (!api?.chooseCrxFile) { showToast('Not available'); return; }
+  const filePath = await api.chooseCrxFile();
+  if (!filePath) return;
+  pendingCrxPath = filePath;
+  const result = await api.readExtManifest(filePath);
+  // readExtManifest unpacks the .crx into userData/extensions/ and returns
+  // the unpacked dir as result.path — that's what loadExtension needs.
+  pendingPath = result?.ok ? (result.path || null) : null;
+  await handleManifestResult(result, filePath);
+});
+
+document.getElementById('choose-folder-btn').addEventListener('click', async () => {
+  if (!api?.chooseFolder) { showToast('Not available'); return; }
+  const folder = await api.chooseFolder();
+  if (!folder) return;
+  pendingPath = folder;
+  pendingCrxPath = null;
+  const result = await api.readExtManifest(folder);
+  await handleManifestResult(result, folder);
+});
+
+document.getElementById('modal-install').addEventListener('click', async () => {
+  const name = document.getElementById('modal-name').value.trim();
+  if (!name) { showToast('Extension name is required'); return; }
+  const version = document.getElementById('modal-version').value.trim() || '1.0.0';
+  const desc = document.getElementById('modal-desc').value.trim();
+  const pinned = document.getElementById('modal-pin').checked;
+
+  const id = `ext_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  extensions.push({
+    id,
+    name,
+    version,
+    description: desc || 'No description provided.',
+    path: pendingPath || '',
+    crxPath: pendingCrxPath || '',
+    iconUrl: pendingIconUrl || null,
+    enabled: true,
+    pinnedToToolbar: pinned,
+  });
+
+  await saveExtensions();
+
+  // Both unpacked folders AND .crx files end up with a real `path` because
+  // readExtManifest unpacks .crx into userData/extensions/ and returns that dir.
+  if (pendingPath && api?.loadExtension) {
+    const res = await api.loadExtension(pendingPath);
+    if (!res?.ok) {
+      showToast(`Installed — ${res?.error || 'failed to load'}`);
+    } else {
+      const installed = extensions.find(e => e.id === id);
+      if (installed) installed.electronId = res.id;
+      await saveExtensions();
+      showToast('Extension installed and loaded');
+    }
+  } else {
+    showToast('Extension installed — could not locate files');
+  }
+
+  render();
+  closeModal();
+});
+
+document.getElementById('install-modal-bg').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('install-modal-bg')) closeModal();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { closeModal(); closeConfirm(false); }
+});
+
+document.getElementById('confirm-cancel').addEventListener('click', () => closeConfirm(false));
+document.getElementById('confirm-ok').addEventListener('click', () => closeConfirm(true));
+document.getElementById('confirm-modal-bg').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('confirm-modal-bg')) closeConfirm(false);
+});
+
+if (api) {
+  api.getSettings().then(({ settings }) => applyTheme(settings)).catch(() => {});
+  api.onSettingsChanged?.(applyTheme);
+}
+
+loadExtensions();
+</script>
+</body>
+</html>

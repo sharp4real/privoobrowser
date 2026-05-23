@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Upgrading to HTTPS — Privoo</title>
+<link rel="icon" href="privoo://newtab/logo.png"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+
+:root{
+  --bg:#f1f3f4;
+  --surface:#ffffff;
+  --text:#202124;
+  --muted:#5f6368;
+  --border:#dadce0;
+  --hover:#e8eaed;
+  --accent:#8ab4f8;
+  --accent-hover:#a0c2fa;
+  --on-accent:#202124;
+  --green:#1e8e3e;
+  --green-bg:rgba(30,142,62,.08);
+  --green-border:rgba(30,142,62,.2);
+}
+body.dark{
+  --bg:#202124;
+  --surface:#303134;
+  --text:#e8eaed;
+  --muted:#9aa0a6;
+  --border:#4a4d51;
+  --hover:#3c4043;
+  --green:#81c995;
+  --green-bg:rgba(129,201,149,.1);
+  --green-border:rgba(129,201,149,.25);
+  color-scheme:dark;
+}
+
+html,body{
+  height:100%;
+  background:var(--bg);
+  color:var(--text);
+  user-select:none;
+}
+
+.page{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-height:100%;
+  padding:40px 24px;
+}
+
+.card{
+  width:100%;
+  max-width:520px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:40px 44px 36px;
+  box-shadow:0 2px 12px rgba(0,0,0,.08);
+  animation:fadein .2s ease;
+}
+body.dark .card{box-shadow:0 2px 16px rgba(0,0,0,.35)}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Shield + progress ring — same diameter so the stroke sits inside the
+   green-tinted background instead of floating outside it. */
+.icon-wrap{
+  width:64px;height:64px;border-radius:50%;
+  background:var(--green-bg);
+  border:1px solid var(--green-border);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 20px;
+  color:var(--green);
+  position:relative;
+}
+.icon-wrap svg.shield-icon{width:28px;height:28px;fill:currentColor}
+
+.progress-ring{
+  position:absolute;
+  inset:0;
+  width:64px;height:64px;
+  /* Rotate around the SVG's geometric centre so the dash starts at 12
+     o'clock and grows clockwise. */
+  transform:rotate(-90deg);
+  transform-origin:50% 50%;
+  pointer-events:none;
+}
+.progress-ring circle{
+  fill:none;
+  stroke:var(--green);
+  stroke-width:3;
+  stroke-linecap:round;
+  /* r=29 in a 64×64 viewBox leaves a 1.5px gap to the edge so the stroke
+     never gets clipped. Circumference = 2π × 29 ≈ 182.21. */
+  stroke-dasharray:182.21;
+  stroke-dashoffset:182.21;
+  /* No CSS transition — JS updates the offset every frame via rAF; a
+     transition would lerp between frames and produce a stutter. */
+  opacity:0.9;
+}
+
+h1{
+  font-size:20px;
+  font-weight:600;
+  line-height:1.3;
+  margin-bottom:8px;
+  color:var(--text);
+}
+
+.subtitle{
+  font-size:13.5px;
+  line-height:1.6;
+  color:var(--muted);
+  margin-bottom:20px;
+}
+
+/* URL display */
+.url-row{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 14px;
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:8px;
+  margin-bottom:24px;
+  font-size:13px;
+  overflow:hidden;
+}
+.url-from{
+  color:var(--muted);
+  text-decoration:line-through;
+  flex-shrink:0;
+  font-size:12px;
+}
+.url-arrow{
+  color:var(--green);
+  flex-shrink:0;
+  font-size:14px;
+}
+.url-to{
+  color:var(--green);
+  font-weight:600;
+  flex-shrink:0;
+}
+.url-rest{
+  color:var(--muted);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* Countdown */
+.countdown-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:24px;
+  font-size:13px;
+  color:var(--muted);
+}
+.countdown-num{
+  font-size:22px;
+  font-weight:700;
+  color:var(--green);
+  min-width:28px;
+  text-align:center;
+  line-height:1;
+}
+
+/* Checkbox */
+.dismiss-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:28px;
+  font-size:13px;
+  color:var(--muted);
+  cursor:pointer;
+  user-select:none;
+}
+.dismiss-row input[type=checkbox]{
+  width:15px;height:15px;
+  accent-color:var(--accent);
+  cursor:pointer;
+  flex-shrink:0;
+}
+.dismiss-row label{cursor:pointer;}
+
+/* Buttons */
+.actions{
+  display:flex;
+  gap:8px;
+  justify-content:flex-end;
+}
+button{
+  font-family:inherit;
+  font-size:13.5px;
+  font-weight:500;
+  height:36px;
+  padding:0 20px;
+  border-radius:18px;
+  border:1px solid var(--border);
+  background:var(--surface);
+  color:var(--text);
+  cursor:pointer;
+  transition:background .12s,border-color .12s;
+}
+button:hover{background:var(--hover)}
+button.primary{
+  background:var(--accent);
+  color:var(--on-accent);
+  border-color:var(--accent);
+}
+button.primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+button.ghost{
+  background:transparent;
+  border-color:transparent;
+  color:var(--muted);
+}
+button.ghost:hover{background:var(--hover);color:var(--text)}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="card">
+    <div class="icon-wrap" aria-hidden="true">
+      <svg class="shield-icon" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 11.59l-2.29-2.3-1.42 1.42L11 15.41l6.71-6.71-1.42-1.41L11 12.59z"/></svg>
+      <svg class="progress-ring" viewBox="0 0 64 64">
+        <circle id="ring" cx="32" cy="32" r="29"/>
+      </svg>
+    </div>
+
+    <h1>Upgrading to a secure connection</h1>
+    <p class="subtitle">Privoo automatically detected an unsecure site and is trying to upgrade to HTTPS for you.</p>
+
+    <div class="url-row">
+      <span class="url-from">http://</span>
+      <span class="url-arrow">→</span>
+      <span class="url-to">https://</span>
+      <span class="url-rest" id="url-rest">…</span>
+    </div>
+
+    <div class="countdown-row">
+      <span class="countdown-num" id="countdown">3</span>
+      <span>Redirecting automatically…</span>
+    </div>
+
+    <div class="dismiss-row">
+      <input type="checkbox" id="no-show" />
+      <label for="no-show">Do not show this message again</label>
+    </div>
+
+    <div class="actions">
+      <button type="button" id="cancel-btn" class="ghost">Cancel</button>
+      <button type="button" id="go-btn" class="primary">Upgrade now</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const api = window.privooInternal;
+
+  let target = '';
+  let httpsTarget = '';
+  try {
+    target = new URLSearchParams(location.search).get('url') || '';
+    httpsTarget = target.replace(/^http:\/\//i, 'https://');
+  } catch {}
+
+  // Show the host + path in the URL row
+  try {
+    const u = new URL(target);
+    const rest = u.hostname + (u.pathname !== '/' || u.search ? u.pathname + u.search : '');
+    document.getElementById('url-rest').textContent = rest;
+  } catch {
+    document.getElementById('url-rest').textContent = target.replace(/^https?:\/\//i, '');
+  }
+
+  // Dark mode + accent
+  function applyAccent(hex){const r=document.documentElement;if(!hex){r.style.removeProperty('--accent');r.style.removeProperty('--accent-hover');r.style.removeProperty('--accent-soft');return;}r.style.setProperty('--accent',hex);const m=hex.replace('#','').match(/.{2}/g);if(m){const[rv,g,b]=m.map(x=>parseInt(x,16));const h=`rgb(${Math.min(255,Math.round(rv+(255-rv)*.18))},${Math.min(255,Math.round(g+(255-g)*.18))},${Math.min(255,Math.round(b+(255-b)*.18))})`;r.style.setProperty('--accent-hover',h);r.style.setProperty('--accent-soft',`rgba(${rv},${g},${b},.18)`);} }
+  api?.getSettings?.().then(d => {
+    document.body.classList.toggle('dark', !!d?.settings?.darkMode);
+    applyAccent(d?.settings?.accentColor);
+  }).catch(() => {});
+  api?.onSettingsChanged?.(s => {
+    document.body.classList.toggle('dark', !!s?.darkMode);
+    applyAccent(s?.accentColor);
+  });
+
+  // Progress ring animation
+  const ring = document.getElementById('ring');
+  const CIRCUMFERENCE = 2 * Math.PI * 29; // matches CSS r="29"
+  const DURATION = 3000; // ms
+  const start = performance.now();
+
+  function updateRing(elapsed) {
+    const progress = Math.min(elapsed / DURATION, 1);
+    ring.style.strokeDashoffset = CIRCUMFERENCE * (1 - progress);
+  }
+
+  // Countdown
+  const countdownEl = document.getElementById('countdown');
+  let redirected = false;
+
+  function tick() {
+    if (redirected) return;
+    const elapsed = performance.now() - start;
+    const remaining = Math.max(0, Math.ceil((DURATION - elapsed) / 1000));
+    countdownEl.textContent = remaining;
+    updateRing(elapsed);
+
+    if (elapsed >= DURATION) {
+      doRedirect();
+    } else {
+      requestAnimationFrame(tick);
+    }
+  }
+  requestAnimationFrame(tick);
+
+  function doRedirect() {
+    if (redirected) return;
+    redirected = true;
+    // Save "don't show" preference if checked
+    if (document.getElementById('no-show').checked) {
+      api?.setSettings?.({ httpsUpgradeShowNotice: false });
+    }
+    // Navigate to the https version
+    if (api?.navigate) api.navigate(httpsTarget);
+    else location.href = httpsTarget;
+  }
+
+  document.getElementById('go-btn').addEventListener('click', doRedirect);
+
+  document.getElementById('cancel-btn').addEventListener('click', () => {
+    redirected = true; // stop the countdown
+    if (history.length > 1) history.back();
+    else if (api?.navigate) api.navigate('privoo://newtab/');
+  });
+
+  // "Do not show" checkbox — save immediately on change so if they cancel it still sticks
+  document.getElementById('no-show').addEventListener('change', (e) => {
+    if (e.target.checked) {
+      api?.setSettings?.({ httpsUpgradeShowNotice: false });
+    } else {
+      api?.setSettings?.({ httpsUpgradeShowNotice: true });
+    }
+  });
+})();
+</script>
+</body>
+</html>

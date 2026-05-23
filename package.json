@@ -1,0 +1,102 @@
+{
+  "name": "privoo-browser",
+  "version": "1.0.0",
+  "description": "Privoo - a private, Chromium-style web browser",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win",
+    "dist:mac": "electron-builder --mac --x64 --arm64",
+    "dist:linux": "electron-builder --linux",
+    "dist:all": "electron-builder -mwl"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^42.0.1",
+    "electron-builder": "^25.1.8"
+  },
+  "dependencies": {
+    "@ghostery/adblocker-electron": "^2.5.2",
+    "electron-updater": "^6.3.9"
+  },
+  "build": {
+    "appId": "com.privoo.browser",
+    "productName": "Privoo",
+    "protocols": [
+      {
+        "name": "Web Protocol",
+        "schemes": ["http", "https", "mailto"]
+      }
+    ],
+    "fileAssociations": [
+      { "ext": "html", "name": "HTML Document", "role": "Viewer", "mimeType": "text/html" },
+      { "ext": "htm",  "name": "HTML Document", "role": "Viewer", "mimeType": "text/html" },
+      { "ext": "xhtml","name": "XHTML Document", "role": "Viewer", "mimeType": "application/xhtml+xml" },
+      { "ext": "pdf",  "name": "PDF Document",  "role": "Viewer", "mimeType": "application/pdf" },
+      { "ext": "svg",  "name": "SVG Image",     "role": "Viewer", "mimeType": "image/svg+xml" },
+      { "ext": "webp", "name": "WebP Image",    "role": "Viewer", "mimeType": "image/webp" }
+    ],
+    "files": [
+      "main.js",
+      "google-spoof.js",
+      "google-auth.js",
+      "password-store.js",
+      "password-autofill.js",
+      "preload.js",
+      "webview-preload.js",
+      "settings-store.js",
+      "history-store.js",
+      "download-store.js",
+      "session-store.js",
+      "browser-import.js",
+      "blocklist.js",
+      "safety.js",
+      "ai.js",
+      "ytdlp.js",
+      "ytdlp-installer.js",
+      "bin/**/*",
+      "renderer/**/*",
+      "logo.png"
+    ],
+    "win": {
+      "icon": "logo.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Privoo"
+    },
+    "mac": {
+      "icon": "logo.icns",
+      "category": "public.app-category.productivity",
+      "target": [
+        { "target": "dmg", "arch": ["x64", "arm64"] },
+        { "target": "zip", "arch": ["x64", "arm64"] }
+      ]
+    },
+    "linux": {
+      "icon": "logo.png",
+      "category": "Network",
+      "target": [
+        { "target": "AppImage", "arch": ["x64"] },
+        { "target": "deb",      "arch": ["x64"] },
+        { "target": "rpm",      "arch": ["x64"] }
+      ]
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "sharp4real",
+      "repo": "privoobrowser",
+      "draft": true
+    }
+  }
+}

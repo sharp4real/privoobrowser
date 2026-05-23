@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Site blocked — Privoo</title>
+<link rel="icon" href="privoo://newtab/logo.png"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+
+:root{
+  --bg:#f1f3f4;
+  --surface:#ffffff;
+  --text:#202124;
+  --muted:#5f6368;
+  --border:#dadce0;
+  --hover:#e8eaed;
+  --accent:#8ab4f8;
+  --accent-hover:#a0c2fa;
+  --on-accent:#202124;
+  --red:#d93025;
+  --red-bg:rgba(217,48,37,.08);
+  --red-border:rgba(217,48,37,.2);
+}
+body.dark{
+  --bg:#202124;
+  --surface:#303134;
+  --text:#e8eaed;
+  --muted:#9aa0a6;
+  --border:#4a4d51;
+  --hover:#3c4043;
+  --red:#f28b82;
+  --red-bg:rgba(242,139,130,.1);
+  --red-border:rgba(242,139,130,.25);
+  color-scheme:dark;
+}
+
+html,body{height:100%;background:var(--bg);color:var(--text);user-select:none;}
+
+.page{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100%;padding:40px 24px;
+}
+
+.card{
+  width:100%;max-width:520px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:40px 44px 36px;
+  box-shadow:0 2px 12px rgba(0,0,0,.08);
+  text-align:center;
+  animation:fadein .22s ease;
+}
+body.dark .card{box-shadow:0 2px 16px rgba(0,0,0,.35)}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Logo + shield badge */
+.logo-wrap{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:22px;
+}
+.logo-wrap img{
+  width:68px;height:68px;
+  border-radius:15px;
+  display:block;
+  opacity:.92;
+}
+.shield-badge{
+  position:absolute;
+  bottom:-8px;right:-8px;
+  width:30px;height:30px;
+  border-radius:50%;
+  background:var(--red);
+  border:2.5px solid var(--surface);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;
+}
+.shield-badge svg{width:15px;height:15px;fill:currentColor}
+
+h1{
+  font-size:21px;font-weight:700;
+  margin-bottom:8px;
+  color:var(--text);
+}
+
+.subtitle{
+  font-size:13.5px;line-height:1.65;
+  color:var(--muted);
+  margin-bottom:20px;
+}
+
+.url-chip{
+  display:inline-block;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:12.5px;
+  color:var(--muted);
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:4px 14px;
+  margin-bottom:28px;
+  user-select:text;
+}
+
+.reason-box{
+  display:flex;align-items:center;gap:10px;
+  background:var(--red-bg);
+  border:1px solid var(--red-border);
+  border-radius:10px;
+  padding:12px 16px;
+  margin-bottom:28px;
+  text-align:left;
+  font-size:13px;
+  color:var(--text);
+  line-height:1.5;
+}
+.reason-box svg{width:18px;height:18px;fill:var(--red);flex-shrink:0;}
+
+.actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+button{
+  font-family:inherit;font-size:13.5px;font-weight:500;
+  height:36px;padding:0 22px;
+  border-radius:18px;border:1px solid var(--border);
+  background:var(--surface);color:var(--text);
+  cursor:pointer;transition:background .12s,border-color .12s;
+}
+button:hover{background:var(--hover)}
+button.primary{
+  background:var(--accent);color:var(--on-accent);border-color:var(--accent);
+}
+button.primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+button.ghost{
+  background:transparent;border-color:transparent;color:var(--muted);
+}
+button.ghost:hover{background:var(--hover);color:var(--text)}
+
+.foot{
+  margin-top:20px;font-size:12px;color:var(--muted);
+}
+.foot a{color:var(--accent);text-decoration:none;cursor:pointer;}
+.foot a:hover{text-decoration:underline;}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="card">
+
+    <div class="logo-wrap">
+      <img src="privoo://newtab/logo.png" alt="Privoo" draggable="false"/>
+      <div class="shield-badge">
+        <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 17v-2h2v2h-2zm0-4V7h2v7h-2z"/></svg>
+      </div>
+    </div>
+
+    <h1>You've been blocked from visiting this website</h1>
+    <p class="subtitle" id="subtitle">Privoo's safety filter blocked this page before it could load.</p>
+
+    <div class="url-chip" id="url-chip"></div>
+
+    <div class="reason-box">
+      <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l5 2.18V11c0 3.5-2.33 6.79-5 7.93-2.67-1.14-5-4.43-5-7.93V7.18L12 5z"/></svg>
+      <span id="reason-text">This site has been identified as an 18+ / adult content site. Block 18+ Sites is enabled in your safety settings.</span>
+    </div>
+
+    <div class="actions">
+      <button type="button" id="back-btn" class="ghost">Go back</button>
+      <button type="button" id="settings-btn" class="primary">Safety settings</button>
+    </div>
+
+  </div>
+  <div class="foot">
+    To allow this site, turn off <a id="settings-link">Block 18+ Sites</a> in Settings → Safety.
+  </div>
+</div>
+
+<script>
+(function(){
+  const api = window.privooInternal;
+
+  const params    = new URLSearchParams(location.search);
+  const blockedUrl = params.get('url') || '';
+  const reason     = params.get('reason') || 'adult';
+
+  if (blockedUrl) {
+    document.getElementById('url-chip').textContent = blockedUrl;
+  } else {
+    document.getElementById('url-chip').style.display = 'none';
+  }
+
+  if (reason === 'safe') {
+    document.getElementById('subtitle').textContent =
+      'Safe Mode is enabled. This site has been blocked to protect you from explicit content.';
+    document.getElementById('reason-text').textContent =
+      'Safe Mode is turned on in your safety settings. Disable it to access this site.';
+    document.getElementById('settings-link').textContent = 'Safe Mode';
+  }
+
+  // Dark mode + accent
+  function applyAccent(hex){const r=document.documentElement;if(!hex){r.style.removeProperty('--accent');r.style.removeProperty('--accent-hover');r.style.removeProperty('--accent-soft');return;}r.style.setProperty('--accent',hex);const m=hex.replace('#','').match(/.{2}/g);if(m){const[rv,g,b]=m.map(x=>parseInt(x,16));const h=`rgb(${Math.min(255,Math.round(rv+(255-rv)*.18))},${Math.min(255,Math.round(g+(255-g)*.18))},${Math.min(255,Math.round(b+(255-b)*.18))})`;r.style.setProperty('--accent-hover',h);r.style.setProperty('--accent-soft',`rgba(${rv},${g},${b},.18)`);} }
+  api?.getSettings?.().then(d => {
+    document.body.classList.toggle('dark', !!d?.settings?.darkMode);
+    applyAccent(d?.settings?.accentColor);
+  }).catch(() => {});
+  api?.onSettingsChanged?.(s => {
+    document.body.classList.toggle('dark', !!s?.darkMode);
+    applyAccent(s?.accentColor);
+  });
+
+  document.getElementById('back-btn').addEventListener('click', () => {
+    if (history.length > 1) history.back();
+    else if (api?.navigate) api.navigate('privoo://newtab/');
+  });
+
+  const goSettings = () => {
+    if (api?.navigate) api.navigate('privoo://settings/');
+  };
+  document.getElementById('settings-btn').addEventListener('click', goSettings);
+  document.getElementById('settings-link').addEventListener('click', (e) => {
+    e.preventDefault();
+    goSettings();
+  });
+})();
+</script>
+</body>
+</html>

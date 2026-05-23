@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Downloads – Privoo</title>
+<link rel="icon" href="privoo://newtab/logo.png"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --accent:#8ab4f8; --accent-hover:#a0c2fa; --on-accent:#202124;
+  --accent-soft:rgba(138,180,248,.18);
+  --bg:#f8f9fa; --surface:#fff; --text:#202124; --muted:#5f6368;
+  --border:#e8eaed; --hover:#f1f3f4;
+}
+body.dark{
+  --bg:#202124; --surface:#292a2d; --text:#e8eaed; --muted:#9aa0a6;
+  --border:#3c4043; --hover:#3c4043;
+}
+html{height:100%;background:transparent}
+body{height:100%;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);user-select:none;display:flex;flex-direction:column}
+body.transparent-ui{background:transparent !important;}
+body.transparent-ui main, body.transparent-ui header{background:transparent !important;}
+body.transparent-ui .dl-item{
+  background:rgba(255,255,255,.55);
+  backdrop-filter:blur(10px) saturate(160%); -webkit-backdrop-filter:blur(10px) saturate(160%);
+}
+body.transparent-ui.dark .dl-item{background:rgba(41,42,45,.55);}
+body.dark{color-scheme:dark}
+button,input{font:inherit;cursor:default;background:none;border:none;color:inherit}
+
+::-webkit-scrollbar{width:12px;height:12px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#dadce0;border-radius:8px;border:3px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:#bdc1c6;background-clip:padding-box;border:3px solid transparent}
+body.dark ::-webkit-scrollbar-thumb{background:#5f6368;background-clip:padding-box;border:3px solid transparent}
+
+header{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  height:60px;display:flex;align-items:center;gap:12px;
+  padding:0 24px;position:sticky;top:0;z-index:20;flex-shrink:0;
+}
+
+.logo{width:26px;height:26px;border-radius:6px;object-fit:contain}
+.page-title{font-size:18px;font-weight:500;margin-right:auto}
+
+.search-wrap{position:relative;display:flex;align-items:center}
+.search-wrap svg{position:absolute;left:12px;width:18px;height:18px;fill:var(--muted);pointer-events:none}
+#search{
+  width:280px;height:38px;border-radius:24px;border:1px solid transparent;
+  padding:0 16px 0 38px;font-size:13.5px;outline:none;background:var(--hover);
+  color:var(--text);user-select:text;transition:background .15s,border-color .15s,box-shadow .15s;
+}
+#search:focus{background:var(--surface);border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+
+.hdr-btn{
+  height:36px;padding:0 16px;border-radius:18px;border:1px solid var(--border);
+  font-size:13px;font-weight:500;background:var(--surface);color:var(--text);white-space:nowrap;
+  transition:background .12s;
+}
+.hdr-btn:hover{background:var(--hover)}
+
+main{flex:1;overflow-y:auto;background:var(--bg)}
+.inner{max-width:840px;margin:0 auto;padding:24px 28px 64px}
+
+#empty{text-align:center;padding:120px 20px;color:var(--muted)}
+#empty svg{width:64px;height:64px;fill:var(--border);display:block;margin:0 auto 18px}
+#empty p{font-size:15px}
+
+.day-label{
+  font-size:13.5px;font-weight:500;color:var(--text);
+  padding:24px 0 10px;border-bottom:1px solid var(--border);
+  margin-bottom:8px;
+}
+
+.dl-item{
+  display:flex;align-items:center;gap:16px;
+  padding:14px 12px;border-radius:10px;
+  transition:background .1s;
+}
+.dl-item:hover{background:var(--hover)}
+
+.file-icon{
+  width:42px;height:42px;border-radius:10px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;
+  box-shadow:0 1px 2px rgba(0,0,0,.12);
+  position:relative;
+  overflow:hidden;
+}
+.file-icon svg{width:22px;height:22px;fill:currentColor}
+.file-icon .ext-tag{
+  position:absolute;left:50%;bottom:5px;transform:translateX(-50%);
+  font-size:8.5px;font-weight:800;letter-spacing:.4px;
+  color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.18);
+  line-height:1;
+}
+/* Real OS-extracted icon (Chrome-style). When this image loads we swap out
+   the placeholder SVG so the .exe shows its actual artwork. */
+.file-icon.has-real-icon{
+  background:var(--surface)!important;
+  box-shadow:0 1px 3px rgba(0,0,0,.08),inset 0 0 0 1px var(--border);
+}
+.file-icon .real-icon{
+  position:absolute;inset:4px;
+  width:calc(100% - 8px);height:calc(100% - 8px);
+  object-fit:contain;
+  image-rendering:auto;
+}
+
+.dl-body{flex:1;min-width:0}
+.dl-name-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dl-filename{
+  font-size:14px;font-weight:500;color:var(--text);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  max-width:400px;
+}
+.status-chip{
+  flex-shrink:0;font-size:11px;font-weight:600;
+  padding:2px 9px;border-radius:10px;
+}
+.chip-done{background:#e6f4ea;color:#1e8e3e}
+.chip-progress{background:var(--accent-soft);color:var(--accent)}
+.chip-error{background:#fce8e6;color:#c5221f}
+.chip-cancelled{background:var(--hover);color:var(--muted)}
+body.dark .chip-done{background:rgba(30,142,62,.18);color:#81c995}
+body.dark .chip-error{background:rgba(197,34,31,.18);color:#f28b82}
+
+.dl-src{
+  font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;margin-top:3px;cursor:pointer;
+}
+.dl-src:hover{color:var(--accent);text-decoration:underline}
+
+.dl-meta{font-size:11.5px;color:var(--muted);margin-top:3px}
+
+.dl-progress-bar{height:4px;background:var(--hover);border-radius:2px;margin-top:8px;overflow:hidden}
+.dl-progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .4s}
+
+.dl-actions{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.dl-act{
+  width:30px;height:30px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--muted);transition:background .1s,color .1s;
+}
+.dl-act:hover{background:var(--hover);color:var(--text)}
+.dl-act.danger:hover{background:#fce8e6;color:#c5221f}
+body.dark .dl-act.danger:hover{background:rgba(197,34,31,.15);color:#f28b82}
+.dl-act svg{width:16px;height:16px;fill:currentColor}
+
+.open-btn{
+  height:30px;padding:0 14px;border-radius:15px;
+  border:1px solid var(--border);font-size:12.5px;font-weight:500;
+  color:var(--text);background:var(--surface);white-space:nowrap;
+  transition:background .12s;
+}
+.open-btn:hover{background:var(--hover)}
+
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#303134;color:#fff;border-radius:8px;padding:10px 18px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .18s;z-index:80;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+#toast.show{opacity:1}
+body.dark #toast{background:#e8eaed;color:#202124}
+</style>
+</head>
+<body>
+
+<header>
+  <img class="logo" src="privoo://newtab/logo.png" alt="" onerror="this.style.display='none'"/>
+  <span class="page-title">Downloads</span>
+  <div class="search-wrap">
+    <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+    <input id="search" type="text" placeholder="Search downloads" autocomplete="off"/>
+  </div>
+  <button class="hdr-btn" id="clear-all">Clear all</button>
+</header>
+
+<main>
+  <div class="inner">
+    <div id="list"></div>
+    <div id="empty" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+      <p>No downloads yet</p>
+    </div>
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+const api = window.privooInternal;
+let all = [];
+let query = '';
+
+function applyTheme(s){
+  document.body.classList.toggle('dark', !!s?.darkMode);
+  document.body.classList.toggle('transparent-ui', !!s?.increaseTransparency);
+  applyAccent(s?.accentColor);
+}
+function applyAccent(hex){const r=document.documentElement;if(!hex){r.style.removeProperty('--accent');r.style.removeProperty('--accent-hover');r.style.removeProperty('--accent-soft');return;}r.style.setProperty('--accent',hex);const m=hex.replace('#','').match(/.{2}/g);if(m){const[rv,g,b]=m.map(x=>parseInt(x,16));const h=`rgb(${Math.min(255,Math.round(rv+(255-rv)*.18))},${Math.min(255,Math.round(g+(255-g)*.18))},${Math.min(255,Math.round(b+(255-b)*.18))})`;r.style.setProperty('--accent-hover',h);r.style.setProperty('--accent-soft',`rgba(${rv},${g},${b},.18)`);} }
+function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function showToast(t){ const el=document.getElementById('toast'); el.textContent=t; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),1800); }
+
+// File-type lookup: every entry maps an extension to a category which has a
+// colour + SVG icon. Avoids the previous "just print the extension in a tile"
+// look so applications show an app icon, images show a picture icon, etc.
+// File-type icons — clean Material-style glyphs, one per category. The
+// previous set used some awkward shapes (archive looked like a generic
+// folder, app looked like a window with lines). These are recognisable at
+// 22px and at 16px (toolbar popover) without rework.
+const FILE_ICONS={
+  // Installer / app — "open box with cube inside" reads as a package.
+  app:    `<svg viewBox="0 0 24 24"><path d="M12 2 2 7v10l10 5 10-5V7L12 2Zm0 2.2 7.4 3.7L12 11.6 4.6 7.9 12 4.2ZM4 9.6l7 3.5v7.4l-7-3.5V9.6Zm9 10.9V13.1l7-3.5v7.4l-7 3.5Z"/></svg>`,
+  image:  `<svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5C3.9 3 3 3.9 3 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2ZM8.5 12.5l2.5 3 3.5-4.5 4.5 6H5l3.5-4.5ZM7 9.5A1.5 1.5 0 1 1 7 6.5a1.5 1.5 0 0 1 0 3Z"/></svg>`,
+  video:  `<svg viewBox="0 0 24 24"><path d="M4 6c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2v-2.5l3.3 3.3c.6.6 1.7.2 1.7-.7V7.9c0-.9-1.1-1.3-1.7-.7L17 10.5V8c0-1.1-.9-2-2-2H4Zm6.5 3.5 4.5 2.5-4.5 2.5v-5Z"/></svg>`,
+  audio:  `<svg viewBox="0 0 24 24"><path d="M12 3 9 4v9.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7l8-2V3h-7Z"/></svg>`,
+  // Archive — proper compressed-file glyph: a folder with a clear zipper
+  // strip down the middle.
+  archive:`<svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2Zm-7 4h-2V8h2v2Zm0 3h-2v-2h2v2Zm0 3h-2v-2h2v2Zm0 3h-2v-2h2v2Z"/></svg>`,
+  // Extension — universal puzzle piece. Used for .crx / .xpi / .nex etc.
+  extension:`<svg viewBox="0 0 24 24"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-2 .9-2 2v3.8h1.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11Z"/></svg>`,
+  // PDF — document with a clear PDF tab.
+  pdf:    `<svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6Zm-1 1.5L18.5 9H14a1 1 0 0 1-1-1V3.5ZM8 13h1.5a1.5 1.5 0 0 1 0 3H9v1.5H8V13Zm0 1v1h1a.5.5 0 0 0 0-1H8Zm3.5-1H13a1.5 1.5 0 0 1 1.5 1.5v2A1.5 1.5 0 0 1 13 18h-1.5v-5Zm1 1v3h.5a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 0-.5-.5h-.5Zm3-1h2v1h-1v1h1v1h-1v2h-1v-5Z"/></svg>`,
+  doc:    `<svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6Zm-1 1.5L18.5 9H14a1 1 0 0 1-1-1V3.5ZM7 13h10v1.5H7V13Zm0 3h10v1.5H7V16Zm0-6h6v1.5H7V10Z"/></svg>`,
+  sheet:  `<svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2Zm-9 14H5v-3h5v3Zm0-4H5v-3h5v3Zm0-4H5V6h5v3Zm9 8h-8v-3h8v3Zm0-4h-8v-3h8v3Zm0-4h-8V6h8v3Z"/></svg>`,
+  slides: `<svg viewBox="0 0 24 24"><path d="M21 3H3v14h7l-1 4h6l-1-4h7V3Zm-2 12H5V5h14v10Z"/></svg>`,
+  code:   `<svg viewBox="0 0 24 24"><path d="M9.4 16.6 4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4Zm5.2 0L19.2 12 14.6 7.4 16 6l6 6-6 6-1.4-1.4Z"/></svg>`,
+  text:   `<svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6Zm-1 1.5L18.5 9H14a1 1 0 0 1-1-1V3.5ZM7 12h10v1.5H7V12Zm0 3h10v1.5H7V15Zm0 3h7v1.5H7V18Z"/></svg>`,
+  generic:`<svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6Zm-1 1.5L18.5 9H14a1 1 0 0 1-1-1V3.5Z"/></svg>`,
+};
+
+const FILE_TYPES={
+  // Applications & installers
+  exe:'app', msi:'app', appx:'app', appxbundle:'app', msix:'app',
+  dmg:'app', pkg:'app', app:'app',
+  deb:'app', rpm:'app', snap:'app', flatpak:'app', appimage:'app',
+  apk:'app', ipa:'app', xap:'app',
+  // Images
+  jpg:'image', jpeg:'image', png:'image', gif:'image', webp:'image',
+  bmp:'image', svg:'image', ico:'image', tif:'image', tiff:'image',
+  heic:'image', heif:'image', avif:'image', psd:'image', raw:'image',
+  // Video
+  mp4:'video', mkv:'video', avi:'video', mov:'video', webm:'video',
+  flv:'video', wmv:'video', m4v:'video', ts:'video',
+  // Audio
+  mp3:'audio', wav:'audio', flac:'audio', aac:'audio', ogg:'audio',
+  m4a:'audio', wma:'audio', opus:'audio', mid:'audio', midi:'audio',
+  // Archives
+  zip:'archive', rar:'archive', '7z':'archive', tar:'archive',
+  gz:'archive', tgz:'archive', bz2:'archive', xz:'archive', iso:'archive',
+  // Browser extensions
+  crx:'extension', xpi:'extension', nex:'extension', safariextz:'extension',
+  // Documents
+  pdf:'pdf',
+  doc:'doc', docx:'doc', odt:'doc', rtf:'doc',
+  xls:'sheet', xlsx:'sheet', csv:'sheet', ods:'sheet',
+  ppt:'slides', pptx:'slides', odp:'slides',
+  // Code
+  js:'code', mjs:'code', ts:'code', jsx:'code', tsx:'code',
+  json:'code', xml:'code', yaml:'code', yml:'code', toml:'code',
+  html:'code', htm:'code', css:'code', scss:'code', less:'code',
+  py:'code', rb:'code', rs:'code', go:'code', java:'code', c:'code',
+  cpp:'code', h:'code', hpp:'code', cs:'code', php:'code', sh:'code',
+  ps1:'code', bat:'code', cmd:'code',
+  // Plain text / markup
+  txt:'text', log:'text', md:'text', ini:'text', conf:'text', cfg:'text',
+};
+
+const TYPE_COLORS={
+  app:    'linear-gradient(135deg,#5b6cff 0%,#3b4ad6 100%)',
+  image:  'linear-gradient(135deg,#34a853 0%,#1e7e34 100%)',
+  video:  'linear-gradient(135deg,#9c27b0 0%,#6a1b9a 100%)',
+  audio:  'linear-gradient(135deg,#ff9800 0%,#e65100 100%)',
+  // Warm amber for archives — distinct from the orange "audio" set
+  archive:'linear-gradient(135deg,#f4b400 0%,#c08300 100%)',
+  // Teal for extensions — matches the universal "puzzle piece" colour Chrome uses
+  extension:'linear-gradient(135deg,#16a085 0%,#0e7b66 100%)',
+  pdf:    'linear-gradient(135deg,#ea4335 0%,#b31412 100%)',
+  doc:    'linear-gradient(135deg,#2196f3 0%,#1565c0 100%)',
+  sheet:  'linear-gradient(135deg,#43a047 0%,#1b5e20 100%)',
+  slides: 'linear-gradient(135deg,#ff5722 0%,#bf360c 100%)',
+  code:   'linear-gradient(135deg,#455a64 0%,#263238 100%)',
+  text:   'linear-gradient(135deg,#9e9e9e 0%,#616161 100%)',
+  generic:'linear-gradient(135deg,#78909c 0%,#455a64 100%)',
+};
+
+function fileExt(n){ return (n||'').split('.').pop().toLowerCase(); }
+function fileType(n){ return FILE_TYPES[fileExt(n)] || 'generic'; }
+function fileIconHtml(dl){
+  const n = dl.filename || '';
+  const t = fileType(n);
+  const ext = fileExt(n);
+  const tag = (t === 'generic' && ext && ext.length <= 4)
+    ? `<span class="ext-tag">${ext.toUpperCase()}</span>` : '';
+  // Tag the tile with the save path so the post-render pass can look it up
+  // and swap in the OS-extracted icon (Chrome-style for .exe and friends).
+  const path = (dl.state === 'completed' && dl.savePath) ? dl.savePath : '';
+  return `<div class="file-icon" data-path="${esc(path)}" style="background:${TYPE_COLORS[t]}">${FILE_ICONS[t]}${tag}</div>`;
+}
+
+// Cache resolved data URLs across renders so a re-render doesn't re-fetch.
+const _iconUrlCache = new Map();
+// Extensions where the embedded icon is worth showing (installers and other
+// app-bearing files). For images/video/audio we keep the category glyph —
+// the file's own thumbnail isn't meaningful at 42px and getFileIcon would
+// just return the OS default icon anyway.
+const REAL_ICON_EXTS = new Set([
+  'exe','msi','dmg','pkg','app','appx','appxbundle','msix',
+  'deb','rpm','snap','flatpak','appimage','apk','ipa',
+]);
+
+async function hydrateRealIcons(){
+  if (!api?.getFileIcon) return;
+  const tiles = document.querySelectorAll('.file-icon[data-path]:not([data-icon-loaded])');
+  for (const tile of tiles) {
+    const p = tile.getAttribute('data-path');
+    if (!p) { tile.setAttribute('data-icon-loaded','1'); continue; }
+    const ext = p.split('.').pop().toLowerCase();
+    if (!REAL_ICON_EXTS.has(ext)) { tile.setAttribute('data-icon-loaded','1'); continue; }
+    tile.setAttribute('data-icon-loaded','1');
+    let url = _iconUrlCache.get(p);
+    if (url === undefined) {
+      try { url = await api.getFileIcon(p); } catch { url = null; }
+      _iconUrlCache.set(p, url);
+    }
+    if (!url) continue;
+    const img = document.createElement('img');
+    img.className = 'real-icon';
+    img.src = url;
+    img.alt = '';
+    tile.classList.add('has-real-icon');
+    // Wipe the placeholder glyph + ext-tag once the real icon is in.
+    tile.querySelectorAll('svg, .ext-tag').forEach(el => el.remove());
+    tile.appendChild(img);
+  }
+}
+
+function fmt(b){
+  if(!b) return '—';
+  if(b<1024) return b+' B';
+  if(b<1048576) return (b/1024).toFixed(1)+' KB';
+  if(b<1073741824) return (b/1048576).toFixed(1)+' MB';
+  return (b/1073741824).toFixed(2)+' GB';
+}
+function fmtDate(ts){
+  if(!ts) return '';
+  const d=new Date(ts), now=new Date(), diff=now-d;
+  if(diff<60000) return 'Just now';
+  if(diff<3600000) return Math.floor(diff/60000)+'m ago';
+  if(diff<86400000) return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  return d.toLocaleDateString([],{month:'short',day:'numeric'});
+}
+function statusChip(state){
+  const map={completed:{l:'Done',c:'chip-done'},progressing:{l:'Downloading',c:'chip-progress'},interrupted:{l:'Failed',c:'chip-error'},cancelled:{l:'Cancelled',c:'chip-cancelled'}};
+  const s=map[state]||{l:state,c:'chip-cancelled'};
+  return `<span class="status-chip ${s.c}">${s.l}</span>`;
+}
+function hostOf(url){ try{ return new URL(url).hostname.replace(/^www\./,''); }catch{ return url||''; } }
+
+function render(){
+  const filtered=query?all.filter(d=>(d.filename||'').toLowerCase().includes(query)||(d.url||'').toLowerCase().includes(query)):all;
+  const listEl=document.getElementById('list'), emptyEl=document.getElementById('empty');
+  if(!filtered.length){ listEl.innerHTML=''; emptyEl.style.display=''; return; }
+  emptyEl.style.display='none';
+  listEl.innerHTML='';
+
+  const groups={};
+  const today=new Date().toDateString(), yesterday=new Date(Date.now()-86400000).toDateString();
+  for(const dl of filtered){
+    const k=dl.startTime?new Date(dl.startTime).toDateString():'Unknown';
+    if(!groups[k]) groups[k]=[];
+    groups[k].push(dl);
+  }
+
+  for(const [dateKey, items] of Object.entries(groups)){
+    const lbl=dateKey===today?'Today':dateKey===yesterday?'Yesterday':dateKey;
+    const dayEl=document.createElement('div');
+    dayEl.className='day-label';
+    dayEl.textContent=lbl;
+    listEl.appendChild(dayEl);
+
+    const group=document.createElement('div');
+    for(const dl of items){
+      const pct=dl.totalBytes>0?Math.round(dl.receivedBytes/dl.totalBytes*100):0;
+      const isProgress=dl.state==='progressing', isDone=dl.state==='completed';
+      const host=hostOf(dl.url);
+
+      const item=document.createElement('div');
+      item.className='dl-item';
+      item.dataset.id=dl.id;
+      item.innerHTML=
+        fileIconHtml(dl)+
+        `<div class="dl-body">`+
+          `<div class="dl-name-row"><span class="dl-filename" title="${esc(dl.filename)}">${esc(dl.filename)}</span>${statusChip(dl.state)}</div>`+
+          `<div class="dl-src" title="${esc(dl.url)}">${esc(host)}</div>`+
+          `<div class="dl-meta">${isProgress?`${fmt(dl.receivedBytes)} of ${fmt(dl.totalBytes)} · ${pct}%`:`${fmt(dl.totalBytes||dl.receivedBytes)}${dl.endTime||dl.startTime?' · '+fmtDate(dl.endTime||dl.startTime):''}`}</div>`+
+          (isProgress?`<div class="dl-progress-bar"><div class="dl-progress-fill" style="width:${pct}%"></div></div>`:'')+
+        `</div>`+
+        `<div class="dl-actions">`+
+          (isDone?`<button class="open-btn" data-act="open" data-path="${esc(dl.savePath)}">Open</button>`+
+                  `<button class="dl-act" title="Show in folder" data-act="folder" data-path="${esc(dl.savePath)}"><svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg></button>`:'')+
+          (isProgress?`<button class="dl-act danger" title="Cancel" data-act="cancel" data-id="${dl.id}"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>`:'')+
+          `<button class="dl-act danger" title="Remove from list" data-act="remove" data-id="${dl.id}"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>`+
+        `</div>`;
+
+      item.addEventListener('click',async e=>{
+        const btn=e.target.closest('[data-act]');
+        if(!btn) return;
+        const act=btn.dataset.act;
+        if(act==='open') await api.openDownload(btn.dataset.path);
+        if(act==='folder') await api.showInFolder(btn.dataset.path);
+        if(act==='cancel'){ await api.cancelDownload(btn.dataset.id); reload(); }
+        if(act==='remove'){ await api.removeDownload(btn.dataset.id); reload(); }
+      });
+
+      // click URL to open in new tab
+      item.querySelector('.dl-src')?.addEventListener('click',async e=>{
+        e.stopPropagation();
+        if(dl.url && api?.openTab) await api.openTab(dl.url);
+      });
+
+      group.appendChild(item);
+    }
+    listEl.appendChild(group);
+  }
+  // Fire-and-forget — fills in OS-extracted icons for installers as they
+  // resolve. Awaiting would block the synchronous render.
+  hydrateRealIcons();
+}
+
+async function reload(){ if(!api) return; try{ all=await api.getDownloads()||[]; }catch{ all=[]; } render(); }
+
+document.getElementById('search').addEventListener('input',e=>{ query=e.target.value.trim().toLowerCase(); render(); });
+document.getElementById('clear-all').addEventListener('click',async()=>{ await api?.clearDownloads(); all=[]; render(); });
+
+if(api){
+  api.onDownloadUpdate(dl=>{ const i=all.findIndex(d=>d.id===dl.id); if(i>=0) all[i]={...all[i],...dl}; else all.unshift(dl); render(); });
+  api.getSettings().then(({settings})=>applyTheme(settings)).catch(()=>{});
+  api.onSettingsChanged?.(applyTheme);
+  api.onBrowsingDataCleared?.(()=>reload());
+}
+reload();
+</script>
+</body>
+</html>

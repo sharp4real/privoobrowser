@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>New tab</title>
+<link rel="icon" href="/logo.png"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+html,body{height:100%;overflow:hidden}
+
+/* Hidden until applyNtpLook() has themed the page — kills any flash of an
+   un-themed new tab. Once themed it reveals with a clean entrance below. */
+body{background:transparent;color:#1f1f1f;user-select:none;opacity:0;}
+body.ntp-ready{opacity:1;}
+/* Clean new-tab entrance — the background is there instantly, the content
+   (search bar, shortcuts) gently rises into place. Runs once on load. */
+body.ntp-ready #ntp-root{
+  animation:ntp-in .4s cubic-bezier(.16,.84,.44,1) both;
+}
+@keyframes ntp-in{
+  from{opacity:0;transform:translateY(13px);}
+  to{opacity:1;transform:none;}
+}
+
+#ntp-bg{
+  position:fixed;inset:0;z-index:0;
+  /* Pre-paint background follows the OS color-scheme so we don't flash
+     white on dark-mode launches before applyNtpLook() runs. The host
+     forwards prefers-color-scheme: dark via CDP when darkMode is on. */
+  background-color:#ffffff;
+  background-size:cover;background-position:center;background-repeat:no-repeat;
+}
+@media (prefers-color-scheme: dark) {
+  #ntp-bg { background-color:#202124; }
+}
+/* Increase Transparency on the new tab — drop the solid fill so the OS
+   material peeks through. Only kicks in when no wallpaper is set; if the
+   user uploaded a wallpaper, that takes precedence (transparency over a
+   wallpaper would look muddy). */
+body.transparent-ui:not(.ntp-wp) #ntp-bg{background-color:transparent;}
+#ntp-bg-dim{
+  position:fixed;inset:0;z-index:1;
+  background:#000;pointer-events:none;opacity:0;
+  transition:opacity .25s;
+}
+#ntp-root{
+  position:relative;z-index:2;
+  min-height:100%;
+  display:flex;flex-direction:column;
+}
+
+body.ntp-dark:not(.ntp-wp) #ntp-footer,
+body.ntp-dark:not(.ntp-wp) #ntp-disclaimer{color:#9aa0a6;}
+
+body.ntp-wp #ntp-footer,
+body.ntp-wp #ntp-disclaimer{color:rgba(255,255,255,.88);text-shadow:0 1px 8px rgba(0,0,0,.4);}
+
+main{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:36px 20px 7vh;
+}
+
+#ntp-logo-wrap{
+  display:flex;justify-content:center;margin-bottom:10px;min-height:56px;
+}
+#ntp-logo-wrap img{
+  display:block;width:64px;height:auto;max-height:72px;object-fit:contain;
+  border:none;outline:none;border-radius:0;box-shadow:none;background:transparent;
+}
+.ntp-ghost-name{
+  text-align:center;
+  font-size:15px;
+  font-weight:500;
+  color:#5f6368;
+  margin-bottom:18px;
+  letter-spacing:.01em;
+}
+body.ntp-dark .ntp-ghost-name{color:#9aa0a6}
+body.ntp-wp .ntp-ghost-name{
+  color:#fff;
+  text-shadow:0 1px 4px rgba(0,0,0,.5);
+}
+
+#search-form{
+  width:100%;max-width:580px;
+  display:flex;align-items:center;gap:10px;
+  /* Light grey resting pill (Chrome-NTP style). White-on-white made the bar
+     read as "transparent" against the page background; this gives the search
+     bar a distinct shape even without backdrop blur. */
+  background:#f1f3f4;border:1.5px solid #dfe1e5;border-radius:24px;
+  padding:0 18px;height:48px;
+  box-shadow:0 1px 6px rgba(32,33,36,.08);
+  position:relative;
+  -webkit-app-region:no-drag;
+  /* Brave-style focused search. Important: NO scale() transform — that
+     subpixel-rendered the suggestions text and made it blurry. We grow the
+     bar by adjusting height/padding/font-size/shadow + a tiny translateY,
+     which gives the same "lean forward" feel without any sub-pixel blur. */
+  transition:height .25s cubic-bezier(.2,0,.2,1),
+             padding .25s cubic-bezier(.2,0,.2,1),
+             max-width .25s cubic-bezier(.2,0,.2,1),
+             box-shadow .25s,
+             border-color .2s,
+             transform .25s cubic-bezier(.2,0,.2,1);
+}
+body.ntp-focused-search-on #ntp-root.search-focused #search-form{
+  height:58px;
+  max-width:640px;
+  padding:0 22px;
+  box-shadow:0 18px 44px rgba(32,33,36,.22);
+  border-color:transparent;
+  transform:translateY(6px);
+}
+body.ntp-focused-search-on #ntp-root.search-focused #q{
+  font-size:16px;
+}
+body.ntp-focused-search-on.ntp-dark:not(.ntp-wp) #ntp-root.search-focused #search-form{
+  box-shadow:0 18px 44px rgba(0,0,0,.55);
+}
+body.ntp-focused-search-on #ntp-root.search-focused #quick-links{
+  opacity:0;
+  transform:translateY(12px);
+  pointer-events:none;
+}
+body.ntp-focused-search-on #quick-links{
+  transition:opacity .22s ease, transform .22s ease;
+}
+/* Light mode + wallpaper: keep the bar white-tinted so it reads against
+   colourful images. Dark mode + wallpaper: use a translucent dark fill so
+   the bar still respects the user's theme choice over the wallpaper. */
+body.ntp-wp:not(.ntp-dark) #search-form{
+  background:rgba(255,255,255,.94);
+  border-color:rgba(255,255,255,.35);
+}
+body.ntp-wp.ntp-dark #search-form{
+  background:rgba(32,33,36,.78);
+  border-color:rgba(255,255,255,.10);
+  color:#e8eaed;
+}
+body.ntp-wp.ntp-dark #q{color:#e8eaed;}
+body.ntp-wp.ntp-dark #search-form svg{fill:#9aa0a6;}
+body.ntp-wp.ntp-dark #search-suggestions{
+  background:rgba(32,33,36,.96);border-color:rgba(255,255,255,.10);color:#e8eaed;
+}
+body.ntp-wp.ntp-dark .ss-item:hover,
+body.ntp-wp.ntp-dark .ss-item.active{background:rgba(255,255,255,.10);}
+body.ntp-dark:not(.ntp-wp) #search-form{
+  background:#303134;border-color:#3c4043;
+  box-shadow:0 1px 8px rgba(0,0,0,.35);
+}
+/* Increase Transparency — the new-tab search bar becomes a frosted glass
+   pill so the OS material shows through it. !important + the extra
+   :not(.ntp-wp) keeps it winning over the wallpaper / dark variants. */
+body.transparent-ui:not(.ntp-wp) #search-form{
+  background:rgba(255,255,255,.46) !important;
+  border-color:rgba(255,255,255,.40) !important;
+  backdrop-filter:blur(20px) saturate(170%);
+  -webkit-backdrop-filter:blur(20px) saturate(170%);
+}
+body.transparent-ui.ntp-dark:not(.ntp-wp) #search-form{
+  background:rgba(40,41,45,.46) !important;
+  border-color:rgba(255,255,255,.12) !important;
+}
+body.transparent-ui:not(.ntp-wp) #search-suggestions{
+  background:rgba(255,255,255,.78) !important;
+  backdrop-filter:blur(20px) saturate(170%);
+  -webkit-backdrop-filter:blur(20px) saturate(170%);
+}
+body.transparent-ui.ntp-dark:not(.ntp-wp) #search-suggestions{
+  background:rgba(40,41,45,.82) !important;
+}
+#search-form:focus-within{
+  border-color:transparent;
+  box-shadow:0 1px 12px rgba(32,33,36,.20);
+}
+#search-form svg{fill:#9aa0a6;flex-shrink:0;}
+body.ntp-dark:not(.ntp-wp) #search-form svg{fill:#9aa0a6;}
+#q{
+  flex:1;border:none;outline:none;background:transparent;
+  font-size:15px;color:#1f1f1f;user-select:text;
+}
+body.ntp-dark:not(.ntp-wp) #q{color:#e8eaed;}
+#q::placeholder{color:#9aa0a6;}
+
+#search-suggestions{
+  position:absolute;top:calc(100% + 8px);left:0;right:0;
+  background:#fff;border:1px solid #e8eaed;border-radius:16px;
+  box-shadow:0 12px 32px rgba(32,33,36,.16), 0 2px 6px rgba(32,33,36,.06);
+  overflow:hidden;z-index:100;color:#1f1f1f;
+  padding:6px;
+  display:none;
+  animation:ss-pop .14s cubic-bezier(.2,0,.2,1);
+  transform-origin:top center;
+}
+#search-suggestions.open{display:block;}
+@keyframes ss-pop{
+  from{opacity:0;transform:translateY(-3px);}
+  to{opacity:1;transform:translateY(0);}
+}
+body.ntp-dark:not(.ntp-wp) #search-suggestions{
+  background:#2a2b2e;border-color:#3c4043;
+  box-shadow:0 14px 36px rgba(0,0,0,.55), 0 2px 8px rgba(0,0,0,.35);
+  color:#e8eaed;
+}
+.ss-item{
+  display:flex;align-items:center;gap:12px;
+  padding:9px 12px;font-size:14px;cursor:default;
+  border-radius:10px;
+  line-height:1.3;
+  transition:background .08s ease;
+}
+.ss-item + .ss-item{margin-top:1px;}
+.ss-item:hover,.ss-item.active{background:#f1f3f4;}
+body.ntp-dark:not(.ntp-wp) .ss-item:hover,
+body.ntp-dark:not(.ntp-wp) .ss-item.active{background:#3c4043;}
+.ss-icon{
+  width:18px;height:18px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  color:#80868b;
+}
+body.ntp-dark:not(.ntp-wp) .ss-icon{color:#9aa0a6;}
+.ss-icon svg{width:14px;height:14px;fill:currentColor;}
+.ss-item > span:not(.ss-icon){
+  flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+
+#quick-links{
+  display:flex;flex-wrap:wrap;justify-content:center;
+  gap:6px;margin-top:30px;max-width:640px;width:100%;
+}
+@keyframes ql-fade-in{
+  from{opacity:0;transform:scale(.88);}
+  to{opacity:1;transform:scale(1);}
+}
+.ql-item, .ql-add{
+  animation:ql-fade-in .18s cubic-bezier(.2,0,.2,1);
+}
+.ql-item.removing{
+  animation:none;
+  opacity:0;
+  transform:scale(.85);
+  transition:opacity .15s ease, transform .15s ease;
+  pointer-events:none;
+}
+.ql-item{
+  display:flex;flex-direction:column;align-items:center;gap:7px;
+  width:82px;padding:14px 8px 10px;border-radius:12px;
+  cursor:default;color:#3c4043;font-size:12px;
+  position:relative;transition:background .12s;
+}
+.ql-item:hover{background:#f1f3f4;}
+body.ntp-wp .ql-item{background:rgba(255,255,255,.12);color:#fff;}
+body.ntp-wp .ql-item:hover{background:rgba(255,255,255,.2);}
+body.ntp-dark:not(.ntp-wp) .ql-item{color:#e8eaed;}
+body.ntp-dark:not(.ntp-wp) .ql-item:hover{background:#3c4043;}
+.ql-ico{
+  width:44px;height:44px;border-radius:50%;
+  background:#f1f3f4;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:700;color:#5f6368;
+  overflow:hidden;
+  border:1px solid #e8eaed;
+  box-shadow:0 1px 3px rgba(0,0,0,.08);
+}
+body.ntp-wp .ql-ico{background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.35);color:#fff;}
+body.ntp-dark:not(.ntp-wp) .ql-ico{background:#3c4043;border-color:#5f6368;color:#e8eaed;}
+.ql-ico img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.ql-name{
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  width:100%;text-align:center;
+}
+.ql-remove{
+  position:absolute;top:4px;right:4px;
+  width:20px;height:20px;border-radius:50%;
+  background:rgba(60,64,67,.7);display:none;
+  align-items:center;justify-content:center;
+  cursor:default;color:#fff;
+}
+.ql-item:hover .ql-remove{display:flex;}
+.ql-remove:hover{background:rgba(60,64,67,.95);}
+body.ntp-dark:not(.ntp-wp) .ql-remove{background:rgba(200,200,200,.25);}
+body.ntp-dark:not(.ntp-wp) .ql-remove:hover{background:rgba(200,200,200,.45);}
+
+.ql-add{
+  display:flex;flex-direction:column;align-items:center;gap:7px;
+  width:82px;padding:14px 8px 10px;border-radius:12px;cursor:default;
+  color:#5f6368;font-size:12px;
+}
+.ql-add:hover{background:#f1f3f4;}
+body.ntp-wp .ql-add{color:rgba(255,255,255,.9);}
+body.ntp-wp .ql-add:hover{background:rgba(255,255,255,.15);}
+body.ntp-dark:not(.ntp-wp) .ql-add{color:#9aa0a6;}
+body.ntp-dark:not(.ntp-wp) .ql-add:hover{background:#3c4043;}
+.ql-add .ql-ico{color:#5f6368;background:#f1f3f4;}
+body.ntp-wp .ql-add .ql-ico{background:rgba(255,255,255,.2);color:#fff;}
+body.ntp-dark:not(.ntp-wp) .ql-add .ql-ico{background:#3c4043;color:#e8eaed;}
+
+#ql-modal-bg,#custom-modal-bg{
+  position:fixed;inset:0;background:rgba(0,0,0,.35);
+  display:none;align-items:center;justify-content:center;z-index:200;
+}
+#ql-modal-bg.open,#custom-modal-bg.open{
+  display:flex;
+  animation:ql-bg-in .15s ease both;
+}
+@keyframes ql-bg-in{ from{opacity:0;} to{opacity:1;} }
+@keyframes ql-modal-in{
+  from{opacity:0;transform:translateY(8px) scale(.96);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+#ql-modal,#custom-modal{
+  background:#fff;border-radius:14px;padding:24px;
+  width:380px;max-width:calc(100vw - 32px);
+  box-shadow:0 12px 40px rgba(0,0,0,.22);
+  max-height:90vh;overflow-y:auto;
+  color:#1f1f1f;
+}
+#ql-modal-bg.open #ql-modal,
+#custom-modal-bg.open #custom-modal{
+  animation:ql-modal-in .18s cubic-bezier(.2,0,.2,1) both;
+}
+body.ntp-dark #ql-modal,
+body.ntp-dark #custom-modal {
+  background:#303134;color:#e8eaed;
+  box-shadow:0 12px 40px rgba(0,0,0,.5);
+}
+body.ntp-dark.ntp-wp #ql-modal,
+body.ntp-dark.ntp-wp #custom-modal {
+  background:rgba(32,33,36,.94);
+  color:#e8eaed;
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 12px 40px rgba(0,0,0,.55);
+}
+
+/* Frosted modal when Increase Transparency is on so the OS material
+   shows through. Keeps winning over the wallpaper / dark variants. */
+body.transparent-ui #ql-modal-bg,
+body.transparent-ui #custom-modal-bg{
+  background:rgba(0,0,0,.18);
+}
+body.transparent-ui #ql-modal,
+body.transparent-ui #custom-modal{
+  background:rgba(255,255,255,.62) !important;
+  border:1px solid rgba(255,255,255,.5);
+  backdrop-filter:blur(26px) saturate(180%);
+  -webkit-backdrop-filter:blur(26px) saturate(180%);
+  box-shadow:0 16px 48px rgba(0,0,0,.28) !important;
+}
+body.transparent-ui.ntp-dark #ql-modal,
+body.transparent-ui.ntp-dark #custom-modal{
+  background:rgba(32,33,36,.6) !important;
+  border:1px solid rgba(255,255,255,.12);
+}
+body.transparent-ui #ql-modal input,
+body.transparent-ui #custom-modal input[type="text"]{
+  background:rgba(255,255,255,.55);
+}
+body.transparent-ui.ntp-dark #ql-modal input,
+body.transparent-ui.ntp-dark #custom-modal input[type="text"]{
+  background:rgba(0,0,0,.28);
+}
+#ql-modal{width:340px;}
+#ql-modal h3,#custom-modal h3{font-size:16px;margin-bottom:16px;}
+#ql-modal input,#custom-modal input[type="text"]{
+  width:100%;border:1.5px solid #dfe1e5;border-radius:8px;
+  padding:10px 12px;font-size:14px;outline:none;margin-bottom:10px;
+  user-select:text;background:#fff;color:#1f1f1f;
+}
+body.ntp-dark #ql-modal input,
+body.ntp-dark #custom-modal input[type="text"] {
+  background:#202124;border-color:#5f6368;color:#e8eaed;
+}
+body.ntp-dark .btn-cancel { border-color:#5f6368;color:#bdc1c6;background:#3c4043; }
+body.ntp-dark .btn-cancel:hover { background:#4a4d51; }
+body.ntp-dark .btn-save { background:#e8eaed;color:#202124; }
+body.ntp-dark .btn-save:hover { background:#f1f3f4; }
+body.ntp-dark #custom-modal .row-label { color:#9aa0a6; }
+body.ntp-dark #custom-modal .mini-btn {
+  border-color:#5f6368;color:#bdc1c6;background:#3c4043;
+}
+body.ntp-dark #custom-modal .mini-btn:hover { background:#4a4d51; }
+body.ntp-dark #custom-modal .mini-btn.primary {
+  border-color:#e8eaed;color:#202124;background:#e8eaed;
+}
+body.ntp-dark #custom-modal .mini-btn.primary:hover { background:#f1f3f4; }
+#custom-modal .row-label{font-size:12.5px;color:#5f6368;margin-bottom:8px;margin-top:4px;}
+#custom-modal .btn-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;}
+#custom-modal .mini-btn{
+  padding:7px 14px;border-radius:8px;font-size:13px;
+  border:1.5px solid #dadce0;color:#5f6368;cursor:default;background:#f8f9fa;
+}
+#custom-modal .mini-btn:hover{background:#f1f3f4;}
+#custom-modal .mini-btn.primary{border-color:#1f1f1f;color:#1f1f1f;background:#fff;}
+#custom-modal .mini-btn.primary:hover{background:#f1f3f4;}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;}
+.btn{
+  padding:8px 18px;border-radius:8px;font-size:13px;cursor:default;
+  border:1.5px solid transparent;
+}
+.btn-cancel{border-color:#dfe1e5;color:#5f6368;}
+.btn-cancel:hover{background:#f1f3f4;}
+.btn-save{background:#1f1f1f;color:#fff;}
+.btn-save:hover{background:#000;}
+
+footer{
+  padding:14px 24px 72px;font-size:12px;color:#9aa0a6;text-align:center;
+  max-width:560px;margin:0 auto;line-height:1.55;
+}
+#ntp-disclaimer{margin:0;}
+
+/* ── Weather widget ── */
+#ntp-weather{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  margin-bottom:14px;
+  animation:fadein .3s ease;
+}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.wx-card{
+  display:inline-flex;align-items:center;gap:12px;
+  padding:10px 18px;border-radius:16px;
+  background:rgba(255,255,255,.72);
+  border:1px solid rgba(0,0,0,.07);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  box-shadow:0 2px 12px rgba(0,0,0,.08);
+  color:#202124;
+  font-size:13px;
+  user-select:none;
+}
+body.ntp-dark:not(.ntp-wp) .wx-card{
+  background:rgba(48,49,52,.82);
+  border-color:rgba(255,255,255,.08);
+  color:#e8eaed;
+}
+body.ntp-wp .wx-card{
+  background:rgba(0,0,0,.32);
+  border-color:rgba(255,255,255,.15);
+  color:#fff;
+}
+.wx-icon{font-size:28px;line-height:1;flex-shrink:0;}
+.wx-body{display:flex;flex-direction:column;gap:1px;}
+.wx-temp{font-size:22px;font-weight:700;line-height:1;}
+.wx-desc{font-size:12px;opacity:.75;text-transform:capitalize;}
+.wx-loc{font-size:11.5px;opacity:.6;margin-top:1px;}
+.wx-details{
+  display:flex;flex-direction:column;gap:3px;
+  font-size:11.5px;opacity:.7;
+  border-left:1px solid rgba(128,128,128,.25);
+  padding-left:12px;
+  margin-left:2px;
+}
+.wx-details span{white-space:nowrap;}
+
+.ntp-pen-btn{
+  position:fixed;right:18px;bottom:14px;z-index:40;
+  width:46px;height:46px;border-radius:50%;
+  background:#2d2d2d;color:#fff;border:none;
+  box-shadow:0 4px 16px rgba(0,0,0,.25);
+  display:flex;align-items:center;justify-content:center;
+  cursor:default;transition:transform .15s,background .12s;
+}
+.ntp-pen-btn:hover{transform:scale(1.06);background:#111;}
+.ntp-pen-btn svg{fill:currentColor;}
+</style>
+</head>
+<body>
+
+<div id="ntp-bg" aria-hidden="true"></div>
+<div id="ntp-bg-dim" aria-hidden="true"></div>
+
+
+<div id="ntp-root">
+
+<main>
+  <div id="ntp-logo-wrap"></div>
+  <div id="ntp-ghost-name" class="ntp-ghost-name" hidden></div>
+
+  <div id="search-form" style="position:relative">
+    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5 1.49-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg>
+    <input id="q" type="text" autocomplete="off" spellcheck="false"
+           placeholder="Search privately or enter a URL"/>
+    <div id="search-suggestions"></div>
+  </div>
+
+  <div id="quick-links"></div>
+</main>
+
+<footer id="ntp-footer">
+  <div id="ntp-weather" hidden></div>
+  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee.</p>
+</footer>
+
+</div>
+
+<button type="button" class="ntp-pen-btn" id="ntp-pen" title="Customize new tab" aria-label="Customize">
+  <svg viewBox="0 0 24 24" width="22" height="22"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+</button>
+
+<div id="custom-modal-bg">
+  <div id="custom-modal">
+    <h3>Customize new tab</h3>
+    <div class="row-label">Appearance</div>
+    <div class="btn-row">
+      <button type="button" class="mini-btn primary" id="cw-theme-light">Light</button>
+      <button type="button" class="mini-btn" id="cw-theme-dark">Dark</button>
+    </div>
+    <div class="row-label">Wallpaper</div>
+    <div class="btn-row">
+      <button type="button" class="mini-btn primary" id="cw-choose">Choose image</button>
+      <button type="button" class="mini-btn" id="cw-clear">Remove wallpaper</button>
+    </div>
+    <div class="modal-btns">
+      <button type="button" class="btn btn-cancel" id="custom-close">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="ql-modal-bg">
+  <div id="ql-modal">
+    <h3 id="modal-title">Add shortcut</h3>
+    <input id="modal-name" type="text" placeholder="Name"/>
+    <input id="modal-url"  type="text" placeholder="URL"/>
+    <div class="modal-btns">
+      <button class="btn btn-cancel" id="modal-cancel">Cancel</button>
+      <button class="btn btn-save"   id="modal-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const api = window.privooInternal;
+
+// Preload wallpaper immediately to prevent flash
+(function preloadWallpaper() {
+  const bg = document.getElementById('ntp-bg');
+  const dim = document.getElementById('ntp-bg-dim');
+  if (!bg || !dim) return;
+  
+  // Try to load wallpaper immediately
+  const img = new Image();
+  img.onload = function() {
+    // Wallpaper exists, show it immediately
+    bg.style.backgroundImage = "url('privoo://newtab/wallpaper')";
+    dim.style.opacity = '0.42';
+    document.body.classList.add('ntp-wp');
+  };
+  img.onerror = function() {
+    // No wallpaper, ensure clean state
+    bg.style.backgroundImage = '';
+    dim.style.opacity = '0';
+    document.body.classList.remove('ntp-wp');
+  };
+  img.src = 'privoo://newtab/wallpaper';
+})();
+
+function mountLogo() {
+  const wrap = document.getElementById('ntp-logo-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  const img = document.createElement('img');
+  img.alt = 'Privoo';
+  img.id = 'logo-img';
+  img.src = 'privoo://newtab/logo.png';
+  img.decoding = 'async';
+  img.onerror = () => { wrap.style.display = 'none'; };
+  wrap.appendChild(img);
+}
+mountLogo();
+
+
+function applyNtpLook(settings) {
+  const bg = document.getElementById('ntp-bg');
+  const dim = document.getElementById('ntp-bg-dim');
+  const wpPath = settings?.ntpWallpaperPath;
+  const hasWp = wpPath !== '' && wpPath !== null && wpPath !== undefined;
+  const dark = !!(settings && settings.darkMode);
+
+  document.body.classList.toggle('ntp-wp', hasWp);
+  document.body.classList.toggle('ntp-dark', dark);
+  // Default ON — toggle in Settings → New tab.
+  document.body.classList.toggle('ntp-focused-search-on', settings?.ntpFocusedSearch !== false);
+  // Increase Transparency — let the OS material show through the NTP too.
+  document.body.classList.toggle('transparent-ui', !!settings?.increaseTransparency);
+
+  const ql = document.getElementById('quick-links');
+  if (ql) ql.hidden = settings?.ntpShowQuickLinks === false;
+
+  if (hasWp) {
+    bg.style.backgroundImage = "url('privoo://newtab/wallpaper?t=" + Date.now() + "')";
+    const d = typeof settings.ntpWallpaperDim === 'number' ? settings.ntpWallpaperDim : 0.42;
+    dim.style.opacity = String(Math.min(0.85, Math.max(0, d)));
+  } else {
+    bg.style.backgroundImage = '';
+    dim.style.opacity = '0';
+    // When transparency is on, leave the NTP background fully transparent
+    // so the OS material / desktop shows through. Otherwise paint the
+    // usual light/dark fill.
+    if (settings?.increaseTransparency) {
+      bg.style.backgroundColor = 'transparent';
+    } else {
+      bg.style.backgroundColor = dark ? '#202124' : '#ffffff';
+    }
+  }
+
+  // Apply custom accent color
+  applyAccent(settings?.accentColor);
+}
+
+function applyAccent(hex){const r=document.documentElement;if(!hex){r.style.removeProperty('--accent');r.style.removeProperty('--accent-hover');r.style.removeProperty('--accent-soft');return;}r.style.setProperty('--accent',hex);const m=hex.replace('#','').match(/.{2}/g);if(m){const[rv,g,b]=m.map(x=>parseInt(x,16));const h=`rgb(${Math.min(255,Math.round(rv+(255-rv)*.18))},${Math.min(255,Math.round(g+(255-g)*.18))},${Math.min(255,Math.round(b+(255-b)*.18))})`;r.style.setProperty('--accent-hover',h);r.style.setProperty('--accent-soft',`rgba(${rv},${g},${b},.18)`);} }
+
+function syncThemeButtons(settings) {
+  // Use main darkMode setting
+  const dark = !!(settings && settings.darkMode);
+  const lightBtn = document.getElementById('cw-theme-light');
+  const darkBtn = document.getElementById('cw-theme-dark');
+  lightBtn.classList.toggle('primary', !dark);
+  darkBtn.classList.toggle('primary', dark);
+}
+
+let quickLinks = [];
+let searchEngine = 'google';
+const ENGINES = { google:'https://www.google.com/search?q=', bing:'https://www.bing.com/search?q=', duckduckgo:'https://duckduckgo.com/?q=', brave:'https://search.brave.com/search?q=' };
+const DEFAULT_QUICK_LINKS = [
+  { name: 'YouTube',   url: 'https://youtube.com' },
+  { name: 'GitHub',    url: 'https://github.com' },
+  { name: 'Reddit',    url: 'https://reddit.com' },
+  { name: 'Wikipedia', url: 'https://wikipedia.org' },
+  { name: 'Gmail',     url: 'https://mail.google.com' },
+];
+
+async function loadNtp() {
+  if (!api) { document.body.classList.add('ntp-ready'); return; }
+  const { settings } = await api.getSettings();
+  searchEngine = settings.searchEngine || 'google';
+  const links = settings.ntpQuickLinks;
+  // Only fall back to defaults if the user has NEVER set this — an empty
+  // array is a deliberate "I want no quick links" and must be respected.
+  quickLinks = Array.isArray(links) ? links : DEFAULT_QUICK_LINKS;
+  applyNtpLook(settings);
+  // Reveal the page only once it's correctly themed — no flash of an
+  // un-themed new tab (which read as the search bar flickering).
+  document.body.classList.add('ntp-ready');
+  syncThemeButtons(settings);
+  renderQL();
+
+  // Greeting feature removed — keep the element hidden so legacy DOM stays inert.
+  const ghostEl = document.getElementById('ntp-ghost-name');
+  if (ghostEl) ghostEl.hidden = true;
+
+  renderWeather(settings);
+}
+
+function faviconUrl(url) {
+  try {
+    const host = new URL(url).hostname;
+    return `https://icons.duckduckgo.com/ip3/${host}.ico`;
+  } catch { return ''; }
+}
+
+function letterAvatar(name) {
+  return (name || '?')[0].toUpperCase();
+}
+
+function renderQL() {
+  const wrap = document.getElementById('quick-links');
+  // Build the new list off-screen in a DocumentFragment so the browser only
+  // does ONE layout pass instead of one per appendChild. This eliminates the
+  // visible flicker that happened when calling renderQL() after add/remove.
+  const frag = document.createDocumentFragment();
+  for (let i = 0; i < quickLinks.length; i++) {
+    const ql = quickLinks[i];
+    const el = document.createElement('div');
+    el.className = 'ql-item';
+
+    const fav = faviconUrl(ql.url);
+    el.innerHTML =
+      `<div class="ql-ico"></div>` +
+      `<span class="ql-name" title="${escHtml(ql.url)}">${escHtml(ql.name)}</span>` +
+      `<span class="ql-remove" data-idx="${i}" title="Remove"><svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></span>`;
+    const ico = el.querySelector('.ql-ico');
+    if (fav) {
+      const img = new Image();
+      img.alt = '';
+      img.addEventListener('error', () => {
+        ico.textContent = '';
+        const span = document.createElement('span');
+        span.style.fontSize = '16px';
+        span.style.fontWeight = '600';
+        span.textContent = letterAvatar(ql.name);
+        ico.appendChild(span);
+      }, { once: true });
+      img.src = fav;
+      ico.appendChild(img);
+    } else {
+      const span = document.createElement('span');
+      span.style.fontSize = '16px';
+      span.style.fontWeight = '600';
+      span.textContent = letterAvatar(ql.name);
+      ico.appendChild(span);
+    }
+
+    el.addEventListener('click', (e) => {
+      if (e.target.classList.contains('ql-remove')) return;
+      if (api) api.openTab(ql.url);
+    });
+
+    el.querySelector('.ql-remove').addEventListener('click', async (e) => {
+      e.stopPropagation();
+      // Animate the removed tile out before re-rendering so the user sees
+      // it shrink/fade instead of vanishing instantly. The list reflow only
+      // runs once the animation has completed.
+      el.classList.add('removing');
+      await new Promise((r) => setTimeout(r, 160));
+      quickLinks.splice(i, 1);
+      await saveQL();
+      renderQL();
+    });
+
+    frag.appendChild(el);
+  }
+
+  const addEl = document.createElement('div');
+  addEl.className = 'ql-add';
+  addEl.innerHTML = `<div class="ql-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></div><span>Add</span>`;
+  addEl.addEventListener('click', () => openModal());
+  frag.appendChild(addEl);
+
+  // Atomic swap — single reflow.
+  wrap.replaceChildren(frag);
+}
+
+async function saveQL() {
+  if (!api) return;
+  try {
+    await api.setSettings({ ntpQuickLinks: quickLinks });
+  } catch (e) {
+    console.error('Privoo NTP save quick links:', e);
+  }
+}
+
+let editingIdx = -1;
+
+function openModal(idx = -1) {
+  editingIdx = idx;
+  const modal = document.getElementById('ql-modal-bg');
+  document.getElementById('modal-title').textContent = idx >= 0 ? 'Edit shortcut' : 'Add shortcut';
+  document.getElementById('modal-name').value = idx >= 0 ? quickLinks[idx].name : '';
+  document.getElementById('modal-url').value  = idx >= 0 ? quickLinks[idx].url  : '';
+  modal.classList.add('open');
+  document.getElementById('modal-name').focus();
+}
+
+document.getElementById('modal-cancel').addEventListener('click', () =>
+  document.getElementById('ql-modal-bg').classList.remove('open')
+);
+
+document.getElementById('ql-modal-bg').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('ql-modal-bg'))
+    document.getElementById('ql-modal-bg').classList.remove('open');
+});
+
+async function commitShortcut() {
+  let name = document.getElementById('modal-name').value.trim();
+  let url  = document.getElementById('modal-url').value.trim();
+  if (!url) {
+    // Flash the URL input so the user understands what's missing instead
+    // of the button looking dead.
+    const inp = document.getElementById('modal-url');
+    inp.style.borderColor = '#ea4335';
+    inp.focus();
+    setTimeout(() => { inp.style.borderColor = ''; }, 1200);
+    return;
+  }
+  if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
+  if (!name) { try { name = new URL(url).hostname; } catch { name = url; } }
+  if (editingIdx >= 0) {
+    quickLinks[editingIdx] = { name, url };
+  } else {
+    quickLinks.push({ name, url });
+  }
+  // Close immediately so the modal doesn't appear stuck while disk-write
+  // is in flight. If the save fails we silently roll back the in-memory
+  // list and re-render.
+  document.getElementById('ql-modal-bg').classList.remove('open');
+  renderQL();
+  try { await saveQL(); }
+  catch (e) { console.error('Privoo NTP commit shortcut:', e); }
+}
+document.getElementById('modal-save').addEventListener('click', commitShortcut);
+// Enter in either field also submits.
+for (const id of ['modal-name', 'modal-url']) {
+  document.getElementById(id).addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); commitShortcut(); }
+  });
+}
+
+async function openCustomize() {
+  document.getElementById('custom-modal-bg').classList.add('open');
+  if (!api) return;
+  const { settings } = await api.getSettings();
+  syncThemeButtons(settings);
+}
+function closeCustomize() {
+  document.getElementById('custom-modal-bg').classList.remove('open');
+}
+
+// Pen button now opens the host's Customize side panel (accent / wallpaper /
+// layout toggles) instead of the legacy in-page modal. Falls back to the
+// old modal if the host bridge isn't available (e.g. opening this page
+// outside Privoo).
+document.getElementById('ntp-pen').addEventListener('click', () => {
+  if (api && typeof api.openCustomizePanel === 'function') {
+    api.openCustomizePanel();
+    return;
+  }
+  openCustomize();
+});
+document.getElementById('custom-close').addEventListener('click', closeCustomize);
+document.getElementById('custom-modal-bg').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('custom-modal-bg')) closeCustomize();
+});
+
+document.getElementById('cw-theme-light').addEventListener('click', async () => {
+  if (!api) return;
+  await api.setSettings({ darkMode: false });
+  await loadNtp();
+});
+
+document.getElementById('cw-theme-dark').addEventListener('click', async () => {
+  if (!api) return;
+  await api.setSettings({ darkMode: true });
+  await loadNtp();
+});
+
+document.getElementById('cw-choose').addEventListener('click', async () => {
+  if (!api?.chooseNtpWallpaper) return;
+  const p = await api.chooseNtpWallpaper();
+  if (p) await loadNtp();
+});
+
+document.getElementById('cw-clear').addEventListener('click', async () => {
+  if (!api?.clearNtpWallpaper) return;
+  await api.clearNtpWallpaper();
+  await loadNtp();
+});
+
+const qInput = document.getElementById('q');
+const ssSug  = document.getElementById('search-suggestions');
+let ssItems  = [];
+let ssIdx    = -1;
+let ssTimer  = null;
+
+qInput.addEventListener('input', () => {
+  clearTimeout(ssTimer);
+  ssTimer = setTimeout(() => fetchSuggestions(qInput.value), 200);
+});
+
+async function fetchSuggestions(q) {
+  if (!q.trim() || !api) { closeSS(); return; }
+  try {
+    const results = await api.getSuggestions(q, searchEngine);
+    ssItems = results;
+    renderSS(results, q);
+  } catch { closeSS(); }
+}
+
+function renderSS(items, q) {
+  if (!items.length) { closeSS(); return; }
+  ssSug.innerHTML = '';
+  ssIdx = -1;
+  for (const it of items) {
+    const el = document.createElement('div');
+    el.className = 'ss-item';
+    el.innerHTML =
+      `<span class="ss-icon"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5 1.49-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg></span>` +
+      `<span>${escHtml(it.text)}</span>`;
+    el.addEventListener('mousedown', (e) => { e.preventDefault(); doSearch(it.text); });
+    ssSug.appendChild(el);
+  }
+  ssSug.classList.add('open');
+}
+
+function closeSS() { ssSug.classList.remove('open'); ssIdx = -1; }
+
+qInput.addEventListener('blur', () => setTimeout(closeSS, 150));
+
+// Brave-style focused-search: scale the bar forward and hide shortcuts
+// while typing/focused. Wired here in addition to :focus-within so we can
+// react to programmatic focus and key down before paint.
+const ntpRoot = document.getElementById('ntp-root');
+function setSearchFocused(on) {
+  if (!ntpRoot) return;
+  ntpRoot.classList.toggle('search-focused', !!on);
+}
+qInput.addEventListener('focus', () => setSearchFocused(true));
+qInput.addEventListener('blur',  () => setSearchFocused(false));
+// Clicking the form region itself also focuses the input (clicking the
+// icon / padding shouldn't fail to enter the focused state).
+document.getElementById('search-form')?.addEventListener('mousedown', () => {
+  qInput.focus();
+});
+
+qInput.addEventListener('keydown', (e) => {
+  const items = ssSug.querySelectorAll('.ss-item');
+  if (e.key === 'ArrowDown')  { e.preventDefault(); ssIdx = Math.min(ssIdx + 1, items.length - 1); items.forEach((el, i) => el.classList.toggle('active', i === ssIdx)); if (ssItems[ssIdx]) qInput.value = ssItems[ssIdx].text; }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); ssIdx = Math.max(ssIdx - 1, -1); items.forEach((el, i) => el.classList.toggle('active', i === ssIdx)); }
+  else if (e.key === 'Escape') { closeSS(); }
+  else if (e.key === 'Enter') { e.preventDefault(); doSearch(qInput.value); closeSS(); }
+});
+
+function doSearch(input) {
+  const t = input.trim();
+  if (!t || !api) return;
+  const looksLikeUrl = /^(https?:\/\/|www\.)/i.test(t) || (!/\s/.test(t) && /\.[a-z]{2,}/i.test(t));
+  const url = looksLikeUrl ? (t.startsWith('http') ? t : 'https://' + t)
+              : (ENGINES[searchEngine] || ENGINES.google) + encodeURIComponent(t);
+  api.navigate(url);
+}
+
+function escHtml(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    document.getElementById('ql-modal-bg').classList.remove('open');
+    closeCustomize();
+  }
+});
+
+// ── Weather widget ──────────────────────────────────────────────────────────
+const WX_ICONS = {
+  0:'☀️',1:'☀️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',
+  51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',
+  71:'🌨️',73:'🌨️',75:'❄️',77:'🌨️',
+  80:'🌦️',81:'🌧️',82:'⛈️',
+  85:'🌨️',86:'❄️',
+  95:'⛈️',96:'⛈️',99:'⛈️',
+};
+const WX_DESC = {
+  0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',
+  45:'Foggy',48:'Icy fog',
+  51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',
+  61:'Light rain',63:'Rain',65:'Heavy rain',
+  71:'Light snow',73:'Snow',75:'Heavy snow',77:'Snow grains',
+  80:'Light showers',81:'Showers',82:'Heavy showers',
+  85:'Snow showers',86:'Heavy snow showers',
+  95:'Thunderstorm',96:'Thunderstorm + hail',99:'Heavy thunderstorm',
+};
+
+let wxCache = null;
+let wxCacheTime = 0;
+const WX_TTL = 10 * 60 * 1000; // 10 min
+
+async function fetchWeather(location) {
+  // Use cached data if fresh
+  if (wxCache && Date.now() - wxCacheTime < WX_TTL) return wxCache;
+
+  // Geocode the location name → lat/lon via Open-Meteo geocoding
+  const geoRes = await fetch(
+    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=en&format=json`
+  );
+  const geoData = await geoRes.json();
+  const place = geoData?.results?.[0];
+  if (!place) throw new Error('Location not found');
+
+  const { latitude, longitude, name, country_code } = place;
+
+  // Fetch current weather from Open-Meteo (free, no API key)
+  const wxRes = await fetch(
+    `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}` +
+    `&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m` +
+    `&temperature_unit=celsius&wind_speed_unit=kmh&timezone=auto`
+  );
+  const wxData = await wxRes.json();
+  const cur = wxData?.current;
+  if (!cur) throw new Error('No weather data');
+
+  wxCache = {
+    temp: Math.round(cur.temperature_2m),
+    feels: Math.round(cur.apparent_temperature),
+    code: cur.weather_code,
+    wind: Math.round(cur.wind_speed_10m),
+    humidity: cur.relative_humidity_2m,
+    city: name,
+    country: country_code?.toUpperCase() || '',
+  };
+  wxCacheTime = Date.now();
+  return wxCache;
+}
+
+async function renderWeather(settings) {
+  const el = document.getElementById('ntp-weather');
+  if (!el) return;
+
+  if (!settings?.ntpShowWeather) {
+    el.hidden = true;
+    el.innerHTML = '';
+    return;
+  }
+
+  const loc = (settings.weatherLocation || '').trim();
+  if (!loc) {
+    el.hidden = true;
+    return;
+  }
+
+  el.hidden = false;
+  if (!el.innerHTML) {
+    el.innerHTML = '<div class="wx-card" style="opacity:.5;font-size:13px">Loading weather…</div>';
+  }
+
+  try {
+    const wx = await fetchWeather(loc);
+    const icon = WX_ICONS[wx.code] ?? '🌡️';
+    const desc = WX_DESC[wx.code] ?? 'Unknown';
+    el.innerHTML = `
+      <div class="wx-card">
+        <div class="wx-icon">${icon}</div>
+        <div class="wx-body">
+          <div class="wx-temp">${wx.temp}°C</div>
+          <div class="wx-desc">${desc}</div>
+          <div class="wx-loc">${wx.city}${wx.country ? ', ' + wx.country : ''}</div>
+        </div>
+        <div class="wx-details">
+          <span>Feels like ${wx.feels}°C</span>
+          <span>💧 ${wx.humidity}%</span>
+          <span>💨 ${wx.wind} km/h</span>
+        </div>
+      </div>`;
+  } catch {
+    el.innerHTML = '<div class="wx-card" style="opacity:.6;font-size:12px">Weather unavailable</div>';
+  }
+}
+
+loadNtp();
+// Safety net — reveal even if settings never arrive, so the page can't
+// stay stuck invisible.
+setTimeout(() => document.body.classList.add('ntp-ready'), 800);
+api?.onSettingsChanged?.((settings) => {
+  try {
+    searchEngine = settings.searchEngine || searchEngine;
+    const links = settings.ntpQuickLinks;
+    const next = Array.isArray(links) ? links : DEFAULT_QUICK_LINKS;
+    const sameLinks = next.length === quickLinks.length
+      && next.every((l, i) => l && quickLinks[i] && l.url === quickLinks[i].url && l.name === quickLinks[i].name);
+    applyNtpLook(settings);
+    syncThemeButtons(settings);
+    if (!sameLinks) {
+      quickLinks = next;
+      renderQL();
+    }
+    renderWeather(settings);
+  } catch (e) {
+    console.error('Privoo NTP settings update:', e);
+  }
+});
+</script>
+</body>
+</html>

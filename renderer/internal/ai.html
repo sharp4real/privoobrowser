@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Privoo AI</title>
+<link rel="icon" href="privoo://newtab/logo.png"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+
+:root{
+  --bg:#f6f7f9;
+  --surface:#ffffff;
+  --surface-2:#f1f3f4;
+  --text:#1f1f1f;
+  --muted:#5f6368;
+  --border:#e6e8eb;
+  --accent:#8ab4f8;
+  --accent-hover:#a0c2fa;
+  --on-accent:#1a1a1a;
+  --accent-soft:rgba(138,180,248,.16);
+  --danger:#d93025;
+}
+body.dark{
+  --bg:#1c1d20;
+  --surface:#26272a;
+  --surface-2:#2f3034;
+  --text:#e8eaed;
+  --muted:#9aa0a6;
+  --border:#36373b;
+  --on-accent:#16181c;
+  --accent-soft:rgba(138,180,248,.14);
+  --danger:#f28b82;
+  color-scheme:dark;
+}
+
+html,body{height:100%}
+body{
+  background:var(--bg);
+  color:var(--text);
+  display:flex;flex-direction:column;
+  overflow:hidden;user-select:none;
+}
+
+/* ── Title bar (frameless drag region) ── */
+.titlebar{
+  height:44px;flex-shrink:0;
+  display:flex;align-items:center;gap:9px;
+  padding:0 6px 0 14px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  -webkit-app-region:drag;
+}
+.tb-logo{width:20px;height:20px;border-radius:5px;object-fit:contain}
+.tb-title{font-size:13px;font-weight:600}
+.tb-beta{
+  font-size:8.5px;font-weight:700;letter-spacing:.5px;
+  padding:2px 6px;border-radius:5px;
+  background:var(--accent-soft);color:var(--accent);
+}
+.tb-spacer{flex:1}
+.tb-btn{
+  -webkit-app-region:no-drag;
+  width:30px;height:30px;border-radius:7px;border:none;
+  background:transparent;color:var(--muted);cursor:default;
+  display:flex;align-items:center;justify-content:center;
+}
+.tb-btn:hover{background:var(--surface-2);color:var(--text)}
+.tb-btn.close:hover{background:#e0443b;color:#fff}
+.tb-btn svg{width:15px;height:15px;fill:currentColor}
+
+main{flex:1;display:flex;flex-direction:column;min-height:0}
+
+/* ── Status strip ── */
+.bar{
+  flex-shrink:0;display:flex;align-items:center;gap:8px;
+  padding:9px 14px;border-bottom:1px solid var(--border);
+  background:var(--surface);
+  -webkit-app-region:no-drag;
+}
+.pill{
+  flex:1;min-width:0;
+  display:flex;align-items:center;gap:8px;
+  height:32px;padding:0 11px;border-radius:8px;
+  background:var(--surface-2);
+  font-size:12px;color:var(--muted);
+}
+.pill .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.pill.ok .dot{background:#1e8e3e}
+body.dark .pill.ok .dot{background:#81c995}
+.pill.no .dot{background:#e0a800}
+.pill b{color:var(--text);font-weight:600}
+.pill #status-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:7px;min-width:0}
+.status-model{
+  padding:2px 7px;border-radius:6px;font-size:10.5px;flex-shrink:0;
+  background:var(--accent-soft);color:var(--accent);font-weight:600;
+}
+.bar-btn{
+  height:32px;padding:0 13px;border-radius:8px;flex-shrink:0;
+  border:1px solid var(--border);background:var(--surface);
+  color:var(--text);font-size:12px;font-weight:500;cursor:default;
+}
+.bar-btn:hover{background:var(--surface-2)}
+
+/* ── Chat ── */
+.chat{flex:1;overflow-y:auto;scrollbar-width:thin}
+.chat-inner{padding:18px 16px 6px;display:flex;flex-direction:column;gap:13px}
+
+.msg{display:flex;gap:9px;max-width:100%}
+.msg.user{flex-direction:row-reverse}
+.avatar{
+  width:28px;height:28px;border-radius:8px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;overflow:hidden;
+}
+.msg.ai .avatar{background:var(--accent-soft);color:var(--accent)}
+.msg.ai .avatar img{width:18px;height:18px;object-fit:contain}
+.msg.user .avatar{background:var(--surface-2);color:var(--muted)}
+.msg.err .avatar{background:rgba(217,48,37,.12);color:var(--danger)}
+.bubble{
+  padding:10px 14px;border-radius:14px;
+  font-size:13.5px;line-height:1.6;
+  white-space:pre-wrap;word-break:break-word;user-select:text;
+  max-width:80%;
+}
+.msg.ai .bubble{background:var(--surface);border:1px solid var(--border);border-top-left-radius:5px}
+.msg.user .bubble{background:var(--accent);color:var(--on-accent);border-top-right-radius:5px;font-weight:500}
+.msg.err .bubble{background:rgba(217,48,37,.08);border:1px solid rgba(217,48,37,.22);color:var(--danger);border-top-left-radius:5px}
+.typing .bubble{color:var(--muted)}
+.typing .dots{display:inline-flex;gap:3px;vertical-align:middle}
+.typing .dots i{width:5px;height:5px;border-radius:50%;background:var(--muted);animation:blink 1.2s infinite}
+.typing .dots i:nth-child(2){animation-delay:.2s}
+.typing .dots i:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+
+/* Empty state */
+.empty{
+  height:100%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;
+  padding:30px 28px;gap:7px;
+}
+.empty .mark{
+  width:56px;height:56px;border-radius:14px;margin-bottom:8px;
+  background:var(--accent-soft);
+  display:flex;align-items:center;justify-content:center;
+}
+.empty .mark svg{width:30px;height:30px;fill:var(--accent)}
+.empty h2{font-size:16px;font-weight:600}
+.empty p{font-size:12.5px;color:var(--muted);max-width:300px;line-height:1.55}
+.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px}
+.chip{
+  padding:7px 11px;border-radius:13px;font-size:11.5px;
+  background:var(--surface);border:1px solid var(--border);color:var(--muted);cursor:default;
+}
+.chip:hover{border-color:var(--accent);color:var(--text)}
+
+/* ── Composer ── */
+.composer{flex-shrink:0;padding:10px 14px 13px;background:var(--surface);border-top:1px solid var(--border)}
+.composer-box{
+  display:flex;align-items:flex-end;gap:8px;
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:16px;padding:6px 6px 6px 14px;
+}
+.composer-box:focus-within{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+#input{
+  flex:1;border:none;outline:none;background:transparent;resize:none;
+  font-size:13.5px;line-height:1.5;color:var(--text);
+  max-height:130px;min-height:22px;padding:6px 0;user-select:text;
+}
+#input::placeholder{color:var(--muted)}
+#send{
+  width:34px;height:34px;border-radius:50%;flex-shrink:0;border:none;cursor:default;
+  background:var(--accent);color:var(--on-accent);
+  display:flex;align-items:center;justify-content:center;
+}
+#send:hover{background:var(--accent-hover)}
+#send:disabled{opacity:.4}
+#send svg{width:16px;height:16px;fill:currentColor}
+.foot-note{margin-top:8px;font-size:10px;color:var(--muted);text-align:center;line-height:1.5}
+
+/* ── Setup / API key modal ── */
+.gate{
+  position:absolute;inset:0;z-index:8;
+  background:rgba(0,0,0,.4);
+  display:flex;align-items:center;justify-content:center;
+  padding:24px 18px;overflow-y:auto;
+}
+.gate.hidden{display:none}
+.gate-card{
+  width:100%;max-width:380px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:24px 22px 20px;
+  box-shadow:0 20px 50px rgba(0,0,0,.28);
+}
+.gate-card h1{font-size:17px;font-weight:700;margin-bottom:6px}
+.gate-card .sub{font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:16px}
+.warn{
+  display:flex;gap:9px;align-items:flex-start;
+  background:#fef7e0;border:1px solid #fce8b3;color:#5f4400;
+  border-radius:10px;padding:10px 12px;
+  font-size:11.5px;line-height:1.5;margin-bottom:16px;
+}
+body.dark .warn{background:rgba(252,213,99,.10);border-color:rgba(252,213,99,.28);color:#fdd663}
+.warn svg{width:16px;height:16px;flex-shrink:0;margin-top:1px;fill:currentColor}
+.f{margin-bottom:12px}
+.f label{display:block;font-size:11.5px;font-weight:600;margin-bottom:5px}
+.f select,.f input{
+  width:100%;height:38px;border-radius:9px;
+  border:1px solid var(--border);background:var(--bg);color:var(--text);
+  padding:0 11px;font-size:13px;outline:none;user-select:text;
+}
+.f select:focus,.f input:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.f .hint{font-size:10.5px;color:var(--muted);margin-top:5px;line-height:1.5}
+.f .hint b{color:var(--accent);font-weight:600}
+.gate-row{display:flex;gap:8px;margin-top:6px}
+.gbtn{
+  flex:1;height:38px;border-radius:19px;font-size:13px;font-weight:600;cursor:default;
+  border:1px solid var(--border);background:var(--surface-2);color:var(--text);
+}
+.gbtn:hover{background:var(--border)}
+.gbtn.primary{
+  border:none;background:var(--accent);color:var(--on-accent);
+}
+.gbtn.primary:hover{background:var(--accent-hover)}
+
+/* ── Increase Transparency — body goes see-through so the OS acrylic
+   material shows; chrome surfaces become translucent frosted layers. ── */
+body.transparent-ui { background: transparent; }
+body.transparent-ui .titlebar {
+  background: rgba(255, 255, 255, .54);
+  border-bottom-color: rgba(0, 0, 0, .06);
+  backdrop-filter: blur(20px) saturate(170%);
+  -webkit-backdrop-filter: blur(20px) saturate(170%);
+}
+body.transparent-ui .bar {
+  background: rgba(255, 255, 255, .42);
+  border-bottom-color: rgba(0, 0, 0, .06);
+  backdrop-filter: blur(20px) saturate(170%);
+  -webkit-backdrop-filter: blur(20px) saturate(170%);
+}
+body.transparent-ui .composer {
+  background: rgba(255, 255, 255, .5);
+  border-top-color: rgba(0, 0, 0, .06);
+  backdrop-filter: blur(20px) saturate(170%);
+  -webkit-backdrop-filter: blur(20px) saturate(170%);
+}
+body.transparent-ui .pill { background: rgba(255, 255, 255, .55); }
+body.transparent-ui .bar-btn { background: rgba(255, 255, 255, .6); }
+body.transparent-ui.dark .titlebar {
+  background: rgba(40, 41, 45, .56);
+  border-bottom-color: rgba(255, 255, 255, .08);
+}
+body.transparent-ui.dark .bar {
+  background: rgba(40, 41, 45, .46);
+  border-bottom-color: rgba(255, 255, 255, .08);
+}
+body.transparent-ui.dark .composer {
+  background: rgba(40, 41, 45, .52);
+  border-top-color: rgba(255, 255, 255, .08);
+}
+body.transparent-ui.dark .pill { background: rgba(60, 61, 66, .5); }
+body.transparent-ui.dark .bar-btn { background: rgba(60, 61, 66, .56); }
+
+/* ── Optional Aero gradient overlay (with transparency on). A drifting
+   colored gradient layer sits behind the chrome to give the window the
+   classic Aero / acrylic-with-colour look. ── */
+body.transparent-ui.aero-ui::before {
+  content: "";
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(60% 50% at 18% 12%, rgba(120, 175, 255, .35), transparent 65%),
+    radial-gradient(55% 45% at 90% 90%, rgba(180, 130, 255, .28), transparent 65%),
+    linear-gradient(135deg, rgba(140, 190, 255, .14), rgba(220, 180, 255, .10));
+  animation: aero-drift 22s ease-in-out infinite alternate;
+}
+body.transparent-ui.aero-ui.dark::before {
+  background:
+    radial-gradient(60% 50% at 18% 12%, rgba(60, 110, 200, .42), transparent 65%),
+    radial-gradient(55% 45% at 90% 90%, rgba(110, 70, 180, .36), transparent 65%),
+    linear-gradient(135deg, rgba(40, 60, 110, .25), rgba(70, 50, 110, .20));
+}
+body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
+@keyframes aero-drift {
+  from { background-position: -4% -3%, 4% 3%, 0 0; }
+  to   { background-position: 5% 4%, -4% -3%, 0 0; }
+}
+</style>
+</head>
+<body>
+<div class="titlebar">
+  <img class="tb-logo" src="privoo://newtab/logo.png" alt="" onerror="this.style.display='none'"/>
+  <span class="tb-title">Privoo AI</span>
+  <span class="tb-beta">BETA</span>
+  <div class="tb-spacer"></div>
+  <button class="tb-btn" id="new-chat" type="button" title="New chat" aria-label="New chat">
+    <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v15.5l3.5-3.5H20c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-7 9h-2v-2H9V9h2V7h2v2h2v2h-2v2z"/></svg>
+  </button>
+  <button class="tb-btn" id="win-min" type="button" title="Minimize" aria-label="Minimize">
+    <svg viewBox="0 0 24 24"><path d="M6 13h12v-2H6z"/></svg>
+  </button>
+  <button class="tb-btn close" id="win-close" type="button" title="Close" aria-label="Close">
+    <svg viewBox="0 0 24 24"><path d="M19 6.4 17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>
+  </button>
+</div>
+
+<main>
+  <div class="bar">
+    <div class="pill no" id="status">
+      <span class="dot"></span>
+      <span id="status-text">No API key — add one to start</span>
+    </div>
+    <button class="bar-btn" id="cfg-btn" type="button">Setup</button>
+  </div>
+
+  <div class="chat" id="chat">
+    <div class="chat-inner" id="chat-inner"></div>
+  </div>
+
+  <div class="composer">
+    <div class="composer-box">
+      <textarea id="input" rows="1" placeholder="Ask Privoo AI anything…"></textarea>
+      <button id="send" type="button" title="Send" aria-label="Send">
+        <svg viewBox="0 0 24 24"><path d="M3 20.5 22 12 3 3.5 3 10l13 2-13 2z"/></svg>
+      </button>
+    </div>
+    <div class="foot-note">AI can make mistakes. Messages go to your chosen provider — don't share sensitive info.</div>
+  </div>
+
+  <!-- Setup / API key modal -->
+  <div class="gate hidden" id="gate">
+    <div class="gate-card">
+      <h1 id="gate-title">Connect an AI</h1>
+      <p class="sub">Pick a provider and paste your API key. You can change it anytime from Setup.</p>
+      <div class="warn">
+        <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+        <div>Your messages are sent to the provider you choose and billed to your key. Don't paste passwords or sensitive data. Beta feature.</div>
+      </div>
+      <div class="f">
+        <label for="provider">Provider</label>
+        <select id="provider">
+          <option value="anthropic">Claude — Anthropic</option>
+          <option value="openai">GPT — OpenAI</option>
+          <option value="deepseek">DeepSeek</option>
+        </select>
+      </div>
+      <div class="f">
+        <label for="model">Model</label>
+        <select id="model"></select>
+        <div class="hint" id="model-hint"></div>
+      </div>
+      <div class="f">
+        <label for="apikey">API key</label>
+        <input id="apikey" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your key"/>
+        <div class="hint">Stored <b>encrypted</b> on this device via your OS keychain — never synced.</div>
+      </div>
+      <div class="gate-row">
+        <button class="gbtn" id="gate-later" type="button">I'll add it later</button>
+        <button class="gbtn primary" id="gate-save" type="button">Save &amp; connect</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+(function(){
+  const api = window.privooInternal;
+  const PROVIDER_NAME = { anthropic:'Claude', openai:'GPT (OpenAI)', deepseek:'DeepSeek' };
+
+  // Selectable models per provider — no typing needed. First entry is the
+  // default. `id` is sent to the API; `label` is shown in the dropdown.
+  const MODELS = {
+    anthropic:[
+      { id:'claude-sonnet-4-6',           label:'Claude Sonnet 4.6 — balanced (recommended)' },
+      { id:'claude-opus-4-7',             label:'Claude Opus 4.7 — most capable' },
+      { id:'claude-haiku-4-5-20251001',   label:'Claude Haiku 4.5 — fastest' },
+      { id:'claude-3-5-sonnet-20241022',  label:'Claude 3.5 Sonnet' },
+      { id:'claude-3-5-haiku-20241022',   label:'Claude 3.5 Haiku' },
+    ],
+    openai:[
+      { id:'gpt-4o-mini',  label:'GPT-4o mini — fast & low cost (recommended)' },
+      { id:'gpt-4o',       label:'GPT-4o — flagship' },
+      { id:'gpt-4-turbo',  label:'GPT-4 Turbo' },
+      { id:'gpt-4.1-mini', label:'GPT-4.1 mini' },
+      { id:'gpt-3.5-turbo',label:'GPT-3.5 Turbo — cheapest' },
+    ],
+    deepseek:[
+      { id:'deepseek-chat',     label:'DeepSeek V3 — general chat (recommended)' },
+      { id:'deepseek-reasoner', label:'DeepSeek R1 — step-by-step reasoning' },
+    ],
+  };
+  const DEFAULT_MODELS = {
+    anthropic: MODELS.anthropic[0].id,
+    openai:    MODELS.openai[0].id,
+    deepseek:  MODELS.deepseek[0].id,
+  };
+  const KEY_HINTS = {
+    anthropic:'Get a key from <b>console.anthropic.com</b>',
+    openai:'Get a key from <b>platform.openai.com</b>',
+    deepseek:'Get a key from <b>platform.deepseek.com</b>',
+  };
+
+  // Fill the model <select> for a provider, selecting `selected` if present.
+  function fillModels(provider, selected){
+    const sel = $('model');
+    sel.innerHTML = '';
+    const list = MODELS[provider] || [];
+    for (const m of list){
+      const o = document.createElement('option');
+      o.value = m.id; o.textContent = m.label;
+      sel.appendChild(o);
+    }
+    // If the saved model isn't in the list (e.g. an older custom one), keep it.
+    if (selected && !list.some(m => m.id === selected)){
+      const o = document.createElement('option');
+      o.value = selected; o.textContent = selected + ' — saved';
+      sel.appendChild(o);
+    }
+    sel.value = selected || DEFAULT_MODELS[provider] || (list[0] && list[0].id) || '';
+  }
+
+  let config = { provider:'anthropic', model:DEFAULT_MODELS.anthropic, hasKey:false, hasKeyFor:{}, accepted:false };
+  let messages = [];
+  let busy = false;
+  const $ = (id) => document.getElementById(id);
+
+  // ── Theme follows the rest of Privoo ──
+  function applyTheme(s){
+    document.body.classList.toggle('dark', !!s?.darkMode);
+    document.body.classList.toggle('transparent-ui', !!s?.increaseTransparency);
+    document.body.classList.toggle('aero-ui', !!s?.increaseTransparency && !!s?.aeroGradient);
+    const r = document.documentElement;
+    const hex = s?.accentColor;
+    if(hex){
+      r.style.setProperty('--accent',hex);
+      const m=hex.replace('#','').match(/.{2}/g);
+      if(m){const[rv,g,b]=m.map(x=>parseInt(x,16));
+        r.style.setProperty('--accent-hover',`rgb(${Math.min(255,Math.round(rv+(255-rv)*.18))},${Math.min(255,Math.round(g+(255-g)*.18))},${Math.min(255,Math.round(b+(255-b)*.18))})`);
+        r.style.setProperty('--accent-soft',`rgba(${rv},${g},${b},.16)`);}
+    }
+  }
+
+  // ── Window controls ──
+  $('win-min').addEventListener('click', () => api?.aiWindowMinimize?.());
+  $('win-close').addEventListener('click', () => api?.aiWindowClose?.());
+  $('new-chat').addEventListener('click', () => {
+    if (busy) return;
+    messages = [];
+    renderChat();
+    $('input').focus();
+  });
+
+  // Short, human label for a model id (falls back to the raw id).
+  function modelLabel(provider, id){
+    const m = (MODELS[provider] || []).find(x => x.id === id);
+    if (!m) return id || '';
+    return m.label.split(' — ')[0];
+  }
+
+  // ── Status pill ──
+  function refreshStatus(){
+    const pill = $('status');
+    if (config.hasKey){
+      pill.className = 'pill ok';
+      $('status-text').innerHTML =
+        '<b>' + (PROVIDER_NAME[config.provider]||config.provider) + '</b>' +
+        '<span class="status-model">' + modelLabel(config.provider, config.model) + '</span>';
+    } else {
+      pill.className = 'pill no';
+      $('status-text').textContent = 'No API key — add one to start';
+    }
+  }
+
+  // ── Setup modal ──
+  function openGate(){
+    $('provider').value = config.provider;
+    fillModels(config.provider, config.model);
+    $('apikey').value = '';
+    $('apikey').placeholder = config.hasKeyFor?.[config.provider] ? 'Key saved — leave blank to keep it' : 'Paste your key';
+    $('model-hint').innerHTML = KEY_HINTS[config.provider] || '';
+    $('gate-title').textContent = config.hasKey ? 'Privoo AI settings' : 'Connect an AI';
+    $('gate').classList.remove('hidden');
+    setTimeout(() => $('apikey').focus(), 50);
+  }
+  function closeGate(){ $('gate').classList.add('hidden'); }
+
+  $('provider').addEventListener('change', () => {
+    const p = $('provider').value;
+    fillModels(p, p === config.provider ? config.model : null);
+    $('model-hint').innerHTML = KEY_HINTS[p] || '';
+    $('apikey').placeholder = config.hasKeyFor?.[p] ? 'Key saved — leave blank to keep it' : 'Paste your key';
+  });
+
+  $('gate-save').addEventListener('click', async () => {
+    const provider = $('provider').value;
+    const model = $('model').value.trim() || DEFAULT_MODELS[provider];
+    const apiKey = $('apikey').value.trim();
+    const patch = { provider, model, accepted:true };
+    if (apiKey) patch.apiKey = apiKey;
+    try { config = await api.aiSetConfig(patch); } catch {}
+    refreshStatus();
+    closeGate();
+  });
+  $('gate-later').addEventListener('click', async () => {
+    try { config = await api.aiSetConfig({ provider:$('provider').value, accepted:true }); } catch {}
+    refreshStatus();
+    closeGate();
+  });
+  $('cfg-btn').addEventListener('click', openGate);
+
+  // ── Chat ──
+  function renderChat(){
+    const inner = $('chat-inner');
+    inner.innerHTML = '';
+    if (!messages.length){
+      const e = document.createElement('div');
+      e.className = 'empty';
+      e.innerHTML =
+        '<div class="mark"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 9h-2V9h2v2zm0-4h-2V5h2v2zm4 4h-2V9h2v2zm0-4h-2V5h2v2zM9 11H7V9h2v2zm0-4H7V5h2v2z"/></svg></div>' +
+        '<h2>How can I help?</h2>' +
+        '<p>Ask anything — explanations, summaries, ideas, code. Powered by your own API key.</p>' +
+        '<div class="chips" id="chips"></div>';
+      inner.appendChild(e);
+      ['Explain a tricky topic','Summarise some text','Brainstorm ideas','Help me write code'].forEach(c => {
+        const b = document.createElement('button');
+        b.className = 'chip'; b.type = 'button'; b.textContent = c;
+        b.addEventListener('click', () => { $('input').value = c + ': '; $('input').focus(); });
+        e.querySelector('#chips').appendChild(b);
+      });
+      return;
+    }
+    for (const m of messages) inner.appendChild(buildMsg(m.role, m.content));
+    $('chat').scrollTop = $('chat').scrollHeight;
+  }
+  function buildMsg(role, content){
+    const wrap = document.createElement('div');
+    wrap.className = 'msg ' + (role === 'user' ? 'user' : role === 'err' ? 'err' : 'ai');
+    const av = document.createElement('div');
+    av.className = 'avatar';
+    if (role === 'user') av.textContent = 'You';
+    else if (role === 'err') av.textContent = '!';
+    else av.innerHTML = '<img src="privoo://newtab/logo.png" alt="AI" onerror="this.parentNode.textContent=\'AI\'"/>';
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    b.textContent = content;
+    wrap.appendChild(av); wrap.appendChild(b);
+    return wrap;
+  }
+
+  async function send(){
+    if (busy) return;
+    const text = $('input').value.trim();
+    if (!text) return;
+
+    if (!config.hasKey){
+      messages.push({ role:'err', content:'⚠ You need to add your API key first. Click "Setup" at the top to connect a provider.' });
+      renderChat();
+      openGate();
+      return;
+    }
+
+    messages.push({ role:'user', content:text });
+    $('input').value = '';
+    $('input').style.height = 'auto';
+    renderChat();
+
+    busy = true;
+    $('send').disabled = true;
+    const typing = document.createElement('div');
+    typing.className = 'msg ai typing';
+    typing.innerHTML = '<div class="avatar"><img src="privoo://newtab/logo.png" alt="" onerror="this.parentNode.textContent=\'AI\'"/></div>' +
+      '<div class="bubble"><span class="dots"><i></i><i></i><i></i></span></div>';
+    $('chat-inner').appendChild(typing);
+    $('chat').scrollTop = $('chat').scrollHeight;
+
+    let res;
+    try {
+      res = await api.aiChat({ messages: messages.map(m => ({ role:m.role, content:m.content })) });
+    } catch (e) {
+      res = { ok:false, error:String(e?.message || e) };
+    }
+    typing.remove();
+    if (res?.ok){
+      messages.push({ role:'assistant', content:res.text || '(empty response)' });
+    } else if (res?.error === 'NO_KEY'){
+      messages.push({ role:'err', content:'⚠ You need to add your API key first. Click "Setup" to connect.' });
+      openGate();
+    } else {
+      messages.push({ role:'err', content:'⚠ ' + (res?.error || 'Request failed.') });
+    }
+    busy = false;
+    $('send').disabled = false;
+    renderChat();
+  }
+
+  $('send').addEventListener('click', send);
+  $('input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); send(); }
+  });
+  $('input').addEventListener('input', () => {
+    const el = $('input');
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 130) + 'px';
+  });
+
+  // ── Init ──
+  (async () => {
+    try {
+      const s = await api?.getSettings?.();
+      applyTheme(s?.settings);
+      api?.onSettingsChanged?.(applyTheme);
+    } catch {}
+    try { config = await api.aiGetConfig(); } catch {}
+    refreshStatus();
+    renderChat();
+    if (!config.hasKey && !config.accepted) openGate();
+    $('input').focus();
+  })();
+})();
+</script>
+</body>
+</html>

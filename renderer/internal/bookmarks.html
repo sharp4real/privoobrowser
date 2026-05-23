@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Bookmarks - Privoo</title>
+<link rel="icon" href="privoo://newtab/logo.png"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+html{height:100%;background:transparent}
+body{height:100%;background:#f8f9fa;color:#1f1f1f;user-select:none;display:flex;flex-direction:column}
+body.dark{background:#202124;color:#e8eaed;color-scheme:dark}
+/* Increase Transparency — drop opaque fills so the OS material shows. */
+body.transparent-ui{background:transparent !important;}
+body.transparent-ui header,body.transparent-ui main{background:transparent !important;}
+body.transparent-ui .bm-card{
+  background:rgba(255,255,255,.55) !important;
+  backdrop-filter:blur(10px) saturate(160%);
+  -webkit-backdrop-filter:blur(10px) saturate(160%);
+}
+body.transparent-ui.dark .bm-card{background:rgba(41,42,45,.55) !important;}
+button,input{font:inherit}
+button{cursor:default;border:none;background:transparent;color:inherit}
+
+header{
+  background:#fff;border-bottom:1px solid #dadce0;
+  padding:16px 28px;display:flex;align-items:center;gap:12px;
+  position:sticky;top:0;z-index:10;flex-shrink:0;flex-wrap:wrap
+}
+body.dark header{background:#303134;border-color:#4a4d51}
+.logo-img{width:28px;height:28px;border-radius:6px;object-fit:cover}
+h1{font-size:20px;font-weight:500;margin-right:auto}
+#search{
+  border:1px solid #dfe1e5;border-radius:20px;
+  padding:0 14px;font-size:13.5px;outline:none;background:#f8f9fa;
+  width:260px;height:34px;user-select:text
+}
+#search:focus{border-color:#3c4043;background:#fff}
+body.dark #search{background:#202124;border-color:#5f6368;color:#e8eaed}
+.toolbar-btn{
+  height:32px;padding:0 14px;border-radius:16px;border:1px solid #dadce0;
+  font-size:13px;color:#1f1f1f;background:#fff
+}
+.toolbar-btn:hover{background:#f1f3f4}
+.toolbar-btn.danger{color:#d93025}
+body.dark .toolbar-btn{background:#303134;border-color:#5f6368;color:#e8eaed}
+body.dark .toolbar-btn.danger{color:#f28b82}
+
+main{flex:1;min-height:0;max-width:900px;margin:0 auto;width:100%;padding:20px 20px 32px;overflow-y:auto;background:inherit}
+#empty{text-align:center;padding:80px 20px;color:#5f6368}
+body.dark #empty{color:#bdc1c6}
+#empty svg{width:64px;height:64px;fill:#dadce0;margin-bottom:16px}
+#empty h2{font-size:18px;font-weight:400;margin-bottom:8px;color:#3c4043}
+body.dark #empty svg{fill:#5f6368}
+body.dark #empty h2{color:#e8eaed}
+
+#list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+
+.bm-card{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 14px;border-radius:10px;cursor:default;
+  border:1px solid #e8eaed;background:#fff;
+  transition:background .1s,border-color .1s
+}
+.bm-card:hover{background:#f8f9fa;border-color:#dadce0}
+body.dark .bm-card{background:#303134;border-color:#4a4d51}
+body.dark .bm-card:hover{background:#3c4043}
+
+.bm-dot{
+  width:28px;height:28px;border-radius:8px;
+  background:#e8eaed;color:#3c4043;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;flex-shrink:0;
+  overflow:hidden;position:relative;
+}
+body.dark .bm-dot{background:#4a4d51;color:#e8eaed}
+.bm-dot img{
+  width:16px;height:16px;object-fit:contain;
+  position:absolute;display:none;
+}
+.bm-dot.loaded img{display:block}
+.bm-dot.loaded .bm-letter{display:none}
+
+.bm-info{flex:1;min-width:0}
+.bm-name{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bm-url{font-size:11.5px;color:#5f6368;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+body.dark .bm-url{color:#9aa0a6}
+
+.bm-del{
+  width:26px;height:26px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  color:#9aa0a6;opacity:0;transition:opacity .1s;flex-shrink:0
+}
+.bm-card:hover .bm-del{opacity:1}
+.bm-del:hover{background:rgba(0,0,0,.08);color:#d93025}
+body.dark .bm-del:hover{background:rgba(255,255,255,.08);color:#f28b82}
+</style>
+</head>
+<body>
+<header>
+  <img src="privoo://newtab/logo.png" class="logo-img" alt="Privoo" onerror="this.style.display='none'"/>
+  <h1>Bookmarks</h1>
+  <input id="search" type="search" placeholder="Search bookmarks…" autocomplete="off"/>
+  <button class="toolbar-btn danger" id="btn-clear-all">Clear all</button>
+</header>
+<main>
+  <div id="empty" hidden>
+    <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
+    <h2>No bookmarks yet</h2>
+    <p>Click the star icon in the address bar to save a page.</p>
+  </div>
+  <div id="list"></div>
+</main>
+<script>
+(function(){
+  let bookmarks = [];
+
+  function esc(s){
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  async function load(){
+    const r = await window.privooInternal.getSettings();
+    const settings = r?.settings || r;
+    bookmarks = Array.isArray(settings?.bookmarks) ? settings.bookmarks : [];
+    document.body.classList.toggle('dark', !!settings?.darkMode);
+    document.body.classList.toggle('transparent-ui', !!settings?.increaseTransparency);
+    applyAccent(settings?.accentColor);
+    render(bookmarks);
+  }
+
+  function applyAccent(hex){const r=document.documentElement;if(!hex){r.style.removeProperty('--accent');r.style.removeProperty('--accent-hover');r.style.removeProperty('--accent-soft');return;}r.style.setProperty('--accent',hex);const m=hex.replace('#','').match(/.{2}/g);if(m){const[rv,g,b]=m.map(x=>parseInt(x,16));const h=`rgb(${Math.min(255,Math.round(rv+(255-rv)*.18))},${Math.min(255,Math.round(g+(255-g)*.18))},${Math.min(255,Math.round(b+(255-b)*.18))})`;r.style.setProperty('--accent-hover',h);r.style.setProperty('--accent-soft',`rgba(${rv},${g},${b},.18)`);} }
+
+  function render(list){
+    const listEl = document.getElementById('list');
+    const emptyEl = document.getElementById('empty');
+    listEl.innerHTML = '';
+    if(!list.length){ emptyEl.hidden=false; return; }
+    emptyEl.hidden = true;
+    for(const bm of list){
+      const card = document.createElement('div');
+      card.className = 'bm-card';
+      const letter = (bm.name||bm.url||'?')[0].toUpperCase();
+
+      // Favicon dot — shows letter until the favicon loads
+      const dot = document.createElement('div');
+      dot.className = 'bm-dot';
+      dot.innerHTML = `<span class="bm-letter">${esc(letter)}</span>`;
+      try {
+        const faviconUrl = 'https://www.google.com/s2/favicons?sz=32&domain=' + encodeURIComponent(new URL(bm.url).hostname);
+        const img = document.createElement('img');
+        img.src = faviconUrl;
+        img.alt = '';
+        img.addEventListener('load', () => dot.classList.add('loaded'));
+        img.addEventListener('error', () => dot.classList.remove('loaded'));
+        dot.appendChild(img);
+      } catch { /* invalid URL — letter fallback stays */ }
+
+      const info = document.createElement('div');
+      info.className = 'bm-info';
+      info.innerHTML =
+        `<div class="bm-name">${esc(bm.name||bm.url)}</div>`+
+        `<div class="bm-url">${esc(bm.url)}</div>`;
+
+      const del = document.createElement('button');
+      del.className = 'bm-del';
+      del.title = 'Remove bookmark';
+      del.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>`;
+
+      card.appendChild(dot);
+      card.appendChild(info);
+      card.appendChild(del);
+
+      card.addEventListener('click', (e)=>{
+        if(e.target.closest('.bm-del')) return;
+        window.privooInternal.navigate(bm.url);
+      });
+      del.addEventListener('click', async (e)=>{
+        e.stopPropagation();
+        bookmarks = bookmarks.filter(b=>b.url!==bm.url);
+        await window.privooInternal.setSettings({ bookmarks });
+        render(bookmarks);
+      });
+      listEl.appendChild(card);
+    }
+  }
+
+  document.getElementById('search').addEventListener('input', function(){
+    const q = this.value.toLowerCase();
+    if(!q){ render(bookmarks); return; }
+    render(bookmarks.filter(b=>(b.name||'').toLowerCase().includes(q)||(b.url||'').toLowerCase().includes(q)));
+  });
+
+  document.getElementById('btn-clear-all').addEventListener('click', async ()=>{
+    if(!confirm('Remove all bookmarks?')) return;
+    bookmarks = [];
+    await window.privooInternal.setSettings({ bookmarks: [] });
+    render([]);
+  });
+
+  window.privooInternal.onSettingsChanged((data)=>{
+    const s = data?.settings || data;
+    document.body.classList.toggle('dark', !!s?.darkMode);
+    document.body.classList.toggle('transparent-ui', !!s?.increaseTransparency);
+    applyAccent(s?.accentColor);
+    bookmarks = Array.isArray(s?.bookmarks) ? s.bookmarks : [];
+    const q = document.getElementById('search').value.toLowerCase();
+    render(q ? bookmarks.filter(b=>(b.name||'').toLowerCase().includes(q)||(b.url||'').toLowerCase().includes(q)) : bookmarks);
+  });
+
+  load().catch(console.error);
+})();
+</script>
+</body>
+</html>

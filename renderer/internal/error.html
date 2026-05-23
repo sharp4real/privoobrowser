@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Nothing here — Privoo</title>
+<link rel="icon" href="privoo://newtab/logo.png"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+
+:root{
+  --bg:#f1f3f4;
+  --surface:#ffffff;
+  --text:#202124;
+  --muted:#5f6368;
+  --border:#dadce0;
+  --hover:#e8eaed;
+  --accent:#8ab4f8;
+  --accent-hover:#a0c2fa;
+  --on-accent:#202124;
+}
+body.dark{
+  --bg:#202124;
+  --surface:#303134;
+  --text:#e8eaed;
+  --muted:#9aa0a6;
+  --border:#4a4d51;
+  --hover:#3c4043;
+  color-scheme:dark;
+}
+
+html,body{height:100%;background:var(--bg);color:var(--text);user-select:none;}
+
+.page{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100%;padding:40px 24px;
+}
+
+.card{
+  width:100%;max-width:520px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:44px 44px 36px;
+  box-shadow:0 2px 12px rgba(0,0,0,.08);
+  text-align:center;
+  animation:fadein .25s ease;
+}
+body.dark .card{box-shadow:0 2px 16px rgba(0,0,0,.35)}
+@keyframes fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* Logo */
+.logo-wrap{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:24px;
+  animation:wobble 1.2s ease .3s both;
+}
+@keyframes wobble{
+  0%  {transform:rotate(0deg)}
+  15% {transform:rotate(-10deg)}
+  30% {transform:rotate(8deg)}
+  45% {transform:rotate(-6deg)}
+  60% {transform:rotate(4deg)}
+  75% {transform:rotate(-2deg)}
+  100%{transform:rotate(0deg)}
+}
+.logo-wrap img{
+  width:72px;height:72px;
+  border-radius:16px;
+  display:block;
+  opacity:.92;
+}
+
+h1{
+  font-size:22px;font-weight:700;
+  margin-bottom:10px;
+  color:var(--text);
+}
+
+.subtitle{
+  font-size:14px;line-height:1.65;
+  color:var(--muted);
+  margin-bottom:8px;
+}
+
+.url-chip{
+  display:inline-block;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:12.5px;
+  color:var(--muted);
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:4px 14px;
+  margin:12px 0 20px;
+  user-select:text;
+}
+
+.error-code{
+  font-size:11.5px;
+  color:var(--muted);
+  opacity:.55;
+  margin-bottom:28px;
+  font-family:monospace;
+}
+
+.actions{
+  display:flex;gap:8px;justify-content:center;flex-wrap:wrap;
+}
+button{
+  font-family:inherit;font-size:13.5px;font-weight:500;
+  height:36px;padding:0 22px;
+  border-radius:18px;border:1px solid var(--border);
+  background:var(--surface);color:var(--text);
+  cursor:pointer;transition:background .12s,border-color .12s;
+}
+button:hover{background:var(--hover)}
+button.primary{
+  background:var(--accent);color:var(--on-accent);border-color:var(--accent);
+}
+button.primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+button.ghost{
+  background:transparent;border-color:transparent;color:var(--muted);
+}
+button.ghost:hover{background:var(--hover);color:var(--text)}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="card">
+
+    <div class="logo-wrap">
+      <img src="privoo://newtab/logo.png" alt="Privoo" draggable="false"/>
+    </div>
+
+    <h1 id="headline">Nothing here to find.</h1>
+    <p class="subtitle" id="subtitle">Privoo couldn't load this page. The site might be down, the address might be wrong, or there's no internet connection.</p>
+    <div class="url-chip" id="url-chip"></div>
+    <div class="error-code" id="error-code"></div>
+    <div class="actions">
+      <button type="button" id="back-btn" class="ghost">Go back</button>
+      <button type="button" id="retry-btn" class="primary">Try again</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  const api = window.privooInternal;
+
+  const params     = new URLSearchParams(location.search);
+  const failedUrl  = params.get('url')  || '';
+  const errorCode  = params.get('code') || '';
+
+  const headlineEl  = document.getElementById('headline');
+  const subtitleEl  = document.getElementById('subtitle');
+  const urlChip     = document.getElementById('url-chip');
+  const errorCodeEl = document.getElementById('error-code');
+
+  const DNS_ERRORS  = ['ERR_NAME_NOT_RESOLVED','ERR_NAME_RESOLUTION_FAILED','ERR_DNS_TIMED_OUT'];
+  const CONN_ERRORS = ['ERR_CONNECTION_REFUSED','ERR_CONNECTION_TIMED_OUT','ERR_CONNECTION_RESET',
+                       'ERR_CONNECTION_CLOSED','ERR_NETWORK_CHANGED','ERR_INTERNET_DISCONNECTED',
+                       'ERR_ADDRESS_UNREACHABLE','ERR_EMPTY_RESPONSE'];
+  const SSL_ERRORS  = ['ERR_CERT_AUTHORITY_INVALID','ERR_CERT_DATE_INVALID','ERR_SSL_PROTOCOL_ERROR',
+                       'ERR_BAD_SSL_CLIENT_AUTH_CERT','ERR_CERT_COMMON_NAME_INVALID'];
+
+  if (DNS_ERRORS.includes(errorCode)) {
+    headlineEl.textContent = "Can't find that one.";
+    subtitleEl.textContent = "Privoo couldn't find this address. Double-check the URL, or the site might not exist.";
+  } else if (CONN_ERRORS.includes(errorCode)) {
+    headlineEl.textContent = 'Nothing picked up the signal.';
+    subtitleEl.textContent = "The site isn't responding. It could be down, or your connection might be having a moment.";
+  } else if (SSL_ERRORS.includes(errorCode)) {
+    headlineEl.textContent = "Couldn't make a secure connection.";
+    subtitleEl.textContent = "There's a problem with this site's security certificate. Privoo blocked the connection to keep you safe.";
+  } else {
+    headlineEl.textContent = 'Nothing here to find.';
+    subtitleEl.textContent = "Privoo couldn't load this page. The site might be down, the address might be wrong, or there's no internet connection.";
+  }
+
+  if (failedUrl) {
+    urlChip.textContent = failedUrl;
+    urlChip.style.display = '';
+  } else {
+    urlChip.style.display = 'none';
+  }
+
+  if (errorCode) {
+    errorCodeEl.textContent = errorCode;
+  } else {
+    errorCodeEl.style.display = 'none';
+  }
+
+  // Dark mode + accent
+  function applyAccent(hex){const r=document.documentElement;if(!hex){r.style.removeProperty('--accent');r.style.removeProperty('--accent-hover');r.style.removeProperty('--accent-soft');return;}r.style.setProperty('--accent',hex);const m=hex.replace('#','').match(/.{2}/g);if(m){const[rv,g,b]=m.map(x=>parseInt(x,16));const h=`rgb(${Math.min(255,Math.round(rv+(255-rv)*.18))},${Math.min(255,Math.round(g+(255-g)*.18))},${Math.min(255,Math.round(b+(255-b)*.18))})`;r.style.setProperty('--accent-hover',h);r.style.setProperty('--accent-soft',`rgba(${rv},${g},${b},.18)`);} }
+  api?.getSettings?.().then(d => {
+    document.body.classList.toggle('dark', !!d?.settings?.darkMode);
+    applyAccent(d?.settings?.accentColor);
+  }).catch(() => {});
+  api?.onSettingsChanged?.(s => {
+    document.body.classList.toggle('dark', !!s?.darkMode);
+    applyAccent(s?.accentColor);
+  });
+
+  document.getElementById('retry-btn').addEventListener('click', () => {
+    if (failedUrl && api?.navigate) api.navigate(failedUrl);
+    else history.go(0);
+  });
+
+  document.getElementById('back-btn').addEventListener('click', () => {
+    if (history.length > 1) history.back();
+    else if (api?.navigate) api.navigate('privoo://newtab/');
+  });
+})();
+</script>
+</body>
+</html>

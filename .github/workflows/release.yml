@@ -1,0 +1,90 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Windows installer
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: npm run dist
+
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build macOS dmg
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: npm run dist:mac
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Linux build dependencies
+        run: sudo apt-get install -y rpm
+
+      - name: Build Linux packages
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: npm run dist:linux
+
+  publish:
+    needs: [build-windows, build-mac, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mark release as published
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GH_TOKEN }}
+          script: |
+            const tag = context.ref.replace('refs/tags/', '');
+            const releases = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const release = releases.data.find(r => r.tag_name === tag);
+            if (release && release.draft) {
+              await github.rest.repos.updateRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: release.id,
+                draft: false,
+                name: `Beta v1.00`,
+                body: 'First public release of Privoo Browser.\n\nDownload the installer for your platform below.',
+              });
+            }

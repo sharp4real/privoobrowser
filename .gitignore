@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+out/
+build/
+
+# Electron builder cache
+.cache/
+
+# User data / settings (generated at runtime, contains personal data)
+*.json
+!package.json
+!package-lock.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+*.suo
+*.user
+
+# Env files
+.env
+.env.*
+
+# yt-dlp binary (downloaded at runtime)
+bin/yt-dlp*
+bin/ffmpeg*

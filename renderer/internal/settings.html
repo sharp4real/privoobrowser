@@ -1,0 +1,1808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Settings - Privoo</title>
+<link rel="icon" href="privoo://newtab/logo.png"/>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  :root {
+    --accent: #8ab4f8;
+    --accent-hover: #a0c2fa;
+    --on-accent: #202124;
+    --accent-soft: rgba(138,180,248,.18);
+  }
+  body.dark {
+    --on-accent: #202124;
+    --accent-soft: rgba(138,180,248,.18);
+  }
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+    background: #f8fafd;
+    color: #1f1f1f;
+    user-select: none;
+  }
+  button, input, select { font: inherit; }
+  button { cursor: default; }
+
+  body.dark {
+    background: #202124;
+    color: #e8eaed;
+    color-scheme: dark;
+  }
+
+  /* Increase Transparency — host signals via settings; we drop the body
+     fill and tint cards so the OS material shows through. Inputs stay
+     opaque so text remains legible. */
+  body.transparent-ui { background: transparent; }
+  body.transparent-ui .card {
+    background: rgba(255, 255, 255, .72);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  body.transparent-ui.dark .card {
+    background: rgba(41, 42, 45, .68);
+  }
+  body.transparent-ui nav#nav { background: transparent; }
+
+  /* ── Custom scrollbar ──────────────────────────────────────────────
+     Thin, rounded, fades in on hover. Replaces the OS-default chunky bar. */
+  ::-webkit-scrollbar { width: 12px; height: 12px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: #dadce0;
+    border-radius: 8px;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+    min-height: 40px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #bdc1c6;
+    background-clip: padding-box;
+    border: 3px solid transparent;
+  }
+  ::-webkit-scrollbar-corner { background: transparent; }
+  body.dark ::-webkit-scrollbar-thumb {
+    background: #5f6368;
+    background-clip: padding-box;
+    border: 3px solid transparent;
+  }
+  body.dark ::-webkit-scrollbar-thumb:hover {
+    background: #80868b;
+    background-clip: padding-box;
+    border: 3px solid transparent;
+  }
+
+  header {
+    height: 64px;
+    background: #fff;
+    border-bottom: 1px solid #dadce0;
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    padding: 0 28px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+  body.dark header { background: #303134; border-color: #4a4d51; }
+  .brand { font-size: 21px; font-weight: 600; letter-spacing: 0; white-space: nowrap; }
+  .brand span { color: #5f6368; }
+  body.dark .brand span { color: #bdc1c6; }
+  .brand-logo {
+    height: 36px;
+    width: auto;
+    display: block;
+    object-fit: contain;
+  }
+  /* Higher-specificity selector (header input.settings-search) so the generic
+     input[type=text] rule further down can't paint a static border on top. */
+  header input.settings-search {
+    flex: 1;
+    max-width: 640px;
+    height: 40px;
+    min-width: 0;
+    border: 1px solid transparent;
+    border-radius: 20px;
+    background: #f1f3f4;
+    color: inherit;
+    padding: 0 18px;
+    outline: none;
+    user-select: text;
+    transition: background .15s, border-color .15s, box-shadow .15s;
+  }
+  header input.settings-search:hover { background: #e8eaed; }
+  header input.settings-search:focus { background: #fff; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+  body.dark header input.settings-search { background: #303134; border-color: transparent; }
+  body.dark header input.settings-search:hover { background: #3c4043; }
+  body.dark header input.settings-search:focus { background: #202124; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+
+  .layout {
+    display: flex;
+    gap: 0;
+    padding: 0;
+    align-items: flex-start;
+  }
+  nav {
+    width: 200px;
+    min-width: 200px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 64px;
+    height: calc(100vh - 64px);
+    overflow-y: auto;
+    padding: 20px 8px 40px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .nav-btn {
+    border: none;
+    background: transparent;
+    color: #3c4043;
+    height: 36px;
+    border-radius: 8px;
+    padding: 0 14px;
+    text-align: left;
+    font-size: 13.5px;
+    font-weight: 400;
+    width: 100%;
+    display: flex;
+    align-items: center;
+  }
+  .nav-btn:hover { background: #f1f3f4; color: #1f1f1f; }
+  .nav-btn.active { background: #e8eaed; color: #1f1f1f; font-weight: 500; }
+  body.dark .nav-btn { color: #bdc1c6; }
+  body.dark .nav-btn:hover { background: #2a2b2e; color: #e8eaed; }
+  body.dark .nav-btn.active { background: #3c4043; color: #e8eaed; font-weight: 500; }
+
+  main { flex: 1; min-width: 0; padding: 24px 32px 64px; }
+  section { scroll-margin-top: 80px; margin-bottom: 30px; }
+  h1 { font-size: 24px; font-weight: 500; margin: 2px 0 22px; }
+  h2 { font-size: 16px; font-weight: 500; margin: 0 0 10px; }
+
+  .card {
+    background: #fff;
+    border: 1px solid #e0e3e7;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  body.dark .card { background: #303134; border-color: #4a4d51; }
+  .row {
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 18px;
+    border-top: 1px solid #edf0f2;
+  }
+  .row:first-child { border-top: 0; }
+  body.dark .row { border-color: #3c4043; }
+  .row.stack { align-items: stretch; flex-direction: column; gap: 10px; }
+  /* Label group always fills remaining space; controls stay at natural width */
+  .row:not(.stack) > div:first-child { flex: 1; min-width: 0; }
+  .row:not(.stack) > :not(div:first-child) { flex-shrink: 0; }
+  .label { font-size: 13.5px; line-height: 1.35; }
+  .desc { font-size: 12px; color: #5f6368; margin-top: 2px; line-height: 1.35; }
+  body.dark .desc { color: #9aa0a6; }
+  .control-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .path { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; user-select: text; }
+
+  select, input[type="text"], input[type="url"], input[type="search"] {
+    min-width: 160px;
+    height: 36px;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    padding: 0 12px;
+    background: #fff;
+    color: inherit;
+    outline: none;
+    user-select: text;
+    flex-shrink: 0;
+    font-size: 13px;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding-right: 32px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235f6368'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 16px 16px;
+    cursor: pointer;
+  }
+  select:hover { border-color: #b3b3b3; }
+  input[type="text"], input[type="url"].wide { width: 100%; min-width: 0; }
+  body.dark select, body.dark input[type="text"], input[type="url"] {
+    background-color: #202124;
+    border-color: #5f6368;
+    color-scheme: dark;
+  }
+  body.dark select {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239aa0a6'><path d='M7 10l5 5 5-5z'/></svg>");
+  }
+  body.dark select:hover { border-color: #80868b; }
+  select:focus, input[type="text"], input[type="url"]:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+
+  .btn {
+    height: 32px;
+    border: 1px solid #dadce0;
+    border-radius: 16px;
+    background: #fff;
+    color: #1f1f1f;
+    padding: 0 14px;
+    font-size: 13px;
+  }
+  .btn:hover { background: #f1f3f4; }
+  .btn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+  .btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn.danger { color: #d93025; }
+  .btn.danger:hover { background: #fce8e6; }
+  body.dark .btn { background: #303134; border-color: #5f6368; color: #e8eaed; }
+  body.dark .btn:hover { background: #3c4043; }
+  body.dark .btn.danger { color: #f28b82; }
+
+  .switch { position: relative; width: 38px; height: 20px; flex-shrink: 0; display: inline-block; }
+  .switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .slider {
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: #bdc1c6;
+    cursor: pointer;
+    transition: background .18s cubic-bezier(.4,0,.2,1);
+  }
+  .slider::before {
+    content: "";
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    left: 3px;
+    top: 3px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    transition: transform .18s cubic-bezier(.4,0,.2,1);
+  }
+  /* Light blue accent for toggles (both modes). Thumb stays white. */
+  input:checked + .slider { background: var(--accent); }
+  input:checked + .slider::before { transform: translateX(18px); }
+  body.dark .slider { background: #5f6368; }
+  /* Dark-mode override needs higher specificity than the equal-specificity
+     unchecked-grey rule above, otherwise the grey wins via source order. */
+  body.dark input:checked + .slider { background: var(--accent); }
+
+  input[type="range"] { color-scheme: light; }
+  body.dark input[type="range"] { color-scheme: dark; }
+
+  .profiles {
+    display: grid;
+    gap: 8px;
+  }
+  .profile {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border: 1px solid #edf0f2;
+    border-radius: 8px;
+    padding: 11px 12px;
+  }
+  body.dark .profile { border-color: #4a4d51; }
+  .profile-title { font-size: 13.5px; }
+  .profile-meta { font-size: 12px; color: #5f6368; margin-top: 2px; word-break: break-all; }
+  body.dark .profile-meta { color: #bdc1c6; }
+  .check-row { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; color: #3c4043; }
+  body.dark .check-row { color: #bdc1c6; }
+  .check-row label { display: flex; align-items: center; gap: 7px; }
+  input[type="checkbox"] { accent-color: #3c4043; }
+
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .metric {
+    border: 1px solid #edf0f2;
+    border-radius: 8px;
+    padding: 12px;
+  }
+  body.dark .metric { border-color: #4a4d51; }
+  .metric b { display: block; font-size: 18px; margin-bottom: 2px; }
+  .metric span { font-size: 12px; color: #5f6368; }
+  body.dark .metric span { color: #bdc1c6; }
+
+  .modal-bg {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,.34);
+    z-index: 80;
+    padding: 20px;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    width: min(430px, 100%);
+    background: #fff;
+    color: #1f1f1f;
+    border-radius: 12px;
+    box-shadow: 0 14px 44px rgba(0,0,0,.28);
+    padding: 22px;
+  }
+  body.dark .modal { background: #303134; color: #e8eaed; }
+  .modal h3 { font-size: 18px; font-weight: 500; margin-bottom: 16px; }
+  .modal .field { margin-bottom: 14px; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+
+  #toast {
+    position: fixed;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    background: #202124;
+    color: #fff;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 13px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .18s;
+    z-index: 100;
+  }
+  #toast.show { opacity: 1; }
+  #toast.long {
+    max-width: 460px;
+    text-align: left;
+    line-height: 1.45;
+    padding: 14px 20px;
+    border-radius: 12px;
+  }
+  body.dark #toast { background: #e8eaed; color: #202124; }
+
+  .vol-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 160px;
+  }
+  .vol-range {
+    flex: 1;
+    accent-color: #3c4043;
+  }
+  body.dark .vol-range { accent-color: #9aa0a6; }
+  .vol-label {
+    font-size: 12px;
+    color: #5f6368;
+    min-width: 36px;
+    text-align: right;
+  }
+  body.dark .vol-label { color: #bdc1c6; }
+
+  @media (max-width: 820px) {
+    header { padding: 0 16px; }
+    .layout { flex-direction: column; }
+    nav { position: static; flex-direction: row; overflow-x: auto; width: 100%; min-width: 0; height: auto; padding: 8px 12px; border-bottom: 1px solid #dadce0; }
+    body.dark nav { border-color: #4a4d51; }
+    .nav-btn { flex: 0 0 auto; width: auto; }
+    main { padding: 18px 16px 48px; max-width: none; }
+    .summary { grid-template-columns: 1fr; }
+    .row { align-items: flex-start; flex-direction: column; }
+  }
+
+  /* Section blurb — short explanatory paragraph above a card. */
+  .section-blurb {
+    font-size: 13px;
+    color: var(--muted);
+    margin: -6px 0 14px;
+    max-width: 720px;
+    line-height: 1.55;
+  }
+
+  /* Credits / acknowledgements list */
+  .credits-card { padding: 14px 20px; }
+  .credits-list {
+    list-style: none;
+    margin: 0; padding: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    column-gap: 28px;
+  }
+  @media (min-width: 760px) {
+    .credits-list { grid-template-columns: 1fr 1fr; }
+  }
+  .credits-list li {
+    padding: 10px 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .credits-list li:last-child { border-bottom: none; }
+  .credits-list li b { color: var(--text); font-weight: 600; }
+  .credit-link { color: inherit; text-decoration: none; cursor: default; }
+  .credit-link:hover b { color: var(--accent); }
+  .credits-foot {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* Password manager — card with header strip, list, and empty state. */
+  .pw-card { padding: 0; overflow: hidden; }
+  .pw-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .pw-header-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .pw-header-count {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .pw-header input[type="search"] {
+    margin-left: auto;
+    min-width: 220px;
+    height: 34px;
+    border-radius: 17px;
+    border: 1px solid transparent;
+    background: var(--hover);
+    padding: 0 14px;
+    font-size: 13px;
+    color: var(--text);
+    transition: background .15s, border-color .15s, box-shadow .15s;
+  }
+  .pw-header input[type="search"]:hover { background: var(--border); }
+  .pw-header input[type="search"]:focus {
+    background: var(--surface);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+    outline: none;
+  }
+
+  .pw-list { display: flex; flex-direction: column; }
+  .pw-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    transition: background .1s;
+    min-height: 60px;
+    box-sizing: border-box;
+  }
+  .pw-row:last-child { border-bottom: none; }
+  .pw-row:hover { background: var(--hover); }
+
+  .pw-fav {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    flex: 0 0 32px;
+    box-sizing: border-box;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    color: var(--muted);
+  }
+  body.dark .pw-fav { background-color: #202124; }
+  .pw-fav img { width: 20px; height: 20px; object-fit: contain; }
+  .pw-fav svg { width: 18px; height: 18px; fill: currentColor; }
+
+  .pw-meta {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .pw-origin {
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 500;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    letter-spacing: -.1px;
+    line-height: 1.3;
+  }
+  .pw-user {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-top: 2px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    line-height: 1.3;
+  }
+
+  .pw-secret {
+    flex: 0 1 170px;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    font-family: ui-monospace, "Segoe UI Mono", Menlo, Consolas, monospace;
+    font-size: 13px;
+    color: var(--text);
+    user-select: text;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    height: 32px;
+  }
+  .pw-secret .pw-dots {
+    letter-spacing: 3px;
+    color: var(--muted);
+    font-size: 18px;
+    line-height: 1;
+    display: inline-block;
+  }
+
+  .pw-actions {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .pw-act {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--muted);
+    cursor: default;
+    background: none;
+    border: none;
+    padding: 0;
+    transition: background .1s, color .1s;
+    flex-shrink: 0;
+  }
+  .pw-act:hover { background: var(--border); color: var(--text); }
+  .pw-act.danger:hover { background: #fce8e6; color: #c5221f; }
+  body.dark .pw-act.danger:hover { background: rgba(242,139,130,.18); color: #f28b82; }
+  .pw-act svg { width: 18px; height: 18px; fill: currentColor; display: block; }
+
+  .pw-empty {
+    padding: 56px 24px 64px;
+    text-align: center;
+    color: var(--muted);
+  }
+  .pw-empty svg { display: block; margin: 0 auto 14px; color: var(--border); }
+  .pw-empty-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .pw-empty-sub {
+    font-size: 13px;
+    color: var(--muted);
+    max-width: 320px;
+    margin: 0 auto;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 640px) {
+    .pw-row { gap: 10px; padding: 10px 14px; }
+    .pw-secret { display: none; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <img class="brand-logo" src="privoo://newtab/logo.png" width="120" height="36" alt="Privoo" />
+    <input class="settings-search" id="settings-search" type="text" placeholder="Search settings" autocomplete="off"/>
+  </header>
+
+  <div class="layout">
+    <nav id="nav">
+      <button class="nav-btn active" data-target="appearance">Appearance</button>
+      <button class="nav-btn" data-target="features">Features</button>
+      <button class="nav-btn" data-target="search">Search engine</button>
+      <button class="nav-btn" data-target="privacy">Privacy</button>
+      <button class="nav-btn" data-target="safety">Safety</button>
+      <button class="nav-btn" data-target="sitefixes">Site fixes</button>
+      <button class="nav-btn" data-target="data">Data</button>
+      <button class="nav-btn" data-target="downloads">Downloads</button>
+      <button class="nav-btn" data-target="media">Media</button>
+      <button class="nav-btn" data-target="performance">Performance</button>
+      <button class="nav-btn" data-target="system">System</button>
+      <button class="nav-btn" data-target="passwords">Passwords</button>
+      <button class="nav-btn" data-target="about">About</button>
+    </nav>
+
+    <main>
+      <h1>Settings</h1>
+
+      <section id="appearance" data-keywords="dark home bookmark theme appearance weather widget">
+        <h2>Appearance</h2>
+        <div class="card">
+          <div class="row">
+            <div><div class="label">Dark mode</div><div class="desc">Use a dark browser and page theme.</div></div>
+            <label class="switch"><input type="checkbox" id="darkMode"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div>
+              <div class="label">Force Dark Mode on all pages <span style="display:inline-block;font-size:10px;font-weight:600;background:#f1f3f4;color:#5f6368;border-radius:4px;padding:1px 6px;vertical-align:middle;margin-left:4px">Experimental</span></div>
+              <div class="desc">Inverts page colours to create a dark look on sites that don't support it natively.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="forceDarkMode"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Show Home button</div><div class="desc">Adds Home next to Reload.</div></div>
+            <label class="switch"><input type="checkbox" id="showHomeButton"><span class="slider"></span></label>
+          </div>
+          <div class="row stack">
+            <div><div class="label">Home page</div><div class="desc">Where the Home button goes.</div></div>
+            <input type="text" id="homePage" class="wide" spellcheck="false">
+          </div>
+          <div class="row">
+            <div><div class="label">Show bookmarks bar</div><div class="desc">Display saved bookmarks under the address bar.</div></div>
+            <label class="switch"><input type="checkbox" id="showBookmarksBar"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Weather widget</div><div class="desc">Show current weather on the new tab page.</div></div>
+            <label class="switch"><input type="checkbox" id="ntpShowWeather"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Focused search on new tab</div><div class="desc">When you click the search bar on the new tab page, scale it forward and fade the shortcuts out (Brave-style). Click outside to undo.</div></div>
+            <label class="switch"><input type="checkbox" id="ntpFocusedSearch"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div>
+              <div class="label">Increase Transparency</div>
+              <div class="desc">Make the toolbar and tab strip translucent so your desktop shows through. Uses Acrylic on Windows 11, Vibrancy on macOS, and a translucent UI fallback on Linux. Some older systems may render this as solid white.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="increaseTransparency"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div>
+              <div class="label">Aero gradient <span style="display:inline-block;font-size:10px;font-weight:600;background:#f1f3f4;color:#5f6368;border-radius:4px;padding:1px 6px;vertical-align:middle;margin-left:4px">Requires transparency</span></div>
+              <div class="desc">Layer a soft drifting blue/violet gradient behind the chrome — the classic Aero / colour-acrylic look. Only kicks in while Increase Transparency is on.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="aeroGradient"><span class="slider"></span></label>
+          </div>
+          <div class="row stack" id="weather-location-row">
+            <div><div class="label">Weather location</div><div class="desc">City name to fetch weather for (e.g. London, New York).</div></div>
+            <input type="text" id="weatherLocation" class="wide" spellcheck="false" placeholder="e.g. London">
+            <div id="weather-location-hint" style="font-size:12px;color:#f29900;margin-top:6px;display:none">
+              Add a location — nothing will be displayed on the new tab until you do.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="features" data-keywords="ytdlp toolbar download media geolocation location notes">
+        <h2>Features</h2>
+        <div class="card">
+          <div class="row">
+            <div><div class="label">yt-dlp toolbar button</div><div class="desc">Always shown in the toolbar for quick media downloads.</div></div>
+            <label class="switch"><input type="checkbox" id="showYtdlpToolbar"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Location toolbar</div><div class="desc">Spoof page geolocation (injected per tab).</div></div>
+            <label class="switch"><input type="checkbox" id="showGeoToolbar"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Notes button</div><div class="desc">Adds a notes pad to the toolbar. Notes are stored locally in this browser.</div></div>
+            <label class="switch"><input type="checkbox" id="showNotesButton"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Shortcuts sidebar</div><div class="desc">Pin sites as favicons in a rail on the left side of the window.</div></div>
+            <label class="switch"><input type="checkbox" id="showSidebar"><span class="slider"></span></label>
+          </div>
+        </div>
+      </section>
+
+
+      <section id="passwords" data-keywords="password manager autofill login vault">
+        <h2>Passwords</h2>
+        <div class="card">
+          <div class="row">
+            <div><div class="label">Password manager</div><div class="desc">Save and autofill logins locally (encrypted on this device).</div></div>
+            <label class="switch"><input type="checkbox" id="passwordManagerEnabled"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Prefer password on Google sign-in</div><div class="desc">Opens Google login in a secure window and steers away from passkey prompts when possible.</div></div>
+            <label class="switch"><input type="checkbox" id="preferPasswordLogin"><span class="slider"></span></label>
+          </div>
+        </div>
+      </section>
+
+      <section id="search" data-keywords="search engine suggestions omnibox">
+        <h2>Search engine</h2>
+        <div class="card">
+          <div class="row">
+            <div><div class="label">Address bar search</div><div class="desc">Used in the address bar and new tab.</div></div>
+            <select id="searchEngine"></select>
+          </div>
+          <div class="row" id="custom-search-row" style="display:none">
+            <div>
+              <div class="label">Custom search URL</div>
+              <div class="desc">Use <code>%s</code> where the query should go, or end with <code>?q=</code> to append automatically.</div>
+            </div>
+            <input type="url" id="customSearchUrl" placeholder="https://example.com/search?q=%s" autocomplete="off" spellcheck="false" style="min-width:320px"/>
+          </div>
+          <div class="row">
+            <div><div class="label">Search suggestions</div><div class="desc">Show suggestions while typing.</div></div>
+            <label class="switch"><input type="checkbox" id="searchSuggestions"><span class="slider"></span></label>
+          </div>
+        </div>
+      </section>
+
+      <section id="privacy" data-keywords="privacy security cookies https dns fingerprint webrtc geolocation dnt">
+        <h2>Privacy and security</h2>
+        <div class="card">
+          <div class="row">
+            <div><div class="label">Ad and tracker blocking</div><div class="desc">Block common ads and trackers.</div></div>
+            <label class="switch"><input type="checkbox" id="adBlocking"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Force HTTPS</div><div class="desc">Upgrade insecure pages when possible.</div></div>
+            <label class="switch"><input type="checkbox" id="httpsUpgrade"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Show HTTPS upgrade notice</div><div class="desc">Display a 3-second splash when Privoo upgrades a site to HTTPS.</div></div>
+            <label class="switch"><input type="checkbox" id="httpsUpgradeShowNotice"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Block third-party cookies</div><div class="desc">Reduce cross-site tracking.</div></div>
+            <label class="switch"><input type="checkbox" id="blockThirdPartyCookies"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Encrypted DNS (DNS-over-HTTPS)</div><div class="desc">Encrypts your DNS lookups end-to-end. Strict mode — never falls back to your ISP's plaintext DNS, so no leaks.</div></div>
+            <label class="switch"><input type="checkbox" id="dnsOverHttps"><span class="slider"></span></label>
+          </div>
+          <div class="row" id="doh-provider-row" style="display:none">
+            <div><div class="label">DNS provider</div><div class="desc" id="doh-provider-desc">Cloudflare — 1.1.1.1, the default.</div></div>
+            <select id="dohProvider"></select>
+          </div>
+          <div class="row" id="custom-doh-row" style="display:none">
+            <div>
+              <div class="label">Custom DNS-over-HTTPS URL</div>
+              <div class="desc">Full <code>https://</code> URL of your DoH endpoint — typically ends in <code>/dns-query</code>.</div>
+            </div>
+            <input type="url" id="customDohUrl" placeholder="https://your-resolver.example.com/dns-query" autocomplete="off" spellcheck="false" style="min-width:320px"/>
+          </div>
+          <div class="row" id="adult-block-row">
+            <div><div class="label">Block adult content (18+)</div><div class="desc">Routes DNS through a family-safe resolver (Cloudflare / AdGuard family filters) that blocks pornography and known malware domains. Requires Encrypted DNS to be on.</div></div>
+            <label class="switch"><input type="checkbox" id="adultContentBlocking"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Do Not Track</div><div class="desc">Send the DNT request header.</div></div>
+            <label class="switch"><input type="checkbox" id="doNotTrack"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Spoof user agent</div><div class="desc">Hides your real browser and OS signature from sites.</div></div>
+            <label class="switch"><input type="checkbox" id="spoofUserAgent"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Canvas fingerprint protection</div><div class="desc">Adds subtle noise to canvas reads to prevent tracking.</div></div>
+            <label class="switch"><input type="checkbox" id="canvasSpoofing"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">WebRTC IP protection</div><div class="desc">Prevents WebRTC from leaking your real IP address.</div></div>
+            <label class="switch"><input type="checkbox" id="webrtcProtection"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Allow location requests</div><div class="desc">Off by default.</div></div>
+            <label class="switch"><input type="checkbox" id="allowGeolocation"><span class="slider"></span></label>
+          </div>
+        </div>
+      </section>
+
+      <section id="data" data-keywords="history cache cookies import clear browsing data old browser">
+        <h2>Your data</h2>
+        <div class="card">
+          <div class="row stack">
+            <div>
+              <div class="label">Storage summary</div>
+              <div class="desc">Counts are local to this Privoo profile.</div>
+            </div>
+            <div class="summary">
+              <div class="metric"><b id="history-count">0</b><span>history items</span></div>
+              <div class="metric"><b id="download-count">0</b><span>downloads</span></div>
+              <div class="metric"><b id="cookie-count">0</b><span>cookies</span></div>
+            </div>
+          </div>
+          <div class="row">
+            <div><div class="label">Clear browsing data</div><div class="desc">History, cache, cookies, site data, and downloads.</div></div>
+            <button class="btn danger" id="open-clear">Clear data</button>
+          </div>
+          <div class="row stack">
+            <div>
+              <div class="label">Import from another browser</div>
+              <div class="desc">Bookmarks and history from detected Chrome, Edge, Brave, Opera, Vivaldi, or Firefox profiles.</div>
+            </div>
+            <div class="check-row">
+              <label><input type="checkbox" id="import-bookmarks" checked>Bookmarks</label>
+              <label><input type="checkbox" id="import-history" checked>History</label>
+            </div>
+            <div class="profiles" id="profiles"></div>
+            <div class="control-row">
+              <button class="btn" id="choose-profile">Choose profile folder</button>
+              <span class="desc path" id="chosen-profile"></span>
+              <button class="btn primary" id="import-chosen" hidden>Import</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="downloads" data-keywords="downloads folder save ask location">
+        <h2>Downloads</h2>
+        <div class="card">
+          <div class="row">
+            <div><div class="label">Download location</div><div class="desc path" id="dl-path-display">-</div></div>
+            <button class="btn" id="choose-dl-path">Change</button>
+          </div>
+          <div class="row">
+            <div><div class="label">Ask where to save each file</div><div class="desc">Choose a folder before each download.</div></div>
+            <label class="switch"><input type="checkbox" id="askDownloadPath"><span class="slider"></span></label>
+          </div>
+        </div>
+      </section>
+
+      <section id="media" data-keywords="media video ytdlp downloader music audio background">
+        <h2>Media</h2>
+        <div class="card">
+          <div class="row">
+            <div><div class="label">Video pop-out button</div><div class="desc">Adds a Picture-in-Picture shortcut on pages.</div></div>
+            <label class="switch"><input type="checkbox" id="videoPopOut"><span class="slider"></span></label>
+          </div>
+        </div>
+
+        <h2 style="margin-top:28px">Background Music</h2>
+        <div class="card">
+          <div class="row">
+            <div><div class="label">Enable background music</div><div class="desc">Play your own .mp3 while browsing. Music loops continuously.</div></div>
+            <label class="switch"><input type="checkbox" id="musicEnabled"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Music file</div><div class="desc path" id="music-path-display">No file selected.</div></div>
+            <div class="control-row">
+              <button class="btn" id="choose-music">Browse</button>
+              <button class="btn" id="clear-music">Clear</button>
+            </div>
+          </div>
+          <div class="row">
+            <div><div class="label">Volume</div><div class="desc">Adjust background music volume.</div></div>
+            <div class="vol-row">
+              <input type="range" id="musicVolume" class="vol-range" min="0" max="100" value="50"/>
+              <span id="music-vol-label" class="vol-label">50%</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="safety" data-keywords="safety safe mode nudity blocker 18+ adult block parental">
+        <h2>Safety</h2>
+        <div class="card">
+          <div class="row">
+            <div>
+              <div class="label">Block 18+ websites</div>
+              <div class="desc">Blocks navigation to adult and explicit content sites using the Hagezi porn blocklist (100k+ domains). Downloaded and cached locally.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="blockAdultSites"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div>
+              <div class="label">Safe Mode — nudity filter</div>
+              <div class="desc">Blurs images and videos on all pages as a broad catch-all for explicit content.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="safeMode"><span class="slider"></span></label>
+          </div>
+        </div>
+      </section>
+
+      <section id="sitefixes" data-keywords="site fix tiktok discord snapchat reddit google login attempts reached reset cookies storage">
+        <h2>Site fixes</h2>
+        <p class="section-blurb">Some sites have aggressive bot detection that can flag privacy-focused browsers after a few failed attempts. Resetting their saved cookies + storage usually clears the flag without logging you out of anything else.</p>
+        <div class="card">
+
+          <div class="row">
+            <div>
+              <div class="label">Reset TikTok login state</div>
+              <div class="desc">Fix for the "maximum number of attempts reached" error when signing into TikTok with Google.</div>
+            </div>
+            <button class="btn site-fix-btn" data-host="tiktok" data-label="TikTok">Reset TikTok</button>
+          </div>
+
+          <div class="row">
+            <div>
+              <div class="label">Reset Discord login state</div>
+              <div class="desc">Use if Discord shows captcha loops or refuses to sign in after a few attempts.</div>
+            </div>
+            <button class="btn site-fix-btn" data-host="discord.com" data-label="Discord">Reset Discord</button>
+          </div>
+
+          <div class="row">
+            <div>
+              <div class="label">Reset Snapchat web state</div>
+              <div class="desc">Snapchat's web client often refuses privacy browsers — this clears its session so you can sign back in.</div>
+            </div>
+            <button class="btn site-fix-btn" data-host="snapchat.com" data-label="Snapchat">Reset Snapchat</button>
+          </div>
+
+          <div class="row">
+            <div>
+              <div class="label">Reset Reddit login state</div>
+              <div class="desc">Helps when Reddit keeps demanding a captcha or won't accept your password.</div>
+            </div>
+            <button class="btn site-fix-btn" data-host="reddit.com" data-label="Reddit">Reset Reddit</button>
+          </div>
+
+          <div class="row">
+            <div>
+              <div class="label">Reset Instagram web state</div>
+              <div class="desc">For Instagram's "suspicious activity" lockouts on a fresh browser.</div>
+            </div>
+            <button class="btn site-fix-btn" data-host="instagram.com" data-label="Instagram">Reset Instagram</button>
+          </div>
+
+          <div class="row">
+            <div>
+              <div class="label">Reset X / Twitter login state</div>
+              <div class="desc">Clears X's session if the login flow loops or rate-limits.</div>
+            </div>
+            <button class="btn site-fix-btn" data-host="x.com" data-label="X">Reset X</button>
+          </div>
+
+          <div class="row">
+            <div>
+              <div class="label">Reset YouTube / Google account state</div>
+              <div class="desc">Use cautiously — this signs you out of Google services in Privoo and clears Google's bot-detection flags.</div>
+            </div>
+            <button class="btn site-fix-btn" data-host="google.com" data-label="Google">Reset Google</button>
+          </div>
+
+          <div class="row">
+            <div>
+              <div class="label">Reset any other site</div>
+              <div class="desc">Type a domain (e.g. <code>roblox.com</code>) to wipe its cookies + site storage. Sub-domains are included automatically.</div>
+            </div>
+            <div class="control-row" style="gap:8px">
+              <input type="text" id="custom-site-host" placeholder="example.com" autocomplete="off" spellcheck="false" style="min-width:200px"/>
+              <button class="btn" id="custom-site-reset">Reset site</button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <section id="performance" data-keywords="hardware acceleration gpu performance smooth video">
+        <h2>Performance</h2>
+        <div class="card">
+          <div class="row">
+            <div>
+              <div class="label">Hardware acceleration</div>
+              <div class="desc">Use your GPU for smoother video, scrolling, and animations. Requires a restart to take effect.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="hardwareAcceleration"><span class="slider"></span></label>
+          </div>
+        </div>
+      </section>
+
+      <section id="system" data-keywords="system tray minimize close background">
+        <h2>System</h2>
+        <div class="card">
+          <div class="row">
+            <div>
+              <div class="label">Keep Privoo running in the system tray</div>
+              <div class="desc">When you close the window, Privoo hides to the tray instead of quitting. Click the tray icon to reopen. Use "Quit Privoo" from the tray menu to exit fully.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="minimizeToTray"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div>
+              <div class="label">Restore tabs from last session</div>
+              <div class="desc">Reopen the tabs you had open when you launch Privoo. Turn off to always start with a single new tab.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="restoreTabsOnLaunch"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div>
+              <div class="label">Auto-update</div>
+              <div class="desc">Check for new versions on launch and install them automatically when you quit. Requires a packaged build — has no effect in dev mode.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="autoUpdates"><span class="slider"></span></label>
+          </div>
+        </div>
+      </section>
+
+      <section id="passwords" data-keywords="password manager saved logins credentials autofill">
+        <h2>Password manager</h2>
+        <p class="section-blurb">Passwords are encrypted with your OS keychain — DPAPI on Windows, Keychain on macOS, libsecret on Linux. They stay on this device and aren't synced anywhere.</p>
+        <div class="card pw-card">
+          <div class="pw-header">
+            <div>
+              <div class="pw-header-title">Saved passwords</div>
+              <div class="pw-header-count" id="pw-count">0 saved</div>
+            </div>
+            <input type="search" id="pw-search" placeholder="Search sites or users" autocomplete="off"/>
+          </div>
+          <div id="pw-list" class="pw-list"></div>
+          <div id="pw-empty" class="pw-empty" style="display:none">
+            <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" fill="currentColor"/></svg>
+            <div class="pw-empty-title">No saved passwords yet</div>
+            <div class="pw-empty-sub">Sign in to any website and Privoo will offer to save the login.</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="about" data-keywords="about version privoo credits acknowledgements third party libraries licenses">
+        <h2>About Privoo</h2>
+        <div class="card">
+          <div class="row">
+            <div><div class="label">Privoo Browser</div><div class="desc">Private, local-first browsing controls.</div></div>
+            <span class="desc" id="privoo-version">v1.00</span>
+          </div>
+        </div>
+
+        <h2 style="margin-top:32px">Credits &amp; acknowledgements</h2>
+        <p class="section-blurb">Privoo is built on top of a lot of excellent open-source work. Thank you to everyone who maintains these projects.</p>
+        <div class="card credits-card">
+          <ul class="credits-list">
+            <li>
+              <a href="#" class="credit-link" data-url="https://www.electronjs.org/"><b>Electron</b></a>
+              — desktop runtime · MIT
+            </li>
+            <li>
+              <a href="#" class="credit-link" data-url="https://www.chromium.org/"><b>Chromium</b></a>
+              — rendering engine · BSD-3-Clause
+            </li>
+            <li>
+              <a href="#" class="credit-link" data-url="https://github.com/ghostery/adblocker"><b>@ghostery/adblocker</b></a>
+              — ad &amp; tracker blocking engine · MPL-2.0
+            </li>
+            <li>
+              <a href="#" class="credit-link" data-url="https://easylist.to/"><b>EasyList</b> &amp; <b>EasyPrivacy</b></a>
+              — filter lists · CC BY-SA 3.0
+            </li>
+            <li>
+              <a href="#" class="credit-link" data-url="https://github.com/uBlockOrigin/uAssets"><b>uBlock Origin filter set</b></a>
+              — extra filter coverage · GPL-3.0
+            </li>
+            <li>
+              <a href="#" class="credit-link" data-url="https://github.com/hagezi/dns-blocklists"><b>Hagezi DNS Blocklists</b></a>
+              — 18+ blocker source · GPL-3.0
+            </li>
+            <li>
+              <a href="#" class="credit-link" data-url="https://github.com/StevenBlack/hosts"><b>StevenBlack/hosts</b></a>
+              — 18+ blocker mirror · MIT
+            </li>
+            <li>
+              <a href="#" class="credit-link" data-url="https://github.com/yt-dlp/yt-dlp"><b>yt-dlp</b></a>
+              — media downloader binary · Unlicense
+            </li>
+            <li>
+              <a href="#" class="credit-link" data-url="https://github.com/maxogden/extract-zip"><b>extract-zip</b></a>
+              — .crx unpacker · BSD-2-Clause
+            </li>
+            <li>
+              <a href="#" class="credit-link" data-url="https://github.com/thejoshwolfe/yauzl"><b>yauzl</b></a>
+              — ZIP parser · MIT
+            </li>
+            <li>
+              <a href="#" class="credit-link" data-url="https://duckduckgo.com/ip3"><b>DuckDuckGo favicon service</b></a>
+              — site icons in suggestions
+            </li>
+            <li>
+              <a href="#" class="credit-link" data-url="https://wttr.in/"><b>wttr.in</b></a>
+              — new-tab weather widget · Apache-2.0
+            </li>
+            <li>
+              <a href="#" class="credit-link" data-url="https://fonts.google.com/icons"><b>Material Icons</b></a>
+              — toolbar &amp; menu glyphs · Apache-2.0
+            </li>
+          </ul>
+          <div class="credits-foot">
+            Licences are honoured per project. Full licence texts are bundled with the Electron and Chromium distributions in this app.
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- One-shot disclaimer when the user enables an adult-content filter.
+       Honest about coverage so we don't promise more than the blocklist
+       can deliver. -->
+  <div class="modal-bg" id="adult-disclaimer-modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="adult-disclaimer-title">
+      <h3 id="adult-disclaimer-title">Heads up — no filter is perfect</h3>
+      <p id="adult-disclaimer-body" style="line-height:1.55;color:var(--muted);margin-bottom:16px"></p>
+      <div class="modal-actions">
+        <button class="btn" id="adult-disclaimer-cancel">Turn it off</button>
+        <button class="btn primary" id="adult-disclaimer-ok">Got it, keep on</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="clear-modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="clear-title">
+      <h3 id="clear-title">Clear browsing data</h3>
+      <div class="field">
+        <select id="clear-range" style="width:100%">
+          <option value="hour">Last hour</option>
+          <option value="day">Last 24 hours</option>
+          <option value="week">Last 7 days</option>
+          <option value="fourWeeks">Last 4 weeks</option>
+          <option value="all" selected>All time</option>
+        </select>
+      </div>
+      <div class="check-row" style="display:grid;gap:10px">
+        <label><input type="checkbox" id="clear-history" checked>Browsing history</label>
+        <label><input type="checkbox" id="clear-cache" checked>Cached files</label>
+        <label><input type="checkbox" id="clear-cookies" checked>Cookies</label>
+        <label><input type="checkbox" id="clear-site-data" checked>Site data</label>
+        <label><input type="checkbox" id="clear-downloads">Download list</label>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" id="clear-cancel">Cancel</button>
+        <button class="btn danger" id="clear-confirm">Clear data</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast">Saved</div>
+
+<script>
+const api = window.privooInternal;
+const TOGGLES = [
+  'darkMode', 'forceDarkMode', 'showHomeButton', 'showBookmarksBar', 'ntpShowWeather', 'ntpFocusedSearch', 'increaseTransparency', 'aeroGradient', 'searchSuggestions',
+  'askDownloadPath', 'adBlocking', 'httpsUpgrade', 'httpsUpgradeShowNotice', 'blockThirdPartyCookies',
+  'dnsOverHttps', 'adultContentBlocking', 'spoofUserAgent', 'canvasSpoofing', 'webrtcProtection',
+  'doNotTrack', 'allowGeolocation', 'videoPopOut',
+  'showYtdlpToolbar', 'showGeoToolbar', 'showNotesButton', 'showSidebar', 'passwordManagerEnabled', 'preferPasswordLogin',
+  'musicEnabled',
+  'blockAdultSites', 'safeMode',
+  'hardwareAcceleration',
+  'minimizeToTray', 'restoreTabsOnLaunch', 'autoUpdates',
+];
+let currentSettings = {};
+let chosenProfile = '';
+let toastTimer = null;
+
+function $(id) { return document.getElementById(id); }
+
+function showToast(text) {
+  const toast = $('toast');
+  toast.textContent = text;
+  toast.classList.add('show');
+  toast.classList.remove('long');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+}
+
+// Longer-lived toast for explanatory disclaimers that need a few seconds of
+// reading time. Same element, just a wider style and longer duration.
+function showLongToast(text) {
+  const toast = $('toast');
+  toast.textContent = text;
+  toast.classList.add('show', 'long');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show', 'long'), 7000);
+}
+
+function applyTheme(settings = currentSettings) {
+  document.body.classList.toggle('dark', !!settings.darkMode);
+  document.body.classList.toggle('transparent-ui', !!settings.increaseTransparency);
+  applyAccent(settings.accentColor);
+}
+
+function applyAccent(hex) {
+  const root = document.documentElement;
+  if (!hex) {
+    root.style.removeProperty('--accent');
+    root.style.removeProperty('--accent-hover');
+    root.style.removeProperty('--accent-soft');
+    return;
+  }
+  root.style.setProperty('--accent', hex);
+  // Derive hover (+12% lighter) and soft (18% alpha) from the chosen color
+  const m = hex.replace('#','').match(/.{2}/g);
+  if (m) {
+    const [r,g,b] = m.map(x=>parseInt(x,16));
+    const h = `rgb(${Math.min(255,Math.round(r+(255-r)*.18))},${Math.min(255,Math.round(g+(255-g)*.18))},${Math.min(255,Math.round(b+(255-b)*.18))})`;
+    root.style.setProperty('--accent-hover', h);
+    root.style.setProperty('--accent-soft', `rgba(${r},${g},${b},.18)`);
+  }
+}
+
+async function savePatch(patch, message = 'Settings saved') {
+  try {
+    currentSettings = await api.setSettings(patch);
+    applyTheme(currentSettings);
+    showToast(message);
+  } catch (e) {
+    console.error('Privoo save settings:', e);
+    showToast('Could not save settings');
+  }
+}
+
+function updatePathDisplays(settings, downloadPath) {
+  $('dl-path-display').textContent = downloadPath || '-';
+  $('homePage').value = settings.homePage || 'privoo://newtab/';
+  // yt-dlp executable picker removed — the installer auto-downloads + auto-updates.
+  if ($('weatherLocation')) $('weatherLocation').value = settings.weatherLocation || '';
+  if ($('music-path-display')) {
+    const p = settings.musicPath;
+    $('music-path-display').textContent = p ? p.split(/[\\/]/).pop() : 'No file selected.';
+  }
+  if ($('musicVolume')) {
+    const vol = Math.round((settings.musicVolume ?? 0.5) * 100);
+    $('musicVolume').value = vol;
+    if ($('music-vol-label')) $('music-vol-label').textContent = vol + '%';
+  }
+  if ($('dohProvider') && providersData) {
+    populateDohProviders(settings);
+  }
+  updateDohServerRow(settings);
+}
+
+let providersData = null; // cache of DOH_PROVIDERS from main
+
+function populateDohProviders(settings) {
+  const sel = $('dohProvider');
+  if (!sel || !providersData) return;
+  sel.innerHTML = '';
+  for (const [key, p] of Object.entries(providersData)) {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = p.name;
+    sel.appendChild(opt);
+  }
+  sel.value = settings.dohProvider || 'cloudflare';
+  const descEl = $('doh-provider-desc');
+  if (descEl) descEl.textContent = providersData[sel.value]?.desc || '';
+}
+
+function updateDohServerRow(settings) {
+  // Provider picker only matters when DoH is on AND the user isn't using the
+  // family-filter block (which forces its own provider).
+  const provRow = $('doh-provider-row');
+  const showPicker = settings.dnsOverHttps && !settings.adultContentBlocking;
+  if (provRow) provRow.style.display = showPicker ? '' : 'none';
+  // Custom URL input is only visible when provider === 'custom' AND the
+  // picker itself is visible.
+  const customRow = $('custom-doh-row');
+  if (customRow) {
+    customRow.style.display = (showPicker && settings.dohProvider === 'custom') ? '' : 'none';
+  }
+  // 18+ block toggle is only meaningful while DoH is on.
+  const adultRow = $('adult-block-row');
+  if (adultRow) adultRow.style.opacity = settings.dnsOverHttps ? '1' : '0.45';
+  const adultInp = $('adultContentBlocking');
+  if (adultInp) adultInp.disabled = !settings.dnsOverHttps;
+}
+
+async function refreshSummary() {
+  if (!api?.dataSummary) return;
+  const summary = await api.dataSummary();
+  $('history-count').textContent = summary.history?.count || 0;
+  $('download-count').textContent = summary.downloads || 0;
+  $('cookie-count').textContent = summary.cookies || 0;
+}
+
+function importOptions(profilePath, kind) {
+  return {
+    profilePath,
+    kind,
+    includeBookmarks: $('import-bookmarks').checked,
+    includeHistory: $('import-history').checked,
+  };
+}
+
+async function runImport(profile) {
+  const result = await api.importBrowserData(importOptions(profile.path, profile.kind));
+  if (!result?.ok) {
+    showToast(result?.error || 'Import failed');
+    return;
+  }
+  showToast(`Imported ${result.bookmarksImported || 0} bookmarks and ${result.historyImported || 0} history items`);
+  await refreshSummary();
+}
+
+function renderProfiles(profiles) {
+  const wrap = $('profiles');
+  wrap.innerHTML = '';
+  if (!profiles.length) {
+    const empty = document.createElement('div');
+    empty.className = 'desc';
+    empty.textContent = 'No browser profiles found automatically.';
+    wrap.appendChild(empty);
+    return;
+  }
+
+  for (const profile of profiles) {
+    const el = document.createElement('div');
+    el.className = 'profile';
+    el.innerHTML =
+      `<div><div class="profile-title">${escapeHtml(profile.browser)} - ${escapeHtml(profile.profile)}</div>` +
+      `<div class="profile-meta">${escapeHtml(profile.types.join(', '))} - ${escapeHtml(profile.path)}</div></div>` +
+      `<button class="btn">Import</button>`;
+    el.querySelector('button').addEventListener('click', () => runImport(profile));
+    wrap.appendChild(el);
+  }
+}
+
+function openClearModal() { $('clear-modal').classList.add('open'); }
+function closeClearModal() { $('clear-modal').classList.remove('open'); }
+
+async function clearData() {
+  const options = {
+    range: $('clear-range').value,
+    history: $('clear-history').checked,
+    cache: $('clear-cache').checked,
+    cookies: $('clear-cookies').checked,
+    siteData: $('clear-site-data').checked,
+    downloads: $('clear-downloads').checked,
+  };
+  await api.clearBrowsingData(options);
+  closeClearModal();
+  showToast('Browsing data cleared');
+  await refreshSummary();
+}
+
+function filterSettings() {
+  const q = $('settings-search').value.trim().toLowerCase();
+  for (const section of document.querySelectorAll('section')) {
+    const text = `${section.id} ${section.dataset.keywords || ''} ${section.textContent}`.toLowerCase();
+    section.style.display = !q || text.includes(q) ? '' : 'none';
+  }
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+
+async function init() {
+  if (!api) return;
+  const data = await api.getSettings();
+  currentSettings = data.settings;
+  // Cache provider catalog from main so the dropdown can populate.
+  providersData = data.dohProviders || null;
+  applyTheme(currentSettings);
+  updatePathDisplays(currentSettings, data.downloadPath);
+
+  const searchSelect = $('searchEngine');
+  for (const [key, engine] of Object.entries(data.searchEngines || {})) {
+    const option = document.createElement('option');
+    option.value = key;
+    option.textContent = engine.name;
+    searchSelect.appendChild(option);
+  }
+  searchSelect.value = currentSettings.searchEngine || 'google';
+  const customSearchRow = $('custom-search-row');
+  const customSearchInp = $('customSearchUrl');
+  function syncCustomSearchRow() {
+    if (customSearchRow) customSearchRow.style.display = (searchSelect.value === 'custom') ? '' : 'none';
+  }
+  if (customSearchInp) customSearchInp.value = currentSettings.customSearchUrl || '';
+  syncCustomSearchRow();
+  searchSelect.addEventListener('change', () => {
+    savePatch({ searchEngine: searchSelect.value });
+    syncCustomSearchRow();
+  });
+  if (customSearchInp) {
+    customSearchInp.addEventListener('change', () => {
+      savePatch({ customSearchUrl: customSearchInp.value.trim() });
+    });
+  }
+
+  for (const id of TOGGLES) {
+    const input = $(id);
+    if (!input) continue;
+    input.checked = !!currentSettings[id];
+    input.addEventListener('change', () => {
+      // 18+ blocker: every time the user flips it ON, surface a real modal
+      // disclaimer. No public blocklist is perfect — we want to set
+      // expectations honestly before they rely on it. The modal also gives
+      // a one-click "Turn it off" escape if they didn't mean to enable it.
+      if ((id === 'blockAdultSites' || id === 'adultContentBlocking') && input.checked) {
+        showAdultBlockerDisclaimer(id, input);
+        // Don't savePatch yet — the modal handler does it on confirm. If
+        // the user cancels we revert the checkbox without persisting.
+        return;
+      }
+      savePatch({ [id]: input.checked });
+      if (id === 'dnsOverHttps' || id === 'adultContentBlocking' || id === 'dohProvider') {
+        updateDohServerRow({
+          ...currentSettings,
+          [id]: input.checked,
+        });
+      }
+      if (id === 'ntpShowWeather') updateWeatherLocationRow({ ntpShowWeather: input.checked });
+      if (id === 'hardwareAcceleration') showToast('Restart Privoo to apply this change');
+    });
+  }
+
+  function showAdultBlockerDisclaimer(settingId, inputEl) {
+    const body = $('adult-disclaimer-body');
+    const okBtn = $('adult-disclaimer-ok');
+    const cancelBtn = $('adult-disclaimer-cancel');
+    const modal = $('adult-disclaimer-modal');
+    if (!modal || !body || !okBtn || !cancelBtn) return;
+
+    body.textContent = settingId === 'blockAdultSites'
+      ? "Privoo blocks adult sites using a public blocklist of 100k+ domains, refreshed daily. It catches the vast majority — but no blocklist is perfect. A handful of sites may slip through, and a few non-adult sites might get caught as false positives. You can still toggle it off any time from this settings page."
+      : "Family-filter DNS (Cloudflare 1.1.1.3 / AdGuard family) catches the vast majority of adult sites at the DNS layer, but it's not perfect. Newer or obscure sites may slip through, and rare false positives can happen.";
+
+    modal.classList.add('open');
+
+    const close = () => {
+      modal.classList.remove('open');
+      okBtn.removeEventListener('click', onOk);
+      cancelBtn.removeEventListener('click', onCancel);
+      modal.removeEventListener('click', onBgClick);
+    };
+    const onOk = () => {
+      close();
+      savePatch({ [settingId]: true });
+      if (settingId === 'adultContentBlocking') {
+        updateDohServerRow({ ...currentSettings, adultContentBlocking: true });
+      }
+    };
+    const onCancel = () => {
+      close();
+      inputEl.checked = false;
+    };
+    const onBgClick = (e) => { if (e.target === modal) onCancel(); };
+    okBtn.addEventListener('click', onOk);
+    cancelBtn.addEventListener('click', onCancel);
+    modal.addEventListener('click', onBgClick);
+  }
+
+  // Show/hide weather location row based on toggle
+  function updateWeatherLocationRow(s) {
+    const row = $('weather-location-row');
+    if (row) row.style.display = s.ntpShowWeather ? '' : 'none';
+    updateWeatherHint();
+  }
+  function updateWeatherHint() {
+    const hint = $('weather-location-hint');
+    if (!hint) return;
+    const enabled = $('ntpShowWeather')?.checked;
+    const hasLoc  = !!($('weatherLocation')?.value.trim());
+    hint.style.display = (enabled && !hasLoc) ? '' : 'none';
+  }
+  updateWeatherLocationRow(currentSettings);
+
+  if ($('dohProvider')) {
+    populateDohProviders(currentSettings);
+    $('dohProvider').addEventListener('change', () => {
+      const key = $('dohProvider').value;
+      savePatch({ dohProvider: key });
+      const descEl = $('doh-provider-desc');
+      if (descEl && providersData?.[key]) descEl.textContent = providersData[key].desc;
+      // Toggle the custom URL input now that the provider key changed.
+      updateDohServerRow({ ...currentSettings, dohProvider: key });
+    });
+  }
+  const customDohInp = $('customDohUrl');
+  if (customDohInp) {
+    customDohInp.value = currentSettings.customDohUrl || '';
+    customDohInp.addEventListener('change', () => {
+      savePatch({ customDohUrl: customDohInp.value.trim() });
+    });
+  }
+
+  $('homePage').addEventListener('change', () => {
+    const value = $('homePage').value.trim() || 'privoo://newtab/';
+    savePatch({ homePage: value });
+  });
+
+  if ($('weatherLocation')) {
+    $('weatherLocation').addEventListener('input', () => updateWeatherHint());
+    $('weatherLocation').addEventListener('change', () => {
+      savePatch({ weatherLocation: $('weatherLocation').value.trim() });
+      updateWeatherHint();
+    });
+  }
+
+
+  $('choose-dl-path').addEventListener('click', async () => {
+    const path = await api.chooseDownloadPath();
+    if (path) {
+      $('dl-path-display').textContent = path;
+      showToast('Download folder updated');
+    }
+  });
+
+  // yt-dlp path picker removed — auto-installer handles binary + updates.
+
+  $('choose-music').addEventListener('click', async () => {
+    const path = await api.chooseMusicFile();
+    if (path) {
+      const fresh = await api.getSettings();
+      currentSettings = fresh.settings;
+      updatePathDisplays(currentSettings, fresh.downloadPath);
+      showToast('Music file selected');
+    }
+  });
+  $('clear-music').addEventListener('click', () => {
+    savePatch({ musicPath: null, musicEnabled: false }, 'Music cleared');
+    if ($('musicEnabled')) $('musicEnabled').checked = false;
+    if ($('music-path-display')) $('music-path-display').textContent = 'No file selected.';
+  });
+  $('musicVolume')?.addEventListener('input', function() {
+    const vol = parseInt(this.value, 10) / 100;
+    if ($('music-vol-label')) $('music-vol-label').textContent = this.value + '%';
+    savePatch({ musicVolume: vol });
+  });
+
+  $('open-clear').addEventListener('click', openClearModal);
+  $('clear-cancel').addEventListener('click', closeClearModal);
+  $('clear-confirm').addEventListener('click', clearData);
+  $('clear-modal').addEventListener('click', (event) => {
+    if (event.target === $('clear-modal')) closeClearModal();
+  });
+
+  $('choose-profile').addEventListener('click', async () => {
+    chosenProfile = await api.chooseBrowserProfile();
+    if (!chosenProfile) return;
+    $('chosen-profile').textContent = chosenProfile;
+    $('import-chosen').hidden = false;
+  });
+  $('import-chosen').addEventListener('click', () => runImport({ path: chosenProfile, kind: '' }));
+
+  const sections = Array.from(document.querySelectorAll('main section[id]'));
+  const navBtns = Array.from(document.querySelectorAll('.nav-btn[data-target]'));
+  const setActive = (id) => {
+    navBtns.forEach((b) => b.classList.toggle('active', b.dataset.target === id));
+  };
+  // Suppress the IntersectionObserver's active-flipping while a click-driven
+  // smooth scroll is in flight. Without this, every section that passes
+  // through the observer band on the way to the target gets briefly marked
+  // active, causing the menu to "flash" through every entry in between.
+  let _navScrollUntil = 0;
+  for (const btn of document.querySelectorAll('.nav-btn')) {
+    btn.addEventListener('click', () => {
+      const target = $(btn.dataset.target);
+      if (!target) return;
+      setActive(btn.dataset.target);
+      _navScrollUntil = performance.now() + 700; // covers the smooth-scroll
+      target.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    });
+  }
+
+  // Track which sections are currently visible and always pick the topmost
+  // one as active — IntersectionObserver entries arrive in change-order,
+  // not document order, so without this the active button can land on a
+  // section below the one the user is actually reading.
+  const visibleIds = new Set();
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) visibleIds.add(entry.target.id);
+      else visibleIds.delete(entry.target.id);
+    }
+    if (performance.now() < _navScrollUntil) return; // user just clicked
+    if (!visibleIds.size) return;
+    const topmost = sections.find((s) => visibleIds.has(s.id));
+    if (topmost) setActive(topmost.id);
+  }, { rootMargin: '-15% 0px -75% 0px', threshold: 0 });
+  sections.forEach((s) => observer.observe(s));
+  if (sections.length) setActive(sections[0].id);
+  $('settings-search').addEventListener('input', filterSettings);
+
+  renderProfiles(await api.listBrowserProfiles());
+  await refreshSummary();
+
+  api.onSettingsChanged?.((settings) => {
+    try {
+      currentSettings = settings;
+      applyTheme(settings);
+      for (const id of TOGGLES) {
+        if ($(id)) $(id).checked = !!settings[id];
+      }
+      updatePathDisplays(settings, $('dl-path-display').textContent);
+      if ($('dohProvider') && providersData) {
+        $('dohProvider').value = settings.dohProvider || 'cloudflare';
+        const descEl = $('doh-provider-desc');
+        if (descEl && providersData[settings.dohProvider || 'cloudflare']) {
+          descEl.textContent = providersData[settings.dohProvider || 'cloudflare'].desc;
+        }
+      }
+      updateDohServerRow(settings);
+    } catch (e) {
+      console.error('Privoo settings update:', e);
+    }
+  });
+  api.onBrowsingDataCleared?.(() => refreshSummary());
+
+  // Credits links — open in a new browser tab via the same IPC the rest of
+  // the page uses. We bind once for all rows.
+  for (const a of document.querySelectorAll('.credit-link')) {
+    a.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      const url = a.dataset.url;
+      if (url && api?.openTab) api.openTab(url);
+    });
+  }
+
+  await refreshPasswordList();
+  $('pw-search').addEventListener('input', () => renderPasswordList());
+
+  // Site fixes — generic handler. Each [data-host] button calls the right
+  // backend (the dedicated TikTok one with its broader domain set, or the
+  // generic per-host wipe) and reports back how many cookies were cleared.
+  async function runSiteReset(host, label, btn) {
+    if (!host) { showToast('No site specified'); return; }
+    if (btn) { btn.disabled = true; var orig = btn.textContent; btn.textContent = 'Resetting…'; }
+    try {
+      let res;
+      if (host === 'tiktok' && api?.clearTikTokData) res = await api.clearTikTokData();
+      else if (api?.clearSiteData)                   res = await api.clearSiteData(host);
+      else { showToast('Reset unavailable'); return; }
+      if (res?.ok) {
+        const target = label || res.host || host;
+        showLongToast(`Cleared ${res.cleared || 0} cookies + site storage for ${target}. Reload the site and try signing in again.`);
+      } else {
+        showToast(res?.error || 'Reset failed');
+      }
+    } catch {
+      showToast('Reset failed');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = orig; }
+    }
+  }
+  for (const btn of document.querySelectorAll('.site-fix-btn')) {
+    btn.addEventListener('click', () => runSiteReset(btn.dataset.host, btn.dataset.label, btn));
+  }
+  const customBtn = $('custom-site-reset');
+  const customInp = $('custom-site-host');
+  if (customBtn && customInp) {
+    const goCustom = () => {
+      const v = customInp.value.trim();
+      if (!v) { customInp.focus(); return; }
+      runSiteReset(v, v, customBtn);
+    };
+    customBtn.addEventListener('click', goCustom);
+    customInp.addEventListener('keydown', (e) => { if (e.key === 'Enter') goCustom(); });
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Password manager
+// ──────────────────────────────────────────────────────────────────────────
+let _pwAll = [];
+const _pwRevealed = new Set();   // ids whose plaintext is currently shown
+
+const PW_ICONS = {
+  eye:        '<svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg>',
+  eyeOff:     '<svg viewBox="0 0 24 24"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>',
+  copy:       '<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>',
+  trash:      '<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>',
+};
+
+async function refreshPasswordList() {
+  if (!api?.passwordsList) { _pwAll = []; renderPasswordList(); return; }
+  try { _pwAll = await api.passwordsList() || []; }
+  catch { _pwAll = []; }
+  // Hide reveal-state across reloads — the user has to opt in again.
+  _pwRevealed.clear();
+  renderPasswordList();
+}
+
+function renderPasswordList() {
+  const list = $('pw-list');
+  const empty = $('pw-empty');
+  const countEl = $('pw-count');
+  if (!list || !empty) return;
+  const q = ($('pw-search')?.value || '').trim().toLowerCase();
+  const items = q
+    ? _pwAll.filter(p => (p.origin || '').toLowerCase().includes(q) || (p.username || '').toLowerCase().includes(q))
+    : _pwAll;
+  list.innerHTML = '';
+  empty.style.display = items.length ? 'none' : '';
+  if (countEl) {
+    if (q) countEl.textContent = `${items.length} of ${_pwAll.length} shown`;
+    else   countEl.textContent = _pwAll.length === 1 ? '1 saved' : `${_pwAll.length} saved`;
+  }
+
+  for (const p of items) {
+    const host = (() => { try { return new URL(p.origin).hostname.replace(/^www\./, ''); } catch { return p.origin; } })();
+    const favUrl = (() => { try { return `https://icons.duckduckgo.com/ip3/${new URL(p.origin).hostname}.ico`; } catch { return ''; } })();
+    const revealed = _pwRevealed.has(p.id);
+
+    const row = document.createElement('div');
+    row.className = 'pw-row';
+    row.dataset.id = p.id;
+    const fallbackGlyph = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>`;
+    row.innerHTML =
+      `<div class="pw-fav" data-fallback>${fallbackGlyph}</div>` +
+      `<div class="pw-meta">` +
+        `<div class="pw-origin" title="${escapeHtml(p.origin)}">${escapeHtml(host)}</div>` +
+        `<div class="pw-user" title="${escapeHtml(p.username)}">${escapeHtml(p.username) || '(no username)'}</div>` +
+      `</div>` +
+      `<div class="pw-secret">` +
+        `<span class="pw-dots" data-pw-secret>${revealed ? '' : '••••••••••'}</span>` +
+      `</div>` +
+      `<div class="pw-actions">` +
+        `<button class="pw-act" data-act="reveal" title="${revealed ? 'Hide' : 'Show'} password">${revealed ? PW_ICONS.eyeOff : PW_ICONS.eye}</button>` +
+        `<button class="pw-act" data-act="copy" title="Copy password">${PW_ICONS.copy}</button>` +
+        `<button class="pw-act danger" data-act="delete" title="Delete saved password">${PW_ICONS.trash}</button>` +
+      `</div>`;
+
+    // Try to load a real favicon. On success, swap out the placeholder
+    // glyph; on failure, leave the glyph in place (so the row never has an
+    // empty hole if the favicon CDN gets blocked or is unreachable).
+    if (favUrl) {
+      const favEl = row.querySelector('.pw-fav');
+      const img = new Image();
+      img.referrerPolicy = 'no-referrer';
+      img.addEventListener('load', () => {
+        if (favEl) { favEl.innerHTML = ''; favEl.appendChild(img); }
+      }, { once: true });
+      img.addEventListener('error', () => { /* keep fallback glyph */ }, { once: true });
+      img.src = favUrl;
+    }
+
+    if (revealed) {
+      // Render plaintext synchronously if already revealed.
+      const slot = row.querySelector('[data-pw-secret]');
+      slot.classList.remove('pw-dots');
+      slot.textContent = _pwRevealCache.get(p.id) || '';
+    }
+
+    row.addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-act]');
+      if (!btn) return;
+      const act = btn.dataset.act;
+      if (act === 'reveal') {
+        if (_pwRevealed.has(p.id)) {
+          _pwRevealed.delete(p.id);
+          renderPasswordList();
+        } else {
+          const pw = await api.passwordsReveal(p.id);
+          if (pw == null) { showToast('Could not decrypt this password'); return; }
+          _pwRevealCache.set(p.id, pw);
+          _pwRevealed.add(p.id);
+          renderPasswordList();
+        }
+      } else if (act === 'copy') {
+        let pw = _pwRevealCache.get(p.id);
+        if (pw == null) {
+          pw = await api.passwordsReveal(p.id);
+          if (pw == null) { showToast('Could not decrypt this password'); return; }
+          _pwRevealCache.set(p.id, pw);
+        }
+        try {
+          await navigator.clipboard.writeText(pw);
+          showToast('Password copied');
+        } catch { showToast('Clipboard unavailable'); }
+      } else if (act === 'delete') {
+        if (!confirm(`Delete saved password for ${host}?`)) return;
+        await api.passwordsRemove(p.id);
+        _pwRevealed.delete(p.id);
+        _pwRevealCache.delete(p.id);
+        await refreshPasswordList();
+        showToast('Password removed');
+      }
+    });
+
+    list.appendChild(row);
+  }
+}
+
+// Cache so flipping the eye on/off doesn't hit IPC every time.
+const _pwRevealCache = new Map();
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') closeClearModal();
+});
+
+init();
+</script>
+</body>
+</html>
