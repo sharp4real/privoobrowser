@@ -46,19 +46,16 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: false
         run: npx electron-builder ${{ matrix.args }} --publish never
 
+      - name: List dist output
+        run: ls -la dist/ || dir dist
+
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           name: Beta v1.00
           body: First public release of Privoo Browser. No telemetry. No tracking. No data collection.
-          files: |
-            dist/*.exe
-            dist/*.dmg
-            dist/*.zip
-            dist/*.AppImage
-            dist/*.deb
-            dist/*.rpm
-            dist/*.yml
+          files: dist/**
           token: ${{ secrets.GH_TOKEN }}
           fail_on_unmatched_files: false
+          overwrite: true
