@@ -1383,16 +1383,24 @@ function createTab(url = defaultNewTabUrl(), activate = true, opts = {}) {
   wireWebview(tab);
   enforcePinnedFirst();
 
-  // The webview keeps a solid theme-colored fill (.first-paint) until the
-  // page has actually painted. We clear it only after did-stop-loading AND
-  // a couple of animation frames — clearing on dom-ready alone exposes the
-  // still-blank page for a frame, which is the new-tab flicker.
-  //
-  // Internal privoo:// pages (new tab, settings, …) load instantly from the
-  // local protocol, so the opaque mask isn't needed — and in transparency
-  // mode it would flash an opaque white panel before the (translucent) page
-  // appears. Only mask real network pages, which can be slow to first paint.
-  if (!url.startsWith('privoo://')) wv.classList.add('first-paint');
+  // Network pages: hold a solid theme-colored fill until did-stop-loading so
+  // the user never sees the blank empty webview frame.
+  // privoo:// pages (new tab, settings): use opacity:0 until dom-ready
+  // instead of a solid fill — they load in <50 ms and this avoids flashing
+  // an opaque panel over a transparent window.
+  if (!url.startsWith('privoo://')) {
+    wv.classList.add('first-paint');
+  } else {
+    wv.classList.add('ntp-loading');
+    let _ntpDone = false;
+    const clearNtpLoading = () => {
+      if (_ntpDone) return;
+      _ntpDone = true;
+      requestAnimationFrame(() => wv.classList.remove('ntp-loading'));
+    };
+    wv.addEventListener('dom-ready', clearNtpLoading, { once: true });
+    setTimeout(clearNtpLoading, 600);
+  }
   let _fpCleared = false;
   const clearFirstPaint = () => {
     if (_fpCleared) return;

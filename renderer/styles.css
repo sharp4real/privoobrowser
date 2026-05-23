@@ -1210,6 +1210,11 @@ body.dark #views webview { background: #202124; }
 body.transparent-ui #views webview.first-paint { background: #ffffff !important; }
 body.dark #views webview.first-paint,
 body.transparent-ui.dark #views webview.first-paint { background: #202124 !important; }
+/* privoo:// pages (new tab, settings) load from the local protocol and are
+   near-instant, but there is still a single-frame gap before first paint.
+   Keep the webview invisible (opacity 0) until dom-ready rather than using
+   a solid fill, so transparent-mode windows never flash an opaque panel. */
+#views webview.ntp-loading { opacity: 0; }
 
 /* ─── First-run setup wizard ─────────────────────────────────── */
 .setup-overlay {

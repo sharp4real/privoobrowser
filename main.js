@@ -1085,9 +1085,13 @@ async function hardenSession(sess) {
 // Window
 // ---------------------------------------------------------------------------
 function resolveIcon() {
-  // Prefer logo.png — it's the canonical icon and works across all platforms
-  // (Electron accepts PNG for window icon on Windows/Linux; macOS uses .icns
-  // from the app bundle, not this).
+  // On Linux in a packaged app the window-manager reads the icon from the
+  // real filesystem, not from inside the ASAR archive. extraResources places
+  // logo.png at process.resourcesPath so it is always accessible.
+  if (process.resourcesPath) {
+    const rp = path.join(process.resourcesPath, 'logo.png');
+    if (fs.existsSync(rp)) return rp;
+  }
   for (const name of ['logo.png', 'logo.ico']) {
     const p = path.join(__dirname, name);
     if (fs.existsSync(p)) return p;

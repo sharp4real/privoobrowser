@@ -1,6 +1,6 @@
 {
   "name": "privoo-browser",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Privoo - a private, Chromium-style web browser",
   "main": "main.js",
   "scripts": {
@@ -36,6 +36,9 @@
       { "ext": "pdf",  "name": "PDF Document",  "role": "Viewer", "mimeType": "application/pdf" },
       { "ext": "svg",  "name": "SVG Image",     "role": "Viewer", "mimeType": "image/svg+xml" },
       { "ext": "webp", "name": "WebP Image",    "role": "Viewer", "mimeType": "image/webp" }
+    ],
+    "extraResources": [
+      { "from": "logo.png", "to": "logo.png" }
     ],
     "files": [
       "main.js",
