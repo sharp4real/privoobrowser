@@ -161,6 +161,23 @@ body.transparent-ui.ntp-dark:not(.ntp-wp) #search-form{
   background:rgba(40,41,45,.46) !important;
   border-color:rgba(255,255,255,.12) !important;
 }
+/* Transparent + wallpaper: frosted glass instead of near-opaque fill */
+body.transparent-ui.ntp-wp:not(.ntp-dark) #search-form{
+  background:rgba(255,255,255,.52) !important;
+  border-color:rgba(255,255,255,.42) !important;
+  backdrop-filter:blur(22px) saturate(180%);
+  -webkit-backdrop-filter:blur(22px) saturate(180%);
+}
+body.transparent-ui.ntp-wp.ntp-dark #search-form{
+  background:rgba(28,29,33,.52) !important;
+  border-color:rgba(255,255,255,.14) !important;
+  backdrop-filter:blur(22px) saturate(180%);
+  -webkit-backdrop-filter:blur(22px) saturate(180%);
+}
+/* Explicit #q text color for every transparent combination */
+body.transparent-ui:not(.ntp-dark) #q{color:#1f1f1f;}
+body.transparent-ui.ntp-dark #q{color:#e8eaed;}
+/* Suggestions — frosted for no-wallpaper case */
 body.transparent-ui:not(.ntp-wp) #search-suggestions{
   background:rgba(255,255,255,.78) !important;
   backdrop-filter:blur(20px) saturate(170%);
@@ -168,6 +185,19 @@ body.transparent-ui:not(.ntp-wp) #search-suggestions{
 }
 body.transparent-ui.ntp-dark:not(.ntp-wp) #search-suggestions{
   background:rgba(40,41,45,.82) !important;
+}
+/* Suggestions — frosted for wallpaper case */
+body.transparent-ui.ntp-wp:not(.ntp-dark) #search-suggestions{
+  background:rgba(255,255,255,.84) !important;
+  backdrop-filter:blur(20px) saturate(170%);
+  -webkit-backdrop-filter:blur(20px) saturate(170%);
+  color:#1f1f1f;
+}
+body.transparent-ui.ntp-wp.ntp-dark #search-suggestions{
+  background:rgba(28,29,33,.88) !important;
+  backdrop-filter:blur(20px) saturate(170%);
+  -webkit-backdrop-filter:blur(20px) saturate(170%);
+  color:#e8eaed;
 }
 #search-form:focus-within{
   border-color:transparent;
@@ -488,7 +518,7 @@ body.ntp-wp .wx-card{
 
 <footer id="ntp-footer">
   <div id="ntp-weather" hidden></div>
-  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee.</p>
+  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee. &nbsp;·&nbsp; <span style="opacity:.55">v1.00</span></p>
 </footer>
 
 </div>
