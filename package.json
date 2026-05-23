@@ -96,8 +96,7 @@
     "publish": {
       "provider": "github",
       "owner": "sharp4real",
-      "repo": "privoobrowser",
-      "releaseType": "release"
+      "repo": "privoobrowser"
     }
   }
 }
