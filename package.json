@@ -14,7 +14,7 @@
   "license": "MIT",
   "devDependencies": {
     "electron": "^42.0.1",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^26.0.0"
   },
   "dependencies": {
     "@ghostery/adblocker-electron": "^2.5.2",
@@ -96,7 +96,7 @@
       "provider": "github",
       "owner": "sharp4real",
       "repo": "privoobrowser",
-      "draft": true
+      "releaseType": "draft"
     }
   }
 }
