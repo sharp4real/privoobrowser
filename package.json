@@ -10,7 +10,7 @@
     "dist:linux": "electron-builder --linux",
     "dist:all": "electron-builder -mwl"
   },
-  "author": "",
+  "author": "Privoo <dev@privoo.app>",
   "license": "MIT",
   "devDependencies": {
     "electron": "^42.0.1",
