@@ -50,28 +50,3 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: false
         run: npm run ${{ matrix.script }}
 
-  publish:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Mark draft release as published
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GH_TOKEN }}
-          script: |
-            const tag = context.ref.replace('refs/tags/', '');
-            const releases = await github.rest.repos.listReleases({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-            });
-            const release = releases.data.find(r => r.tag_name === tag);
-            if (release && release.draft) {
-              await github.rest.repos.updateRelease({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                release_id: release.id,
-                draft: false,
-                name: 'Beta v1.00',
-                body: 'First public release of Privoo Browser.\n\nDownload the installer for your platform below.',
-              });
-            }
