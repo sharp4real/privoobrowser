@@ -611,17 +611,58 @@ function documentBaseDomain(wcId) {
 // ONCE and reuse the same instance across every session.
 let _sharedBlocker = null;
 let _sharedBlockerPromise = null;
+// Extra YouTube-specific rules applied on top of the prebuilt filter lists.
+// These target YouTube's anti-adblock detection wall and the ad UI elements
+// the standard lists don't always catch between filter-list update cycles.
+const _YT_EXTRA_FILTERS = [
+  // Block ad tracking pings
+  '||youtube.com/api/stats/ads^',
+  '||youtube.com/pagead/$domain=youtube.com',
+  '||youtube.com/ptracking^',
+  '||youtube.com/youtubei/v1/log_event?*adlogging*',
+  // Cosmetic: remove ad video overlay and in-stream ad containers
+  'youtube.com##.video-ads.ytp-ad-module',
+  'youtube.com##.ytp-ad-overlay-container',
+  'youtube.com##.ytp-ad-player-overlay-layout',
+  'youtube.com##.ytp-ad-skip-button-modern',
+  'youtube.com##.ytp-ad-text-overlay',
+  // Cosmetic: hide the "disable your ad blocker" enforcement modal
+  'youtube.com##ytd-enforcement-message-view-model',
+  'youtube.com##tp-yt-paper-dialog:has(ytd-mealbar-promo-renderer)',
+  'youtube.com##ytd-mealbar-promo-renderer',
+  'youtube.com##ytd-popup-container:has(ytd-mealbar-promo-renderer)',
+  // Scriptlets: neutralize the adPlacements object YouTube uses to detect blockers
+  'youtube.com##+js(set, ytInitialPlayerResponse.adPlacements, undefined)',
+  'youtube.com##+js(set, Object.prototype.adPlacements, undefined)',
+];
+
 async function getSharedBlocker() {
   if (_sharedBlocker) return _sharedBlocker;
   if (_sharedBlockerPromise) return _sharedBlockerPromise;
   _sharedBlockerPromise = (async () => {
     const { ElectronBlocker } = require('@ghostery/adblocker-electron');
     const cachePath = path.join(app.getPath('userData'), 'adblock-engine.bin');
+
+    // Refresh filter lists every 7 days so YouTube anti-adblock bypass rules
+    // stay current. Without this, a stale cache can miss rules that were
+    // added after the user first installed the app.
+    try {
+      const stat = await fs.promises.stat(cachePath);
+      const ageMs = Date.now() - stat.mtimeMs;
+      if (ageMs > 7 * 24 * 60 * 60 * 1000) {
+        await fs.promises.unlink(cachePath).catch(() => {});
+      }
+    } catch { /* cache doesn't exist yet — that's fine */ }
+
     const blocker = await ElectronBlocker.fromPrebuiltAdsAndTracking(fetch, {
       path: cachePath,
       read: fs.promises.readFile,
       write: fs.promises.writeFile,
     });
+
+    // Apply YouTube-specific rules on top of the prebuilt lists every launch.
+    try { blocker.updateFromDiff({ added: _YT_EXTRA_FILTERS }); } catch {}
+
     blocker.on('request-blocked',    () => { stats.blockedAds++; });
     blocker.on('request-redirected', () => { stats.blockedAds++; });
     _sharedBlocker = blocker;
