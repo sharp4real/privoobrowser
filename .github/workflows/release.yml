@@ -42,8 +42,17 @@ jobs:
             --title "Beta v1.00" \
             --notes "First public release of Privoo Browser. No telemetry. No tracking. No data collection." \
             2>/dev/null || true
-          for f in dist/*; do
-            [ -f "$f" ] && gh release upload "${{ github.ref_name }}" "$f" \
+          find dist -maxdepth 1 -type f \( \
+            -name "*.exe" -o -name "*.exe.blockmap" \
+            -o -name "*.dmg" -o -name "*.dmg.blockmap" \
+            -o -name "*.zip" -o -name "*.zip.blockmap" \
+            -o -name "*.AppImage" \
+            -o -name "*.deb" \
+            -o -name "*.rpm" \
+            -o -name "latest*.yml" \
+          \) | while IFS= read -r f; do
+            echo "Uploading $f"
+            gh release upload "${{ github.ref_name }}" "$f" \
               --repo "${{ github.repository }}" --clobber || true
           done
 
@@ -76,8 +85,17 @@ jobs:
             --title "Beta v1.00" \
             --notes "First public release of Privoo Browser. No telemetry. No tracking. No data collection." \
             2>/dev/null || true
-          for f in dist/*; do
-            [ -f "$f" ] && gh release upload "${{ github.ref_name }}" "$f" \
+          find dist -maxdepth 1 -type f \( \
+            -name "*.exe" -o -name "*.exe.blockmap" \
+            -o -name "*.dmg" -o -name "*.dmg.blockmap" \
+            -o -name "*.zip" -o -name "*.zip.blockmap" \
+            -o -name "*.AppImage" \
+            -o -name "*.deb" \
+            -o -name "*.rpm" \
+            -o -name "latest*.yml" \
+          \) | while IFS= read -r f; do
+            echo "Uploading $f"
+            gh release upload "${{ github.ref_name }}" "$f" \
               --repo "${{ github.repository }}" --clobber || true
           done
 
@@ -113,7 +131,16 @@ jobs:
             --title "Beta v1.00" \
             --notes "First public release of Privoo Browser. No telemetry. No tracking. No data collection." \
             2>/dev/null || true
-          for f in dist/*; do
-            [ -f "$f" ] && gh release upload "${{ github.ref_name }}" "$f" \
+          find dist -maxdepth 1 -type f \( \
+            -name "*.exe" -o -name "*.exe.blockmap" \
+            -o -name "*.dmg" -o -name "*.dmg.blockmap" \
+            -o -name "*.zip" -o -name "*.zip.blockmap" \
+            -o -name "*.AppImage" \
+            -o -name "*.deb" \
+            -o -name "*.rpm" \
+            -o -name "latest*.yml" \
+          \) | while IFS= read -r f; do
+            echo "Uploading $f"
+            gh release upload "${{ github.ref_name }}" "$f" \
               --repo "${{ github.repository }}" --clobber || true
           done
