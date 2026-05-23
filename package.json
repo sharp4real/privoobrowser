@@ -5,10 +5,10 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder --win",
-    "dist:mac": "electron-builder --mac --x64 --arm64",
-    "dist:linux": "electron-builder --linux",
-    "dist:all": "electron-builder -mwl"
+    "dist": "electron-builder --win --publish never",
+    "dist:mac": "electron-builder --mac --x64 --arm64 --publish never",
+    "dist:linux": "electron-builder --linux --publish never",
+    "dist:all": "electron-builder -mwl --publish never"
   },
   "author": "Privoo <dev@privoo.app>",
   "license": "MIT",

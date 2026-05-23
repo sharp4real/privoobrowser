@@ -24,19 +24,28 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci
 
       - name: Build
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
-        run: npx electron-builder --win --publish never
+        run: npm run dist
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows
-          path: dist/
-          if-no-files-found: warn
+      - name: Upload to release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --repo "${{ github.repository }}" \
+            --title "Beta v1.00" \
+            --notes "First public release of Privoo Browser. No telemetry. No tracking. No data collection." \
+            2>/dev/null || true
+          for f in dist/*; do
+            [ -f "$f" ] && gh release upload "${{ github.ref_name }}" "$f" \
+              --repo "${{ github.repository }}" --clobber || true
+          done
 
   build-mac:
     runs-on: macos-latest
@@ -49,19 +58,28 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci
 
       - name: Build
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
-        run: npx electron-builder --mac --x64 --arm64 --publish never
+        run: npm run dist:mac
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: mac
-          path: dist/
-          if-no-files-found: warn
+      - name: Upload to release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --repo "${{ github.repository }}" \
+            --title "Beta v1.00" \
+            --notes "First public release of Privoo Browser. No telemetry. No tracking. No data collection." \
+            2>/dev/null || true
+          for f in dist/*; do
+            [ -f "$f" ] && gh release upload "${{ github.ref_name }}" "$f" \
+              --repo "${{ github.repository }}" --clobber || true
+          done
 
   build-linux:
     runs-on: ubuntu-latest
@@ -77,35 +95,16 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y rpm
 
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci
 
       - name: Build
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
-        run: npx electron-builder --linux --publish never
+        run: npm run dist:linux
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux
-          path: dist/
-          if-no-files-found: warn
-
-  release:
-    needs: [build-windows, build-mac, build-linux]
-    runs-on: ubuntu-latest
-    if: always() && startsWith(github.ref, 'refs/tags/') && (needs.build-windows.result == 'success' || needs.build-mac.result == 'success' || needs.build-linux.result == 'success')
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-          merge-multiple: true
-
-      - name: List files
-        run: find artifacts -type f | sort
-
-      - name: Create release and upload files
+      - name: Upload to release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -114,10 +113,7 @@ jobs:
             --title "Beta v1.00" \
             --notes "First public release of Privoo Browser. No telemetry. No tracking. No data collection." \
             2>/dev/null || true
-
-          find artifacts -type f | while IFS= read -r file; do
-            echo "Uploading: $file"
-            gh release upload "${{ github.ref_name }}" "$file" \
-              --repo "${{ github.repository }}" \
-              --clobber || echo "Skipped: $file"
+          for f in dist/*; do
+            [ -f "$f" ] && gh release upload "${{ github.ref_name }}" "$f" \
+              --repo "${{ github.repository }}" --clobber || true
           done
