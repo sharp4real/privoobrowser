@@ -19,11 +19,11 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            script: dist
+            args: --win
           - os: macos-latest
-            script: dist:mac
+            args: --mac --x64 --arm64
           - os: ubuntu-latest
-            script: dist:linux
+            args: --linux
 
     runs-on: ${{ matrix.os }}
     permissions:
@@ -49,5 +49,5 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
-        run: npm run ${{ matrix.script }}
+        run: npx electron-builder ${{ matrix.args }} --publish always
 
