@@ -5,9 +5,24 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 jobs:
-  build-windows:
-    runs-on: windows-latest
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            script: dist
+          - os: macos-latest
+            script: dist:mac
+          - os: ubuntu-latest
+            script: dist:linux
+
+    runs-on: ${{ matrix.os }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -15,59 +30,26 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build Windows installer
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: npm run dist
-
-  build-mac:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build macOS dmg
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: npm run dist:mac
-
-  build-linux:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install dependencies
-        run: npm ci
+          cache: npm
 
       - name: Install Linux build dependencies
-        run: sudo apt-get install -y rpm
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y rpm
 
-      - name: Build Linux packages
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build & publish
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: npm run dist:linux
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: npm run ${{ matrix.script }}
 
   publish:
-    needs: [build-windows, build-mac, build-linux]
+    needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Mark release as published
+      - name: Mark draft release as published
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GH_TOKEN }}
@@ -84,7 +66,7 @@ jobs:
                 repo: context.repo.repo,
                 release_id: release.id,
                 draft: false,
-                name: `Beta v1.00`,
+                name: 'Beta v1.00',
                 body: 'First public release of Privoo Browser.\n\nDownload the installer for your platform below.',
               });
             }
