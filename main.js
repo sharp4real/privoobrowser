@@ -1344,14 +1344,31 @@ function ensureTray() {
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
 
+// Store update state so we can re-send to any window that loads after the event fired.
+let _updateAvailableInfo   = null;
+let _updateDownloadedInfo  = null;
+
+function _sendUpdateToWin(win) {
+  if (!win || win.isDestroyed()) return;
+  if (_updateDownloadedInfo) {
+    win.webContents.send('update-downloaded', _updateDownloadedInfo);
+  } else if (_updateAvailableInfo) {
+    win.webContents.send('update-available', _updateAvailableInfo);
+  }
+}
+
 autoUpdater.on('update-available', (info) => {
-  const win = BrowserWindow.getAllWindows()[0];
-  if (win) win.webContents.send('update-available', info);
+  _updateAvailableInfo = info;
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (!win.isDestroyed()) win.webContents.send('update-available', info);
+  }
 });
 
 autoUpdater.on('update-downloaded', (info) => {
-  const win = BrowserWindow.getAllWindows()[0];
-  if (win) win.webContents.send('update-downloaded', info);
+  _updateDownloadedInfo = info;
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (!win.isDestroyed()) win.webContents.send('update-downloaded', info);
+  }
 });
 
 autoUpdater.on('error', (err) => {
@@ -1362,11 +1379,19 @@ ipcMain.on('install-update-now', () => {
   autoUpdater.quitAndInstall();
 });
 
+// Renderer asks for current update state on load (catches missed events).
+ipcMain.handle('get-update-status', () => ({
+  available: _updateAvailableInfo  || null,
+  downloaded: _updateDownloadedInfo || null,
+}));
+
 function checkForUpdatesIfEnabled() {
   if (!app.isPackaged) return;
   const settings = settingsStore.load();
   if (!settings.autoUpdates) return;
-  autoUpdater.checkForUpdates().catch(() => {});
+  autoUpdater.checkForUpdates().catch((e) => {
+    console.warn('Privoo updater check failed:', e.message);
+  });
 }
 
 // App lifecycle
