@@ -767,95 +767,72 @@
   <script src="emoji-data.js"></script>
   <script src="renderer.js"></script>
 
-  <!-- Auto-update toast -->
-  <div id="update-toast" style="
+  <!-- Auto-update bar -->
+  <div id="update-bar" style="
     display:none;
-    position:fixed;
-    bottom:20px;
-    right:20px;
-    z-index:99999;
-    background:var(--toolbar,#fff);
-    color:var(--text,#1f1f1f);
-    border:1px solid var(--accent,#8ab4f8);
-    border-radius:10px;
-    padding:14px 18px;
-    font-size:13px;
-    box-shadow:var(--panel-shadow,0 4px 20px rgba(0,0,0,0.2));
-    max-width:300px;
-    line-height:1.4;
+    position:fixed;bottom:0;left:0;right:0;z-index:99999;
+    background:#1e2030;color:#e8eaed;
+    border-top:1px solid rgba(138,180,248,.35);
+    padding:10px 20px;
+    flex-direction:row;align-items:center;gap:16px;
+    font-size:13px;font-family:inherit;
+    box-shadow:0 -4px 20px rgba(0,0,0,.35);
   ">
-    <div id="update-toast-msg" style="margin-bottom:10px;font-weight:500;"></div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;">
-      <button id="update-toast-dismiss" style="
-        background:transparent;
-        border:1px solid var(--border,#dadce0);
-        color:var(--text,#1f1f1f);
-        border-radius:6px;
-        padding:4px 12px;
-        cursor:pointer;
-        font-size:12px;
-      ">Later</button>
-      <button id="update-toast-action" style="
-        background:var(--accent,#8ab4f8);
-        border:none;
-        color:var(--on-accent,#202124);
-        border-radius:6px;
-        padding:4px 12px;
-        cursor:pointer;
-        font-size:12px;
-        font-weight:600;
-      "></button>
+    <svg viewBox="0 0 24 24" width="20" height="20" style="flex-shrink:0;fill:#8ab4f8"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/><path d="M13 16h-2V8h2v8z" style="display:none"/></svg>
+    <div style="flex:1;min-width:0;">
+      <div id="upd-msg" style="font-weight:600;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+      <div id="upd-track" style="background:rgba(255,255,255,.15);border-radius:4px;height:5px;overflow:hidden;">
+        <div id="upd-bar" style="background:#8ab4f8;height:100%;width:0%;transition:width .3s ease;border-radius:4px;"></div>
+      </div>
+      <div id="upd-detail" style="font-size:11px;color:#9aa0a6;margin-top:4px;"></div>
     </div>
+    <button id="upd-restart" style="
+      display:none;flex-shrink:0;
+      background:#8ab4f8;color:#202124;border:none;
+      border-radius:8px;padding:8px 18px;
+      font-size:13px;font-weight:700;cursor:pointer;
+    ">Restart &amp; Update</button>
   </div>
   <script>
   (function() {
-    const toast   = document.getElementById('update-toast');
-    const msg     = document.getElementById('update-toast-msg');
-    const action  = document.getElementById('update-toast-action');
-    const dismiss = document.getElementById('update-toast-dismiss');
+    const bar     = document.getElementById('update-bar');
+    const msg     = document.getElementById('upd-msg');
+    const track   = document.getElementById('upd-track');
+    const fill    = document.getElementById('upd-bar');
+    const detail  = document.getElementById('upd-detail');
+    const restart = document.getElementById('upd-restart');
 
-    function showToast(text, btnLabel, onAction) {
-      msg.textContent = text;
-      action.textContent = btnLabel;
-      action.onclick = onAction;
-      toast.style.display = 'block';
+    function showDownloading(version, pct, speed) {
+      msg.textContent = 'Downloading Privoo ' + version + '…';
+      track.style.display = 'block';
+      fill.style.width = (pct || 0) + '%';
+      detail.textContent = pct != null
+        ? Math.round(pct) + '%' + (speed ? '  ·  ' + (speed / 1024 / 1024).toFixed(1) + ' MB/s' : '')
+        : 'Starting download…';
+      restart.style.display = 'none';
+      bar.style.display = 'flex';
     }
 
-    dismiss.onclick = () => { toast.style.display = 'none'; };
+    function showReady(version) {
+      msg.textContent = 'Privoo ' + version + ' is ready to install.';
+      track.style.display = 'none';
+      detail.textContent = 'The update will apply when you restart.';
+      restart.style.display = 'block';
+      bar.style.display = 'flex';
+    }
+
+    restart.onclick = () => { if (window.privoo) window.privoo.installUpdateNow(); };
 
     if (window.privoo) {
-      window.privoo.onUpdateAvailable((info) => {
-        showToast(
-          'Update v' + info.version + ' available — downloading in the background…',
-          'OK',
-          () => { toast.style.display = 'none'; }
-        );
-      });
+      window.privoo.onUpdateAvailable((info) => { showDownloading(info.version, 0, 0); });
+      window.privoo.onUpdateProgress((p)    => { showDownloading(p.version || msg.textContent.replace('Downloading Privoo ','').replace('…',''), p.percent, p.bytesPerSecond); });
+      window.privoo.onUpdateDownloaded((info) => { showReady(info.version); });
 
-      window.privoo.onUpdateDownloaded((info) => {
-        showToast(
-          'Privoo v' + info.version + ' is ready to install.',
-          'Restart & Update',
-          () => { window.privoo.installUpdateNow(); }
-        );
-      });
-
-      // Query current update state on load — catches events that fired before
-      // this listener was registered (e.g. update found during startup).
-      window.privoo.getUpdateStatus().then((status) => {
-        if (status && status.downloaded) {
-          showToast(
-            'Privoo v' + status.downloaded.version + ' is ready to install.',
-            'Restart & Update',
-            () => { window.privoo.installUpdateNow(); }
-          );
-        } else if (status && status.available) {
-          showToast(
-            'Update v' + status.available.version + ' available — downloading in the background…',
-            'OK',
-            () => { toast.style.display = 'none'; }
-          );
-        }
+      // On load: catch any update that was already found before listeners registered.
+      window.privoo.getUpdateStatus().then((s) => {
+        if (!s) return;
+        if (s.downloaded)      showReady(s.downloaded.version);
+        else if (s.available)  showDownloading(s.available.version, s.progress ? s.progress.percent : 0, s.progress ? s.progress.bytesPerSecond : 0);
       }).catch(() => {});
     }
   })();

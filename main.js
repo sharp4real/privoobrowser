@@ -1347,6 +1347,7 @@ autoUpdater.autoInstallOnAppQuit = true;
 // Store update state so we can re-send to any window that loads after the event fired.
 let _updateAvailableInfo   = null;
 let _updateDownloadedInfo  = null;
+let _updateProgressInfo    = null;
 
 function _sendUpdateToWin(win) {
   if (!win || win.isDestroyed()) return;
@@ -1364,8 +1365,16 @@ autoUpdater.on('update-available', (info) => {
   }
 });
 
+autoUpdater.on('download-progress', (progress) => {
+  _updateProgressInfo = progress;
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (!win.isDestroyed()) win.webContents.send('update-progress', progress);
+  }
+});
+
 autoUpdater.on('update-downloaded', (info) => {
   _updateDownloadedInfo = info;
+  _updateProgressInfo   = null;
   for (const win of BrowserWindow.getAllWindows()) {
     if (!win.isDestroyed()) win.webContents.send('update-downloaded', info);
   }
@@ -1381,8 +1390,9 @@ ipcMain.on('install-update-now', () => {
 
 // Renderer asks for current update state on load (catches missed events).
 ipcMain.handle('get-update-status', () => ({
-  available: _updateAvailableInfo  || null,
+  available:  _updateAvailableInfo  || null,
   downloaded: _updateDownloadedInfo || null,
+  progress:   _updateProgressInfo   || null,
 }));
 
 function checkForUpdatesIfEnabled() {
