@@ -94,10 +94,7 @@ jobs:
   release:
     needs: [build-windows, build-mac, build-linux]
     runs-on: ubuntu-latest
-    if: |
-      always() &&
-      startsWith(github.ref, 'refs/tags/') &&
-      (needs.build-windows.result == 'success' || needs.build-mac.result == 'success' || needs.build-linux.result == 'success')
+    if: always() && startsWith(github.ref, 'refs/tags/') && (needs.build-windows.result == 'success' || needs.build-mac.result == 'success' || needs.build-linux.result == 'success')
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -105,22 +102,22 @@ jobs:
           path: artifacts
           merge-multiple: true
 
-      - name: List files to release
+      - name: List files
         run: find artifacts -type f | sort
 
-      - name: Create or update release
+      - name: Create release and upload files
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          TAG: ${{ github.ref_name }}
-          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$TAG" \
-            --repo "$REPO" \
+          gh release create "${{ github.ref_name }}" \
+            --repo "${{ github.repository }}" \
             --title "Beta v1.00" \
             --notes "First public release of Privoo Browser. No telemetry. No tracking. No data collection." \
-            2>/dev/null || echo "Release already exists, uploading files..."
+            2>/dev/null || true
 
-          find artifacts -type f | while read f; do
-            echo "Uploading $f..."
-            gh release upload "$TAG" "$f" --repo "$REPO" --clobber
+          find artifacts -type f | while IFS= read -r file; do
+            echo "Uploading: $file"
+            gh release upload "${{ github.ref_name }}" "$file" \
+              --repo "${{ github.repository }}" \
+              --clobber || echo "Skipped: $file"
           done
