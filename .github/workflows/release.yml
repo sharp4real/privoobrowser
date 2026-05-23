@@ -39,8 +39,13 @@ jobs:
         run: |
           gh release create "${{ github.ref_name }}" \
             --repo "${{ github.repository }}" \
-            --title "Beta v1.00" \
-            --notes "First public release of Privoo Browser. No telemetry. No tracking. No data collection." \
+            --title "Privoo ${{ github.ref_name }}" \
+            --notes "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection." \
+            2>/dev/null || true
+          gh release edit "${{ github.ref_name }}" \
+            --repo "${{ github.repository }}" \
+            --title "Privoo ${{ github.ref_name }}" \
+            --notes "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection." \
             2>/dev/null || true
           find dist -maxdepth 1 -type f \( \
             -name "*.exe" -o -name "*.exe.blockmap" \
@@ -82,8 +87,13 @@ jobs:
         run: |
           gh release create "${{ github.ref_name }}" \
             --repo "${{ github.repository }}" \
-            --title "Beta v1.00" \
-            --notes "First public release of Privoo Browser. No telemetry. No tracking. No data collection." \
+            --title "Privoo ${{ github.ref_name }}" \
+            --notes "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection." \
+            2>/dev/null || true
+          gh release edit "${{ github.ref_name }}" \
+            --repo "${{ github.repository }}" \
+            --title "Privoo ${{ github.ref_name }}" \
+            --notes "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection." \
             2>/dev/null || true
           find dist -maxdepth 1 -type f \( \
             -name "*.exe" -o -name "*.exe.blockmap" \
@@ -128,8 +138,13 @@ jobs:
         run: |
           gh release create "${{ github.ref_name }}" \
             --repo "${{ github.repository }}" \
-            --title "Beta v1.00" \
-            --notes "First public release of Privoo Browser. No telemetry. No tracking. No data collection." \
+            --title "Privoo ${{ github.ref_name }}" \
+            --notes "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection." \
+            2>/dev/null || true
+          gh release edit "${{ github.ref_name }}" \
+            --repo "${{ github.repository }}" \
+            --title "Privoo ${{ github.ref_name }}" \
+            --notes "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection." \
             2>/dev/null || true
           find dist -maxdepth 1 -type f \( \
             -name "*.exe" -o -name "*.exe.blockmap" \
