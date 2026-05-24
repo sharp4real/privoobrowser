@@ -1383,6 +1383,7 @@ function ensureTray() {
 // ---------------------------------------------------------------------------
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
+autoUpdater.disableDifferentialDownload = true;
 
 // Store update state so we can re-send to any window that loads after the event fired.
 let _updateAvailableInfo   = null;
@@ -1444,6 +1445,10 @@ ipcMain.handle('get-update-status', () => ({
   downloaded: _updateDownloadedInfo || null,
   progress:   _updateProgressInfo   || null,
 }));
+
+ipcMain.handle('trigger-update-check', () => {
+  checkForUpdatesIfEnabled();
+});
 
 function checkForUpdatesIfEnabled() {
   if (!app.isPackaged) return;

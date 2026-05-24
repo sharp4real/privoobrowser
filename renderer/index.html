@@ -619,7 +619,7 @@
                 <span>Exit</span>
               </div>
               <hr/>
-              <div class="menu-ver">Privoo v1.0.2</div>
+              <div class="menu-ver">Privoo v1.0.3</div>
             </div>
           </div>
         </div>
@@ -833,11 +833,26 @@
 
     restart.onclick = () => { if (window.privoo) window.privoo.installUpdateNow(); };
 
+    // If download reaches 100% but update-downloaded never fires (silent
+    // verification failure), retry after 20 s so it self-heals.
+    let _stallTimer = null;
+    function armStallTimer() {
+      clearTimeout(_stallTimer);
+      _stallTimer = setTimeout(() => {
+        showError();
+        window.privoo?.triggerUpdateCheck?.();
+      }, 20000);
+    }
+    function cancelStallTimer() { clearTimeout(_stallTimer); _stallTimer = null; }
+
     if (window.privoo) {
       window.privoo.onUpdateAvailable((info) => { showDownloading(info.version, 0, 0); });
-      window.privoo.onUpdateProgress((p)    => { showDownloading(p.version || msg.textContent.replace('Downloading Privoo ','').replace('…',''), p.percent, p.bytesPerSecond); });
-      window.privoo.onUpdateDownloaded((info) => { showReady(info.version); });
-      window.privoo.onUpdateError?.(() => { showError(); });
+      window.privoo.onUpdateProgress((p) => {
+        showDownloading(p.version || msg.textContent.replace('Downloading Privoo ','').replace('…',''), p.percent, p.bytesPerSecond);
+        if (p.percent >= 99.9) armStallTimer();
+      });
+      window.privoo.onUpdateDownloaded((info) => { cancelStallTimer(); showReady(info.version); });
+      window.privoo.onUpdateError?.(() => { cancelStallTimer(); showError(); });
 
       // On load: catch any update that was already found before listeners registered.
       window.privoo.getUpdateStatus().then((s) => {

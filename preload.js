@@ -127,6 +127,7 @@ contextBridge.exposeInMainWorld('privoo', {
   onUpdateError:      (fn) => ipcRenderer.on('update-error',      (_e, msg)  => fn(msg)),
   installUpdateNow:   ()   => ipcRenderer.send('install-update-now'),
   getUpdateStatus:    ()   => ipcRenderer.invoke('get-update-status'),
+  triggerUpdateCheck: ()   => ipcRenderer.invoke('trigger-update-check'),
 });
 
 // Expose version information for About section
