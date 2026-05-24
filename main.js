@@ -376,15 +376,29 @@ function buildPrivooProtocolHandler() {
 
     // Serve root image assets (logo.png, europeprivoobanner.png, …) for any
     // privoo://*/<name>.<ext> request. path.basename strips any directory
-    // parts, so this can't be used to traverse outside the app root.
+    // parts so this can't be used to traverse outside the app root.
+    // We use fs.readFile (ASAR-aware) rather than net.fetch(file://) because
+    // net.fetch cannot read from inside ASAR archives in packaged builds.
     const imgMatch = pathname.toLowerCase().match(/\/([a-z0-9._-]+\.(?:png|jpe?g|svg|webp|gif))$/);
     if (imgMatch) {
-      const asset = path.join(__dirname, path.basename(imgMatch[1]));
-      if (fs.existsSync(asset)) return net.fetch(pathToFileURL(asset).toString());
-      // Fallback: transparent 1x1 PNG (covers a missing logo.png)
+      const name = path.basename(imgMatch[1]);
+      const ext  = path.extname(name).slice(1).replace('jpg', 'jpeg');
+      const ct   = `image/${ext}`;
+      // Prefer extraResources path (outside ASAR) so the file is always reachable.
+      const candidates = process.resourcesPath
+        ? [path.join(process.resourcesPath, name), path.join(__dirname, name)]
+        : [path.join(__dirname, name)];
+      for (const asset of candidates) {
+        if (fs.existsSync(asset)) {
+          try {
+            const data = await fs.promises.readFile(asset);
+            return new Response(data, { headers: { 'content-type': ct } });
+          } catch { /* try next candidate */ }
+        }
+      }
+      // Fallback: transparent 1x1 PNG
       const b64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
-      const buf = Buffer.from(b64, 'base64');
-      return new Response(buf, { headers: { 'content-type': 'image/png' } });
+      return new Response(Buffer.from(b64, 'base64'), { headers: { 'content-type': 'image/png' } });
     }
 
     // New-tab wallpaper (image copied into userData)
