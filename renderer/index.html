@@ -619,7 +619,7 @@
                 <span>Exit</span>
               </div>
               <hr/>
-              <div class="menu-ver">Privoo v1.0.3</div>
+              <div class="menu-ver">Privoo v1.0.4</div>
             </div>
           </div>
         </div>
@@ -813,10 +813,18 @@
       bar.style.display = 'flex';
     }
 
+    let _isMac = false;
+    window.privoo?.getPlatform?.().then(p => {
+      _isMac = (p === 'darwin');
+      if (_isMac) restart.textContent = 'Download Update';
+    }).catch(() => {});
+
     function showReady(version) {
-      msg.textContent = 'Privoo ' + version + ' is ready to install.';
+      msg.textContent = 'Privoo ' + version + ' is available.';
       track.style.display = 'none';
-      detail.textContent = 'The update will apply when you restart.';
+      detail.textContent = _isMac
+        ? 'Click to open the download page and install manually.'
+        : 'The update will apply when you restart.';
       restart.style.display = 'block';
       bar.style.display = 'flex';
     }
@@ -827,7 +835,6 @@
       detail.textContent = 'Restart Privoo to try again immediately.';
       restart.style.display = 'none';
       bar.style.display = 'flex';
-      // Hide bar after 8 s so it doesn't linger.
       setTimeout(() => { bar.style.display = 'none'; }, 8000);
     }
 

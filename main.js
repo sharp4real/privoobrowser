@@ -1382,7 +1382,10 @@ function ensureTray() {
 // Auto-updater
 // ---------------------------------------------------------------------------
 autoUpdater.autoDownload = true;
-autoUpdater.autoInstallOnAppQuit = true;
+// macOS: Squirrel.Mac requires a signed app. Setting autoInstallOnAppQuit=false
+// prevents Squirrel from being triggered after download (which would throw a
+// silent error for unsigned builds and block the update-downloaded event).
+autoUpdater.autoInstallOnAppQuit = process.platform !== 'darwin';
 autoUpdater.disableDifferentialDownload = true;
 
 // Store update state so we can re-send to any window that loads after the event fired.
@@ -1434,9 +1437,13 @@ autoUpdater.on('error', (err) => {
 });
 
 ipcMain.on('install-update-now', () => {
-  // isSilent=true: no NSIS wizard dialog shown
-  // isForceRunAfter=true: launch the new version immediately after install
-  autoUpdater.quitAndInstall(true, true);
+  if (process.platform === 'darwin') {
+    // Squirrel.Mac can't install unsigned apps — open releases page instead.
+    shell.openExternal('https://github.com/sharp4real/privoobrowser/releases/latest');
+  } else {
+    // isSilent=true: no NSIS wizard; isForceRunAfter=true: relaunch after install
+    autoUpdater.quitAndInstall(true, true);
+  }
 });
 
 // Renderer asks for current update state on load (catches missed events).
