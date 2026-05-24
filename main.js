@@ -1422,6 +1422,14 @@ autoUpdater.on('update-downloaded', (info) => {
 
 autoUpdater.on('error', (err) => {
   console.warn('Privoo updater error:', err.message);
+  // Surface to renderer so the UI doesn't freeze silently at 100%.
+  // After an error, schedule a retry in 60 s so a transient issue self-heals.
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (!win.isDestroyed()) win.webContents.send('update-error', err.message || String(err));
+  }
+  _updateAvailableInfo  = null;
+  _updateProgressInfo   = null;
+  setTimeout(() => checkForUpdatesIfEnabled(), 60_000);
 });
 
 ipcMain.on('install-update-now', () => {

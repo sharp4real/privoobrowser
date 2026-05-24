@@ -821,12 +821,23 @@
       bar.style.display = 'flex';
     }
 
+    function showError() {
+      msg.textContent = 'Update failed — retrying shortly.';
+      track.style.display = 'none';
+      detail.textContent = 'Restart Privoo to try again immediately.';
+      restart.style.display = 'none';
+      bar.style.display = 'flex';
+      // Hide bar after 8 s so it doesn't linger.
+      setTimeout(() => { bar.style.display = 'none'; }, 8000);
+    }
+
     restart.onclick = () => { if (window.privoo) window.privoo.installUpdateNow(); };
 
     if (window.privoo) {
       window.privoo.onUpdateAvailable((info) => { showDownloading(info.version, 0, 0); });
       window.privoo.onUpdateProgress((p)    => { showDownloading(p.version || msg.textContent.replace('Downloading Privoo ','').replace('…',''), p.percent, p.bytesPerSecond); });
       window.privoo.onUpdateDownloaded((info) => { showReady(info.version); });
+      window.privoo.onUpdateError?.(() => { showError(); });
 
       // On load: catch any update that was already found before listeners registered.
       window.privoo.getUpdateStatus().then((s) => {

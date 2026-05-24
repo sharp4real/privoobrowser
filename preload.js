@@ -124,6 +124,7 @@ contextBridge.exposeInMainWorld('privoo', {
   onUpdateAvailable:  (fn) => ipcRenderer.on('update-available',  (_e, info) => fn(info)),
   onUpdateProgress:   (fn) => ipcRenderer.on('update-progress',   (_e, p)    => fn(p)),
   onUpdateDownloaded: (fn) => ipcRenderer.on('update-downloaded', (_e, info) => fn(info)),
+  onUpdateError:      (fn) => ipcRenderer.on('update-error',      (_e, msg)  => fn(msg)),
   installUpdateNow:   ()   => ipcRenderer.send('install-update-now'),
   getUpdateStatus:    ()   => ipcRenderer.invoke('get-update-status'),
 });
