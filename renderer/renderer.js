@@ -2548,21 +2548,8 @@ if (wvContextMenu) {
 }
 
 // ─── DevTools ───────────────────────────────────────────────────────────────
-// Open the guest's real Chromium DevTools in a separate window. Goes via
-// main (which calls openDevTools({mode:'detach'}) on the guest's webContents
-// directly) for the most reliable behaviour across Electron versions, with a
-// direct <webview>.openDevTools() fallback. Calling again toggles it off.
-async function openDockedDevTools(tab) {
+function openDockedDevTools(tab) {
   if (!tab?.wv) return;
-  let wcId = null;
-  try { wcId = tab.wv.getWebContentsId(); } catch { /* ignore */ }
-  if (wcId != null && window.privoo?.openDevTools) {
-    try {
-      const res = await window.privoo.openDevTools(wcId, null);
-      if (res?.ok) return;
-    } catch { /* fall through */ }
-  }
-  // Fallback — direct webview method.
   try {
     if (tab.wv.isDevToolsOpened?.()) tab.wv.closeDevTools();
     else tab.wv.openDevTools();

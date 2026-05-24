@@ -1676,6 +1676,22 @@ app.on('web-contents-created', (_event, contents) => {
   const ytAdScript = `(function(){
   const isYT = h => h === 'youtube.com' || h.endsWith('.youtube.com');
   if (!isYT(location.hostname)) return;
+  // Intercept ytInitialPlayerResponse assigned via inline <script> object literal
+  // (bypasses JSON.parse — this is why the first video needed a refresh).
+  try {
+    let _ytipr;
+    Object.defineProperty(window, 'ytInitialPlayerResponse', {
+      get: () => _ytipr,
+      set: v => {
+        if (v && typeof v === 'object') {
+          try { if ('adPlacements' in v) v.adPlacements = []; } catch {}
+          try { if ('playerAds'    in v) v.playerAds    = []; } catch {}
+        }
+        _ytipr = v;
+      },
+      configurable: true,
+    });
+  } catch {}
   const _jp = JSON.parse;
   JSON.parse = function(t, ...a) {
     const r = _jp.call(this, t, ...a);

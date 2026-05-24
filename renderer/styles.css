@@ -937,7 +937,7 @@ body.dark .si-icon.insecure { background: rgba(242,139,130,.18); color: #f28b82;
 }
 
 /* Menu — padded around items with small inner radius, Chrome-style. */
-#menu { padding: 6px; min-width: 240px; }
+#menu { padding: 6px; min-width: 240px; max-height: calc(100vh - 90px); overflow-y: auto; overflow-x: hidden; }
 .menu-ver {
   padding: 5px 12px 3px;
   font-size: 11px;
