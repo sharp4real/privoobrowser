@@ -629,25 +629,42 @@ let _sharedBlockerPromise = null;
 // These target YouTube's anti-adblock detection wall and the ad UI elements
 // the standard lists don't always catch between filter-list update cycles.
 const _YT_EXTRA_FILTERS = [
-  // Block ad tracking pings
+  // ── Allowlist: video playback endpoints must never be blocked ─────────────
+  // These take priority over any blocking rule in the prebuilt filter lists.
+  '@@||youtube.com/youtubei/v1/player^',
+  '@@||youtube.com/youtubei/v1/next^',
+  '@@||youtube.com/youtubei/v1/browse^',
+  '@@||youtube.com/youtubei/v1/search^',
+  '@@||youtube.com/videoplayback^',
+  '@@||googlevideo.com^',
+  '@@||ytimg.com^',
+  '@@||yt3.ggpht.com^',
+  '@@||youtube.com/api/stats/watchtime^',
+  '@@||youtube.com/s/^',
+  // ── Block: ad tracking / serving requests ─────────────────────────────────
   '||youtube.com/api/stats/ads^',
   '||youtube.com/pagead/$domain=youtube.com',
   '||youtube.com/ptracking^',
   '||youtube.com/youtubei/v1/log_event?*adlogging*',
-  // Cosmetic: remove ad video overlay and in-stream ad containers
+  '||doubleclick.net^$domain=youtube.com',
+  // ── Cosmetic: remove in-stream ad UI elements ─────────────────────────────
   'youtube.com##.video-ads.ytp-ad-module',
   'youtube.com##.ytp-ad-overlay-container',
   'youtube.com##.ytp-ad-player-overlay-layout',
   'youtube.com##.ytp-ad-skip-button-modern',
   'youtube.com##.ytp-ad-text-overlay',
-  // Cosmetic: hide the "disable your ad blocker" enforcement modal
+  'youtube.com##.ytp-ad-simple-ad-badge',
+  'youtube.com##.ytp-ad-preview-container',
+  'youtube.com##ytd-action-companion-ad-renderer',
+  'youtube.com##ytd-display-ad-renderer',
+  'youtube.com##ytd-video-masthead-ad-v3-renderer',
+  'youtube.com##ytd-ad-slot-renderer',
+  'youtube.com##ytd-compact-promoted-video-renderer',
+  // ── Cosmetic: anti-adblock enforcement wall ───────────────────────────────
   'youtube.com##ytd-enforcement-message-view-model',
   'youtube.com##tp-yt-paper-dialog:has(ytd-mealbar-promo-renderer)',
   'youtube.com##ytd-mealbar-promo-renderer',
   'youtube.com##ytd-popup-container:has(ytd-mealbar-promo-renderer)',
-  // Scriptlets: neutralize the adPlacements object YouTube uses to detect blockers
-  'youtube.com##+js(set, ytInitialPlayerResponse.adPlacements, undefined)',
-  'youtube.com##+js(set, Object.prototype.adPlacements, undefined)',
 ];
 
 async function getSharedBlocker() {
@@ -655,7 +672,7 @@ async function getSharedBlocker() {
   if (_sharedBlockerPromise) return _sharedBlockerPromise;
   _sharedBlockerPromise = (async () => {
     const { ElectronBlocker } = require('@ghostery/adblocker-electron');
-    const cachePath = path.join(app.getPath('userData'), 'adblock-engine.bin');
+    const cachePath = path.join(app.getPath('userData'), 'adblock-engine-v2.bin');
 
     // Refresh filter lists every 7 days so YouTube anti-adblock bypass rules
     // stay current. Without this, a stale cache can miss rules that were
@@ -1651,6 +1668,57 @@ app.on('web-contents-created', (_event, contents) => {
     platform: process.platform,
   });
 
+  // YouTube ad-block + video-fix script. Injected before any page script runs
+  // so it wins the race against YouTube's detection code. Three layers:
+  //   1. JSON.parse intercept  — strips adPlacements from ytInitialPlayerResponse
+  //   2. fetch intercept       — strips ad slots from /player and /next API calls
+  //   3. setInterval DOM poll  — auto-skips/fast-forwards any ad that slips through
+  const ytAdScript = `(function(){
+  const isYT = h => h === 'youtube.com' || h.endsWith('.youtube.com');
+  if (!isYT(location.hostname)) return;
+  const _jp = JSON.parse;
+  JSON.parse = function(t, ...a) {
+    const r = _jp.call(this, t, ...a);
+    if (r && typeof r === 'object') {
+      try { if ('adPlacements' in r) r.adPlacements = []; } catch {}
+      try { if ('playerAds'    in r) r.playerAds    = []; } catch {}
+    }
+    return r;
+  };
+  const _f = window.fetch;
+  window.fetch = function(input, ...rest) {
+    return _f.call(this, input, ...rest).then(async res => {
+      const url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+      if (url.includes('/youtubei/v1/player') || url.includes('/youtubei/v1/next')) {
+        try {
+          const body = await res.clone().json();
+          if (body.adPlacements !== undefined) body.adPlacements = [];
+          if (body.playerAds    !== undefined) body.playerAds    = [];
+          return new Response(JSON.stringify(body), {
+            status: res.status, statusText: res.statusText, headers: res.headers,
+          });
+        } catch {}
+      }
+      return res;
+    });
+  };
+  setInterval(function() {
+    try {
+      var skip = document.querySelector('.ytp-skip-ad-button,.ytp-ad-skip-button-modern,.ytp-ad-skip-button');
+      if (skip) { skip.click(); return; }
+      var video = document.querySelector('video.html5-main-video');
+      var isAd  = !!document.querySelector('.ytp-ad-player-overlay,.ytp-ad-simple-ad-badge,.ytp-ad-preview-container');
+      if (video && isAd && isFinite(video.duration) && video.duration > 0) {
+        if (!video.muted) video.muted = true;
+        video.playbackRate = 16;
+        if (video.duration - video.currentTime > 0.1) video.currentTime = video.duration - 0.1;
+      }
+      var wall = document.querySelector('ytd-enforcement-message-view-model');
+      if (wall) wall.remove();
+    } catch {}
+  }, 300);
+})();`;
+
   // ── PRIMARY: CDP injection ─────────────────────────────────────────────────
   // Page.addScriptToEvaluateOnNewDocument runs the script BEFORE any page
   // script executes — including inline <script> tags. This is the only way
@@ -1666,6 +1734,10 @@ app.on('web-contents-created', (_event, contents) => {
         source: spoofScript,
         runImmediately: true,
       }).catch(() => { /* command may fail on internal pages */ });
+      contents.debugger.sendCommand('Page.addScriptToEvaluateOnNewDocument', {
+        source: ytAdScript,
+        runImmediately: true,
+      }).catch(() => {});
 
       // Emulate `prefers-color-scheme` so sites that ship a real dark theme
       // follow the user's choice. Pages with no dark theme are handled by the
@@ -1772,6 +1844,7 @@ app.on('web-contents-created', (_event, contents) => {
     // Re-try CDP attach on each navigation in case DevTools was closed.
     if (!cdpAttached) tryAttachCdp();
     contents.executeJavaScript(spoofScript, true).catch(() => {});
+    contents.executeJavaScript(ytAdScript, true).catch(() => {});
     // Safe Mode — blur explicit imagery, but only on hosts the adult-domain
     // classifier flagged. Applying it on every page (its previous behaviour)
     // blurred normal photos on completely innocuous sites.
