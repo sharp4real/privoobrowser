@@ -1085,14 +1085,19 @@ async function hardenSession(sess) {
 // Window
 // ---------------------------------------------------------------------------
 function resolveIcon() {
-  // On Linux in a packaged app the window-manager reads the icon from the
-  // real filesystem, not from inside the ASAR archive. extraResources places
-  // logo.png at process.resourcesPath so it is always accessible.
+  // extraResources places both logo.ico and logo.png outside the ASAR so the
+  // window manager / taskbar can read them from the real filesystem.
+  // On Windows prefer .ico (native multi-resolution); on Linux prefer .png.
+  const byPlatform = process.platform === 'win32'
+    ? ['logo.ico', 'logo.png']
+    : ['logo.png', 'logo.ico'];
   if (process.resourcesPath) {
-    const rp = path.join(process.resourcesPath, 'logo.png');
-    if (fs.existsSync(rp)) return rp;
+    for (const name of byPlatform) {
+      const rp = path.join(process.resourcesPath, name);
+      if (fs.existsSync(rp)) return rp;
+    }
   }
-  for (const name of ['logo.png', 'logo.ico']) {
+  for (const name of byPlatform) {
     const p = path.join(__dirname, name);
     if (fs.existsSync(p)) return p;
   }
@@ -1389,7 +1394,9 @@ autoUpdater.on('error', (err) => {
 });
 
 ipcMain.on('install-update-now', () => {
-  autoUpdater.quitAndInstall();
+  // isSilent=true: no NSIS wizard dialog shown
+  // isForceRunAfter=true: launch the new version immediately after install
+  autoUpdater.quitAndInstall(true, true);
 });
 
 // Renderer asks for current update state on load (catches missed events).

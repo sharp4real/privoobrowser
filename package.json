@@ -1,6 +1,6 @@
 {
   "name": "privoo-browser",
-  "version": "1.0.2",
+  "version": "1.0.1",
   "description": "Privoo - a private, Chromium-style web browser",
   "main": "main.js",
   "scripts": {
@@ -38,7 +38,8 @@
       { "ext": "webp", "name": "WebP Image",    "role": "Viewer", "mimeType": "image/webp" }
     ],
     "extraResources": [
-      { "from": "logo.png", "to": "logo.png" }
+      { "from": "logo.png", "to": "logo.png" },
+      { "from": "logo.ico", "to": "logo.ico" }
     ],
     "files": [
       "main.js",
@@ -60,7 +61,8 @@
       "ytdlp-installer.js",
       "bin/**/*",
       "renderer/**/*",
-      "logo.png"
+      "logo.png",
+      "logo.ico"
     ],
     "win": {
       "icon": "logo.ico",
