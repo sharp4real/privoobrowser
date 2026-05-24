@@ -78,7 +78,8 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Privoo"
+      "shortcutName": "Privoo",
+      "artifactName": "Privoo-Setup-${version}.${ext}"
     },
     "mac": {
       "icon": "logo.icns",
