@@ -2019,6 +2019,7 @@ ipcMain.on('window-close',     (e) => winOf(e)?.close());
 ipcMain.on('setup-finished',   (e) => { const w = winOf(e); if (w && !w.isDestroyed()) { try { w.setResizable(true); } catch {} } });
 ipcMain.handle('window-is-maximized', (e) => !!winOf(e)?.isMaximized());
 ipcMain.handle('get-platform', () => process.platform);
+ipcMain.handle('get-app-version', () => app.getVersion());
 
 // Returns the OS cursor position translated into the window's content area
 // (viewport coords). Lets the renderer position HTML overlays — like the

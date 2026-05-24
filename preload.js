@@ -94,6 +94,7 @@ contextBridge.exposeInMainWorld('privoo', {
   setupFinished:  () => ipcRenderer.send('setup-finished'),
   isMaximized:    () => ipcRenderer.invoke('window-is-maximized'),
   getPlatform:    () => ipcRenderer.invoke('get-platform'),
+  getAppVersion:  () => ipcRenderer.invoke('get-app-version'),
   openDevTools:   (guestWcId, devWcId) => ipcRenderer.invoke('open-devtools', guestWcId, devWcId),
   showContextMenu:(items) => ipcRenderer.invoke('show-context-menu', items),
   showEmojiPanel: () => ipcRenderer.invoke('show-emoji-panel'),
