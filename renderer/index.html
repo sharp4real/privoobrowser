@@ -557,6 +557,11 @@
               <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11z"/></svg>
             </button>
           </div>
+          <div class="toolbar-anchor" id="ai-anchor">
+            <button class="tb-btn round" id="ai-btn" title="Privoo AI">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 9h-2V9h2v2zm0-4h-2V5h2v2zm4 4h-2V9h2v2zm0-4h-2V5h2v2zM9 11H7V9h2v2zm0-4H7V5h2v2z"/></svg>
+            </button>
+          </div>
           <div class="toolbar-anchor" id="menu-anchor">
             <button class="tb-btn round" id="menu-btn" title="Customize and control Privoo">
               <svg viewBox="0 0 20 20" width="18" height="18"><circle cx="10" cy="4" r="1.5"/><circle cx="10" cy="10" r="1.5"/><circle cx="10" cy="16" r="1.5"/></svg>
@@ -590,6 +595,7 @@
               </div>
               <div class="menu-item" data-action="ai-browser">
                 <span class="menu-label">Privoo AI<span class="beta-tag">Beta</span></span>
+                <span class="menu-ai-tag">AI</span>
               </div>
               <hr/>
               <div class="menu-item" data-action="zoom-out"><span>Zoom out</span><span class="kbd">Ctrl+−</span></div>
@@ -619,7 +625,7 @@
                 <span>Exit</span>
               </div>
               <hr/>
-              <div class="menu-ver">Privoo v1.0.4</div>
+              <div class="menu-ver">Privoo v1.0.5</div>
             </div>
           </div>
         </div>
@@ -671,6 +677,15 @@
       </div>
 
       <div id="views-wrap">
+        <!-- Vertical tabs panel — shown when vertical-tabs mode is active -->
+        <div id="vtabs-panel" class="vtabs-panel" hidden>
+          <div id="vtabs-list" class="vtabs-list"></div>
+          <button id="vtabs-new" class="vtabs-new-btn" title="New tab (Ctrl+T)">
+            <svg viewBox="0 0 20 20" width="13" height="13"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>
+            New Tab
+          </button>
+        </div>
+
         <div id="views">
           <div id="split-divider" role="separator" aria-orientation="vertical" title="Drag to resize" hidden></div>
         </div>
@@ -688,6 +703,74 @@
             <webview id="devtools-view" src="about:blank"></webview>
           </div>
         </div>
+
+        <!-- ── Inline AI side panel — full-height right panel ── -->
+        <aside id="ai-panel" class="ai-panel" hidden aria-label="Privoo AI">
+          <div class="ai-panel-header">
+            <span class="ai-panel-title">Privoo AI</span>
+            <span class="beta-tag" style="font-size:9px;padding:2px 6px">Beta</span>
+            <div style="flex:1"></div>
+            <button type="button" id="ai-new-chat" class="ai-hdr-btn" title="New chat">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v15.5l3.5-3.5H20c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-7 9h-2v-2H9V9h2V7h2v2h2v2h-2v2z"/></svg>
+            </button>
+            <button type="button" id="ai-panel-close" class="ai-hdr-btn" title="Close AI panel">
+              <svg viewBox="0 0 14 14" width="11" height="11"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+            </button>
+          </div>
+          <div class="ai-bar">
+            <div class="ai-pill ai-pill-no" id="ai-status">
+              <span class="ai-dot"></span>
+              <span id="ai-status-text">No API key — click Setup</span>
+            </div>
+            <button class="ai-bar-btn" id="ai-cfg-btn" type="button">Setup</button>
+          </div>
+          <div class="ai-chat-area" id="ai-chat-area">
+            <div id="ai-chat-inner" class="ai-chat-inner"></div>
+          </div>
+          <div class="ai-composer">
+            <div class="ai-composer-box">
+              <textarea id="ai-input" rows="1" placeholder="Ask Privoo AI anything…"></textarea>
+              <button id="ai-send" type="button" title="Send" aria-label="Send">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M3 20.5 22 12 3 3.5 3 10l13 2-13 2z"/></svg>
+              </button>
+            </div>
+            <div class="ai-foot">AI can make mistakes. Messages go to your chosen provider.</div>
+          </div>
+          <!-- Setup modal -->
+          <div class="ai-gate" id="ai-gate" hidden>
+            <div class="ai-gate-card">
+              <h3 id="ai-gate-title">Connect an AI</h3>
+              <p class="ai-gate-sub">Pick a provider and paste your API key.</p>
+              <div class="ai-warn">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+                <span>Messages are sent to your provider and billed to your key.</span>
+              </div>
+              <div class="ai-field">
+                <label for="ai-provider">Provider</label>
+                <select id="ai-provider">
+                  <option value="anthropic">Claude — Anthropic</option>
+                  <option value="openai">GPT — OpenAI</option>
+                  <option value="deepseek">DeepSeek</option>
+                  <option value="gemini">Gemini — Google</option>
+                </select>
+              </div>
+              <div class="ai-field">
+                <label for="ai-model">Model</label>
+                <select id="ai-model"></select>
+                <div class="ai-hint" id="ai-model-hint"></div>
+              </div>
+              <div class="ai-field">
+                <label for="ai-apikey">API key</label>
+                <input id="ai-apikey" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your key"/>
+                <div class="ai-hint">Stored <b>encrypted</b> on this device — never synced.</div>
+              </div>
+              <div class="ai-gate-row">
+                <button class="ai-gbtn" id="ai-gate-later" type="button">Later</button>
+                <button class="ai-gbtn ai-gbtn-primary" id="ai-gate-save" type="button">Save &amp; connect</button>
+              </div>
+            </div>
+          </div>
+        </aside>
 
         <!-- ── Customize side panel — sits under the toolbar, beside views ── -->
         <aside id="customize-panel" class="customize-panel hidden" aria-label="Customize Privoo" hidden>
@@ -746,6 +829,10 @@
           <div class="cp-row">
             <span>Shortcuts sidebar</span>
             <label class="switch"><input type="checkbox" id="cp-show-sidebar"><span class="slider"></span></label>
+          </div>
+          <div class="cp-row">
+            <span>Vertical tabs</span>
+            <label class="switch"><input type="checkbox" id="cp-vertical-tabs"><span class="slider"></span></label>
           </div>
           <div class="cp-row">
             <span>Notes button</span>

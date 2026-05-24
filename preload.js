@@ -60,8 +60,11 @@ contextBridge.exposeInMainWorld('privoo', {
   openIncognitoWindow: () => ipcRenderer.invoke('open-incognito-window'),
   onIncognitoMode: (fn) => ipcRenderer.on('incognito-mode', (_e, on) => fn(on)),
 
-  // AI Browser (BETA) — opens its own compact companion window.
+  // AI Browser (BETA) — inline side panel + config/chat IPC.
   openAiWindow: () => ipcRenderer.invoke('open-ai-window'),
+  aiGetConfig: ()        => ipcRenderer.invoke('ai-get-config'),
+  aiSetConfig: (cfg)     => ipcRenderer.invoke('ai-set-config', cfg),
+  aiChat:      (payload) => ipcRenderer.invoke('ai-chat', payload),
 
   // yt-dlp (main window)
   ytdlpDownload:      (url, opts) => ipcRenderer.invoke('ytdlp-download', url, opts || {}),

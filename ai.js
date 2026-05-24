@@ -17,7 +17,7 @@ const crypto = require('crypto');
 const CONFIG_FILE = () => path.join(app.getPath('userData'), 'privoo-ai.json');
 
 const DEFAULTS = {
-  provider: 'anthropic',          // 'anthropic' | 'openai' | 'deepseek'
+  provider: 'anthropic',          // 'anthropic' | 'openai' | 'deepseek' | 'gemini'
   model: 'claude-sonnet-4-6',
 };
 
@@ -25,6 +25,7 @@ const DEFAULT_MODELS = {
   anthropic: 'claude-sonnet-4-6',
   openai: 'gpt-4o-mini',
   deepseek: 'deepseek-chat',
+  gemini: 'gemini-2.0-flash',
 };
 
 // OpenAI-compatible providers (same request/response shape, different host).
@@ -33,7 +34,7 @@ const OPENAI_COMPATIBLE = {
   deepseek: 'https://api.deepseek.com/chat/completions',
 };
 
-const VALID_PROVIDERS = ['anthropic', 'openai', 'deepseek'];
+const VALID_PROVIDERS = ['anthropic', 'openai', 'deepseek', 'gemini'];
 
 // --- key encryption (same approach as password-store) -----------------------
 function machineKey() {
@@ -172,6 +173,27 @@ async function chat(messages, { systemPrompt } = {}) {
         return { ok: false, error: res.json?.error?.message || `${label} HTTP ${res.status}` };
       }
       const text = res.json?.choices?.[0]?.message?.content || '';
+      return { ok: true, text };
+    }
+    // Gemini — Google Generative Language API (different wire format).
+    if (cfg.provider === 'gemini') {
+      const model = cfg.model || DEFAULT_MODELS.gemini;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+      const contents = clean.map((m) => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: m.content }],
+      }));
+      const res = await httpJson(url, {
+        headers: { 'Content-Type': 'application/json' },
+        body: {
+          systemInstruction: { parts: [{ text: sys }] },
+          contents,
+        },
+      });
+      if (res.status !== 200) {
+        return { ok: false, error: res.json?.error?.message || `Gemini HTTP ${res.status}` };
+      }
+      const text = res.json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
       return { ok: true, text };
     }
     // Anthropic

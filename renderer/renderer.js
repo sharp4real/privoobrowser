@@ -301,6 +301,11 @@ const audioVolumeSlider = document.getElementById('audio-volume');
 const extToolbar        = document.getElementById('ext-toolbar');
 const audioVolLabel     = document.getElementById('audio-vol-label');
 const bgMusic           = document.getElementById('bg-music');
+const vtabsPanel        = document.getElementById('vtabs-panel');
+const vtabsList         = document.getElementById('vtabs-list');
+const vtabsNewBtn       = document.getElementById('vtabs-new');
+const aiPanel           = document.getElementById('ai-panel');
+const aiBtn             = document.getElementById('ai-btn');
 
 const STOP_ICON   = `<svg viewBox="0 0 24 24" width="18" height="18"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>`;
 const RELOAD_ICON = `<svg viewBox="0 0 24 24" width="18" height="18"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>`;
@@ -408,6 +413,7 @@ function applyAppSettings() {
   renderBookmarksBar();
   updateBookmarkButton();
   paintToolbarWidgets();
+  applyVerticalTabs(!!settings.verticalTabs);
 }
 
 function onSettingsChanged(next) {
@@ -764,6 +770,7 @@ function renderTabStrip() {
     for (const t of buckets.get(gid)) tabsEl.appendChild(t.tabEl);
   }
   requestAnimationFrame(resizeTabs);
+  renderVtabs();
 }
 
 function makeGroupChip(g) {
@@ -1443,6 +1450,7 @@ function activateTab(id) {
   if (typeof maybeShowOverlayBanner === 'function') maybeShowOverlayBanner(tab.url);
   requestAnimationFrame(resizeTabs);
   scheduleSaveSession();
+  renderVtabs();
 }
 
 function closeTab(id) {
@@ -1599,11 +1607,13 @@ function wireWebview(tab) {
     tab.title = e.title || tab.url;
     if (titleEl) { titleEl.textContent = tab.title; titleEl.title = tab.title; }
     if (tab.id === activeId) updateBookmarkButton();
+    renderVtabs();
   }, { signal });
 
   wv.addEventListener('page-favicon-updated', (e) => {
     const icon = e.favicons?.[0];
     if (icon) applyTabFavicon(tab, icon);
+    renderVtabs();
   }, { signal });
 
   const onNav = () => {
@@ -3035,7 +3045,8 @@ const cpAccentRow   = document.getElementById('cp-accent-row');
 const cpShowHome    = document.getElementById('cp-show-home');
 const cpShowBks     = document.getElementById('cp-show-bookmarks');
 const cpShowSidebar = document.getElementById('cp-show-sidebar');
-const cpShowNotes   = document.getElementById('cp-show-notes');
+const cpShowNotes      = document.getElementById('cp-show-notes');
+const cpVerticalTabs   = document.getElementById('cp-vertical-tabs');
 // cpShowGreet removed — greeting feature deleted
 const cpWpPickBtn   = document.getElementById('cp-wp-pick');
 const cpWpClearBtn  = document.getElementById('cp-wp-clear');
@@ -3107,10 +3118,11 @@ function paintCustomizePanel() {
   if (!cpPanel) return;
   paintThemeButtons();
   paintAccentSwatches();
-  if (cpShowHome)    cpShowHome.checked    = !!settings?.showHomeButton;
-  if (cpShowBks)     cpShowBks.checked     = !!settings?.showBookmarksBar;
-  if (cpShowSidebar) cpShowSidebar.checked = !!settings?.showSidebar;
-  if (cpShowNotes)   cpShowNotes.checked   = !!settings?.showNotesButton;
+  if (cpShowHome)       cpShowHome.checked       = !!settings?.showHomeButton;
+  if (cpShowBks)        cpShowBks.checked        = !!settings?.showBookmarksBar;
+  if (cpShowSidebar)    cpShowSidebar.checked    = !!settings?.showSidebar;
+  if (cpVerticalTabs)   cpVerticalTabs.checked   = !!settings?.verticalTabs;
+  if (cpShowNotes)      cpShowNotes.checked      = !!settings?.showNotesButton;
 }
 
 function openCustomizePanel() {
@@ -3136,7 +3148,16 @@ document.querySelectorAll('.cp-theme-btn').forEach(btn => {
 });
 cpShowHome?.addEventListener('change',    () => saveBrowserSetting({ showHomeButton:    cpShowHome.checked }));
 cpShowBks?.addEventListener('change',     () => saveBrowserSetting({ showBookmarksBar:  cpShowBks.checked  }));
-cpShowSidebar?.addEventListener('change', () => saveBrowserSetting({ showSidebar:       cpShowSidebar.checked }));
+cpShowSidebar?.addEventListener('change', () => saveBrowserSetting({ showSidebar: cpShowSidebar.checked }));
+cpVerticalTabs?.addEventListener('change', async () => {
+  const on = cpVerticalTabs.checked;
+  const patch = { verticalTabs: on };
+  if (on && settings?.showSidebar) {
+    patch.showSidebar = false;
+    if (cpShowSidebar) cpShowSidebar.checked = false;
+  }
+  await saveBrowserSetting(patch);
+});
 cpShowNotes?.addEventListener('change',   () => saveBrowserSetting({ showNotesButton:   cpShowNotes.checked }));
 
 cpWpPickBtn?.addEventListener('click', async () => {
@@ -3409,7 +3430,7 @@ function handleAction(action) {
     case 'history':    createTab(HISTORY_URL); break;
     case 'downloads':  createTab(DOWNLOADS_URL); break;
     case 'extensions': createTab(EXTENSIONS_URL); break;
-    case 'ai-browser': window.privoo.openAiWindow?.().catch(() => {}); break;
+    case 'ai-browser': toggleAiPanel(); break;
     case 'settings':   createTab(SETTINGS_URL); break;
     case 'customize':  openCustomizePanel(); break;
     case 'save-tabs':  saveSessionNow(); break;
@@ -4182,3 +4203,308 @@ function applyPlatformChrome(platform) {
   const tabsScrollEl = document.getElementById('tabs-scroll');
   if (tabsScrollEl) new ResizeObserver(() => resizeTabs()).observe(tabsScrollEl);
 })();
+
+// ─── Vertical Tabs ───────────────────────────────────────────────────────────
+
+function applyVerticalTabs(on) {
+  document.body.classList.toggle('vertical-tabs', on);
+  if (vtabsPanel) vtabsPanel.hidden = !on;
+  if (on) renderVtabs();
+}
+
+function renderVtabs() {
+  if (!vtabsList || !document.body.classList.contains('vertical-tabs')) return;
+  vtabsList.innerHTML = '';
+  for (const tab of tabs) {
+    const el = document.createElement('div');
+    el.className = 'vtab' + (tab.id === activeId ? ' active' : '');
+    el.dataset.tabId = String(tab.id);
+    const fav = tab.faviconUrl || '';
+    el.innerHTML =
+      `<img class="vtab-favicon" src="${fav}" alt="" onerror="this.style.display='none'"/>` +
+      `<span class="vtab-title">${tab.title || 'New Tab'}</span>` +
+      `<button class="vtab-close" type="button" title="Close tab">` +
+        `<svg viewBox="0 0 14 14" width="10" height="10"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>` +
+      `</button>`;
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('.vtab-close')) { closeTab(tab.id); return; }
+      activateTab(tab.id);
+    });
+    vtabsList.appendChild(el);
+  }
+}
+
+vtabsNewBtn?.addEventListener('click', () => createTab());
+
+// ─── Inline AI Panel ─────────────────────────────────────────────────────────
+
+let _aiPanelInited = false;
+let _aiConfig = { provider: 'anthropic', model: 'claude-sonnet-4-6', hasKey: false, hasKeyFor: {}, accepted: false };
+let _aiMessages = [];
+let _aiBusy = false;
+
+const AI_MODELS = {
+  anthropic: [
+    { id: 'claude-sonnet-4-6',          label: 'Claude Sonnet 4.6 — balanced (recommended)' },
+    { id: 'claude-opus-4-7',            label: 'Claude Opus 4.7 — most capable' },
+    { id: 'claude-haiku-4-5-20251001',  label: 'Claude Haiku 4.5 — fastest' },
+    { id: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet' },
+    { id: 'claude-3-5-haiku-20241022',  label: 'Claude 3.5 Haiku' },
+  ],
+  openai: [
+    { id: 'gpt-4o-mini',   label: 'GPT-4o mini — fast & low cost (recommended)' },
+    { id: 'gpt-4o',        label: 'GPT-4o — flagship' },
+    { id: 'gpt-4-turbo',   label: 'GPT-4 Turbo' },
+    { id: 'gpt-4.1-mini',  label: 'GPT-4.1 mini' },
+    { id: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo — cheapest' },
+  ],
+  deepseek: [
+    { id: 'deepseek-chat',     label: 'DeepSeek V3 — general chat (recommended)' },
+    { id: 'deepseek-reasoner', label: 'DeepSeek R1 — step-by-step reasoning' },
+  ],
+  gemini: [
+    { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash — fast (recommended)' },
+    { id: 'gemini-2.5-pro',   label: 'Gemini 2.5 Pro — most capable' },
+    { id: 'gemini-1.5-pro',   label: 'Gemini 1.5 Pro' },
+  ],
+};
+const AI_DEFAULT_MODELS = {
+  anthropic: 'claude-sonnet-4-6',
+  openai:    'gpt-4o-mini',
+  deepseek:  'deepseek-chat',
+  gemini:    'gemini-2.0-flash',
+};
+const AI_KEY_HINTS = {
+  anthropic: 'Get a key from <b>console.anthropic.com</b>',
+  openai:    'Get a key from <b>platform.openai.com</b>',
+  deepseek:  'Get a key from <b>platform.deepseek.com</b>',
+  gemini:    'Get a key from <b>aistudio.google.com</b>',
+};
+const AI_PROVIDER_LABELS = { anthropic: 'Claude', openai: 'GPT (OpenAI)', deepseek: 'DeepSeek', gemini: 'Gemini' };
+
+function _aiEl(id) { return document.getElementById(id); }
+
+function _aiModelLabel(provider, modelId) {
+  const m = (AI_MODELS[provider] || []).find(x => x.id === modelId);
+  return m ? m.label.split(' — ')[0] : (modelId || '');
+}
+
+function _aiFillModels(provider, selected) {
+  const sel = _aiEl('ai-model');
+  if (!sel) return;
+  sel.innerHTML = '';
+  const list = AI_MODELS[provider] || [];
+  for (const m of list) {
+    const o = document.createElement('option');
+    o.value = m.id; o.textContent = m.label;
+    sel.appendChild(o);
+  }
+  if (selected && !list.some(m => m.id === selected)) {
+    const o = document.createElement('option');
+    o.value = selected; o.textContent = selected + ' — saved';
+    sel.appendChild(o);
+  }
+  sel.value = selected || AI_DEFAULT_MODELS[provider] || (list[0]?.id) || '';
+}
+
+function _aiRefreshStatus() {
+  const pill   = _aiEl('ai-status');
+  const text   = _aiEl('ai-status-text');
+  const dot    = pill?.querySelector('.ai-dot');
+  if (!pill || !text) return;
+  if (_aiConfig.hasKey) {
+    pill.className = 'ai-pill ai-pill-ok';
+    text.innerHTML =
+      '<b>' + (AI_PROVIDER_LABELS[_aiConfig.provider] || _aiConfig.provider) + '</b>' +
+      '<span class="ai-pill-model">' + _aiModelLabel(_aiConfig.provider, _aiConfig.model) + '</span>';
+  } else {
+    pill.className = 'ai-pill ai-pill-no';
+    text.textContent = 'No API key — click Setup';
+  }
+}
+
+function _aiRenderChat() {
+  const inner = _aiEl('ai-chat-inner');
+  if (!inner) return;
+  inner.innerHTML = '';
+  if (!_aiMessages.length) {
+    const e = document.createElement('div');
+    e.className = 'ai-empty';
+    e.innerHTML =
+      '<div class="ai-empty-mark"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg></div>' +
+      '<h3>How can I help?</h3>' +
+      '<p>Ask anything — summaries, ideas, code. Powered by your own API key.</p>' +
+      '<div class="ai-chips" id="ai-chips"></div>';
+    inner.appendChild(e);
+    ['Explain a concept', 'Summarize text', 'Write some code', 'Brainstorm ideas'].forEach(c => {
+      const b = document.createElement('button');
+      b.className = 'ai-chip'; b.type = 'button'; b.textContent = c;
+      b.addEventListener('click', () => {
+        const inp = _aiEl('ai-input');
+        if (inp) { inp.value = c + ': '; inp.focus(); }
+      });
+      e.querySelector('#ai-chips').appendChild(b);
+    });
+    return;
+  }
+  for (const m of _aiMessages) {
+    const wrap = document.createElement('div');
+    wrap.className = 'ai-msg ' + (m.role === 'user' ? 'ai-user' : m.role === 'err' ? 'ai-err' : 'ai-assistant');
+    const av = document.createElement('div'); av.className = 'ai-av';
+    if (m.role === 'user') av.textContent = 'You';
+    else if (m.role === 'err') av.textContent = '!';
+    else av.textContent = 'AI';
+    const b = document.createElement('div'); b.className = 'ai-bubble'; b.textContent = m.content;
+    wrap.appendChild(av); wrap.appendChild(b);
+    inner.appendChild(wrap);
+  }
+  const area = _aiEl('ai-chat-area');
+  if (area) area.scrollTop = area.scrollHeight;
+}
+
+async function _aiSend() {
+  if (_aiBusy) return;
+  const inp = _aiEl('ai-input');
+  const text = inp?.value?.trim();
+  if (!text) return;
+  if (!_aiConfig.hasKey) {
+    _aiMessages.push({ role: 'err', content: '⚠ Add your API key first — click Setup.' });
+    _aiRenderChat();
+    _aiOpenGate();
+    return;
+  }
+  _aiMessages.push({ role: 'user', content: text });
+  if (inp) { inp.value = ''; inp.style.height = 'auto'; }
+  _aiRenderChat();
+  _aiBusy = true;
+  const sendBtn = _aiEl('ai-send');
+  if (sendBtn) sendBtn.disabled = true;
+  // Typing indicator
+  const area = _aiEl('ai-chat-area');
+  const typing = document.createElement('div');
+  typing.className = 'ai-msg ai-typing';
+  typing.innerHTML = '<div class="ai-av">AI</div><div class="ai-bubble"><span class="ai-dots"><i></i><i></i><i></i></span></div>';
+  _aiEl('ai-chat-inner')?.appendChild(typing);
+  if (area) area.scrollTop = area.scrollHeight;
+  let res;
+  try {
+    res = await window.privoo.aiChat({ messages: _aiMessages.map(m => ({ role: m.role, content: m.content })) });
+  } catch (e) { res = { ok: false, error: String(e?.message || e) }; }
+  typing.remove();
+  if (res?.ok) {
+    _aiMessages.push({ role: 'assistant', content: res.text || '(empty response)' });
+  } else if (res?.error === 'NO_KEY') {
+    _aiMessages.push({ role: 'err', content: '⚠ Add your API key first — click Setup.' });
+    _aiOpenGate();
+  } else {
+    _aiMessages.push({ role: 'err', content: '⚠ ' + (res?.error || 'Request failed.') });
+  }
+  _aiBusy = false;
+  if (sendBtn) sendBtn.disabled = false;
+  _aiRenderChat();
+}
+
+function _aiOpenGate() {
+  const gate = _aiEl('ai-gate');
+  if (!gate) return;
+  const provSel = _aiEl('ai-provider');
+  if (provSel) provSel.value = _aiConfig.provider;
+  _aiFillModels(_aiConfig.provider, _aiConfig.model);
+  const keyInp = _aiEl('ai-apikey');
+  if (keyInp) {
+    keyInp.value = '';
+    keyInp.placeholder = _aiConfig.hasKeyFor?.[_aiConfig.provider] ? 'Key saved — leave blank to keep' : 'Paste your key';
+  }
+  const hint = _aiEl('ai-model-hint');
+  if (hint) hint.innerHTML = AI_KEY_HINTS[_aiConfig.provider] || '';
+  const title = _aiEl('ai-gate-title');
+  if (title) title.textContent = _aiConfig.hasKey ? 'AI settings' : 'Connect an AI';
+  gate.hidden = false;
+  setTimeout(() => keyInp?.focus(), 50);
+}
+
+function initAiPanel() {
+  if (_aiPanelInited) return;
+  _aiPanelInited = true;
+
+  // Close button
+  _aiEl('ai-panel-close')?.addEventListener('click', () => toggleAiPanel());
+
+  // New chat
+  _aiEl('ai-new-chat')?.addEventListener('click', () => {
+    if (_aiBusy) return;
+    _aiMessages = [];
+    _aiRenderChat();
+    _aiEl('ai-input')?.focus();
+  });
+
+  // Setup button
+  _aiEl('ai-cfg-btn')?.addEventListener('click', _aiOpenGate);
+
+  // Provider change in gate
+  _aiEl('ai-provider')?.addEventListener('change', () => {
+    const p = _aiEl('ai-provider')?.value;
+    if (!p) return;
+    _aiFillModels(p, p === _aiConfig.provider ? _aiConfig.model : null);
+    const hint = _aiEl('ai-model-hint');
+    if (hint) hint.innerHTML = AI_KEY_HINTS[p] || '';
+    const keyInp = _aiEl('ai-apikey');
+    if (keyInp) keyInp.placeholder = _aiConfig.hasKeyFor?.[p] ? 'Key saved — leave blank to keep' : 'Paste your key';
+  });
+
+  // Gate save
+  _aiEl('ai-gate-save')?.addEventListener('click', async () => {
+    const provider = _aiEl('ai-provider')?.value;
+    const model    = _aiEl('ai-model')?.value?.trim() || AI_DEFAULT_MODELS[provider];
+    const apiKey   = _aiEl('ai-apikey')?.value?.trim();
+    const patch    = { provider, model, accepted: true };
+    if (apiKey) patch.apiKey = apiKey;
+    try { _aiConfig = await window.privoo.aiSetConfig(patch); } catch {}
+    _aiRefreshStatus();
+    const gate = _aiEl('ai-gate');
+    if (gate) gate.hidden = true;
+  });
+
+  // Gate later
+  _aiEl('ai-gate-later')?.addEventListener('click', async () => {
+    const p = _aiEl('ai-provider')?.value || _aiConfig.provider;
+    try { _aiConfig = await window.privoo.aiSetConfig({ provider: p, accepted: true }); } catch {}
+    _aiRefreshStatus();
+    const gate = _aiEl('ai-gate');
+    if (gate) gate.hidden = true;
+  });
+
+  // Send button
+  _aiEl('ai-send')?.addEventListener('click', _aiSend);
+
+  // Textarea: Enter sends, Shift+Enter newline; auto-resize
+  const inp = _aiEl('ai-input');
+  inp?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); _aiSend(); }
+  });
+  inp?.addEventListener('input', () => {
+    if (!inp) return;
+    inp.style.height = 'auto';
+    inp.style.height = Math.min(inp.scrollHeight, 110) + 'px';
+  });
+
+  // Load config and init state
+  window.privoo.aiGetConfig?.().then((cfg) => {
+    if (cfg) _aiConfig = cfg;
+    _aiRefreshStatus();
+    _aiRenderChat();
+    if (!_aiConfig.hasKey && !_aiConfig.accepted) _aiOpenGate();
+    _aiEl('ai-input')?.focus();
+  }).catch(() => { _aiRenderChat(); });
+}
+
+function toggleAiPanel() {
+  if (!aiPanel) return;
+  const opening = aiPanel.hidden;
+  aiPanel.hidden = !opening;
+  if (aiBtn) aiBtn.classList.toggle('ai-active', opening);
+  if (opening) initAiPanel();
+}
+
+// AI toolbar button click
+aiBtn?.addEventListener('click', toggleAiPanel);

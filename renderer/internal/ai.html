@@ -340,6 +340,7 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
           <option value="anthropic">Claude — Anthropic</option>
           <option value="openai">GPT — OpenAI</option>
           <option value="deepseek">DeepSeek</option>
+          <option value="gemini">Gemini — Google</option>
         </select>
       </div>
       <div class="f">
@@ -363,7 +364,7 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
 <script>
 (function(){
   const api = window.privooInternal;
-  const PROVIDER_NAME = { anthropic:'Claude', openai:'GPT (OpenAI)', deepseek:'DeepSeek' };
+  const PROVIDER_NAME = { anthropic:'Claude', openai:'GPT (OpenAI)', deepseek:'DeepSeek', gemini:'Gemini' };
 
   // Selectable models per provider — no typing needed. First entry is the
   // default. `id` is sent to the API; `label` is shown in the dropdown.
@@ -386,16 +387,23 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
       { id:'deepseek-chat',     label:'DeepSeek V3 — general chat (recommended)' },
       { id:'deepseek-reasoner', label:'DeepSeek R1 — step-by-step reasoning' },
     ],
+    gemini:[
+      { id:'gemini-2.0-flash', label:'Gemini 2.0 Flash — fast (recommended)' },
+      { id:'gemini-2.5-pro',   label:'Gemini 2.5 Pro — most capable' },
+      { id:'gemini-1.5-pro',   label:'Gemini 1.5 Pro' },
+    ],
   };
   const DEFAULT_MODELS = {
     anthropic: MODELS.anthropic[0].id,
     openai:    MODELS.openai[0].id,
     deepseek:  MODELS.deepseek[0].id,
+    gemini:    MODELS.gemini[0].id,
   };
   const KEY_HINTS = {
     anthropic:'Get a key from <b>console.anthropic.com</b>',
     openai:'Get a key from <b>platform.openai.com</b>',
     deepseek:'Get a key from <b>platform.deepseek.com</b>',
+    gemini:'Get a key from <b>aistudio.google.com</b>',
   };
 
   // Fill the model <select> for a provider, selecting `selected` if present.

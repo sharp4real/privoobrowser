@@ -171,6 +171,7 @@ const DEFAULTS = {
   showGeoToolbar: true,
   showNotesButton: false, // hidden by default — opt-in via Settings → Features
   showSidebar: false,     // shortcuts rail on the left — opt-in via Settings → Features
+  verticalTabs: false,    // show tabs in a vertical left panel instead of horizontal strip
   sidebarLinks: [],
   ghostName: '',          // user-supplied name for the Privoo mascot
   accentColor: '',        // empty = use stylesheet default (light blue)
