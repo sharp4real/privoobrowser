@@ -47,15 +47,16 @@ jobs:
             --title "Privoo ${{ github.ref_name }}" \
             --notes "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection." \
             2>/dev/null || true
+          # Upload installer first, then latest.yml last so the hash file
+          # is only updated once the binary it references is already present.
           find dist -maxdepth 1 -type f \( \
             -name "*.exe" -o -name "*.exe.blockmap" \
-            -o -name "*.dmg" -o -name "*.dmg.blockmap" \
-            -o -name "*.zip" -o -name "*.zip.blockmap" \
-            -o -name "*.AppImage" \
-            -o -name "*.deb" \
-            -o -name "*.rpm" \
-            -o -name "latest*.yml" \
           \) | while IFS= read -r f; do
+            echo "Uploading $f"
+            gh release upload "${{ github.ref_name }}" "$f" \
+              --repo "${{ github.repository }}" --clobber || true
+          done
+          find dist -maxdepth 1 -type f -name "latest.yml" | while IFS= read -r f; do
             echo "Uploading $f"
             gh release upload "${{ github.ref_name }}" "$f" \
               --repo "${{ github.repository }}" --clobber || true
@@ -95,15 +96,16 @@ jobs:
             --title "Privoo ${{ github.ref_name }}" \
             --notes "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection." \
             2>/dev/null || true
+          # Upload binaries first, then latest-mac.yml last.
           find dist -maxdepth 1 -type f \( \
-            -name "*.exe" -o -name "*.exe.blockmap" \
-            -o -name "*.dmg" -o -name "*.dmg.blockmap" \
+            -name "*.dmg" -o -name "*.dmg.blockmap" \
             -o -name "*.zip" -o -name "*.zip.blockmap" \
-            -o -name "*.AppImage" \
-            -o -name "*.deb" \
-            -o -name "*.rpm" \
-            -o -name "latest*.yml" \
           \) | while IFS= read -r f; do
+            echo "Uploading $f"
+            gh release upload "${{ github.ref_name }}" "$f" \
+              --repo "${{ github.repository }}" --clobber || true
+          done
+          find dist -maxdepth 1 -type f -name "latest-mac.yml" | while IFS= read -r f; do
             echo "Uploading $f"
             gh release upload "${{ github.ref_name }}" "$f" \
               --repo "${{ github.repository }}" --clobber || true
@@ -113,11 +115,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
 
       - name: Install Linux build dependencies
         run: sudo apt-get update && sudo apt-get install -y rpm
@@ -146,15 +143,17 @@ jobs:
             --title "Privoo ${{ github.ref_name }}" \
             --notes "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection." \
             2>/dev/null || true
+          # Upload binaries first, then latest-linux.yml last.
           find dist -maxdepth 1 -type f \( \
-            -name "*.exe" -o -name "*.exe.blockmap" \
-            -o -name "*.dmg" -o -name "*.dmg.blockmap" \
-            -o -name "*.zip" -o -name "*.zip.blockmap" \
-            -o -name "*.AppImage" \
+            -name "*.AppImage" \
             -o -name "*.deb" \
             -o -name "*.rpm" \
-            -o -name "latest*.yml" \
           \) | while IFS= read -r f; do
+            echo "Uploading $f"
+            gh release upload "${{ github.ref_name }}" "$f" \
+              --repo "${{ github.repository }}" --clobber || true
+          done
+          find dist -maxdepth 1 -type f -name "latest-linux.yml" | while IFS= read -r f; do
             echo "Uploading $f"
             gh release upload "${{ github.ref_name }}" "$f" \
               --repo "${{ github.repository }}" --clobber || true
