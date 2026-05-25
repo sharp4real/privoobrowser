@@ -919,7 +919,7 @@
     function showError(errMsg) {
       msg.textContent = 'Update failed — retrying shortly.';
       track.style.display = 'none';
-      detail.textContent = errMsg ? errMsg : 'Restart Privoo to try again immediately.';
+      detail.textContent = errMsg ? errMsg : 'The update will retry automatically.';
       restart.style.display = 'none';
       bar.style.display = 'flex';
       setTimeout(() => { bar.style.display = 'none'; }, 12000);
