@@ -7,6 +7,9 @@ const DOWNLOADS_URL  = 'privoo://downloads/';
 const HISTORY_URL    = 'privoo://history/';
 const EXTENSIONS_URL = 'privoo://extensions/';
 
+// Default favicon shown for internal pages and when a real favicon fails to load
+const VTAB_DEFAULT_FAVICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='16' height='16'%3E%3Cpath fill='%235f6368' d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z'/%3E%3C/svg%3E";
+
 // ─── Fingerprint spoofing — injected into every real web page ────────────────
 // Brave-style "farbling": canvas noise is DETERMINISTIC per-origin instead of
 // random per-page-load. This means the same site sees the same canvas hash on
@@ -591,6 +594,9 @@ function paintToolbarWidgets() {
   if (geoToolbarBtn) geoToolbarBtn.hidden = !settings.showGeoToolbar;
   // Notes button — off by default, enable in Settings → Features
   if (notesBtn) notesBtn.hidden = !settings.showNotesButton;
+  // Translate toolbar button — off by default, enable in Settings → Features
+  const translateAnchor = document.getElementById('translate-anchor');
+  if (translateAnchor) translateAnchor.hidden = !settings.showTranslateButton;
   // AI toolbar button — on by default, can be hidden in Settings → Features
   const aiAnchor = document.getElementById('ai-anchor');
   if (aiAnchor) aiAnchor.hidden = settings.showAiButton === false;
@@ -2569,6 +2575,7 @@ function closePopovers() {
   geoPopover?.classList.add('hidden');
   siteInfoPopover?.classList.add('hidden');
   notesPopover?.classList.add('hidden');
+  document.getElementById('translate-popover')?.classList.add('hidden');
   emojiPickerEl?.classList.add('hidden');
   if (audioPopover && !audioPopover.classList.contains('hidden')) {
     audioPopover.classList.add('hidden');
@@ -3360,6 +3367,27 @@ notesBtn?.addEventListener('click', (e) => {
   togglePopover(notesPopover);
   if (wasHidden) showNotesList();
 });
+
+// ─── Translate ───────────────────────────────────────────────────────────────
+{
+  const translateBtn     = document.getElementById('translate-btn');
+  const translatePopover = document.getElementById('translate-popover');
+  const translateLang    = document.getElementById('translate-lang');
+  const translateGo      = document.getElementById('translate-go');
+
+  translateBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    togglePopover(translatePopover);
+  });
+
+  translateGo?.addEventListener('click', () => {
+    const tab = activeTab();
+    if (!tab?.url || tab.url.startsWith('privoo://') || tab.url.startsWith('about:')) return;
+    const lang = translateLang?.value || 'es';
+    navigate(`https://translate.google.com/translate?sl=auto&tl=${lang}&u=${encodeURIComponent(tab.url)}`);
+    translatePopover?.classList.add('hidden');
+  });
+}
 
 // ─── Sidebar wiring ──────────────────────────────────────────────────────────
 document.getElementById('sidebar-add')?.addEventListener('click', (e) => {
@@ -4379,8 +4407,8 @@ function _updateVtabEl(el, tab) {
   if (titleEl) titleEl.textContent = tab.title || 'New Tab';
   const favEl = el.querySelector('.vtab-favicon');
   if (favEl) {
-    const newSrc = tab.faviconUrl || '';
-    if (favEl.src !== newSrc) { favEl.src = newSrc; favEl.style.display = ''; }
+    const newSrc = tab.faviconUrl || VTAB_DEFAULT_FAVICON;
+    if (favEl.src !== newSrc) favEl.src = newSrc;
   }
 }
 
@@ -4400,9 +4428,9 @@ function _makeVtabEl(tab) {
 
   const fav = document.createElement('img');
   fav.className = 'vtab-favicon';
-  fav.src = tab.faviconUrl || '';
+  fav.src = tab.faviconUrl || VTAB_DEFAULT_FAVICON;
   fav.alt = '';
-  fav.addEventListener('error', () => { fav.style.display = 'none'; });
+  fav.addEventListener('error', () => { fav.src = VTAB_DEFAULT_FAVICON; });
   el.appendChild(fav);
 
   const titleEl = document.createElement('span');

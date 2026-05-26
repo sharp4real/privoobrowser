@@ -212,6 +212,7 @@ body.transparent-ui #ytdlp-popover,
 body.transparent-ui #geo-popover,
 body.transparent-ui #audio-popover,
 body.transparent-ui #notes-popover,
+body.transparent-ui #translate-popover,
 body.transparent-ui .context-menu,
 body.transparent-ui #wv-context-menu,
 body.transparent-ui #tab-context-menu {
@@ -231,6 +232,7 @@ body.transparent-ui.dark #ytdlp-popover,
 body.transparent-ui.dark #geo-popover,
 body.transparent-ui.dark #audio-popover,
 body.transparent-ui.dark #notes-popover,
+body.transparent-ui.dark #translate-popover,
 body.transparent-ui.dark .context-menu,
 body.transparent-ui.dark #wv-context-menu,
 body.transparent-ui.dark #tab-context-menu {
@@ -2571,6 +2573,51 @@ body.dark #emoji-grid::-webkit-scrollbar-thumb { background: #5f6368; }
   flex-shrink: 0;
 }
 .notes-count { font-variant-numeric: tabular-nums; }
+
+/* ── Translate popover ──────────────────────────────────────────── */
+.translate-body {
+  padding: 10px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.translate-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.translate-label {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.translate-select {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 12.5px;
+  color: var(--text);
+  background: var(--omni-bg);
+  cursor: default;
+  font-family: inherit;
+  outline: none;
+}
+.translate-select:focus { border-color: var(--accent); }
+.translate-go-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 6px 16px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: default;
+  font-family: inherit;
+  align-self: flex-end;
+  transition: opacity .12s;
+}
+.translate-go-btn:hover { opacity: .86; }
+
 .sidebar-flyout {
   position: fixed;
   z-index: 11000;
@@ -3429,10 +3476,10 @@ body.dark .vtab.active {
 }
 /* Entrance animation for newly added tabs */
 @keyframes vtab-enter {
-  from { opacity: 0; transform: translateX(-6px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
-.vtab.vtab-enter { animation: vtab-enter .18s cubic-bezier(.2,.8,.4,1) both; }
+.vtab.vtab-enter { animation: vtab-enter .16s ease both; }
 
 /* ── Favicon ── */
 .vtab-favicon {

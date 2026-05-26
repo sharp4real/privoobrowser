@@ -172,6 +172,7 @@ const DEFAULTS = {
   showNotesButton: false, // hidden by default — opt-in via Settings → Features
   showSidebar: false,     // shortcuts rail on the left — opt-in via Settings → Features
   showAiButton: true,     // AI toolbar button — can be hidden via Settings → Features
+  showTranslateButton: false, // Translate toolbar button — off by default, enable in Settings → Features
   centerSidebarIcons: false, // vertically center shortcut icons in the sidebar rail
   verticalTabs: false,    // show tabs in a vertical left panel instead of horizontal strip
   vtabsCollapsed: false,  // vertical tabs panel collapsed to icon-only rail
