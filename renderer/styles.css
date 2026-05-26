@@ -107,19 +107,21 @@ body.transparent-ui #bookmarks-bar {
 body.transparent-ui .tab.active {
   background: linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,255,255,.72)) !important;
 }
-/* Omnibox — frosted glass pill. !important + the backdrop blur make it
-   read as a distinct translucent surface over the toolbar rather than a
-   muddy double-rgba layer. */
+/* Omnibox — ultra-light frosted pill that reads as part of the glass
+   toolbar. Low alpha so the OS material shows through; becomes more
+   opaque on focus so text is always readable. */
 body.transparent-ui #omnibox-wrap {
-  background: rgba(255, 255, 255, .58) !important;
-  backdrop-filter: blur(16px) saturate(170%);
-  -webkit-backdrop-filter: blur(16px) saturate(170%);
-  border-color: rgba(255, 255, 255, .55) !important;
+  background: rgba(255, 255, 255, .18) !important;
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border-color: rgba(255, 255, 255, .28) !important;
 }
-body.transparent-ui #omnibox-wrap:hover { background: rgba(255, 255, 255, .68) !important; }
+body.transparent-ui #omnibox-wrap:hover { background: rgba(255, 255, 255, .26) !important; }
 body.transparent-ui #omnibox-wrap:focus-within {
-  background: rgba(255, 255, 255, .82) !important;
+  background: rgba(255, 255, 255, .74) !important;
   border-color: var(--accent) !important;
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
 }
 body.transparent-ui #omnibox        { background: transparent !important; }
 /* The tab strip is a plain white veil — matching the titlebar, not a separate
@@ -156,13 +158,17 @@ body.transparent-ui.dark .tab.active {
   background: linear-gradient(180deg, rgba(66,67,72,.66), rgba(58,59,64,.58)) !important;
 }
 body.transparent-ui.dark #omnibox-wrap  {
-  background: rgba(32, 33, 36, .55) !important;
+  background: rgba(32, 33, 36, .36) !important;
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
   border-color: rgba(255, 255, 255, .14) !important;
 }
-body.transparent-ui.dark #omnibox-wrap:hover { background: rgba(48, 49, 52, .66) !important; }
+body.transparent-ui.dark #omnibox-wrap:hover { background: rgba(48, 49, 52, .46) !important; }
 body.transparent-ui.dark #omnibox-wrap:focus-within {
-  background: rgba(48, 49, 52, .82) !important;
+  background: rgba(48, 49, 52, .74) !important;
   border-color: var(--accent) !important;
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
 }
 body.transparent-ui.dark .strip         { background: rgba(42, 43, 47, .46) !important; }
 
@@ -3554,36 +3560,28 @@ body.dark .vtab-close:hover { background: rgba(255,255,255,.12); }
 
 /* ── AI panel transparency ── */
 body.transparent-ui #ai-panel {
-  background: rgba(255,255,255,.60) !important;
+  background: rgba(255,255,255,.26) !important;
   backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
 }
 body.transparent-ui .ai-panel-header,
 body.transparent-ui .ai-bar {
-  background: rgba(255,255,255,.50) !important;
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  background: rgba(255,255,255,.20) !important;
 }
 body.transparent-ui .ai-composer {
-  background: rgba(255,255,255,.46) !important;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(255,255,255,.16) !important;
 }
 body.transparent-ui.dark #ai-panel {
-  background: rgba(32,33,36,.64) !important;
+  background: rgba(32,33,36,.38) !important;
   backdrop-filter: blur(24px) saturate(140%);
   -webkit-backdrop-filter: blur(24px) saturate(140%);
 }
 body.transparent-ui.dark .ai-panel-header,
 body.transparent-ui.dark .ai-bar {
-  background: rgba(28,29,33,.52) !important;
-  backdrop-filter: blur(24px) saturate(140%);
-  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  background: rgba(28,29,33,.30) !important;
 }
 body.transparent-ui.dark .ai-composer {
-  background: rgba(28,29,33,.48) !important;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(28,29,33,.26) !important;
 }
 
 /* ── Centered sidebar icons ── */
@@ -3601,7 +3599,7 @@ body.sidebar-centered .sidebar-rail {
   border-left: 1px solid var(--border);
   min-height: 0;
   position: relative;
-  overflow: hidden;
+  overflow: clip;
 }
 #ai-panel[hidden] { display: none !important; }
 

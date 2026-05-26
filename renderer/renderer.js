@@ -4274,21 +4274,25 @@ function _doRenderVtabs() {
   const ungrouped = tabs.filter(t => !t.pinned && !t.groupId);
   const grouped   = tabs.filter(t => !t.pinned && t.groupId);
 
-  const newNodes = [];
-
+  // Build ordered list of desired items with stable keys
+  const desired = [];
   if (pinned.length) {
-    const lbl = document.createElement('div');
-    lbl.className = 'vtabs-section-label';
-    lbl.textContent = 'Pinned';
-    newNodes.push(lbl);
-    for (const t of pinned) newNodes.push(_makeVtabEl(t));
-    const hr = document.createElement('div');
-    hr.className = 'vtabs-section-divider';
-    newNodes.push(hr);
+    desired.push({ key: '__pinned-label__', make: () => {
+      const el = document.createElement('div');
+      el.className = 'vtabs-section-label';
+      el.textContent = 'Pinned';
+      el.dataset.vtabKey = '__pinned-label__';
+      return el;
+    }});
+    for (const t of pinned) desired.push({ key: `tab-${t.id}`, tab: t });
+    desired.push({ key: '__pinned-divider__', make: () => {
+      const el = document.createElement('div');
+      el.className = 'vtabs-section-divider';
+      el.dataset.vtabKey = '__pinned-divider__';
+      return el;
+    }});
   }
-
-  for (const t of ungrouped) newNodes.push(_makeVtabEl(t));
-
+  for (const t of ungrouped) desired.push({ key: `tab-${t.id}`, tab: t });
   const seenGroups = [];
   const buckets = new Map();
   for (const t of grouped) {
@@ -4297,43 +4301,94 @@ function _doRenderVtabs() {
   }
   for (const gid of seenGroups) {
     const g = tabGroups.find(x => x.id === gid);
-    if (g) newNodes.push(_makeVtabGroupEl(g));
-    for (const t of (buckets.get(gid) || [])) newNodes.push(_makeVtabEl(t));
+    if (g) desired.push({ key: `group-${gid}`, group: g });
+    for (const t of (buckets.get(gid) || [])) desired.push({ key: `tab-${t.id}`, tab: t });
   }
 
-  // Reconcile: reuse existing .vtab nodes to avoid flash; only add/remove diffs
-  const existingById = new Map();
-  for (const el of vtabsList.querySelectorAll('.vtab[data-tab-id]')) {
-    existingById.set(el.dataset.tabId, el);
+  // Index all existing keyed nodes
+  const existingByKey = new Map();
+  for (const el of vtabsList.querySelectorAll('[data-vtab-key]')) {
+    existingByKey.set(el.dataset.vtabKey, el);
   }
 
-  const tabIds = new Set(tabs.map(t => String(t.id)));
-  const finalNodes = newNodes.map(node => {
-    const tid = node.dataset?.tabId;
-    if (tid && existingById.has(tid)) {
-      const existing = existingById.get(tid);
-      // Update active state and group styling in-place — no DOM removal
-      existing.className = node.className;
-      existing.style.cssText = node.style.cssText;
-      const existTitle = existing.querySelector('.vtab-title');
-      const newTitle   = node.querySelector('.vtab-title');
-      if (existTitle && newTitle) existTitle.textContent = newTitle.textContent;
-      const existFav = existing.querySelector('.vtab-favicon');
-      const newFav   = node.querySelector('.vtab-favicon');
-      if (existFav && newFav && existFav.src !== newFav.src) existFav.src = newFav.src;
-      return existing;
+  const usedKeys = new Set();
+  const newEls = [];
+
+  // Single forward pass: reuse/update existing nodes, insert new ones, reorder with insertBefore
+  let cursor = vtabsList.firstChild;
+  for (const item of desired) {
+    usedKeys.add(item.key);
+    let el;
+    if (existingByKey.has(item.key)) {
+      el = existingByKey.get(item.key);
+      if (item.tab) _updateVtabEl(el, item.tab);
+      if (item.group) {
+        const nameEl = el.querySelector('.vtab-group-name');
+        if (nameEl) nameEl.textContent = item.group.name || 'Group';
+      }
+    } else {
+      if (item.tab) {
+        el = _makeVtabEl(item.tab);
+      } else if (item.group) {
+        el = _makeVtabGroupEl(item.group);
+        el.dataset.vtabKey = item.key;
+      } else {
+        el = item.make();
+      }
+      newEls.push(el);
     }
-    if (tid) node.classList.add('vtab-enter');
-    return node;
-  });
+    // Move to correct position if not already there
+    if (el !== cursor) {
+      vtabsList.insertBefore(el, cursor || null);
+    } else {
+      cursor = el.nextSibling;
+    }
+  }
 
-  vtabsList.replaceChildren(...finalNodes);
+  // Remove stale nodes that are no longer in the desired list
+  for (const [key, el] of existingByKey) {
+    if (!usedKeys.has(key)) el.remove();
+  }
+
+  // Trigger enter animation on new tab nodes only, after the browser paints them
+  if (newEls.length) {
+    requestAnimationFrame(() => {
+      for (const el of newEls) {
+        if (el.classList.contains('vtab')) el.classList.add('vtab-enter');
+      }
+    });
+  }
+}
+
+function _updateVtabEl(el, tab) {
+  const isActive = tab.id === activeId;
+  let cls = 'vtab';
+  if (isActive) cls += ' active';
+  if (tab.pinned) cls += ' vtab-pinned';
+  if (tab.groupId) {
+    const g = tabGroups.find(x => x.id === tab.groupId);
+    if (g) {
+      el.style.setProperty('--vtab-group-color', g.solid || g.color || '#5f6368');
+      cls += ' vtab-grouped';
+    }
+  } else {
+    el.style.removeProperty('--vtab-group-color');
+  }
+  el.className = cls;
+  const titleEl = el.querySelector('.vtab-title');
+  if (titleEl) titleEl.textContent = tab.title || 'New Tab';
+  const favEl = el.querySelector('.vtab-favicon');
+  if (favEl) {
+    const newSrc = tab.faviconUrl || '';
+    if (favEl.src !== newSrc) { favEl.src = newSrc; favEl.style.display = ''; }
+  }
 }
 
 function _makeVtabEl(tab) {
   const el = document.createElement('div');
   el.className = 'vtab' + (tab.id === activeId ? ' active' : '') + (tab.pinned ? ' vtab-pinned' : '');
   el.dataset.tabId = String(tab.id);
+  el.dataset.vtabKey = `tab-${tab.id}`;
 
   if (tab.groupId) {
     const g = tabGroups.find(x => x.id === tab.groupId);
