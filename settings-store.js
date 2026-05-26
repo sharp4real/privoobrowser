@@ -171,6 +171,8 @@ const DEFAULTS = {
   showGeoToolbar: true,
   showNotesButton: false, // hidden by default — opt-in via Settings → Features
   showSidebar: false,     // shortcuts rail on the left — opt-in via Settings → Features
+  showAiButton: true,     // AI toolbar button — can be hidden via Settings → Features
+  centerSidebarIcons: false, // vertically center shortcut icons in the sidebar rail
   verticalTabs: false,    // show tabs in a vertical left panel instead of horizontal strip
   sidebarLinks: [],
   ghostName: '',          // user-supplied name for the Privoo mascot

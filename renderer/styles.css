@@ -3309,7 +3309,7 @@ body.dark #split-divider::before { background: #3c4043; }
 
 /* ── Vertical tabs panel ────────────────────────────────────────── */
 #vtabs-panel {
-  width: 200px;
+  width: 210px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -3317,48 +3317,98 @@ body.dark #split-divider::before { background: #3c4043; }
   border-right: 1px solid var(--border);
   overflow: hidden;
   min-height: 0;
+  transition: width .2s cubic-bezier(.4,0,.2,1);
 }
 #vtabs-panel[hidden] { display: none !important; }
 body.vertical-tabs #tabs-scroll { display: none !important; }
 body.vertical-tabs #titlebar-trailing-spacer { flex: 1; }
+
+/* Collapsed state — icon-only rail */
+body.vtabs-collapsed #vtabs-panel { width: 52px; }
+body.vtabs-collapsed .vtabs-header-title { display: none; }
+body.vtabs-collapsed .vtabs-new-label { display: none; }
+body.vtabs-collapsed .vtab-title { display: none; }
+body.vtabs-collapsed .vtab-close { display: none !important; }
+body.vtabs-collapsed .vtabs-collapse-btn svg { transform: rotate(180deg); }
+body.vtabs-collapsed .vtab { justify-content: center; padding: 8px 0; }
+body.vtabs-collapsed .vtabs-new-btn { justify-content: center; padding: 10px 0; }
+
+/* ── Vtabs header ── */
+.vtabs-header {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  flex-shrink: 0;
+  padding: 0 6px 0 12px;
+  border-bottom: 1px solid var(--border);
+  gap: 4px;
+}
+.vtabs-header-title {
+  flex: 1;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.vtabs-collapse-btn {
+  width: 26px; height: 26px;
+  border: none; background: transparent;
+  border-radius: 6px;
+  color: var(--muted);
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  cursor: default;
+  transition: background .12s, color .12s;
+}
+.vtabs-collapse-btn svg { transition: transform .2s cubic-bezier(.4,0,.2,1); }
+.vtabs-collapse-btn:hover { background: var(--hover); color: var(--text); }
 
 .vtabs-list {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
-  padding: 4px 6px;
+  padding: 5px 6px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 .vtab {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 8px;
-  border-radius: 8px;
+  padding: 7px 9px;
+  border-radius: 9px;
   cursor: default;
   font-size: 12.5px;
   color: var(--text);
   min-width: 0;
   user-select: none;
   position: relative;
+  transition: background .12s;
 }
 .vtab:hover { background: var(--tab-hover); }
-.vtab.active { background: var(--tab-active); font-weight: 500; }
+.vtab.active {
+  background: var(--tab-active);
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
 body.dark .vtab.active { background: var(--strip-focus); }
 .vtab-favicon {
-  width: 14px; height: 14px;
+  width: 15px; height: 15px;
   flex-shrink: 0;
   object-fit: contain;
-  border-radius: 2px;
+  border-radius: 3px;
 }
 .vtab-title {
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 12.5px;
 }
 .vtab-close {
   width: 18px; height: 18px;
@@ -3369,16 +3419,18 @@ body.dark .vtab.active { background: var(--strip-focus); }
   align-items: center; justify-content: center;
   flex-shrink: 0;
   cursor: default;
+  transition: background .1s, color .1s;
 }
 .vtab:hover .vtab-close { display: flex; }
-.vtab-close:hover { background: rgba(0,0,0,.12); color: var(--text); }
+.vtab-close:hover { background: rgba(0,0,0,.12); color: var(--danger,#d93025); }
 body.dark .vtab-close:hover { background: rgba(255,255,255,.12); }
 .vtabs-new-btn {
   flex-shrink: 0;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 7px;
-  padding: 8px 10px;
+  padding: 9px 10px;
   border: none;
   background: transparent;
   color: var(--muted);
@@ -3387,8 +3439,34 @@ body.dark .vtab-close:hover { background: rgba(255,255,255,.12); }
   cursor: default;
   border-top: 1px solid var(--border);
   width: 100%;
+  transition: background .12s, color .12s;
 }
 .vtabs-new-btn:hover { background: var(--hover); color: var(--text); }
+
+/* ── AI panel transparency ── */
+body.transparent-ui #ai-panel {
+  background: rgba(255,255,255,.48);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+}
+body.transparent-ui .ai-panel-header,
+body.transparent-ui .ai-bar {
+  background: rgba(255,255,255,.36);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+}
+body.transparent-ui.dark #ai-panel {
+  background: rgba(35,36,40,.54);
+}
+body.transparent-ui.dark .ai-panel-header,
+body.transparent-ui.dark .ai-bar {
+  background: rgba(35,36,40,.44);
+}
+
+/* ── Centered sidebar icons ── */
+body.sidebar-centered .sidebar-rail {
+  justify-content: center;
+}
 
 /* ── Inline AI side panel ───────────────────────────────────────── */
 #ai-panel {

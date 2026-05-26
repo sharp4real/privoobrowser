@@ -590,8 +590,12 @@ function paintToolbarWidgets() {
   if (geoToolbarBtn) geoToolbarBtn.hidden = !settings.showGeoToolbar;
   // Notes button — off by default, enable in Settings → Features
   if (notesBtn) notesBtn.hidden = !settings.showNotesButton;
+  // AI toolbar button — on by default, can be hidden in Settings → Features
+  const aiAnchor = document.getElementById('ai-anchor');
+  if (aiAnchor) aiAnchor.hidden = settings.showAiButton === false;
   // Shortcuts sidebar — also off by default, enable in Settings → Features
   if (appSidebar) appSidebar.hidden = !settings.showSidebar;
+  document.body.classList.toggle('sidebar-centered', !!settings.centerSidebarIcons);
   renderPinnedExtensions();
   if (settings.showSidebar) renderSidebarRail();
 }
@@ -4276,6 +4280,10 @@ function renderVtabs() {
 }
 
 vtabsNewBtn?.addEventListener('click', () => createTab());
+
+document.getElementById('vtabs-collapse')?.addEventListener('click', () => {
+  document.body.classList.toggle('vtabs-collapsed');
+});
 
 // ─── Inline AI Panel ─────────────────────────────────────────────────────────
 
