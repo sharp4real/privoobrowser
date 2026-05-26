@@ -3342,7 +3342,7 @@ body.vtabs-collapsed .vtabs-new-label,
 body.vtabs-collapsed .vtab-title { display: none; }
 body.vtabs-collapsed .vtab-close { display: none !important; }
 body.vtabs-collapsed .vtabs-collapse-btn svg { transform: rotate(180deg); }
-body.vtabs-collapsed .vtab { justify-content: center; padding: 0; }
+body.vtabs-collapsed .vtab { justify-content: center; padding: 0 !important; }
 body.vtabs-collapsed .vtabs-new-btn { justify-content: center; padding: 0; }
 
 /* ── Header ── */
@@ -3400,11 +3400,11 @@ body.vtabs-collapsed .vtabs-new-btn { justify-content: center; padding: 0; }
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 0 8px 0 10px;
-  height: 34px;
+  padding: 0 8px 0 12px;
+  height: 36px;
   border-radius: 9px;
   cursor: default;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text);
   min-width: 0;
   flex-shrink: 0;
@@ -3421,6 +3421,12 @@ body.dark .vtab.active {
   background: rgba(138,180,248,.14);
   box-shadow: inset 3px 0 0 var(--accent);
 }
+/* Entrance animation for newly added tabs */
+@keyframes vtab-enter {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.vtab.vtab-enter { animation: vtab-enter .18s cubic-bezier(.2,.8,.4,1) both; }
 
 /* ── Favicon ── */
 .vtab-favicon {
@@ -3463,7 +3469,7 @@ body.dark .vtab.active {
 .vtab-close:hover { background: rgba(0,0,0,.12); color: var(--red); }
 body.dark .vtab-close:hover { background: rgba(255,255,255,.12); }
 
-/* ── New tab button ── */
+/* ── New tab button (sits below the header, above the list) ── */
 .vtabs-new-btn {
   flex-shrink: 0;
   display: flex;
@@ -3471,18 +3477,80 @@ body.dark .vtab-close:hover { background: rgba(255,255,255,.12); }
   justify-content: flex-start;
   gap: 8px;
   padding: 0 14px;
-  height: 40px;
+  height: 38px;
   border: none;
   background: transparent;
   color: var(--muted);
   font-size: 12px;
   font-family: inherit;
   cursor: default;
-  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   width: 100%;
   transition: background .12s, color .12s;
 }
 .vtabs-new-btn:hover { background: var(--hover); color: var(--text); }
+
+/* ── Pinned section label + divider ── */
+.vtabs-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--muted);
+  padding: 6px 14px 2px;
+  opacity: .65;
+  user-select: none;
+  flex-shrink: 0;
+}
+.vtabs-section-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 10px 6px;
+  flex-shrink: 0;
+}
+
+/* ── Pin icon shown on pinned tabs ── */
+.vtab-pin-icon {
+  flex-shrink: 0;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  opacity: .5;
+}
+
+/* ── Grouped vtab — left color bar overrides the accent bar ── */
+.vtab-grouped { box-shadow: inset 3px 0 0 var(--vtab-group-color, var(--border)); }
+.vtab-grouped.active { box-shadow: inset 3px 0 0 var(--vtab-group-color, var(--accent)) !important; }
+
+/* ── Group header row in vtabs ── */
+.vtab-group-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px 3px 14px;
+  cursor: default;
+  user-select: none;
+  flex-shrink: 0;
+}
+.vtab-group-header:hover .vtab-group-name { color: var(--text); }
+.vtab-group-dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--vtab-group-color, var(--border));
+  flex-shrink: 0;
+}
+.vtab-group-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  transition: color .12s;
+}
 
 /* ── AI panel transparency ── */
 body.transparent-ui #ai-panel {

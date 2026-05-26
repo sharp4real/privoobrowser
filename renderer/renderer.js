@@ -4258,26 +4258,148 @@ function applyVerticalTabs(on) {
   if (on) renderVtabs();
 }
 
+let _vtabsRafPending = false;
 function renderVtabs() {
   if (!vtabsList || !document.body.classList.contains('vertical-tabs')) return;
-  vtabsList.innerHTML = '';
-  for (const tab of tabs) {
-    const el = document.createElement('div');
-    el.className = 'vtab' + (tab.id === activeId ? ' active' : '');
-    el.dataset.tabId = String(tab.id);
-    const fav = tab.faviconUrl || '';
-    el.innerHTML =
-      `<img class="vtab-favicon" src="${fav}" alt="" onerror="this.style.display='none'"/>` +
-      `<span class="vtab-title">${tab.title || 'New Tab'}</span>` +
-      `<button class="vtab-close" type="button" title="Close tab">` +
-        `<svg viewBox="0 0 14 14" width="10" height="10"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>` +
-      `</button>`;
-    el.addEventListener('click', (e) => {
-      if (e.target.closest('.vtab-close')) { closeTab(tab.id); return; }
-      activateTab(tab.id);
-    });
-    vtabsList.appendChild(el);
+  if (_vtabsRafPending) return;
+  _vtabsRafPending = true;
+  requestAnimationFrame(_doRenderVtabs);
+}
+
+function _doRenderVtabs() {
+  _vtabsRafPending = false;
+  if (!vtabsList || !document.body.classList.contains('vertical-tabs')) return;
+
+  const pinned    = tabs.filter(t => t.pinned);
+  const ungrouped = tabs.filter(t => !t.pinned && !t.groupId);
+  const grouped   = tabs.filter(t => !t.pinned && t.groupId);
+
+  const newNodes = [];
+
+  if (pinned.length) {
+    const lbl = document.createElement('div');
+    lbl.className = 'vtabs-section-label';
+    lbl.textContent = 'Pinned';
+    newNodes.push(lbl);
+    for (const t of pinned) newNodes.push(_makeVtabEl(t));
+    const hr = document.createElement('div');
+    hr.className = 'vtabs-section-divider';
+    newNodes.push(hr);
   }
+
+  for (const t of ungrouped) newNodes.push(_makeVtabEl(t));
+
+  const seenGroups = [];
+  const buckets = new Map();
+  for (const t of grouped) {
+    if (!buckets.has(t.groupId)) { seenGroups.push(t.groupId); buckets.set(t.groupId, []); }
+    buckets.get(t.groupId).push(t);
+  }
+  for (const gid of seenGroups) {
+    const g = tabGroups.find(x => x.id === gid);
+    if (g) newNodes.push(_makeVtabGroupEl(g));
+    for (const t of (buckets.get(gid) || [])) newNodes.push(_makeVtabEl(t));
+  }
+
+  // Reconcile: reuse existing .vtab nodes to avoid flash; only add/remove diffs
+  const existingById = new Map();
+  for (const el of vtabsList.querySelectorAll('.vtab[data-tab-id]')) {
+    existingById.set(el.dataset.tabId, el);
+  }
+
+  const tabIds = new Set(tabs.map(t => String(t.id)));
+  const finalNodes = newNodes.map(node => {
+    const tid = node.dataset?.tabId;
+    if (tid && existingById.has(tid)) {
+      const existing = existingById.get(tid);
+      // Update active state and group styling in-place — no DOM removal
+      existing.className = node.className;
+      existing.style.cssText = node.style.cssText;
+      const existTitle = existing.querySelector('.vtab-title');
+      const newTitle   = node.querySelector('.vtab-title');
+      if (existTitle && newTitle) existTitle.textContent = newTitle.textContent;
+      const existFav = existing.querySelector('.vtab-favicon');
+      const newFav   = node.querySelector('.vtab-favicon');
+      if (existFav && newFav && existFav.src !== newFav.src) existFav.src = newFav.src;
+      return existing;
+    }
+    if (tid) node.classList.add('vtab-enter');
+    return node;
+  });
+
+  vtabsList.replaceChildren(...finalNodes);
+}
+
+function _makeVtabEl(tab) {
+  const el = document.createElement('div');
+  el.className = 'vtab' + (tab.id === activeId ? ' active' : '') + (tab.pinned ? ' vtab-pinned' : '');
+  el.dataset.tabId = String(tab.id);
+
+  if (tab.groupId) {
+    const g = tabGroups.find(x => x.id === tab.groupId);
+    if (g) {
+      el.style.setProperty('--vtab-group-color', g.solid || g.color || '#5f6368');
+      el.classList.add('vtab-grouped');
+    }
+  }
+
+  const fav = document.createElement('img');
+  fav.className = 'vtab-favicon';
+  fav.src = tab.faviconUrl || '';
+  fav.alt = '';
+  fav.addEventListener('error', () => { fav.style.display = 'none'; });
+  el.appendChild(fav);
+
+  const titleEl = document.createElement('span');
+  titleEl.className = 'vtab-title';
+  titleEl.textContent = tab.title || 'New Tab';
+  el.appendChild(titleEl);
+
+  if (tab.pinned) {
+    const pin = document.createElement('span');
+    pin.className = 'vtab-pin-icon';
+    pin.innerHTML = `<svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><path d="M16 9V4h1a1 1 0 0 0 0-2H7a1 1 0 0 0 0 2h1v5l-2 3h4v5l1 1 1-1v-5h4l-2-3z"/></svg>`;
+    el.appendChild(pin);
+  }
+
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'vtab-close';
+  closeBtn.type = 'button';
+  closeBtn.title = 'Close tab';
+  closeBtn.innerHTML = `<svg viewBox="0 0 14 14" width="10" height="10"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>`;
+  el.appendChild(closeBtn);
+
+  el.addEventListener('click', (e) => {
+    if (e.target.closest('.vtab-close')) { closeTab(tab.id); return; }
+    activateTab(tab.id);
+  });
+  el.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    openTabContextMenu(e.clientX, e.clientY, tab.id);
+  });
+  return el;
+}
+
+function _makeVtabGroupEl(g) {
+  const el = document.createElement('div');
+  el.className = 'vtab-group-header';
+  el.dataset.groupId = String(g.id);
+  el.style.setProperty('--vtab-group-color', g.solid || g.color || '#5f6368');
+
+  const dot = document.createElement('span');
+  dot.className = 'vtab-group-dot';
+  el.appendChild(dot);
+
+  const name = document.createElement('span');
+  name.className = 'vtab-group-name';
+  name.textContent = g.name || 'Group';
+  el.appendChild(name);
+
+  el.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    openGroupContextMenu(g.id);
+  });
+  return el;
 }
 
 vtabsNewBtn?.addEventListener('click', () => createTab());
