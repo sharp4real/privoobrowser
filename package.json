@@ -79,7 +79,7 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Privoo",
-      "artifactName": "Privoo-Setup-${version}.${ext}"
+      "artifactName": "Privoo-Setup-${version}-2.${ext}"
     },
     "mac": {
       "icon": "logo.icns",
