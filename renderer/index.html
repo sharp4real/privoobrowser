@@ -995,7 +995,11 @@
       setTimeout(() => { bar.style.display = 'none'; }, 12000);
     }
 
-    restart.onclick = () => { if (window.privoo) window.privoo.installUpdateNow(); };
+    restart.onclick = () => {
+      const overlay = document.getElementById('updating-overlay');
+      if (overlay) overlay.hidden = false;
+      setTimeout(() => { if (window.privoo) window.privoo.installUpdateNow(); }, 900);
+    };
 
     // If download reaches 100% but update-downloaded never fires (silent
     // verification failure), retry after 20 s so it self-heals.
@@ -1027,5 +1031,19 @@
     }
   })();
   </script>
+
+  <!-- Updating overlay — shown when Restart & Update is clicked -->
+  <div id="updating-overlay" class="updating-overlay" hidden>
+    <div class="updating-card">
+      <svg class="updating-logo" viewBox="0 0 48 48" width="54" height="54" fill="none">
+        <path d="M24 3 5 11v13c0 12.15 8.4 23.52 19 26 10.6-2.48 19-13.85 19-26V11z" fill="var(--accent)" opacity=".18"/>
+        <path d="M24 3 5 11v13c0 12.15 8.4 23.52 19 26 10.6-2.48 19-13.85 19-26V11z" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M16 24l6 6 10-11" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="updating-spinner"></div>
+      <div class="updating-title">Installing update…</div>
+      <div class="updating-sub">Privoo will restart automatically.</div>
+    </div>
+  </div>
 </body>
 </html>
