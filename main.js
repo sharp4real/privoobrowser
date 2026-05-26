@@ -2174,7 +2174,7 @@ ipcMain.handle('open-devtools', (_e, guestWcId) => {
       guest.closeDevTools();
       return { ok: true, closed: true };
     }
-    guest.openDevTools({ mode: 'detach', activate: true });
+    guest.openDevTools({ mode: 'right', activate: true });
     return { ok: true };
   } catch (e) {
     return { ok: false, error: String(e.message || e) };

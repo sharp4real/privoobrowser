@@ -302,11 +302,11 @@ bookmarksBar?.addEventListener('contextmenu', async (e) => {
   // Skip if the right-click landed on a bookmark chip — that has its own menu.
   if (e.target.closest('.bookmark-chip')) return;
   e.preventDefault();
-  const action = await window.privoo.showContextMenu([
+  const action = await showHtmlMenu([
     { id: 'bb-hide', label: 'Hide bookmarks bar' },
     { type: 'separator' },
     { id: 'bb-manage', label: 'Bookmark manager…' },
-  ]);
+  ], e.clientX, e.clientY);
   if (action === 'bb-hide') {
     await saveBrowserSetting({ showBookmarksBar: false });
   } else if (action === 'bb-manage') {
@@ -340,6 +340,7 @@ const dlPopoverList     = document.getElementById('dl-popover-list');
 const dlPopoverAll      = document.getElementById('dl-popover-all');
 const tabContextMenu    = document.getElementById('tab-context-menu');
 const wvContextMenu     = document.getElementById('wv-context-menu');
+const ctxBackdrop       = document.getElementById('ctx-backdrop');
 const audioBtn          = document.getElementById('audio-btn');
 const audioPopover      = document.getElementById('audio-popover');
 const audioMuteBtn      = document.getElementById('audio-mute-btn');
@@ -534,13 +535,13 @@ function renderBookmarksBar() {
     btn.addEventListener('contextmenu', async (e) => {
       e.preventDefault();
       e.stopPropagation();
-      const action = await window.privoo.showContextMenu([
+      const action = await showHtmlMenu([
         { id: 'bm-open',   label: 'Open' },
         { id: 'bm-newtab', label: 'Open in new tab' },
         { id: 'bm-copy',   label: 'Copy link address' },
         { type: 'separator' },
         { id: 'bm-remove', label: 'Remove from bookmarks' },
-      ]);
+      ], e.clientX, e.clientY);
       if (action === 'bm-open') navigate(bm.url);
       else if (action === 'bm-newtab') createTab(bm.url);
       else if (action === 'bm-copy') navigator.clipboard.writeText(bm.url).catch(() => {});
@@ -663,12 +664,12 @@ function renderSidebarRail() {
     btn.addEventListener('contextmenu', async (e) => {
       e.preventDefault();
       const idx = links.indexOf(link);
-      const action = await window.privoo.showContextMenu([
+      const action = await showHtmlMenu([
         { id: 'sb-open',   label: 'Open in new tab' },
         { id: 'sb-copy',   label: 'Copy link' },
         { type: 'separator' },
         { id: 'sb-remove', label: 'Remove shortcut' },
-      ]);
+      ], e.clientX, e.clientY);
       if (action === 'sb-open') createTab(link.url);
       else if (action === 'sb-copy') navigator.clipboard.writeText(link.url).catch(() => {});
       else if (action === 'sb-remove') {
@@ -930,16 +931,16 @@ function makeGroupChip(g) {
   chip.addEventListener('click', (e) => {
     if (name.isContentEditable) return;
     e.stopPropagation();
-    openGroupContextMenu(g.id);
+    openGroupContextMenu(g.id, e.clientX, e.clientY);
   });
   chip.addEventListener('contextmenu', (e) => {
     e.preventDefault();
-    if (!name.isContentEditable) openGroupContextMenu(g.id);
+    if (!name.isContentEditable) openGroupContextMenu(g.id, e.clientX, e.clientY);
   });
   return chip;
 }
 
-async function openGroupContextMenu(groupId) {
+async function openGroupContextMenu(groupId, x = 0, y = 0) {
   const g = tabGroups.find(x => x.id === groupId);
   if (!g) return;
   const colorSubmenu = GROUP_COLORS.map((p, i) => ({
@@ -955,7 +956,7 @@ async function openGroupContextMenu(groupId) {
     { id: 'g-ungroup', label: 'Ungroup' },
     { id: 'g-close',   label: 'Close all tabs in group' },
   ];
-  const action = await window.privoo.showContextMenu(items);
+  const action = await showHtmlMenu(items, x, y);
   if (!action) return;
   if (action === 'g-rename') {
     renameGroupInline(g);
@@ -1640,9 +1641,113 @@ tabsEl.addEventListener('dragover', (e) => {
   after ? tabsEl.insertBefore(dragging, after) : tabsEl.appendChild(dragging);
 });
 
-function hideTabContextMenu() {
+// ─── Custom HTML context menu ────────────────────────────────────────────────
+let _ctxResolve = null;
+let _ctxFlyout  = null;
+
+function _closeCtxMenu(chosen = null) {
+  if (_ctxFlyout) { _ctxFlyout.remove(); _ctxFlyout = null; }
+  ctxBackdrop?.classList.add('hidden');
   tabContextMenu?.classList.add('hidden');
+  wvContextMenu?.classList.add('hidden');
+  const r = _ctxResolve; _ctxResolve = null;
+  if (r) r(chosen);
+}
+
+function _buildCtxRows(container, items) {
+  container.innerHTML = '';
+  for (const item of items) {
+    if (item.type === 'separator') {
+      const s = document.createElement('div');
+      s.className = 'ctx-sep';
+      container.appendChild(s);
+      continue;
+    }
+    const row = document.createElement('div');
+    const off = item.enabled === false;
+    row.className = 'ctx-item' + (off ? ' disabled' : '');
+    const lbl = document.createElement('span');
+    lbl.className = 'ctx-label';
+    lbl.textContent = item.label;
+    row.appendChild(lbl);
+    if (item.submenu) {
+      const arr = document.createElement('span');
+      arr.className = 'ctx-accel';
+      arr.textContent = '▸';
+      row.appendChild(arr);
+      const subItems = item.submenu;
+      row.addEventListener('mouseenter', function () {
+        if (_ctxFlyout) { _ctxFlyout.remove(); _ctxFlyout = null; }
+        const fly = document.createElement('div');
+        fly.className = 'context-menu';
+        _buildCtxRows(fly, subItems);
+        document.body.appendChild(fly);
+        _ctxFlyout = fly;
+        const rect = this.getBoundingClientRect();
+        fly.style.left = '0'; fly.style.top = '0';
+        const fw = fly.offsetWidth, fh = fly.offsetHeight;
+        const vw = window.innerWidth, vh = window.innerHeight;
+        fly.style.left = `${Math.min(rect.right + 2, vw - fw - 4)}px`;
+        fly.style.top  = `${Math.min(rect.top,      vh - fh - 4)}px`;
+        fly.addEventListener('mousedown', (e) => {
+          const r = e.target.closest('.ctx-item');
+          if (!r || r.classList.contains('disabled') || !r.dataset.menuId) return;
+          e.preventDefault(); e.stopPropagation();
+          _closeCtxMenu(r.dataset.menuId);
+        }, true);
+      });
+      row.addEventListener('mouseleave', function (e) {
+        if (_ctxFlyout && !_ctxFlyout.contains(e.relatedTarget)) {
+          _ctxFlyout.remove(); _ctxFlyout = null;
+        }
+      });
+    } else if (!off && item.id) {
+      row.dataset.menuId = item.id;
+    }
+    container.appendChild(row);
+  }
+}
+
+function showHtmlMenu(items, x, y, el) {
+  _closeCtxMenu(null);
+  const target = el || wvContextMenu;
+  if (!target) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    _ctxResolve = resolve;
+    ctxBackdrop?.classList.remove('hidden');
+    _buildCtxRows(target, items);
+    target.style.left = '0';
+    target.style.top  = '0';
+    target.classList.remove('hidden');
+    const mw = target.offsetWidth, mh = target.offsetHeight;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    target.style.left = `${Math.min(x, vw - mw - 4)}px`;
+    target.style.top  = `${Math.min(y, vh - mh - 4)}px`;
+  });
+}
+
+// Backdrop click dismisses any open HTML menu
+ctxBackdrop?.addEventListener('mousedown', (e) => { e.preventDefault(); _closeCtxMenu(null); });
+
+// Delegated handler for tab context menu
+tabContextMenu?.addEventListener('mousedown', (e) => {
+  const row = e.target.closest('.ctx-item');
+  if (!row || row.classList.contains('disabled') || !row.dataset.menuId) return;
+  e.preventDefault(); e.stopPropagation();
+  _closeCtxMenu(row.dataset.menuId);
+}, true);
+
+// Delegated handler for webview context menu
+wvContextMenu?.addEventListener('mousedown', (e) => {
+  const row = e.target.closest('.ctx-item');
+  if (!row || row.classList.contains('disabled') || !row.dataset.menuId) return;
+  e.preventDefault(); e.stopPropagation();
+  _closeCtxMenu(row.dataset.menuId);
+}, true);
+
+function hideTabContextMenu() {
   ctxTabId = null;
+  _closeCtxMenu(null);
 }
 
 async function openTabContextMenu(x, y, tabId) {
@@ -1677,7 +1782,7 @@ async function openTabContextMenu(x, y, tabId) {
     { id: 'save-tabs',    label: 'Save tabs for next launch' },
   ];
 
-  const action = await window.privoo.showContextMenu(items);
+  const action = await showHtmlMenu(items, x, y, tabContextMenu);
   if (!action) return;
 
   switch (action) {
@@ -1826,8 +1931,10 @@ function wireWebview(tab) {
 
   wv.addEventListener('context-menu', (e) => {
     e.preventDefault();
-    // Native OS menu — positions itself at the cursor.
-    showWvContextMenu(tab, e.params || {});
+    const rect = wv.getBoundingClientRect();
+    const vx = rect.left + (e.params?.x || 0);
+    const vy = rect.top  + (e.params?.y || 0);
+    showWvContextMenu(tab, e.params || {}, vx, vy);
   }, { signal });
 
   wv.addEventListener('media-started-playing', () => {
@@ -2670,41 +2777,25 @@ function closePopovers() {
 }
 
 function hideWvContextMenu() {
-  wvContextMenu?.classList.add('hidden');
-}
-
-// Single delegated activation handler for the webview context menu. Bound
-// ONCE on the container — `innerHTML = ''` between shows clears the rows
-// but leaves this listener intact. Reads the callback stashed on each row
-// by addRow. Using `mousedown` (capture) so it fires before any focus
-// shuffle or the document-level "click outside" handler can interfere.
-if (wvContextMenu) {
-  const runCtxAction = (e) => {
-    const row = e.target.closest('.ctx-item');
-    if (!row || !wvContextMenu.contains(row)) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const action = row._privooAction;
-    hideWvContextMenu();
-    if (typeof action === 'function') {
-      try { action(); } catch (err) { console.error('ctx-item handler:', err); }
-    }
-  };
-  wvContextMenu.addEventListener('mousedown', runCtxAction, true);
+  _closeCtxMenu(null);
 }
 
 // ─── DevTools ───────────────────────────────────────────────────────────────
 function openDockedDevTools(tab) {
   if (!tab?.wv) return;
   try {
-    if (tab.wv.isDevToolsOpened?.()) tab.wv.closeDevTools();
-    else tab.wv.openDevTools();
+    const wcId = tab.wv.getWebContentsId?.();
+    if (wcId != null && window.privoo?.openDevTools) {
+      window.privoo.openDevTools(wcId);
+    } else {
+      if (tab.wv.isDevToolsOpened?.()) tab.wv.closeDevTools();
+      else tab.wv.openDevTools();
+    }
   } catch { /* ignore */ }
 }
 
 function closeDockedDevTools() {
-  const tab = activeTab();
-  try { if (tab?.wv?.isDevToolsOpened?.()) tab.wv.closeDevTools(); } catch { /* ignore */ }
+  openDockedDevTools(activeTab());
 }
 
 // ─── Standalone emoji picker (Chrome/Edge-style) ────────────────────────────
@@ -3073,7 +3164,7 @@ function maybeShowOverlayBanner(url) {
   hideOverlayBanner();
 }
 
-async function showWvContextMenu(tab, params) {
+async function showWvContextMenu(tab, params, vx = 200, vy = 200) {
   closePopovers();
   const wv = tab.wv;
   const flags = params?.editFlags || {};
@@ -3146,7 +3237,7 @@ async function showWvContextMenu(tab, params) {
   add('Inspect',          () => openDockedDevTools(tab),                                  { accel: 'F12' });
 
   let chosen = null;
-  try { chosen = await window.privoo.showContextMenu(items); } catch { chosen = null; }
+  try { chosen = await showHtmlMenu(items, vx, vy); } catch { chosen = null; }
   if (chosen && typeof actions[chosen] === 'function') {
     try { actions[chosen](); } catch (err) { console.error('ctx-item handler:', err); }
   }

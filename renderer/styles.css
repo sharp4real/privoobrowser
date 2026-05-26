@@ -2988,6 +2988,16 @@ body.dark .vpn-input { background: var(--omni-bg); color: var(--text); }
 .ctx-item.muted { color: var(--muted); font-size: 11px; pointer-events: none; padding: 6px 14px 4px; }
 .ctx-sep { height: 1px; background: var(--border); margin: 5px 0; }
 
+/* Transparent backdrop that sits above webviews so HTML context menus can
+   receive mouse events and dismiss on outside clicks. */
+.ctx-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 14998;
+  background: transparent;
+}
+.ctx-backdrop.hidden { display: none; }
+
 /* Chrome-style emoji row at the top of right-click menus on editable fields */
 .ctx-emoji-row {
   display: flex;
@@ -3545,7 +3555,7 @@ body.vtabs-collapsed .vtabs-new-btn { justify-content: center; padding: 0; }
   align-items: center;
   gap: 9px;
   padding: 0 8px 0 12px;
-  height: 42px;
+  height: 36px;
   border-radius: 9px;
   cursor: default;
   font-size: 13.5px;
@@ -3613,23 +3623,24 @@ body.dark .vtab.active {
 .vtab:hover .vtab-close { opacity: 1; visibility: visible; }
 .vtab-close:hover { background: var(--hover); color: var(--text); }
 
-/* ── New tab button (sits below the header, above the list) ── */
+/* ── New tab button (compact row, no separator) ── */
 .vtabs-new-btn {
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 8px;
-  padding: 0 14px;
-  height: 38px;
+  gap: 9px;
+  padding: 0 8px 0 12px;
+  height: 32px;
   border: none;
   background: transparent;
   color: var(--muted);
   font-size: 12px;
   font-family: inherit;
   cursor: default;
-  border-bottom: 1px solid var(--border);
   width: 100%;
+  border-radius: 9px;
+  margin: 2px 0 2px;
   transition: background .12s, color .12s;
 }
 .vtabs-new-btn:hover { background: var(--hover); color: var(--text); }
