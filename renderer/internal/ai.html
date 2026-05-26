@@ -222,6 +222,61 @@ body.dark .warn{background:rgba(252,213,99,.10);border-color:rgba(252,213,99,.28
 }
 .gbtn.primary:hover{background:var(--accent-hover)}
 
+/* ── First-time disclaimer ── */
+.disclaimer{
+  position:absolute;inset:0;z-index:10;
+  background:rgba(0,0,0,.5);
+  display:flex;align-items:center;justify-content:center;
+  padding:24px 18px;overflow-y:auto;
+}
+.disclaimer.hidden{display:none}
+.disc-card{
+  width:100%;max-width:390px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:26px 22px 20px;
+  box-shadow:0 20px 50px rgba(0,0,0,.3);
+}
+.disc-card .disc-icon{
+  width:46px;height:46px;border-radius:12px;margin-bottom:14px;
+  background:var(--accent-soft);display:flex;align-items:center;justify-content:center;
+}
+.disc-card .disc-icon svg{width:26px;height:26px;fill:var(--accent)}
+.disc-card h1{font-size:17px;font-weight:700;margin-bottom:6px}
+.disc-card .disc-sub{font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:14px}
+.disc-list{list-style:none;margin:0 0 16px;padding:0;display:flex;flex-direction:column;gap:8px}
+.disc-list li{
+  display:flex;gap:9px;align-items:flex-start;
+  font-size:12px;color:var(--text);line-height:1.5;
+}
+.disc-list li .disc-li-icon{
+  width:20px;height:20px;border-radius:6px;flex-shrink:0;margin-top:1px;
+  background:var(--accent-soft);display:flex;align-items:center;justify-content:center;
+}
+.disc-list li .disc-li-icon svg{width:12px;height:12px;fill:var(--accent)}
+
+/* ── Markdown inside AI bubbles ── */
+.msg.ai .bubble,.msg.err .bubble{white-space:normal}
+.msg.ai .bubble p{margin:.3em 0}
+.msg.ai .bubble p:first-child{margin-top:0}
+.msg.ai .bubble p:last-child{margin-bottom:0}
+.msg.ai .bubble strong{font-weight:700}
+.msg.ai .bubble em{font-style:italic}
+.msg.ai .bubble code{
+  font-family:ui-monospace,Consolas,"Cascadia Code",monospace;font-size:11.5px;
+  background:var(--surface-2);padding:1px 5px;border-radius:4px;border:1px solid var(--border);
+}
+.msg.ai .bubble pre{
+  background:var(--surface-2);border:1px solid var(--border);
+  border-radius:9px;padding:10px 13px;margin:.5em 0;overflow-x:auto;
+}
+.msg.ai .bubble pre code{background:none;padding:0;border:none;font-size:12px;line-height:1.55}
+.msg.ai .bubble h3,.msg.ai .bubble h4{font-size:13.5px;font-weight:700;margin:.6em 0 .2em}
+.msg.ai .bubble ul,.msg.ai .bubble ol{padding-left:1.4em;margin:.3em 0}
+.msg.ai .bubble li{margin-bottom:.2em}
+.msg.ai .bubble hr{border:none;border-top:1px solid var(--border);margin:.6em 0}
+.msg.ai .bubble a{color:var(--accent);text-decoration:none}
+.msg.ai .bubble a:hover{text-decoration:underline}
+
 /* ── Increase Transparency — body goes see-through so the OS acrylic
    material shows; chrome surfaces become translucent frosted layers. ── */
 body.transparent-ui { background: transparent; }
@@ -325,6 +380,36 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
     <div class="foot-note">AI can make mistakes. Messages go to your chosen provider — don't share sensitive info.</div>
   </div>
 
+  <!-- First-time disclaimer -->
+  <div class="disclaimer hidden" id="disclaimer">
+    <div class="disc-card">
+      <div class="disc-icon"><svg viewBox="0 0 24 24"><path d="M12 1C5.9 1 1 5.9 1 12s4.9 11 11 11 11-4.9 11-11S18.1 1 12 1zm1 16h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg></div>
+      <h1>Before you use Privoo AI</h1>
+      <p class="disc-sub">Privoo AI connects to third-party AI providers using your own API key. Please read the following before continuing.</p>
+      <ul class="disc-list">
+        <li>
+          <span class="disc-li-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg></span>
+          <span><strong>Your messages are sent to the AI provider you choose</strong> (Anthropic, OpenAI, DeepSeek, or Google). Privoo does not see or store them.</span>
+        </li>
+        <li>
+          <span class="disc-li-icon"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg></span>
+          <span><strong>API usage is billed to your key.</strong> You are responsible for any costs charged by the provider.</span>
+        </li>
+        <li>
+          <span class="disc-li-icon"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM12 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z"/></svg></span>
+          <span><strong>Your API key is stored encrypted</strong> on this device only via your OS keychain — it is never uploaded or shared.</span>
+        </li>
+        <li>
+          <span class="disc-li-icon"><svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg></span>
+          <span><strong>Do not share sensitive information</strong> such as passwords, personal data, or confidential content in your messages.</span>
+        </li>
+      </ul>
+      <div class="gate-row">
+        <button class="gbtn primary" id="disc-accept" type="button" style="border-radius:10px">I understand, continue</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Setup / API key modal -->
   <div class="gate hidden" id="gate">
     <div class="gate-card">
@@ -377,20 +462,26 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
       { id:'claude-3-5-haiku-20241022',   label:'Claude 3.5 Haiku' },
     ],
     openai:[
-      { id:'gpt-4o-mini',  label:'GPT-4o mini — fast & low cost (recommended)' },
-      { id:'gpt-4o',       label:'GPT-4o — flagship' },
-      { id:'gpt-4-turbo',  label:'GPT-4 Turbo' },
-      { id:'gpt-4.1-mini', label:'GPT-4.1 mini' },
-      { id:'gpt-3.5-turbo',label:'GPT-3.5 Turbo — cheapest' },
+      { id:'gpt-4o-mini',   label:'GPT-4o mini — fast & low cost (recommended)' },
+      { id:'gpt-4o',        label:'GPT-4o — flagship' },
+      { id:'gpt-4.1',       label:'GPT-4.1 — latest generation' },
+      { id:'gpt-4.1-mini',  label:'GPT-4.1 mini — fast & affordable' },
+      { id:'o3-mini',       label:'o3-mini — reasoning, efficient' },
+      { id:'o1',            label:'o1 — advanced reasoning' },
+      { id:'o1-mini',       label:'o1-mini — reasoning, fast' },
+      { id:'gpt-4-turbo',   label:'GPT-4 Turbo' },
+      { id:'gpt-3.5-turbo', label:'GPT-3.5 Turbo — cheapest' },
     ],
     deepseek:[
       { id:'deepseek-chat',     label:'DeepSeek V3 — general chat (recommended)' },
+      { id:'deepseek-v4',       label:'DeepSeek V4 — latest' },
       { id:'deepseek-reasoner', label:'DeepSeek R1 — step-by-step reasoning' },
     ],
     gemini:[
-      { id:'gemini-2.0-flash', label:'Gemini 2.0 Flash — fast (recommended)' },
-      { id:'gemini-2.5-pro',   label:'Gemini 2.5 Pro — most capable' },
-      { id:'gemini-1.5-pro',   label:'Gemini 1.5 Pro' },
+      { id:'gemini-2.5-flash',  label:'Gemini 2.5 Flash — fast (recommended)' },
+      { id:'gemini-2.5-pro',    label:'Gemini 2.5 Pro — most capable' },
+      { id:'gemini-2.0-flash',  label:'Gemini 2.0 Flash' },
+      { id:'gemini-1.5-pro',    label:'Gemini 1.5 Pro' },
     ],
   };
   const DEFAULT_MODELS = {
@@ -405,6 +496,53 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
     deepseek:'Get a key from <b>platform.deepseek.com</b>',
     gemini:'Get a key from <b>aistudio.google.com</b>',
   };
+
+  // ── Markdown renderer (safe — HTML-escaped before transformation) ──
+  function renderMd(text){
+    // 1. Escape HTML entities in the raw text
+    let s = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    // 2. Fenced code blocks
+    s = s.replace(/```(?:\w*)\n?([\s\S]*?)```/g,(_,c)=>'<pre><code>'+c.trimEnd()+'</code></pre>');
+    // 3. Inline code
+    s = s.replace(/`([^`\n]+)`/g,'<code>$1</code>');
+    // 4. Bold + italic
+    s = s.replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>');
+    s = s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+    s = s.replace(/__(.+?)__/g,'<strong>$1</strong>');
+    s = s.replace(/\*([^*\n]+)\*/g,'<em>$1</em>');
+    // 5. Headers
+    s = s.replace(/^### (.+)$/gm,'<h4>$1</h4>');
+    s = s.replace(/^## (.+)$/gm,'<h3>$1</h3>');
+    s = s.replace(/^# (.+)$/gm,'<h3>$1</h3>');
+    // 6. Horizontal rule
+    s = s.replace(/^---+$/gm,'<hr>');
+    // 7. Lists — process line by line
+    const lines = s.split('\n');
+    const out = []; let ul=false,ol=false;
+    for(const ln of lines){
+      if(/^[-*] /.test(ln)){
+        if(!ul){out.push('<ul>');ul=true;}
+        out.push('<li>'+ln.slice(2)+'</li>');
+      } else if(/^\d+\. /.test(ln)){
+        if(!ol){out.push('<ol>');ol=true;}
+        out.push('<li>'+ln.replace(/^\d+\. /,'')+'</li>');
+      } else {
+        if(ul){out.push('</ul>');ul=false;}
+        if(ol){out.push('</ol>');ol=false;}
+        out.push(ln);
+      }
+    }
+    if(ul)out.push('</ul>');
+    if(ol)out.push('</ol>');
+    s = out.join('\n');
+    // 8. Paragraphs — double newline = paragraph break; single = <br> inside paragraph
+    s = s.split(/\n{2,}/).map(p=>{
+      p=p.trim(); if(!p)return '';
+      if(/^<(?:ul|ol|pre|h[1-6]|hr)/.test(p))return p;
+      return '<p>'+p.replace(/\n/g,'<br>')+'</p>';
+    }).join('');
+    return s;
+  }
 
   // Fill the model <select> for a provider, selecting `selected` if present.
   function fillModels(provider, selected){
@@ -514,6 +652,15 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
   });
   $('cfg-btn').addEventListener('click', openGate);
 
+  // ── Disclaimer ──
+  function openDisclaimer(){ $('disclaimer').classList.remove('hidden'); }
+  function closeDisclaimer(){ $('disclaimer').classList.add('hidden'); }
+  $('disc-accept').addEventListener('click', async () => {
+    try { config = await api.aiSetConfig({ accepted: true }); } catch {}
+    closeDisclaimer();
+    if (!config.hasKey) openGate();
+  });
+
   // ── Chat ──
   function renderChat(){
     const inner = $('chat-inner');
@@ -548,7 +695,11 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
     else av.innerHTML = '<img src="privoo://newtab/logo.png" alt="AI" onerror="this.parentNode.textContent=\'AI\'"/>';
     const b = document.createElement('div');
     b.className = 'bubble';
-    b.textContent = content;
+    if (role === 'user') {
+      b.textContent = content;
+    } else {
+      b.innerHTML = renderMd(content);
+    }
     wrap.appendChild(av); wrap.appendChild(b);
     return wrap;
   }
@@ -619,7 +770,8 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
     try { config = await api.aiGetConfig(); } catch {}
     refreshStatus();
     renderChat();
-    if (!config.hasKey && !config.accepted) openGate();
+    if (!config.accepted) { openDisclaimer(); }
+    else if (!config.hasKey) { openGate(); }
     $('input').focus();
   })();
 })();
