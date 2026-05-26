@@ -313,6 +313,7 @@ body {
   flex-direction: row;
   min-height: 0;
   min-width: 0;
+  position: relative; /* anchor for absolutely-positioned sidebar panel */
 }
 
 .browser-column {
@@ -2172,26 +2173,41 @@ body.transparent-ui.dark .app-sidebar {
 }
 #sidebar-add:active { transform: scale(.9); transition-duration: .05s; }
 
-/* ── Sidebar web panel ─────────────────────────────────────────── */
+/* ── Sidebar web panel — floats over the page, does not push content ── */
 @keyframes sp-slide-in {
   from { opacity: 0; transform: translateX(-14px); }
   to   { opacity: 1; transform: translateX(0); }
 }
 #sidebar-panel {
-  flex-shrink: 0;
+  position: absolute;
+  left: 58px; /* right-edge of .app-sidebar */
+  top: 0;
+  bottom: 0;
+  z-index: 100;
   display: flex;
   flex-direction: column;
   width: 320px;
   min-width: 180px;
-  max-width: 640px;
+  max-width: calc(100% - 64px);
   background: var(--toolbar);
-  border-right: 1px solid var(--border);
-  position: relative;
-  min-height: 0;
+  box-shadow: 4px 0 28px rgba(0,0,0,.16), 1px 0 0 var(--border);
   overflow: clip;
 }
 #sidebar-panel[hidden] { display: none !important; }
 #sidebar-panel.sp-enter { animation: sp-slide-in .18s cubic-bezier(.4,0,.2,1) both; }
+
+/* Transparent backdrop — captures clicks outside the panel to dismiss it */
+.sidebar-overlay {
+  position: absolute;
+  top: 0;
+  left: 58px;
+  right: 0;
+  bottom: 0;
+  z-index: 99;
+  background: transparent;
+  cursor: default;
+}
+.sidebar-overlay.hidden { display: none; }
 body.transparent-ui #sidebar-panel {
   background: rgba(255,255,255,.28) !important;
   backdrop-filter: blur(20px) saturate(150%);

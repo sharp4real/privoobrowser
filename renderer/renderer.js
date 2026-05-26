@@ -318,6 +318,7 @@ const setupOverlay      = document.getElementById('setup-overlay');
 const appSidebar        = document.getElementById('app-sidebar');
 const sidebarRail       = document.getElementById('sidebar-rail');
 const sidebarFlyout     = document.getElementById('sidebar-flyout');
+const sidebarOverlay    = document.getElementById('sidebar-overlay');
 const sidebarPanel      = document.getElementById('sidebar-panel');
 const sidebarWv         = document.getElementById('sidebar-wv');
 const ytdlpToolbarBtn   = document.getElementById('ytdlp-toolbar-btn');
@@ -765,6 +766,7 @@ function openSidebarPanel(link) {
   }
   sidebarWv.src = link.url;
   sidebarPanel.hidden = false;
+  sidebarOverlay?.classList.remove('hidden');
   // Trigger Opera-style slide-in animation
   sidebarPanel.classList.remove('sp-enter');
   requestAnimationFrame(() => sidebarPanel.classList.add('sp-enter'));
@@ -780,11 +782,14 @@ function openSidebarPanel(link) {
 function closeSidebarPanel() {
   if (!sidebarPanel) return;
   sidebarPanel.hidden = true;
+  sidebarOverlay?.classList.add('hidden');
   if (sidebarWv) sidebarWv.src = 'about:blank';
 }
 
 // Sidebar panel header buttons
 document.getElementById('sidebar-panel-close')?.addEventListener('click', closeSidebarPanel);
+// Click outside the panel (on the transparent overlay) dismisses it
+sidebarOverlay?.addEventListener('click', closeSidebarPanel);
 document.getElementById('sidebar-panel-back')?.addEventListener('click', () => {
   if (sidebarWv?.canGoBack()) sidebarWv.goBack();
 });
