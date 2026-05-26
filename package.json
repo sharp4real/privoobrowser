@@ -1,6 +1,6 @@
 {
   "name": "privoo-browser",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Privacy focused browser built on Electron.",
   "main": "main.js",
   "scripts": {
@@ -102,7 +102,8 @@
     "publish": {
       "provider": "github",
       "owner": "sharp4real",
-      "repo": "privoobrowser"
+      "repo": "privoobrowser",
+      "releaseNotes": "No telemetry. No tracking. No data collection."
     }
   }
 }

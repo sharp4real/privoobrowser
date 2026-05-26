@@ -26,42 +26,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
-        env:
-          CSC_IDENTITY_AUTO_DISCOVERY: false
-        run: npm run dist
-
-      - name: Upload to release
-        if: startsWith(github.ref, 'refs/tags/')
-        shell: bash
+      - name: Build & Publish
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "${{ github.ref_name }}" \
-            --repo "${{ github.repository }}" \
-            --title "Privoo ${{ github.ref_name }}" \
-            --notes "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection." \
-            2>/dev/null || true
-          gh release edit "${{ github.ref_name }}" \
-            --repo "${{ github.repository }}" \
-            --title "Privoo ${{ github.ref_name }}" \
-            --notes "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection." \
-            2>/dev/null || true
-          # Upload exe + blockmap first (no || true — failure must abort so
-          # latest.yml is never uploaded with a mismatched hash).
-          find dist -maxdepth 1 -type f \( \
-            -name "*.exe" -o -name "*.exe.blockmap" \
-          \) | while IFS= read -r f; do
-            echo "Uploading $f"
-            gh release upload "${{ github.ref_name }}" "$f" \
-              --repo "${{ github.repository }}" --clobber
-          done
-          # Only reached if exe upload succeeded — upload latest.yml last.
-          find dist -maxdepth 1 -type f -name "latest.yml" | while IFS= read -r f; do
-            echo "Uploading $f"
-            gh release upload "${{ github.ref_name }}" "$f" \
-              --repo "${{ github.repository }}" --clobber
-          done
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        # electron-builder owns the entire upload so latest.yml is always
+        # generated from — and uploaded after — the exact exe it hashes.
+        run: npx electron-builder --win --publish onTag
 
   build-mac:
     runs-on: macos-latest
@@ -76,41 +47,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
-        env:
-          CSC_IDENTITY_AUTO_DISCOVERY: false
-        run: npm run dist:mac
-
-      - name: Upload to release
-        if: startsWith(github.ref, 'refs/tags/')
-        shell: bash
+      - name: Build & Publish
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "${{ github.ref_name }}" \
-            --repo "${{ github.repository }}" \
-            --title "Privoo ${{ github.ref_name }}" \
-            --notes "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection." \
-            2>/dev/null || true
-          gh release edit "${{ github.ref_name }}" \
-            --repo "${{ github.repository }}" \
-            --title "Privoo ${{ github.ref_name }}" \
-            --notes "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection." \
-            2>/dev/null || true
-          # Upload binaries first, then latest-mac.yml last.
-          find dist -maxdepth 1 -type f \( \
-            -name "*.dmg" -o -name "*.dmg.blockmap" \
-            -o -name "*.zip" -o -name "*.zip.blockmap" \
-          \) | while IFS= read -r f; do
-            echo "Uploading $f"
-            gh release upload "${{ github.ref_name }}" "$f" \
-              --repo "${{ github.repository }}" --clobber || true
-          done
-          find dist -maxdepth 1 -type f -name "latest-mac.yml" | while IFS= read -r f; do
-            echo "Uploading $f"
-            gh release upload "${{ github.ref_name }}" "$f" \
-              --repo "${{ github.repository }}" --clobber || true
-          done
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: npx electron-builder --mac --x64 --arm64 --publish onTag
 
   build-linux:
     runs-on: ubuntu-latest
@@ -120,42 +61,16 @@ jobs:
       - name: Install Linux build dependencies
         run: sudo apt-get update && sudo apt-get install -y rpm
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
-        env:
-          CSC_IDENTITY_AUTO_DISCOVERY: false
-        run: npm run dist:linux
-
-      - name: Upload to release
-        if: startsWith(github.ref, 'refs/tags/')
-        shell: bash
+      - name: Build & Publish
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "${{ github.ref_name }}" \
-            --repo "${{ github.repository }}" \
-            --title "Privoo ${{ github.ref_name }}" \
-            --notes "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection." \
-            2>/dev/null || true
-          gh release edit "${{ github.ref_name }}" \
-            --repo "${{ github.repository }}" \
-            --title "Privoo ${{ github.ref_name }}" \
-            --notes "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection." \
-            2>/dev/null || true
-          # Upload binaries first, then latest-linux.yml last.
-          find dist -maxdepth 1 -type f \( \
-            -name "*.AppImage" \
-            -o -name "*.deb" \
-            -o -name "*.rpm" \
-          \) | while IFS= read -r f; do
-            echo "Uploading $f"
-            gh release upload "${{ github.ref_name }}" "$f" \
-              --repo "${{ github.repository }}" --clobber || true
-          done
-          find dist -maxdepth 1 -type f -name "latest-linux.yml" | while IFS= read -r f; do
-            echo "Uploading $f"
-            gh release upload "${{ github.ref_name }}" "$f" \
-              --repo "${{ github.repository }}" --clobber || true
-          done
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: npx electron-builder --linux --publish onTag
