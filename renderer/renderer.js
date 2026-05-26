@@ -3587,8 +3587,17 @@ notesBtn?.addEventListener('click', (e) => {
   translateGo?.addEventListener('click', () => {
     const tab = activeTab();
     if (!tab?.url || tab.url.startsWith('privoo://') || tab.url.startsWith('about:')) return;
-    const lang = translateLang?.value || 'es';
-    navigate(`https://translate.google.com/translate?sl=auto&tl=${lang}&u=${encodeURIComponent(tab.url)}`);
+    const lang = translateLang?.value || 'en';
+    try {
+      const u = new URL(tab.url);
+      // Google Translate's current page-translation format: replace dots with
+      // hyphens in the hostname, then load via *.translate.goog
+      const slug = u.hostname.replace(/\./g, '-');
+      const path = u.pathname + u.search + u.hash;
+      navigate(`https://${slug}.translate.goog${path}?_x_tr_sl=auto&_x_tr_tl=${lang}&_x_tr_hl=en&_x_tr_hist=true`);
+    } catch {
+      navigate(`https://translate.google.com/?sl=auto&tl=${lang}&op=websites&u=${encodeURIComponent(tab.url)}`);
+    }
     translatePopover?.classList.add('hidden');
   });
 }
