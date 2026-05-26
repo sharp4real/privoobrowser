@@ -26,9 +26,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Exclude workspace from Windows Defender
+      - name: Disable Windows Defender realtime monitoring
         shell: powershell
-        run: Add-MpPreference -ExclusionPath "$env:GITHUB_WORKSPACE"
+        run: Set-MpPreference -DisableRealtimeMonitoring $true
 
       - name: Build
         env:
