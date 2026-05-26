@@ -36,20 +36,24 @@ jobs:
         run: npm run dist
 
       - name: Recompute sha512 after AV scan
-        shell: powershell
+        shell: node {0}
         run: |
-          $exe = Get-ChildItem dist -Filter "*.exe" | Where-Object { $_.Name -notlike "*.blockmap" } | Select-Object -First 1
-          if (-not $exe) { Write-Error "No exe found in dist"; exit 1 }
-          $hashHex = (Get-FileHash $exe.FullName -Algorithm SHA512).Hash
-          $hashBytes = [byte[]]::new(64)
-          for ($i = 0; $i -lt 64; $i++) { $hashBytes[$i] = [Convert]::ToByte($hashHex.Substring($i * 2, 2), 16) }
-          $hashBase64 = [Convert]::ToBase64String($hashBytes)
-          $size = $exe.Length
-          $content = Get-Content dist\latest.yml -Raw
-          $content = [regex]::Replace($content, 'sha512: \S+', "sha512: $hashBase64")
-          $content = [regex]::Replace($content, 'size: \d+', "size: $size")
-          [System.IO.File]::WriteAllText((Resolve-Path dist\latest.yml), $content)
-          Write-Host "sha512: $hashBase64 size: $size"
+          const { createHash } = require('crypto');
+          const { readFileSync, readdirSync, statSync, writeFileSync } = require('fs');
+          const { join, resolve } = require('path');
+          const dist = 'dist';
+          const exeFile = readdirSync(dist).find(f => f.endsWith('.exe') && !f.endsWith('.blockmap'));
+          if (!exeFile) { console.error('No exe found in dist'); process.exit(1); }
+          const exePath = join(dist, exeFile);
+          const hash = createHash('sha512').update(readFileSync(exePath)).digest('base64');
+          const size = statSync(exePath).size;
+          const ymlPath = join(dist, 'latest.yml');
+          let yml = readFileSync(ymlPath, 'utf8');
+          yml = yml.replace(/sha512: \S+/g, 'sha512: ' + hash);
+          yml = yml.replace(/size: \d+/g, 'size: ' + size);
+          writeFileSync(ymlPath, yml);
+          console.log('sha512:', hash);
+          console.log('size:', size);
 
       - name: Upload release assets
         if: startsWith(github.ref, 'refs/tags/')
@@ -59,7 +63,6 @@ jobs:
           body: "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection."
           files: |
             dist/Privoo-Setup-*.exe
-            dist/Privoo-Setup-*.exe.blockmap
             dist/latest.yml
 
   build-mac:
