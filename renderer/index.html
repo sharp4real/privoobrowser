@@ -925,31 +925,24 @@
   <script src="emoji-data.js"></script>
   <script src="renderer.js"></script>
 
-  <!-- Auto-update bar -->
-  <div id="update-bar" style="
-    display:none;
-    position:fixed;bottom:0;left:0;right:0;z-index:99999;
-    background:#1e2030;color:#e8eaed;
-    border-top:1px solid rgba(138,180,248,.35);
-    padding:10px 20px;
-    flex-direction:row;align-items:center;gap:16px;
-    font-size:13px;font-family:inherit;
-    box-shadow:0 -4px 20px rgba(0,0,0,.35);
-  ">
-    <svg viewBox="0 0 24 24" width="20" height="20" style="flex-shrink:0;fill:#8ab4f8"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/><path d="M13 16h-2V8h2v8z" style="display:none"/></svg>
-    <div style="flex:1;min-width:0;">
-      <div id="upd-msg" style="font-weight:600;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
-      <div id="upd-track" style="background:rgba(255,255,255,.15);border-radius:4px;height:5px;overflow:hidden;">
-        <div id="upd-bar" style="background:#8ab4f8;height:100%;width:0%;transition:width .3s ease;border-radius:4px;"></div>
-      </div>
-      <div id="upd-detail" style="font-size:11px;color:#9aa0a6;margin-top:4px;"></div>
+  <!-- Auto-update popup -->
+  <div id="update-bar" class="upd-popup" style="display:none">
+    <button id="upd-dismiss" class="upd-dismiss" title="Dismiss" aria-label="Dismiss">
+      <svg viewBox="0 0 14 14" width="10" height="10"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+    </button>
+    <div class="upd-icon">
+      <svg viewBox="0 0 40 40" width="36" height="36" fill="none">
+        <path d="M20 2.5 4 9.2v10.8c0 10.1 7 19.6 16 21.7 9-2.1 16-11.6 16-21.7V9.2z" fill="var(--accent)" opacity=".15"/>
+        <path d="M20 2.5 4 9.2v10.8c0 10.1 7 19.6 16 21.7 9-2.1 16-11.6 16-21.7V9.2z" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M14 20.5l4.5 4.5 8-9" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
     </div>
-    <button id="upd-restart" style="
-      display:none;flex-shrink:0;
-      background:#8ab4f8;color:#202124;border:none;
-      border-radius:8px;padding:8px 18px;
-      font-size:13px;font-weight:700;cursor:pointer;
-    ">Restart &amp; Update</button>
+    <div id="upd-msg" class="upd-msg"></div>
+    <div id="upd-track" class="upd-track" style="display:none">
+      <div id="upd-bar" class="upd-fill"></div>
+    </div>
+    <div id="upd-detail" class="upd-detail"></div>
+    <button id="upd-restart" class="upd-restart-btn" style="display:none">Restart &amp; Update</button>
   </div>
   <script>
   (function() {
@@ -959,6 +952,8 @@
     const fill    = document.getElementById('upd-bar');
     const detail  = document.getElementById('upd-detail');
     const restart = document.getElementById('upd-restart');
+    const dismiss = document.getElementById('upd-dismiss');
+    if (dismiss) dismiss.onclick = () => { bar.style.display = 'none'; };
 
     function showDownloading(version, pct, speed) {
       msg.textContent = 'Downloading Privoo ' + version + '…';
@@ -993,7 +988,7 @@
       detail.textContent = errMsg ? errMsg : 'The update will retry automatically.';
       restart.style.display = 'none';
       bar.style.display = 'flex';
-      setTimeout(() => { bar.style.display = 'none'; }, 12000);
+      setTimeout(() => { bar.style.display = 'none'; }, 10000);
     }
 
     restart.onclick = () => {

@@ -765,6 +765,9 @@ function openSidebarPanel(link) {
   }
   sidebarWv.src = link.url;
   sidebarPanel.hidden = false;
+  // Trigger Opera-style slide-in animation
+  sidebarPanel.classList.remove('sp-enter');
+  requestAnimationFrame(() => sidebarPanel.classList.add('sp-enter'));
   // Keep title current as the page navigates
   sidebarWv.addEventListener('page-title-updated', (e) => {
     if (titleEl) {
@@ -2781,12 +2784,30 @@ function hideWvContextMenu() {
 }
 
 // ─── DevTools ───────────────────────────────────────────────────────────────
-function openDockedDevTools(tab) {
+async function openDockedDevTools(tab) {
   if (!tab?.wv) return;
+  const pane    = document.getElementById('devtools-pane');
+  const devView = document.getElementById('devtools-view');
   try {
-    const wcId = tab.wv.getWebContentsId?.();
-    if (wcId != null && window.privoo?.openDevTools) {
-      window.privoo.openDevTools(wcId);
+    // Toggle: already open → close it
+    if (tab.wv.isDevToolsOpened?.()) {
+      tab.wv.closeDevTools();
+      if (pane) pane.hidden = true;
+      return;
+    }
+    const wcId    = tab.wv.getWebContentsId?.() || 0;
+    const devWcId = devView?.getWebContentsId?.() || 0;
+    if (wcId && window.privoo?.openDevTools) {
+      const res = await window.privoo.openDevTools(wcId, devWcId || undefined);
+      if (res?.closed) {
+        if (pane) pane.hidden = true;
+      } else if (!res?.detached && pane) {
+        // Embedded DevTools loaded in #devtools-view — show pane
+        pane.hidden = false;
+        const titleEl = document.getElementById('devtools-pane-title');
+        if (titleEl) titleEl.textContent = 'DevTools';
+      }
+      // If detached: native window handles it, no pane needed
     } else {
       if (tab.wv.isDevToolsOpened?.()) tab.wv.closeDevTools();
       else tab.wv.openDevTools();
@@ -2795,7 +2816,11 @@ function openDockedDevTools(tab) {
 }
 
 function closeDockedDevTools() {
-  openDockedDevTools(activeTab());
+  const pane = document.getElementById('devtools-pane');
+  if (pane) pane.hidden = true;
+  const tab = activeTab();
+  if (!tab?.wv) return;
+  try { if (tab.wv.isDevToolsOpened?.()) tab.wv.closeDevTools(); } catch {}
 }
 
 // ─── Standalone emoji picker (Chrome/Edge-style) ────────────────────────────

@@ -2162,11 +2162,12 @@ ipcMain.handle('capture-full-page', async (e, guestWcId) => {
 // Embed DevTools UI for `guestWcId` into the webContents identified by `devWcId`
 // (a hidden <webview> in the renderer). This is what gives us Chrome-style
 // docked DevTools — without this, openDevTools always spawns a new window.
-// Open Chromium's own DevTools for the guest webContents in a separate
-// window. The old "embed DevTools into a hidden <webview>" route via
-// setDevToolsWebContents rendered an empty panel in this Electron version;
-// a detached window is reliable and shows real, working DevTools.
-ipcMain.handle('open-devtools', (_e, guestWcId) => {
+// Open DevTools for guestWcId.  If devWcId is supplied (the #devtools-view
+// webview's webContents id) we try to embed via setDevToolsWebContents so
+// DevTools renders inside our custom right-side panel.  If that throws we
+// fall back to a native right-docked window — either way { detached } tells
+// the renderer whether to show #devtools-pane.
+ipcMain.handle('open-devtools', (_e, guestWcId, devWcId) => {
   try {
     const guest = webContents.fromId(Number(guestWcId));
     if (!guest || guest.isDestroyed()) return { ok: false, error: 'Tab not found' };
@@ -2174,8 +2175,18 @@ ipcMain.handle('open-devtools', (_e, guestWcId) => {
       guest.closeDevTools();
       return { ok: true, closed: true };
     }
+    if (devWcId) {
+      const devView = webContents.fromId(Number(devWcId));
+      if (devView && !devView.isDestroyed()) {
+        try {
+          guest.setDevToolsWebContents(devView);
+          guest.openDevTools();
+          return { ok: true, detached: false };
+        } catch (_) { /* fall through */ }
+      }
+    }
     guest.openDevTools({ mode: 'right', activate: true });
-    return { ok: true };
+    return { ok: true, detached: true };
   } catch (e) {
     return { ok: false, error: String(e.message || e) };
   }
