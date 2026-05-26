@@ -455,6 +455,7 @@ function applyAppSettings() {
   updateBookmarkButton();
   paintToolbarWidgets();
   applyVerticalTabs(!!settings.verticalTabs);
+  document.body.classList.toggle('vtabs-collapsed', !!settings.vtabsCollapsed);
 }
 
 function onSettingsChanged(next) {
@@ -4281,8 +4282,9 @@ function renderVtabs() {
 
 vtabsNewBtn?.addEventListener('click', () => createTab());
 
-document.getElementById('vtabs-collapse')?.addEventListener('click', () => {
+document.getElementById('vtabs-collapse')?.addEventListener('click', async () => {
   document.body.classList.toggle('vtabs-collapsed');
+  await window.privoo?.saveSettings({ vtabsCollapsed: document.body.classList.contains('vtabs-collapsed') });
 });
 
 // ─── Inline AI Panel ─────────────────────────────────────────────────────────

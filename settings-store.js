@@ -174,6 +174,7 @@ const DEFAULTS = {
   showAiButton: true,     // AI toolbar button — can be hidden via Settings → Features
   centerSidebarIcons: false, // vertically center shortcut icons in the sidebar rail
   verticalTabs: false,    // show tabs in a vertical left panel instead of horizontal strip
+  vtabsCollapsed: false,  // vertical tabs panel collapsed to icon-only rail
   sidebarLinks: [],
   ghostName: '',          // user-supplied name for the Privoo mascot
   accentColor: '',        // empty = use stylesheet default (light blue)
