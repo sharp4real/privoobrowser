@@ -26,13 +26,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build & Publish
+      - name: Build
         env:
-          GH_TOKEN: ${{ github.token }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
-        # electron-builder owns the entire upload so latest.yml is always
-        # generated from — and uploaded after — the exact exe it hashes.
-        run: npx electron-builder --win --publish onTag
+        run: npm run dist
+
+      - name: Upload release assets
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Privoo ${{ github.ref_name }}
+          body: "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection."
+          files: |
+            dist/Privoo-Setup-*.exe
+            dist/Privoo-Setup-*.exe.blockmap
+            dist/latest.yml
 
   build-mac:
     runs-on: macos-latest
@@ -47,11 +55,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build & Publish
+      - name: Build
         env:
-          GH_TOKEN: ${{ github.token }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
-        run: npx electron-builder --mac --x64 --arm64 --publish onTag
+        run: npm run dist:mac
+
+      - name: Upload release assets
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Privoo ${{ github.ref_name }}
+          body: "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection."
+          files: |
+            dist/*.dmg
+            dist/*.dmg.blockmap
+            dist/*.zip
+            dist/*.zip.blockmap
+            dist/latest-mac.yml
 
   build-linux:
     runs-on: ubuntu-latest
@@ -69,8 +89,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build & Publish
+      - name: Build
         env:
-          GH_TOKEN: ${{ github.token }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
-        run: npx electron-builder --linux --publish onTag
+        run: npm run dist:linux
+
+      - name: Upload release assets
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Privoo ${{ github.ref_name }}
+          body: "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection."
+          files: |
+            dist/*.AppImage
+            dist/*.deb
+            dist/*.rpm
+            dist/latest-linux.yml
