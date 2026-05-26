@@ -26,10 +26,30 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Exclude workspace from Windows Defender
+        shell: powershell
+        run: Add-MpPreference -ExclusionPath "$env:GITHUB_WORKSPACE"
+
       - name: Build
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
         run: npm run dist
+
+      - name: Verify exe hash matches latest.yml
+        shell: powershell
+        run: |
+          $exe = Get-ChildItem dist -Filter "*.exe" | Where-Object { $_.Name -notlike "*.blockmap" } | Select-Object -First 1
+          if (-not $exe) { Write-Error "No exe found in dist"; exit 1 }
+          $hashHex = (Get-FileHash $exe.FullName -Algorithm SHA512).Hash
+          $hashBytes = [byte[]]::new(64)
+          for ($i = 0; $i -lt 64; $i++) { $hashBytes[$i] = [Convert]::ToByte($hashHex.Substring($i * 2, 2), 16) }
+          $hashBase64 = [Convert]::ToBase64String($hashBytes)
+          $yml = Get-Content dist/latest.yml -Raw
+          if ($yml -notmatch [regex]::Escape($hashBase64)) {
+            Write-Error "Hash mismatch — exe was modified after latest.yml was generated. Exe hash: $hashBase64"
+            exit 1
+          }
+          Write-Host "Hash verified: $hashBase64"
 
       - name: Upload release assets
         if: startsWith(github.ref, 'refs/tags/')
