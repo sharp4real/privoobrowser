@@ -47,19 +47,20 @@ jobs:
             --title "Privoo ${{ github.ref_name }}" \
             --notes "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection." \
             2>/dev/null || true
-          # Upload installer first, then latest.yml last so the hash file
-          # is only updated once the binary it references is already present.
+          # Upload exe + blockmap first (no || true — failure must abort so
+          # latest.yml is never uploaded with a mismatched hash).
           find dist -maxdepth 1 -type f \( \
             -name "*.exe" -o -name "*.exe.blockmap" \
           \) | while IFS= read -r f; do
             echo "Uploading $f"
             gh release upload "${{ github.ref_name }}" "$f" \
-              --repo "${{ github.repository }}" --clobber || true
+              --repo "${{ github.repository }}" --clobber
           done
+          # Only reached if exe upload succeeded — upload latest.yml last.
           find dist -maxdepth 1 -type f -name "latest.yml" | while IFS= read -r f; do
             echo "Uploading $f"
             gh release upload "${{ github.ref_name }}" "$f" \
-              --repo "${{ github.repository }}" --clobber || true
+              --repo "${{ github.repository }}" --clobber
           done
 
   build-mac:
