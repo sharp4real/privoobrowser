@@ -102,8 +102,7 @@
     "publish": {
       "provider": "github",
       "owner": "sharp4real",
-      "repo": "privoobrowser",
-      "releaseNotes": "No telemetry. No tracking. No data collection."
+      "repo": "privoobrowser"
     }
   }
 }
