@@ -209,6 +209,24 @@
       </button>
     </aside>
 
+    <!-- ── Sidebar web panel — full-height view shown when clicking a rail icon ── -->
+    <div id="sidebar-panel" class="sidebar-panel" hidden>
+      <div class="sidebar-panel-header">
+        <button type="button" id="sidebar-panel-back" class="sidebar-panel-nav" title="Go back">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+        </button>
+        <span id="sidebar-panel-title" class="sidebar-panel-title"></span>
+        <button type="button" id="sidebar-panel-newtab" class="sidebar-panel-nav" title="Open in new tab">
+          <svg viewBox="0 0 24 24" width="14" height="14"><path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+        </button>
+        <button type="button" id="sidebar-panel-close" class="sidebar-panel-nav" title="Close sidebar">
+          <svg viewBox="0 0 14 14" width="10" height="10"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+        </button>
+      </div>
+      <webview id="sidebar-wv" class="sidebar-wv" allowpopups></webview>
+      <div id="sidebar-resize" class="sidebar-resize" title="Drag to resize"></div>
+    </div>
+
     <!-- Add-shortcut modal -->
     <div id="sidebar-add-modal" class="sb-modal hidden" role="dialog" aria-modal="true" aria-label="Add shortcut">
       <div class="sb-modal-card">

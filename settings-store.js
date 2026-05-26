@@ -171,6 +171,7 @@ const DEFAULTS = {
   showGeoToolbar: true,
   showNotesButton: false, // hidden by default — opt-in via Settings → Features
   showSidebar: false,     // shortcuts rail on the left — opt-in via Settings → Features
+  sidebarPanelWidth: 320, // width of the embedded web panel in the sidebar
   showAiButton: true,     // AI toolbar button — can be hidden via Settings → Features
   showTranslateButton: false, // Translate toolbar button — off by default, enable in Settings → Features
   centerSidebarIcons: false, // vertically center shortcut icons in the sidebar rail

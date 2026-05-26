@@ -318,6 +318,8 @@ const setupOverlay      = document.getElementById('setup-overlay');
 const appSidebar        = document.getElementById('app-sidebar');
 const sidebarRail       = document.getElementById('sidebar-rail');
 const sidebarFlyout     = document.getElementById('sidebar-flyout');
+const sidebarPanel      = document.getElementById('sidebar-panel');
+const sidebarWv         = document.getElementById('sidebar-wv');
 const ytdlpToolbarBtn   = document.getElementById('ytdlp-toolbar-btn');
 const ytdlpPopover      = document.getElementById('ytdlp-popover');
 const ytdlpUrlInput     = document.getElementById('ytdlp-url');
@@ -597,6 +599,8 @@ function paintToolbarWidgets() {
   // Translate toolbar button — off by default, enable in Settings → Features
   const translateAnchor = document.getElementById('translate-anchor');
   if (translateAnchor) translateAnchor.hidden = !settings.showTranslateButton;
+  const translateBtnEl = document.getElementById('translate-btn');
+  if (translateBtnEl) translateBtnEl.hidden = !settings.showTranslateButton;
   // AI toolbar button — on by default, can be hidden in Settings → Features
   const aiAnchor = document.getElementById('ai-anchor');
   if (aiAnchor) aiAnchor.hidden = settings.showAiButton === false;
@@ -654,7 +658,7 @@ function renderSidebarRail() {
     }
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      createTab(link.url);
+      openSidebarPanel(link);
     });
     btn.addEventListener('contextmenu', async (e) => {
       e.preventDefault();
@@ -734,6 +738,85 @@ function openSidebarFlyout(anchorBtn, link) {
     navigate(link.url);
     hideSidebarFlyout();
   });
+}
+
+// ─── Sidebar web panel ────────────────────────────────────────────────────────
+let _sidebarResizing = false;
+let _sidebarResizeStart = 0;
+let _sidebarResizeW = 320;
+
+function openSidebarPanel(link) {
+  if (!sidebarPanel || !sidebarWv) return;
+  // Apply preload + partition once before first real navigation
+  if (!sidebarWv.getAttribute('preload') && window.privoo?.webviewPreloadUrl) {
+    sidebarWv.setAttribute('preload', window.privoo.webviewPreloadUrl);
+  }
+  const _incoPart = window.__privooIncognitoPartition || window.privoo?.incognitoPartition;
+  if (_incoPart && !sidebarWv.getAttribute('partition')) {
+    sidebarWv.setAttribute('partition', _incoPart);
+  }
+  const w = settings?.sidebarPanelWidth || 320;
+  sidebarPanel.style.width = `${w}px`;
+  const titleEl = document.getElementById('sidebar-panel-title');
+  if (titleEl) {
+    try { titleEl.textContent = new URL(link.url).hostname.replace(/^www\./, ''); }
+    catch { titleEl.textContent = link.title || link.url; }
+  }
+  sidebarWv.src = link.url;
+  sidebarPanel.hidden = false;
+  // Keep title current as the page navigates
+  sidebarWv.addEventListener('page-title-updated', (e) => {
+    if (titleEl) {
+      try { titleEl.textContent = new URL(sidebarWv.getURL()).hostname.replace(/^www\./, ''); }
+      catch { titleEl.textContent = e.title || ''; }
+    }
+  });
+}
+
+function closeSidebarPanel() {
+  if (!sidebarPanel) return;
+  sidebarPanel.hidden = true;
+  if (sidebarWv) sidebarWv.src = 'about:blank';
+}
+
+// Sidebar panel header buttons
+document.getElementById('sidebar-panel-close')?.addEventListener('click', closeSidebarPanel);
+document.getElementById('sidebar-panel-back')?.addEventListener('click', () => {
+  if (sidebarWv?.canGoBack()) sidebarWv.goBack();
+});
+document.getElementById('sidebar-panel-newtab')?.addEventListener('click', () => {
+  try { const url = sidebarWv?.getURL(); if (url && url !== 'about:blank') createTab(url); } catch {}
+});
+
+// Drag-to-resize handle
+const sidebarResizeHandle = document.getElementById('sidebar-resize');
+sidebarResizeHandle?.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  _sidebarResizing = true;
+  _sidebarResizeStart = e.clientX;
+  _sidebarResizeW = sidebarPanel ? parseInt(sidebarPanel.style.width) || 320 : 320;
+  document.body.classList.add('sidebar-resizing');
+  document.addEventListener('mousemove', _onSidebarResize);
+  document.addEventListener('mouseup', _onSidebarResizeEnd);
+});
+
+function _onSidebarResize(e) {
+  if (!_sidebarResizing || !sidebarPanel) return;
+  const delta = e.clientX - _sidebarResizeStart;
+  const newW = Math.max(180, Math.min(640, _sidebarResizeW + delta));
+  sidebarPanel.style.width = `${newW}px`;
+}
+
+async function _onSidebarResizeEnd() {
+  if (!_sidebarResizing) return;
+  _sidebarResizing = false;
+  document.body.classList.remove('sidebar-resizing');
+  document.removeEventListener('mousemove', _onSidebarResize);
+  document.removeEventListener('mouseup', _onSidebarResizeEnd);
+  if (sidebarPanel) {
+    const w = parseInt(sidebarPanel.style.width) || 320;
+    await saveBrowserSetting({ sidebarPanelWidth: w });
+  }
 }
 
 function serializeSession() {
