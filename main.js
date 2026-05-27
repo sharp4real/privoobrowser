@@ -2038,6 +2038,16 @@ ipcMain.handle('get-cursor-pos', (e) => {
   }
 });
 
+ipcMain.handle('is-default-browser', () => app.isDefaultProtocolClient('https'));
+ipcMain.handle('set-default-browser', () => {
+  if (process.platform === 'win32') {
+    shell.openExternal('ms-settings:defaultapps');
+  } else {
+    app.setAsDefaultProtocolClient('https');
+    app.setAsDefaultProtocolClient('http');
+  }
+});
+
 // Show a native OS context menu. Renderer sends a tree of items
 // (`{id, label, type, enabled, submenu}`); we build a Menu, popup it at the
 // cursor position (OS handles positioning so it's always exactly under the

@@ -1940,8 +1940,9 @@ function wireWebview(tab) {
   wv.addEventListener('context-menu', (e) => {
     e.preventDefault();
     const rect = wv.getBoundingClientRect();
-    const vx = rect.left + (e.params?.x || 0);
-    const vy = rect.top  + (e.params?.y || 0);
+    const dpr = window.devicePixelRatio || 1;
+    const vx = rect.left + (e.params?.x || 0) / dpr;
+    const vy = rect.top  + (e.params?.y || 0) / dpr;
     showWvContextMenu(tab, e.params || {}, vx, vy);
   }, { signal });
 
@@ -4729,6 +4730,7 @@ const AI_MODELS = {
   ],
   deepseek: [
     { id: 'deepseek-chat',     label: 'DeepSeek V3 — general chat (recommended)' },
+    { id: 'deepseek-v4',       label: 'DeepSeek V4 — latest' },
     { id: 'deepseek-reasoner', label: 'DeepSeek R1 — step-by-step reasoning' },
   ],
   gemini: [

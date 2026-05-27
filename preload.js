@@ -99,7 +99,9 @@ contextBridge.exposeInMainWorld('privoo', {
   showContextMenu:(items) => ipcRenderer.invoke('show-context-menu', items),
   showEmojiPanel: () => ipcRenderer.invoke('show-emoji-panel'),
   captureFullPage:(wcId) => ipcRenderer.invoke('capture-full-page', wcId),
-  getCursorPos:   () => ipcRenderer.invoke('get-cursor-pos'),
+  getCursorPos:       () => ipcRenderer.invoke('get-cursor-pos'),
+  isDefaultBrowser:   () => ipcRenderer.invoke('is-default-browser'),
+  setDefaultBrowser:  () => ipcRenderer.invoke('set-default-browser'),
 
   passwordsList:       () => ipcRenderer.invoke('passwords-list'),
   passwordsGetForUrl:  (url) => ipcRenderer.invoke('passwords-get-for-url', url),
