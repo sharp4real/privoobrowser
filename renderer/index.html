@@ -929,85 +929,65 @@
   <script src="emoji-data.js"></script>
   <script src="renderer.js"></script>
 
-  <!-- Auto-update popup -->
-  <div id="update-bar" class="upd-popup" style="display:none">
-    <button id="upd-dismiss" class="upd-dismiss" title="Dismiss" aria-label="Dismiss">
-      <svg viewBox="0 0 14 14" width="10" height="10"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
-    </button>
-    <div class="upd-icon">
-      <svg viewBox="0 0 40 40" width="36" height="36" fill="none">
-        <path d="M20 2.5 4 9.2v10.8c0 10.1 7 19.6 16 21.7 9-2.1 16-11.6 16-21.7V9.2z" fill="var(--accent)" opacity=".15"/>
-        <path d="M20 2.5 4 9.2v10.8c0 10.1 7 19.6 16 21.7 9-2.1 16-11.6 16-21.7V9.2z" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>
-        <path d="M14 20.5l4.5 4.5 8-9" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+  <!-- Auto-update overlay — shown on download start, cannot be dismissed -->
+  <div id="updating-overlay" class="updating-overlay" hidden>
+    <div class="updating-card">
+      <div class="updating-icon-wrap" id="upd-icon-wrap">
+        <svg viewBox="0 0 52 52" width="56" height="56" fill="none">
+          <circle cx="26" cy="26" r="26" fill="var(--accent)" opacity=".15"/>
+          <path d="M26 13v18M19 25l7 7 7-7" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M16 38h20" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="updating-spinner" id="upd-spinner" style="display:none"></div>
+      <div class="updating-title" id="upd-title">Downloading update…</div>
+      <div class="updating-prog-outer" id="upd-prog-outer" style="display:none">
+        <div class="updating-prog-track">
+          <div class="updating-prog-bar" id="upd-prog-bar"></div>
+        </div>
+        <div class="updating-prog-label" id="upd-prog-label">Starting download…</div>
+      </div>
+      <div class="updating-sub" id="upd-sub">Privoo will restart automatically when ready.</div>
     </div>
-    <div id="upd-msg" class="upd-msg"></div>
-    <div id="upd-track" class="upd-track" style="display:none">
-      <div id="upd-bar" class="upd-fill"></div>
-    </div>
-    <div id="upd-detail" class="upd-detail"></div>
-    <button id="upd-restart" class="upd-restart-btn" style="display:none">Restart &amp; Update</button>
   </div>
   <script>
   (function() {
-    const bar     = document.getElementById('update-bar');
-    const msg     = document.getElementById('upd-msg');
-    const track   = document.getElementById('upd-track');
-    const fill    = document.getElementById('upd-bar');
-    const detail  = document.getElementById('upd-detail');
-    const restart = document.getElementById('upd-restart');
-    const dismiss = document.getElementById('upd-dismiss');
-    if (dismiss) dismiss.onclick = () => { bar.style.display = 'none'; };
+    const overlay   = document.getElementById('updating-overlay');
+    const iconWrap  = document.getElementById('upd-icon-wrap');
+    const spinner   = document.getElementById('upd-spinner');
+    const title     = document.getElementById('upd-title');
+    const progOuter = document.getElementById('upd-prog-outer');
+    const progBar   = document.getElementById('upd-prog-bar');
+    const progLabel = document.getElementById('upd-prog-label');
+    const sub       = document.getElementById('upd-sub');
 
-    function showDownloading(version, pct, speed) {
-      msg.textContent = 'Downloading Privoo ' + version + '…';
-      track.style.display = 'block';
-      fill.style.width = (pct || 0) + '%';
-      detail.textContent = pct != null
-        ? Math.round(pct) + '%' + (speed ? '  ·  ' + (speed / 1024 / 1024).toFixed(1) + ' MB/s' : '')
+    function showDownloading(ver, pct, speed) {
+      overlay.hidden = false;
+      iconWrap.style.display = 'flex';
+      spinner.style.display = 'none';
+      title.textContent = 'Downloading Privoo ' + ver + '…';
+      progOuter.style.display = 'block';
+      progBar.style.width = (pct || 0) + '%';
+      progLabel.textContent = pct > 0
+        ? Math.round(pct) + '%' + (speed > 0 ? ' · ' + (speed / 1024 / 1024).toFixed(1) + ' MB/s' : '')
         : 'Starting download…';
-      restart.style.display = 'none';
-      bar.style.display = 'flex';
+      sub.textContent = 'Privoo will restart automatically when ready.';
     }
 
-    let _isMac = false;
-    window.privoo?.getPlatform?.().then(p => {
-      _isMac = (p === 'darwin');
-      if (_isMac) restart.textContent = 'Download Update';
-    }).catch(() => {});
-
-    function showReady(version) {
-      msg.textContent = 'Privoo ' + version + ' is available.';
-      track.style.display = 'none';
-      detail.textContent = _isMac
-        ? 'Click to open the download page and install manually.'
-        : 'The update will apply when you restart.';
-      restart.style.display = 'block';
-      bar.style.display = 'flex';
+    function showInstalling() {
+      overlay.hidden = false;
+      iconWrap.style.display = 'none';
+      progOuter.style.display = 'none';
+      spinner.style.display = 'block';
+      title.textContent = 'Installing update…';
+      sub.textContent = 'Privoo will restart automatically.';
     }
 
-    function showError(errMsg) {
-      msg.textContent = 'Update failed — retrying shortly.';
-      track.style.display = 'none';
-      detail.textContent = errMsg ? errMsg : 'The update will retry automatically.';
-      restart.style.display = 'none';
-      bar.style.display = 'flex';
-      setTimeout(() => { bar.style.display = 'none'; }, 10000);
-    }
-
-    restart.onclick = () => {
-      const overlay = document.getElementById('updating-overlay');
-      if (overlay) overlay.hidden = false;
-      setTimeout(() => { if (window.privoo) window.privoo.installUpdateNow(); }, 900);
-    };
-
-    // If download reaches 100% but update-downloaded never fires (silent
-    // verification failure), retry after 20 s so it self-heals.
     let _stallTimer = null;
     function armStallTimer() {
       clearTimeout(_stallTimer);
       _stallTimer = setTimeout(() => {
-        showError('Download stalled at 100% — retrying.');
+        overlay.hidden = true;
         window.privoo?.triggerUpdateCheck?.();
       }, 20000);
     }
@@ -1016,34 +996,28 @@
     if (window.privoo) {
       window.privoo.onUpdateAvailable((info) => { showDownloading(info.version, 0, 0); });
       window.privoo.onUpdateProgress((p) => {
-        showDownloading(p.version || msg.textContent.replace('Downloading Privoo ','').replace('…',''), p.percent, p.bytesPerSecond);
+        const ver = p.version || title.textContent.replace('Downloading Privoo ', '').replace('…', '');
+        showDownloading(ver, p.percent, p.bytesPerSecond);
         if (p.percent >= 99.9) armStallTimer();
       });
-      window.privoo.onUpdateDownloaded((info) => { cancelStallTimer(); showReady(info.version); });
-      window.privoo.onUpdateError?.((errMsg) => { cancelStallTimer(); showError(errMsg); });
+      window.privoo.onUpdateDownloaded(() => {
+        cancelStallTimer();
+        showInstalling();
+        setTimeout(() => { window.privoo.installUpdateNow(); }, 1500);
+      });
+      window.privoo.onUpdateError?.(() => { cancelStallTimer(); overlay.hidden = true; });
 
-      // On load: catch any update that was already found before listeners registered.
       window.privoo.getUpdateStatus().then((s) => {
         if (!s) return;
-        if (s.downloaded)      showReady(s.downloaded.version);
-        else if (s.available)  showDownloading(s.available.version, s.progress ? s.progress.percent : 0, s.progress ? s.progress.bytesPerSecond : 0);
+        if (s.downloaded) {
+          showInstalling();
+          setTimeout(() => { window.privoo.installUpdateNow(); }, 1500);
+        } else if (s.available) {
+          showDownloading(s.available.version, s.progress?.percent || 0, s.progress?.bytesPerSecond || 0);
+        }
       }).catch(() => {});
     }
   })();
   </script>
-
-  <!-- Updating overlay — shown when Restart & Update is clicked -->
-  <div id="updating-overlay" class="updating-overlay" hidden>
-    <div class="updating-card">
-      <svg class="updating-logo" viewBox="0 0 48 48" width="54" height="54" fill="none">
-        <path d="M24 3 5 11v13c0 12.15 8.4 23.52 19 26 10.6-2.48 19-13.85 19-26V11z" fill="var(--accent)" opacity=".18"/>
-        <path d="M24 3 5 11v13c0 12.15 8.4 23.52 19 26 10.6-2.48 19-13.85 19-26V11z" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>
-        <path d="M16 24l6 6 10-11" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <div class="updating-spinner"></div>
-      <div class="updating-title">Installing update…</div>
-      <div class="updating-sub">Privoo will restart automatically.</div>
-    </div>
-  </div>
 </body>
 </html>

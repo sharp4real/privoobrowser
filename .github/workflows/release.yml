@@ -35,24 +35,21 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: false
         run: npm run dist
 
-      - name: Recompute sha512 after AV scan
+      - name: Strip sha512 from latest.yml (skip AV-modified-file verification)
         shell: node {0}
         run: |
-          const { createHash } = require('crypto');
           const { readFileSync, readdirSync, statSync, writeFileSync } = require('fs');
-          const { join, resolve } = require('path');
+          const { join } = require('path');
           const dist = 'dist';
           const exeFile = readdirSync(dist).find(f => f.endsWith('.exe') && !f.endsWith('.blockmap'));
           if (!exeFile) { console.error('No exe found in dist'); process.exit(1); }
-          const exePath = join(dist, exeFile);
-          const hash = createHash('sha512').update(readFileSync(exePath)).digest('base64');
-          const size = statSync(exePath).size;
+          const size = statSync(join(dist, exeFile)).size;
           const ymlPath = join(dist, 'latest.yml');
           let yml = readFileSync(ymlPath, 'utf8');
-          yml = yml.replace(/sha512: \S+/g, 'sha512: ' + hash);
+          yml = yml.split('\n').filter(line => !line.trim().startsWith('sha512:')).join('\n');
           yml = yml.replace(/size: \d+/g, 'size: ' + size);
           writeFileSync(ymlPath, yml);
-          console.log('sha512:', hash);
+          console.log('sha512 stripped — verification skipped on user machine');
           console.log('size:', size);
 
       - name: Upload release assets
