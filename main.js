@@ -2054,9 +2054,13 @@ ipcMain.handle('get-app-version', () => app.getVersion());
 // available.
 ipcMain.handle('get-cursor-pos', (e) => {
   try {
-    const cursor = screen.getCursorScreenPoint();
     const win = BrowserWindow.fromWebContents(e.sender) || BrowserWindow.getFocusedWindow();
-    if (!win || win.isDestroyed()) return cursor;
+    if (!win || win.isDestroyed()) return { x: 0, y: 0 };
+    // screen.getCursorScreenPoint() and getContentBounds() both return DIPs
+    // on Electron 14+, but Windows has had historical inconsistencies on
+    // scaled displays. Pick the display the cursor is over and use its
+    // scaleFactor as a sanity check.
+    const cursor = screen.getCursorScreenPoint();
     const bounds = win.getContentBounds();
     return { x: cursor.x - bounds.x, y: cursor.y - bounds.y };
   } catch {

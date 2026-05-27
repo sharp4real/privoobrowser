@@ -1942,17 +1942,28 @@ function wireWebview(tab) {
 
   wv.addEventListener('context-menu', async (e) => {
     e.preventDefault();
-    // Use the real cursor position in window-local CSS pixels — the
-    // event's params.x/y come from the guest's compositor and don't
-    // line up with the host window's coordinate space (esp. on HiDPI).
-    let vx, vy;
+    // Position the host context menu at the real cursor. Two sources:
+    //  1. getCursorPos() from main — true OS cursor minus window content
+    //     bounds. Should always be right but Windows DPI scaling has
+    //     historically had edge cases.
+    //  2. e.params.x/y — the guest's compositor coords. On Windows HiDPI
+    //     these come back in physical pixels, so divide by devicePixelRatio
+    //     to get CSS pixels.
+    // Use source 1, then fall back to source 2 if the result lands outside
+    // the viewport (a sign that DPI math went wrong).
+    let vx = 0, vy = 0;
+    let usable = false;
     try {
       const c = await window.privoo.getCursorPos();
-      vx = c.x; vy = c.y;
-    } catch {
+      if (c && c.x >= 0 && c.y >= 0 && c.x <= window.innerWidth && c.y <= window.innerHeight) {
+        vx = c.x; vy = c.y; usable = true;
+      }
+    } catch {}
+    if (!usable) {
       const rect = wv.getBoundingClientRect();
-      vx = rect.left + (e.params?.x || 0);
-      vy = rect.top  + (e.params?.y || 0);
+      const dpr  = window.devicePixelRatio || 1;
+      vx = rect.left + (e.params?.x || 0) / dpr;
+      vy = rect.top  + (e.params?.y || 0) / dpr;
     }
     showWvContextMenu(tab, e.params || {}, vx, vy);
   }, { signal });
@@ -3800,6 +3811,54 @@ omnibox.addEventListener('focus', () => {
   const val = omnibox.value;
   if (!val) return;
   triggerSuggest(val);
+});
+
+// Right-click on the URL bar: a Chrome-style cut/copy/paste menu, anchored
+// at the exact cursor with clientX/Y (DOM CSS pixels — no DPR math, no IPC).
+omnibox.addEventListener('contextmenu', async (e) => {
+  e.preventDefault();
+  const hasSel = omnibox.selectionStart !== omnibox.selectionEnd;
+  let clip = '';
+  try { clip = await navigator.clipboard.readText(); } catch {}
+  const items = [
+    { id: 'undo',  label: 'Undo' },
+    { type: 'separator' },
+    { id: 'cut',   label: 'Cut',   enabled: hasSel },
+    { id: 'copy',  label: 'Copy',  enabled: hasSel },
+    { id: 'paste', label: 'Paste', enabled: !!clip },
+    { id: 'paste-go', label: 'Paste and go', enabled: !!clip },
+    { type: 'separator' },
+    { id: 'select-all', label: 'Select all', enabled: omnibox.value.length > 0 },
+  ];
+  const action = await showHtmlMenu(items, e.clientX, e.clientY);
+  if (!action) return;
+  const start = omnibox.selectionStart || 0;
+  const end   = omnibox.selectionEnd   || 0;
+  switch (action) {
+    case 'undo':
+      try { document.execCommand('undo'); } catch {}
+      break;
+    case 'cut':
+      if (hasSel) {
+        try { await navigator.clipboard.writeText(omnibox.value.slice(start, end)); } catch {}
+        omnibox.setRangeText('', start, end, 'end');
+      }
+      break;
+    case 'copy':
+      if (hasSel) {
+        try { await navigator.clipboard.writeText(omnibox.value.slice(start, end)); } catch {}
+      }
+      break;
+    case 'paste':
+      if (clip) omnibox.setRangeText(clip, start, end, 'end');
+      break;
+    case 'paste-go':
+      if (clip) navigate(clip);
+      break;
+    case 'select-all':
+      omnibox.select();
+      break;
+  }
 });
 omnibox.addEventListener('input', (e) => triggerSuggest(e.target.value));
 
