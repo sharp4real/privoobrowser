@@ -288,6 +288,9 @@ const homeBtn      = document.getElementById('home');
 const newTabBtn    = document.getElementById('new-tab');
 const shieldBtn    = document.getElementById('shield-btn');
 const shieldPanel  = document.getElementById('shield-panel');
+const pageShieldBtn     = document.getElementById('page-shield');
+const pageShieldCount   = document.getElementById('page-shield-count');
+const pageShieldPopover = document.getElementById('page-shield-popover');
 const shieldCount  = document.getElementById('shield-count');
 const menuBtn      = document.getElementById('menu-btn');
 const menuEl       = document.getElementById('menu');
@@ -1786,8 +1789,6 @@ async function openTabContextMenu(x, y, tabId) {
     { id: 'close-others', label: 'Close other tabs', enabled: tabs.length > 1 },
     { type: 'separator' },
     { label: 'Tab group',   submenu: groupSubmenu },
-    { type: 'separator' },
-    { id: 'save-tabs',    label: 'Save tabs for next launch' },
   ];
 
   const action = await showHtmlMenu(items, x, y, tabContextMenu);
@@ -1812,9 +1813,6 @@ async function openTabContextMenu(x, y, tabId) {
       break;
     case 'close-others':
       for (const t of [...tabs]) if (t.id !== tabId) closeTab(t.id);
-      break;
-    case 'save-tabs':
-      saveSessionNow();
       break;
     default:
       if (action === 'g-new') {
@@ -1910,6 +1908,11 @@ function wireWebview(tab) {
   wv.addEventListener('did-finish-load', () => {
     tab.everLoaded = true;
     applyInjections(wv);
+    if (tab === activeTab()) refreshPageShield(tab);
+  }, { signal });
+
+  wv.addEventListener('did-stop-loading', () => {
+    if (tab === activeTab()) refreshPageShield(tab);
   }, { signal });
 
   wv.addEventListener('did-fail-load', (e) => {
@@ -1937,12 +1940,20 @@ function wireWebview(tab) {
     wv.loadURL(`privoo://error/?${params.toString()}`).catch(() => {});
   }, { signal });
 
-  wv.addEventListener('context-menu', (e) => {
+  wv.addEventListener('context-menu', async (e) => {
     e.preventDefault();
-    const rect = wv.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
-    const vx = rect.left + (e.params?.x || 0) / dpr;
-    const vy = rect.top  + (e.params?.y || 0) / dpr;
+    // Use the real cursor position in window-local CSS pixels — the
+    // event's params.x/y come from the guest's compositor and don't
+    // line up with the host window's coordinate space (esp. on HiDPI).
+    let vx, vy;
+    try {
+      const c = await window.privoo.getCursorPos();
+      vx = c.x; vy = c.y;
+    } catch {
+      const rect = wv.getBoundingClientRect();
+      vx = rect.left + (e.params?.x || 0);
+      vy = rect.top  + (e.params?.y || 0);
+    }
     showWvContextMenu(tab, e.params || {}, vx, vy);
   }, { signal });
 
@@ -2148,6 +2159,7 @@ function syncToolbar() {
   siteIcon.className = 'site-icon ' + (isInternal ? 'internal' : isSecure ? 'secure' : 'insecure');
   siteIcon.title = isInternal ? 'Privoo internal page' : isSecure ? 'Connection is secure' : 'Connection is not secure';
   updateSiteInfoPopover(tab.url, isInternal, isSecure, isHttp);
+  refreshPageShield(tab);
 
   try {
     backBtn.disabled    = !wv.canGoBack();
@@ -2718,6 +2730,32 @@ async function refreshStats() {
   } catch { /* ignore */ }
 }
 
+async function refreshPageShield(tab) {
+  if (!pageShieldBtn || !pageShieldCount) return;
+  tab = tab || activeTab();
+  let wcId = 0;
+  try { wcId = tab?.wv?.getWebContentsId?.() || 0; } catch {}
+  let count = 0;
+  if (wcId) {
+    try { count = await window.privoo.getPageBlockedCount(wcId); } catch {}
+  }
+  const label = count > 999 ? '999+' : String(count);
+  pageShieldCount.textContent = label;
+  pageShieldBtn.classList.toggle('has-blocks', count > 0);
+  const heroNum = document.getElementById('ps-hero-num');
+  if (heroNum) heroNum.textContent = label;
+  const hostEl = document.getElementById('ps-foot-host');
+  if (hostEl) {
+    let host = '';
+    try { host = tab?.url ? new URL(tab.url).hostname.replace(/^www\./, '') : ''; } catch {}
+    if (!host || tab?.url?.startsWith('privoo://')) {
+      hostEl.textContent = 'Internal page';
+    } else {
+      hostEl.textContent = host;
+    }
+  }
+}
+
 // ─── Popovers ────────────────────────────────────────────────────────────────
 function togglePopover(el) {
   const wasHidden = el.classList.contains('hidden');
@@ -2773,6 +2811,7 @@ function closePopovers() {
   ytdlpPopover?.classList.add('hidden');
   geoPopover?.classList.add('hidden');
   siteInfoPopover?.classList.add('hidden');
+  pageShieldPopover?.classList.add('hidden');
   notesPopover?.classList.add('hidden');
   document.getElementById('translate-popover')?.classList.add('hidden');
   emojiPickerEl?.classList.add('hidden');
@@ -3442,6 +3481,12 @@ siteIcon?.addEventListener('click', (e) => {
   togglePopover(siteInfoPopover);
 });
 
+pageShieldBtn?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  refreshPageShield();
+  togglePopover(pageShieldPopover);
+});
+
 document.getElementById('devtools-close')?.addEventListener('click', () => closeDockedDevTools());
 
 // ─── Notes popover — multi-note with home + edit views ──────────────────────
@@ -3688,6 +3733,9 @@ window.addEventListener('mousedown', (e) => {
   if (siteInfoPopover && !siteInfoPopover.classList.contains('hidden') && !siteInfoPopover.contains(t) && t !== siteIcon && !siteIcon.contains(t)) {
     siteInfoPopover.classList.add('hidden');
   }
+  if (pageShieldPopover && !pageShieldPopover.classList.contains('hidden') && !pageShieldPopover.contains(t) && !pageShieldBtn?.contains(t)) {
+    pageShieldPopover.classList.add('hidden');
+  }
   if (audioPopover && !audioPopover.classList.contains('hidden') && !t.closest('#audio-anchor')) {
     audioPopover.classList.add('hidden');
     stopMediaPolling();
@@ -3721,7 +3769,6 @@ function handleAction(action) {
     case 'ai-browser': toggleAiPanel(); break;
     case 'settings':   createTab(SETTINGS_URL); break;
     case 'customize':  openCustomizePanel(); break;
-    case 'save-tabs':  saveSessionNow(); break;
     case 'zoom-in':    activeTab()?.wv.setZoomLevel((activeTab()?.wv.getZoomLevel() || 0) + 1); break;
     case 'zoom-out':   activeTab()?.wv.setZoomLevel((activeTab()?.wv.getZoomLevel() || 0) - 1); break;
     case 'zoom-reset': activeTab()?.wv.setZoomLevel(0); break;

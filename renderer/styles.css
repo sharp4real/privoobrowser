@@ -794,6 +794,89 @@ body.dark #omnibox-wrap:focus-within {
 .site-icon.insecure { color: var(--red); }
 .site-icon.internal { color: var(--accent); }
 
+/* ── Per-page shield (sits inside the omnibox, left of the bookmark btn) ── */
+.page-shield {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  border-radius: 11px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background .12s, color .12s;
+  font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+}
+.page-shield:hover { background: var(--hover); }
+.page-shield svg { fill: currentColor; }
+.page-shield #page-shield-count {
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+}
+.page-shield.has-blocks { color: var(--accent); }
+
+/* Popover anchored under the omnibox */
+#page-shield-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 280px;
+  background: var(--toolbar);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--panel-shadow);
+  z-index: 1000;
+  padding: 18px 18px 14px;
+  font-size: 13px;
+  color: var(--text);
+  animation: pop-in .15s cubic-bezier(.2,0,.2,1);
+  transform-origin: top right;
+}
+#page-shield-popover.hidden { display: none; }
+.ps-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 12px;
+}
+.ps-hero-shield {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.ps-hero-shield svg { width: 24px; height: 24px; fill: currentColor; }
+.ps-hero-text { min-width: 0; }
+.ps-hero-num {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -.01em;
+  color: var(--text);
+}
+.ps-hero-sub {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.3;
+  margin-top: 2px;
+}
+.ps-foot {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* ── Site security popover (click on the lock/shield in the omnibox) ── */
 #site-info-popover {
   position: absolute;

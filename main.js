@@ -340,6 +340,9 @@ const SEC_CH_UA =
   `"Chromium";v="${CHROME_MAJOR}", "Google Chrome";v="${CHROME_MAJOR}", "Not_A Brand";v="24"`;
 
 const stats = { blockedAds: 0, blockedCookies: 0, upgradedHttps: 0 };
+// Per-webContents block counts — reset on each main-frame navigation so the
+// omnibox shield can show "blocked on this page" without bleeding across loads.
+const pageBlockedCounts = new Map();
 let defaultUserAgent = null;
 
 // In-progress download items keyed by ID
@@ -748,8 +751,22 @@ async function setupAdBlocking(sess) {
       // everything through. Top-level navigation to that host counts too.
       const sourceHost = documentBaseDomain(details.webContentsId) || hostnameOf(details.url);
       if (isSiteCompatibilityHost(sourceHost)) return cb({ cancel: false });
-      // Everyone else: hand off to the real adblock engine.
-      blockerOnBeforeRequest(details, cb);
+      // Reset the per-page counter on a fresh main-frame navigation so each
+      // page starts at 0 — keeps the omnibox shield accurate.
+      if (details.resourceType === 'mainFrame' && details.webContentsId) {
+        pageBlockedCounts.set(details.webContentsId, 0);
+      }
+      // Hand off to the real adblock engine, but watch the response so we
+      // can tally per-tab blocks (request-blocked event has no wcId).
+      blockerOnBeforeRequest(details, (response) => {
+        if (response && response.cancel && details.webContentsId) {
+          pageBlockedCounts.set(
+            details.webContentsId,
+            (pageBlockedCounts.get(details.webContentsId) || 0) + 1
+          );
+        }
+        cb(response);
+      });
     });
     console.log('Privoo: adblock engine (EasyList + EasyPrivacy + uBO) active');
     return;
@@ -786,7 +803,16 @@ async function setupAdBlocking(sess) {
 
     if (isBlockedHost(host)) {
       stats.blockedAds++;
+      if (details.webContentsId) {
+        pageBlockedCounts.set(
+          details.webContentsId,
+          (pageBlockedCounts.get(details.webContentsId) || 0) + 1
+        );
+      }
       return cb({ cancel: true });
+    }
+    if (details.resourceType === 'mainFrame' && details.webContentsId) {
+      pageBlockedCounts.set(details.webContentsId, 0);
     }
     cb({ cancel: false });
   });
@@ -2212,6 +2238,13 @@ ipcMain.handle('reset-privacy-stats', () => {
   stats.blockedCookies = 0;
   stats.upgradedHttps = 0;
   return stats;
+});
+
+// Per-page blocked-request count, keyed by guest webContents id.
+// The omnibox shield reads this to show "N trackers blocked on this page".
+ipcMain.handle('page-blocked-count', (_e, wcId) => {
+  if (!wcId) return 0;
+  return pageBlockedCounts.get(wcId) || 0;
 });
 
 ipcMain.handle('get-settings', () => ({

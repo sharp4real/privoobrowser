@@ -39,6 +39,7 @@ contextBridge.exposeInMainWorld('privoo', {
   // Privacy stats
   getPrivacyStats:   () => ipcRenderer.invoke('privacy-stats'),
   resetPrivacyStats: () => ipcRenderer.invoke('reset-privacy-stats'),
+  getPageBlockedCount: (wcId) => ipcRenderer.invoke('page-blocked-count', wcId),
 
   // History (recorded by renderer after each page load)
   addHistory:          (entry)  => ipcRenderer.invoke('add-history', entry),
