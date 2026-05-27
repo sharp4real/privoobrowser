@@ -66,7 +66,9 @@ jobs:
             dist/latest.yml
 
   build-mac:
-    runs-on: macos-latest
+    # Use Intel macOS so we can cross-compile x64 + arm64 dmg/zip without
+    # the arch-specific native-module pitfalls macos-latest (arm64) has.
+    runs-on: macos-13
     steps:
       - uses: actions/checkout@v4
 
@@ -81,6 +83,11 @@ jobs:
       - name: Build
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          # electron-builder warns + sometimes fails when no Apple ID/cert
+          # is configured — silence the prompt and skip notarization.
+          APPLE_ID: ""
+          APPLE_APP_SPECIFIC_PASSWORD: ""
+          APPLE_TEAM_ID: ""
         run: npm run dist:mac
 
       - name: Upload release assets
