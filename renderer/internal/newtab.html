@@ -518,7 +518,7 @@ body.ntp-wp .wx-card{
 
 <footer id="ntp-footer">
   <div id="ntp-weather" hidden></div>
-  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee. &nbsp;·&nbsp; <span style="opacity:.55">v1.2.0</span></p>
+  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee. &nbsp;·&nbsp; <span id="ntp-version" style="opacity:.55"></span></p>
 </footer>
 
 </div>
@@ -661,6 +661,11 @@ const DEFAULT_QUICK_LINKS = [
 
 async function loadNtp() {
   if (!api) { document.body.classList.add('ntp-ready'); return; }
+  try {
+    const v = await api.getAppVersion?.();
+    const el = document.getElementById('ntp-version');
+    if (el && v) el.textContent = 'v' + v;
+  } catch {}
   const { settings } = await api.getSettings();
   searchEngine = settings.searchEngine || 'google';
   const links = settings.ntpQuickLinks;

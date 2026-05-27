@@ -3476,6 +3476,13 @@ cpPanel?.querySelectorAll('[data-action]').forEach(el => {
 // Apply saved accent on startup so existing user accent persists across launches
 if (settings?.accentColor) applyAccentColor(settings.accentColor);
 
+// Populate the version chip in the main menu from package.json so the text
+// never drifts out of sync with the actual build.
+window.privoo?.getAppVersion?.().then((v) => {
+  const el = document.getElementById('menu-ver');
+  if (el && v) el.textContent = 'Privoo v' + v;
+}).catch(() => {});
+
 siteIcon?.addEventListener('click', (e) => {
   e.stopPropagation();
   togglePopover(siteInfoPopover);

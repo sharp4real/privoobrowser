@@ -36,6 +36,7 @@ if (location.protocol === 'privoo:') {
     getFileIcon:     (p)     => ipcRenderer.invoke('get-file-icon', p),
 
     getSuggestions: (q, eng) => ipcRenderer.invoke('search-suggestions', { query: q, engine: eng }),
+    getAppVersion:  () => ipcRenderer.invoke('get-app-version'),
     httpProceed:    (url)    => ipcRenderer.invoke('http-proceed', url),
     clearTikTokData: ()      => ipcRenderer.invoke('clear-tiktok-data'),
     clearSiteData:   (host)  => ipcRenderer.invoke('clear-site-data', host),
