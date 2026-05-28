@@ -35,35 +35,96 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: false
         run: npm run dist
 
-      - name: Recompute sha512 after AV scan
-        shell: node {0}
-        run: |
-          const { createHash } = require('crypto');
-          const { readFileSync, readdirSync, statSync, writeFileSync } = require('fs');
-          const { join } = require('path');
-          const dist = 'dist';
-          const exeFile = readdirSync(dist).find(f => f.endsWith('.exe') && !f.endsWith('.blockmap'));
-          if (!exeFile) { console.error('No exe found in dist'); process.exit(1); }
-          const exePath = join(dist, exeFile);
-          const hash = createHash('sha512').update(readFileSync(exePath)).digest('base64');
-          const size = statSync(exePath).size;
-          const ymlPath = join(dist, 'latest.yml');
-          let yml = readFileSync(ymlPath, 'utf8');
-          yml = yml.replace(/sha512: \S+/g, 'sha512: ' + hash);
-          yml = yml.replace(/size: \d+/g, 'size: ' + size);
-          writeFileSync(ymlPath, yml);
-          console.log('sha512:', hash);
-          console.log('size:', size);
-
-      - name: Upload release assets
+      # Step 1: upload the exe FIRST (without latest.yml). This lets the
+      # next step hash whatever bytes GitHub actually serves — eliminating
+      # the recurring mismatch where our locally-computed sha512 didn't
+      # match the file CDN-side. Critical: do NOT touch latest.yml yet.
+      - name: Upload installer
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           name: Privoo ${{ github.ref_name }}
           body: "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection."
-          files: |
-            dist/Privoo-Setup-*.exe
-            dist/latest.yml
+          files: dist/Privoo-Setup-*.exe
+
+      # Step 2: download the exe back from the release we just published,
+      # compute its sha512, and write a fresh latest.yml with that hash.
+      # This guarantees the yml's hash matches the file electron-updater
+      # will actually download — no matter what happened during upload.
+      - name: Build latest.yml from published installer
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: node {0}
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          const { createHash } = require('crypto');
+          const { writeFileSync, readdirSync, statSync, readFileSync } = require('fs');
+          const { join } = require('path');
+          const https = require('https');
+
+          const dist = 'dist';
+          const exeFile = readdirSync(dist).find(f => f.endsWith('.exe') && !f.endsWith('.blockmap'));
+          if (!exeFile) { console.error('No exe in dist'); process.exit(1); }
+          const tag = process.env.TAG;
+          const version = tag.replace(/^v/, '');
+
+          // Up to ~5 minutes for the GitHub CDN to fully propagate after the
+          // upload step, then download the actual published bytes.
+          async function fetchExe(url, hops = 0) {
+            return new Promise((resolve, reject) => {
+              if (hops > 8) return reject(new Error('too many redirects'));
+              https.get(url, { headers: { 'User-Agent': 'Privoo-CI' } }, (res) => {
+                const code = res.statusCode || 0;
+                if (code >= 300 && code < 400 && res.headers.location) {
+                  res.resume();
+                  fetchExe(res.headers.location, hops + 1).then(resolve, reject);
+                  return;
+                }
+                if (code !== 200) { res.resume(); return reject(new Error('HTTP ' + code)); }
+                const chunks = [];
+                res.on('data', (c) => chunks.push(c));
+                res.on('end', () => resolve(Buffer.concat(chunks)));
+                res.on('error', reject);
+              }).on('error', reject);
+            });
+          }
+
+          const dlUrl = `https://github.com/sharp4real/privoobrowser/releases/download/${tag}/${exeFile}`;
+          let buffer = null;
+          let lastErr = null;
+          for (let i = 0; i < 20; i++) {
+            try {
+              buffer = await fetchExe(dlUrl);
+              if (buffer && buffer.length > 1024) break;
+            } catch (e) { lastErr = e; }
+            await new Promise((r) => setTimeout(r, 15000));
+          }
+          if (!buffer) { console.error('Failed to fetch published exe:', lastErr?.message); process.exit(1); }
+
+          const hash = createHash('sha512').update(buffer).digest('base64');
+          const size = buffer.length;
+          const releaseDate = new Date().toISOString();
+          const yml =
+            `version: ${version}\n` +
+            `files:\n` +
+            `  - url: ${exeFile}\n` +
+            `    sha512: ${hash}\n` +
+            `    size: ${size}\n` +
+            `path: ${exeFile}\n` +
+            `sha512: ${hash}\n` +
+            `releaseDate: '${releaseDate}'\n`;
+          writeFileSync(join(dist, 'latest.yml'), yml);
+          console.log('Published exe size:', size);
+          console.log('Published exe sha512:', hash);
+          console.log('latest.yml written from CDN-served bytes');
+
+      - name: Upload latest.yml
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Privoo ${{ github.ref_name }}
+          body: "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection."
+          files: dist/latest.yml
 
   build-mac:
     # Use Intel macOS so we can cross-compile x64 + arm64 dmg/zip without
