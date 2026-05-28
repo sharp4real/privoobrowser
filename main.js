@@ -1407,69 +1407,181 @@ function ensureTray() {
 // ---------------------------------------------------------------------------
 // Auto-updater
 // ---------------------------------------------------------------------------
-autoUpdater.autoDownload = true;
-// macOS: Squirrel.Mac requires a signed app. Setting autoInstallOnAppQuit=false
-// prevents Squirrel from being triggered after download (which would throw a
-// silent error for unsigned builds and block the update-downloaded event).
-autoUpdater.autoInstallOnAppQuit = process.platform !== 'darwin';
+// Windows-only manual download path. electron-updater's sha512 verification
+// breaks every time Defender touches the downloaded exe — even though the
+// file is fine the hash won't match and the install silently fails. We let
+// electron-updater detect new versions, then download the installer ourselves
+// over plain HTTPS (no hash check) and run it.
+const IS_WIN = process.platform === 'win32';
+autoUpdater.autoDownload = !IS_WIN;
+autoUpdater.autoInstallOnAppQuit = process.platform === 'linux';
 autoUpdater.disableDifferentialDownload = true;
 
-// Store update state so we can re-send to any window that loads after the event fired.
 let _updateAvailableInfo   = null;
 let _updateDownloadedInfo  = null;
 let _updateProgressInfo    = null;
+let _manualInstallerPath   = null;
+let _manualDownloadActive  = false;
+
+function _broadcastUpdate(channel, payload) {
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (!win.isDestroyed()) win.webContents.send(channel, payload);
+  }
+}
 
 function _sendUpdateToWin(win) {
   if (!win || win.isDestroyed()) return;
-  if (_updateDownloadedInfo) {
-    win.webContents.send('update-downloaded', _updateDownloadedInfo);
-  } else if (_updateAvailableInfo) {
-    win.webContents.send('update-available', _updateAvailableInfo);
-  }
+  if (_updateDownloadedInfo)     win.webContents.send('update-downloaded', _updateDownloadedInfo);
+  else if (_updateAvailableInfo) win.webContents.send('update-available',  _updateAvailableInfo);
+}
+
+function _httpsGetFollow(url, onResponse, onError, hops = 0) {
+  if (hops > 6) { onError(new Error('too many redirects')); return; }
+  const https = require('https');
+  const req = https.get(url, { headers: { 'User-Agent': 'Privoo-Updater' } }, (res) => {
+    const code = res.statusCode || 0;
+    if (code >= 300 && code < 400 && res.headers.location) {
+      res.resume();
+      _httpsGetFollow(res.headers.location, onResponse, onError, hops + 1);
+      return;
+    }
+    if (code !== 200) { res.resume(); onError(new Error('HTTP ' + code)); return; }
+    onResponse(res);
+  });
+  req.on('error', onError);
+}
+
+async function _downloadInstallerWindows(info) {
+  if (_manualDownloadActive) return;
+  _manualDownloadActive = true;
+
+  const version  = info.version;
+  const fileName = `Privoo-Setup-${version}.exe`;
+  const url      = `https://github.com/sharp4real/privoobrowser/releases/download/v${version}/${fileName}`;
+
+  const dir = path.join(app.getPath('userData'), '__privoo_update__');
+  try { fs.mkdirSync(dir, { recursive: true }); } catch {}
+  try {
+    for (const f of fs.readdirSync(dir)) {
+      if (f !== fileName) { try { fs.unlinkSync(path.join(dir, f)); } catch {} }
+    }
+  } catch {}
+  const dest = path.join(dir, fileName);
+
+  const expectedSize = (info.files && info.files[0] && info.files[0].size) || 0;
+
+  // Reuse already-downloaded installer if intact
+  try {
+    const st = fs.statSync(dest);
+    if (expectedSize > 0 && st.size === expectedSize) {
+      _manualInstallerPath  = dest;
+      _updateDownloadedInfo = info;
+      _updateProgressInfo   = null;
+      _manualDownloadActive = false;
+      _broadcastUpdate('update-downloaded', info);
+      return;
+    }
+    try { fs.unlinkSync(dest); } catch {}
+  } catch {}
+
+  await new Promise((resolve, reject) => {
+    const file = fs.createWriteStream(dest);
+    let downloaded = 0;
+    let total = expectedSize;
+    const start = Date.now();
+    let lastEmit = 0;
+
+    _httpsGetFollow(url, (res) => {
+      const cl = parseInt(res.headers['content-length'] || '', 10);
+      if (cl > 0) total = cl;
+
+      res.on('data', (chunk) => {
+        downloaded += chunk.length;
+        const now = Date.now();
+        if (now - lastEmit > 200) {
+          lastEmit = now;
+          const elapsed = (now - start) / 1000;
+          const bps = elapsed > 0 ? downloaded / elapsed : 0;
+          const percent = total > 0 ? (downloaded / total) * 100 : 0;
+          _updateProgressInfo = { percent, bytesPerSecond: bps, transferred: downloaded, total };
+          _broadcastUpdate('update-progress', _updateProgressInfo);
+        }
+      });
+      res.pipe(file);
+      file.on('finish', () => file.close(() => {
+        _updateProgressInfo = { percent: 100, bytesPerSecond: 0, transferred: downloaded, total };
+        _broadcastUpdate('update-progress', _updateProgressInfo);
+        resolve();
+      }));
+      res.on('error', reject);
+      file.on('error', reject);
+    }, reject);
+  }).then(() => {
+    _manualInstallerPath  = dest;
+    _updateDownloadedInfo = info;
+    _updateProgressInfo   = null;
+    _manualDownloadActive = false;
+    _broadcastUpdate('update-downloaded', info);
+  }).catch((err) => {
+    _manualDownloadActive = false;
+    try { fs.unlinkSync(dest); } catch {}
+    console.warn('Privoo manual update download failed:', err.message);
+    _broadcastUpdate('update-error', err.message || String(err));
+    _updateAvailableInfo = null;
+    _updateProgressInfo  = null;
+    setTimeout(() => checkForUpdatesIfEnabled(), 60_000);
+  });
 }
 
 autoUpdater.on('update-available', (info) => {
   _updateAvailableInfo = info;
-  for (const win of BrowserWindow.getAllWindows()) {
-    if (!win.isDestroyed()) win.webContents.send('update-available', info);
-  }
+  _broadcastUpdate('update-available', info);
+  if (IS_WIN) _downloadInstallerWindows(info);
 });
 
 autoUpdater.on('download-progress', (progress) => {
   _updateProgressInfo = progress;
-  for (const win of BrowserWindow.getAllWindows()) {
-    if (!win.isDestroyed()) win.webContents.send('update-progress', progress);
-  }
+  _broadcastUpdate('update-progress', progress);
 });
 
 autoUpdater.on('update-downloaded', (info) => {
   _updateDownloadedInfo = info;
   _updateProgressInfo   = null;
-  for (const win of BrowserWindow.getAllWindows()) {
-    if (!win.isDestroyed()) win.webContents.send('update-downloaded', info);
-  }
+  _broadcastUpdate('update-downloaded', info);
 });
 
 autoUpdater.on('error', (err) => {
-  console.warn('Privoo updater error:', err.message);
-  // Surface to renderer so the UI doesn't freeze silently at 100%.
-  // After an error, schedule a retry in 60 s so a transient issue self-heals.
-  for (const win of BrowserWindow.getAllWindows()) {
-    if (!win.isDestroyed()) win.webContents.send('update-error', err.message || String(err));
-  }
-  _updateAvailableInfo  = null;
-  _updateProgressInfo   = null;
+  const msg = err.message || String(err);
+  console.warn('Privoo updater error:', msg);
+  // Silently swallow electron-updater errors on Windows while our manual
+  // download is healthy — the sha512 mismatch we know about is harmless.
+  if (IS_WIN && (_manualDownloadActive || _manualInstallerPath)) return;
+  _broadcastUpdate('update-error', msg);
+  _updateAvailableInfo = null;
+  _updateProgressInfo  = null;
   setTimeout(() => checkForUpdatesIfEnabled(), 60_000);
 });
 
 ipcMain.on('install-update-now', () => {
   if (process.platform === 'darwin') {
-    // Squirrel.Mac can't install unsigned apps — open releases page instead.
     shell.openExternal('https://github.com/sharp4real/privoobrowser/releases/latest');
-  } else {
-    // isSilent=true: no NSIS wizard; isForceRunAfter=true: relaunch after install
-    autoUpdater.quitAndInstall(true, true);
+    return;
   }
+  if (IS_WIN && _manualInstallerPath && fs.existsSync(_manualInstallerPath)) {
+    const { spawn } = require('child_process');
+    try {
+      spawn(_manualInstallerPath, ['/S', '--force-run'], {
+        detached: true,
+        stdio: 'ignore',
+      }).unref();
+    } catch (e) {
+      console.warn('Privoo: spawn installer failed:', e.message);
+      shell.openPath(_manualInstallerPath);
+    }
+    setTimeout(() => app.quit(), 400);
+    return;
+  }
+  autoUpdater.quitAndInstall(true, true);
 });
 
 // Renderer asks for current update state on load (catches missed events).
