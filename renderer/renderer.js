@@ -289,7 +289,6 @@ const newTabBtn    = document.getElementById('new-tab');
 const shieldBtn    = document.getElementById('shield-btn');
 const shieldPanel  = document.getElementById('shield-panel');
 const pageShieldBtn     = document.getElementById('page-shield');
-const pageShieldCount   = document.getElementById('page-shield-count');
 const pageShieldPopover = document.getElementById('page-shield-popover');
 const shieldCount  = document.getElementById('shield-count');
 const menuBtn      = document.getElementById('menu-btn');
@@ -2742,7 +2741,7 @@ async function refreshStats() {
 }
 
 async function refreshPageShield(tab) {
-  if (!pageShieldBtn || !pageShieldCount) return;
+  if (!pageShieldBtn) return;
   tab = tab || activeTab();
   let wcId = 0;
   try { wcId = tab?.wv?.getWebContentsId?.() || 0; } catch {}
@@ -2750,9 +2749,8 @@ async function refreshPageShield(tab) {
   if (wcId) {
     try { count = await window.privoo.getPageBlockedCount(wcId); } catch {}
   }
-  const label = count > 999 ? '999+' : String(count);
-  pageShieldCount.textContent = label;
   pageShieldBtn.classList.toggle('has-blocks', count > 0);
+  const label = count > 999 ? '999+' : String(count);
   const heroNum = document.getElementById('ps-hero-num');
   if (heroNum) heroNum.textContent = label;
   const hostEl = document.getElementById('ps-foot-host');
