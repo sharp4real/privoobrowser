@@ -2032,7 +2032,11 @@ function isSiteCompatibilityHost(host) {
     // Google domains — canvas farbling + other anti-fingerprint tweaks make
     // Google flag Privoo as a bot and bury the user in reCAPTCHAs. Treat
     // Google as a compat host so its pages get the minimal-interference path.
-    h === 'google.com'                  || h.endsWith('.google.com')
+    h === 'google.com'                  || h.endsWith('.google.com') ||
+    // YouTube — forceDark injects CSS filter:invert on <video> which makes the
+    // player render a black frame on first play. Skip all injection on YouTube.
+    h === 'youtube.com'                 || h.endsWith('.youtube.com') ||
+    h === 'youtu.be'                    || h.endsWith('.youtu.be')
   );
 }
 
@@ -2848,31 +2852,14 @@ function hideWvContextMenu() {
 // ─── DevTools ───────────────────────────────────────────────────────────────
 async function openDockedDevTools(tab) {
   if (!tab?.wv) return;
-  const pane    = document.getElementById('devtools-pane');
-  const devView = document.getElementById('devtools-view');
   try {
-    // Toggle: already open → close it
-    if (tab.wv.isDevToolsOpened?.()) {
-      tab.wv.closeDevTools();
-      if (pane) pane.hidden = true;
-      return;
-    }
-    const wcId    = tab.wv.getWebContentsId?.() || 0;
-    const devWcId = devView?.getWebContentsId?.() || 0;
+    // Toggle
+    if (tab.wv.isDevToolsOpened?.()) { tab.wv.closeDevTools(); return; }
+    const wcId = tab.wv.getWebContentsId?.() || 0;
     if (wcId && window.privoo?.openDevTools) {
-      const res = await window.privoo.openDevTools(wcId, devWcId || undefined);
-      if (res?.closed) {
-        if (pane) pane.hidden = true;
-      } else if (!res?.detached && pane) {
-        // Embedded DevTools loaded in #devtools-view — show pane
-        pane.hidden = false;
-        const titleEl = document.getElementById('devtools-pane-title');
-        if (titleEl) titleEl.textContent = 'DevTools';
-      }
-      // If detached: native window handles it, no pane needed
+      await window.privoo.openDevTools(wcId);
     } else {
-      if (tab.wv.isDevToolsOpened?.()) tab.wv.closeDevTools();
-      else tab.wv.openDevTools();
+      tab.wv.openDevTools();
     }
   } catch { /* ignore */ }
 }
@@ -3004,18 +2991,12 @@ function selectEmoji(glyph) {
   // Keep picker open — matches Chrome/Edge so users can insert several.
 }
 
-async function openEmojiPicker(wv) {
+function openEmojiPicker(wv) {
   if (!emojiPickerEl) return;
   closePopovers();
   emojiTargetWv = wv || activeTab()?.wv || null;
-  // Try the native Windows emoji panel (Win+. via showEmojiPanel IPC) first
-  try {
-    if (await window.privoo.showEmojiPanel?.()) return;
-  } catch {}
-  // Fallback to our built-in picker
-  emojiTargetWv = wv || activeTab()?.wv || null;
   // Snapshot the focused element in the webview BEFORE focus moves to the
-  // picker UI. We use it in insertEmojiInWebview to re-focus and insert.
+  // picker UI — we re-focus it when an emoji is clicked so insertText works.
   if (emojiTargetWv) {
     emojiTargetWv.executeJavaScript(
       '(function(){var el=document.activeElement;if(el&&el!==document.body&&el!==document.documentElement)window.__privooEmojiTarget=el;})();'

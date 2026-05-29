@@ -156,6 +156,12 @@ app.commandLine.appendSwitch('disable-features', [
 app.commandLine.appendSwitch('no-first-run');
 app.commandLine.appendSwitch('no-default-browser-check');
 
+// Prevent GPU command-buffer state errors that cause black video frames
+// (particularly visible on the first YouTube video played per session).
+app.commandLine.appendSwitch('ignore-gpu-blocklist');
+app.commandLine.appendSwitch('enable-gpu-rasterization');
+app.commandLine.appendSwitch('enable-zero-copy');
+
 // ---------------------------------------------------------------------------
 // Single-instance lock + default-browser registration
 // ---------------------------------------------------------------------------
@@ -2187,28 +2193,41 @@ ipcMain.handle('get-cursor-pos', (e) => {
   }
 });
 
-// Mobile View — a narrow 390px window so responsive sites snap to their
-// mobile layout via CSS media queries. No CDP, no UA spoofing, no debugger
-// attach — just a small window that works.
+// Mobile View — frameless window showing an interactive phone frame with the
+// page loaded inside a webview. The phone bezel is draggable via CSS
+// -webkit-app-region: drag set in mobile-frame.html.
 ipcMain.handle('open-mobile-window', (_e, url) => {
   try {
     const iconPath = resolveIcon();
     const win = new BrowserWindow({
-      width: 390,
-      height: 844,
-      minWidth: 320,
-      minHeight: 480,
+      width: 560,
+      height: 920,
+      minWidth: 480,
+      minHeight: 700,
       title: 'Mobile View',
+      frame: false,
+      transparent: false,
+      backgroundColor: '#0d0f1a',
       autoHideMenuBar: true,
       ...(iconPath ? { icon: iconPath } : {}),
       webPreferences: {
         contextIsolation: true,
         nodeIntegration: false,
         sandbox: false,
+        webviewTag: true,
+        preload: path.join(__dirname, 'preload.js'),
       },
     });
 
-    if (url) win.webContents.loadURL(url).catch(() => {});
+    const framePath = path.join(RENDERER_DIR, 'internal', 'mobile-frame.html');
+    win.loadFile(framePath, { query: { url: url || '' } });
+
+    // Allow the phone-frame webview to attach correctly
+    win.webContents.on('will-attach-webview', (_e2, prefs) => {
+      prefs.nodeIntegration = false;
+      prefs.contextIsolation = true;
+      prefs.sandbox = false;
+    });
 
     return { ok: true };
   } catch (e) {
@@ -2356,28 +2375,15 @@ ipcMain.handle('capture-full-page', async (e, guestWcId) => {
 // DevTools renders inside our custom right-side panel.  If that throws we
 // fall back to a native right-docked window — either way { detached } tells
 // the renderer whether to show #devtools-pane.
-ipcMain.handle('open-devtools', (_e, guestWcId, devWcId) => {
+ipcMain.handle('open-devtools', (_e, guestWcId) => {
   try {
     const guest = webContents.fromId(Number(guestWcId));
-    if (!guest || guest.isDestroyed()) return { ok: false, error: 'Tab not found' };
-    if (guest.isDevToolsOpened()) {
-      guest.closeDevTools();
-      return { ok: true, closed: true };
-    }
-    if (devWcId) {
-      const devView = webContents.fromId(Number(devWcId));
-      if (devView && !devView.isDestroyed()) {
-        try {
-          guest.setDevToolsWebContents(devView);
-          guest.openDevTools();
-          return { ok: true, detached: false };
-        } catch (_) { /* fall through */ }
-      }
-    }
-    guest.openDevTools({ mode: 'right', activate: true });
+    if (!guest || guest.isDestroyed()) return { ok: false };
+    if (guest.isDevToolsOpened()) { guest.closeDevTools(); return { ok: true, closed: true }; }
+    guest.openDevTools({ mode: 'detach', activate: true });
     return { ok: true, detached: true };
   } catch (e) {
-    return { ok: false, error: String(e.message || e) };
+    return { ok: false };
   }
 });
 
