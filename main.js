@@ -2187,10 +2187,10 @@ ipcMain.handle('get-cursor-pos', (e) => {
   }
 });
 
-// Mobile View — opens a dedicated narrow BrowserWindow with iPhone UA +
-// viewport emulation so the page renders exactly like a real mobile device.
-const _MOBILE_WIN_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
-
+// Mobile View — opens a 390px-wide window with CDP viewport emulation so
+// responsive layouts treat it as a phone. No UA spoofing: the real browser
+// UA keeps sites happy while CSS media queries and touch emulation give the
+// mobile experience.
 ipcMain.handle('open-mobile-window', (_e, url) => {
   try {
     const iconPath = resolveIcon();
@@ -2210,37 +2210,37 @@ ipcMain.handle('open-mobile-window', (_e, url) => {
       },
     });
 
-    try { win.webContents.setUserAgent(_MOBILE_WIN_UA); } catch {}
+    // Apply mobile viewport via CDP BEFORE loading the URL so the first
+    // paint is already at 390px — pages with responsive CSS see mobile
+    // breakpoints immediately without a re-layout flash.
+    try {
+      const dbg = win.webContents.debugger;
+      if (!dbg.isAttached()) dbg.attach('1.3');
+      dbg.sendCommand('Emulation.setDeviceMetricsOverride', {
+        width: 390, height: 844, deviceScaleFactor: 3, mobile: true,
+      }).catch(() => {});
+      // Spoof maxTouchPoints so sites enable swipe/tap handlers
+      dbg.sendCommand('Emulation.setTouchEmulationEnabled', {
+        enabled: true, maxTouchPoints: 5,
+      }).catch(() => {});
+    } catch {}
 
-    // Guard: only run setup once regardless of which event fires first.
-    let _setupDone = false;
-    const doSetup = () => {
-      if (_setupDone || win.isDestroyed()) return;
-      _setupDone = true;
-      try {
-        const dbg = win.webContents.debugger;
-        if (!dbg.isAttached()) dbg.attach('1.3');
-        dbg.sendCommand('Emulation.setDeviceMetricsOverride', {
-          width: 390, height: 844, deviceScaleFactor: 3, mobile: true,
-        }).catch(() => {});
-        dbg.sendCommand('Page.addScriptToEvaluateOnNewDocument', {
-          source: '(function(){var u=' + JSON.stringify(_MOBILE_WIN_UA) + ';' +
-            'try{Object.defineProperty(navigator,"userAgent",{get:function(){return u;},configurable:true});}catch(e){}' +
-            'try{Object.defineProperty(navigator,"maxTouchPoints",{get:function(){return 5;},configurable:true});}catch(e){}' +
-          '})();',
-          runImmediately: false,
-        }).catch(() => {});
-      } catch {}
-      try {
-        if (url && !win.isDestroyed()) win.webContents.loadURL(url).catch(() => {});
-      } catch {}
-      try { if (!win.isDestroyed()) win.show(); } catch {}
+    // Load the URL — this triggers the renderer process to start
+    if (url) {
+      try { win.webContents.loadURL(url).catch(() => {}); } catch {}
+    }
+
+    // Show the window once the first frame is ready (avoids white-flash).
+    // ready-to-show only fires when show:false is set, which we did above.
+    let _shown = false;
+    const showWin = () => {
+      if (_shown || win.isDestroyed()) return;
+      _shown = true;
+      try { win.show(); } catch {}
     };
-
-    // Trigger setup on dom-ready (fires reliably on all platforms).
-    win.webContents.once('dom-ready', doSetup);
-    // Fallback in case dom-ready is late or missed.
-    setTimeout(() => { if (!_setupDone && !win.isDestroyed()) doSetup(); }, 800);
+    win.once('ready-to-show', showWin);
+    // Hard fallback: show after 2.5 s regardless (slow pages, no network, etc.)
+    setTimeout(showWin, 2500);
 
     return { ok: true };
   } catch (e) {
