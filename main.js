@@ -2194,27 +2194,29 @@ const _MOBILE_WIN_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) A
 ipcMain.handle('open-mobile-window', (_e, url) => {
   try {
     const iconPath = resolveIcon();
-    const winOpts = {
+    const win = new BrowserWindow({
       width: 430,
       height: 932,
       minWidth: 320,
       minHeight: 480,
       title: 'Mobile View',
+      show: false,
       autoHideMenuBar: true,
+      ...(iconPath ? { icon: iconPath } : {}),
       webPreferences: {
         contextIsolation: true,
         nodeIntegration: false,
         sandbox: false,
       },
-    };
-    if (iconPath) winOpts.icon = iconPath;
+    });
 
-    const win = new BrowserWindow(winOpts);
+    try { win.webContents.setUserAgent(_MOBILE_WIN_UA); } catch {}
 
-    win.webContents.setUserAgent(_MOBILE_WIN_UA);
-
-    // Attach CDP for mobile viewport + pre-page UA override.
-    const afterReady = () => {
+    // Guard: only run setup once regardless of which event fires first.
+    let _setupDone = false;
+    const doSetup = () => {
+      if (_setupDone || win.isDestroyed()) return;
+      _setupDone = true;
       try {
         const dbg = win.webContents.debugger;
         if (!dbg.isAttached()) dbg.attach('1.3');
@@ -2222,22 +2224,24 @@ ipcMain.handle('open-mobile-window', (_e, url) => {
           width: 390, height: 844, deviceScaleFactor: 3, mobile: true,
         }).catch(() => {});
         dbg.sendCommand('Page.addScriptToEvaluateOnNewDocument', {
-          source: '(function(){var u=' + JSON.stringify(_MOBILE_WIN_UA) + ';try{Object.defineProperty(navigator,"userAgent",{get:function(){return u;},configurable:true});}catch(e){}try{Object.defineProperty(navigator,"maxTouchPoints",{get:function(){return 5;},configurable:true});}catch(e){}})();',
+          source: '(function(){var u=' + JSON.stringify(_MOBILE_WIN_UA) + ';' +
+            'try{Object.defineProperty(navigator,"userAgent",{get:function(){return u;},configurable:true});}catch(e){}' +
+            'try{Object.defineProperty(navigator,"maxTouchPoints",{get:function(){return 5;},configurable:true});}catch(e){}' +
+          '})();',
           runImmediately: false,
         }).catch(() => {});
       } catch {}
-      if (url) {
-        win.webContents.loadURL(url).catch(() => {});
-      }
+      try {
+        if (url && !win.isDestroyed()) win.webContents.loadURL(url).catch(() => {});
+      } catch {}
+      try { if (!win.isDestroyed()) win.show(); } catch {}
     };
 
-    // Wait for the window's webContents to be ready before attaching debugger.
-    win.webContents.once('did-finish-load', () => {});
-    win.once('ready-to-show', afterReady);
-    // Fallback: if ready-to-show never fires, use a short delay.
-    setTimeout(() => { if (!win.isDestroyed()) afterReady(); }, 500);
+    // Trigger setup on dom-ready (fires reliably on all platforms).
+    win.webContents.once('dom-ready', doSetup);
+    // Fallback in case dom-ready is late or missed.
+    setTimeout(() => { if (!_setupDone && !win.isDestroyed()) doSetup(); }, 800);
 
-    win.show();
     return { ok: true };
   } catch (e) {
     console.error('open-mobile-window error:', e);
