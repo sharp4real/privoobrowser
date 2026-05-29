@@ -3003,8 +3003,10 @@ function openEmojiPicker(wv) {
     ).catch(() => {});
   }
   emojiPickerEl.classList.remove('hidden');
-  if (!emojiCategoriesEl.children.length) buildEmojiCategories();
-  emojiActiveCat = emojiRecent.length ? 'recent' : 'smileys';
+  // Always rebuild categories so they're never stale
+  buildEmojiCategories();
+  // Always start on smileys so users immediately see a full grid of emojis
+  emojiActiveCat = 'smileys';
   if (emojiSearchInp) emojiSearchInp.value = '';
   renderEmojiGrid();
   setTimeout(() => emojiSearchInp?.focus(), 0);
