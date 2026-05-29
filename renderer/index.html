@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -7,10 +7,10 @@
 </head>
 <body>
 
-  <!-- ── Setup wizard (first-run) ── -->
+  <!-- â”€â”€ Setup wizard (first-run) â”€â”€ -->
   <div id="setup-overlay" class="setup-overlay" hidden>
 
-    <!-- Step 1: European intro — spinning star ring, zooms in -->
+    <!-- Step 1: European intro â€” spinning star ring, zooms in -->
     <div class="sw-card sw-step sw-intro active" id="sw-step-1">
       <div class="sw-progress-dots">
         <span class="sw-dot active"></span><span class="sw-dot"></span><span class="sw-dot"></span><span class="sw-dot"></span><span class="sw-dot"></span><span class="sw-dot"></span>
@@ -25,11 +25,11 @@
         <img class="sw-eu-logo" src="privoo://newtab/logo.png" alt="" draggable="false" onerror="this.style.display='none'"/>
       </div>
       <h1 class="sw-headline sw-intro-head">Welcome to Privoo</h1>
-      <p class="sw-sub sw-intro-sub">Built for privacy. Ads, trackers and fingerprinting are blocked by default — and nothing you do is profiled, synced, or sent away.</p>
+      <p class="sw-sub sw-intro-sub">Built for privacy. Ads, trackers and fingerprinting are blocked by default â€” and nothing you do is profiled, synced, or sent away.</p>
       <div class="sw-actions">
         <button class="sw-btn primary" id="sw-1-next">Start</button>
       </div>
-      <p class="sw-fineprint">Privoo is an independent project — not affiliated with, endorsed by, or connected to the European Union.</p>
+      <p class="sw-fineprint">Privoo is an independent project â€” not affiliated with, endorsed by, or connected to the European Union.</p>
     </div>
 
     <!-- Step 2: Terms of use -->
@@ -38,12 +38,12 @@
         <span class="sw-dot"></span><span class="sw-dot active"></span><span class="sw-dot"></span><span class="sw-dot"></span><span class="sw-dot"></span><span class="sw-dot"></span>
       </div>
       <h2 class="sw-headline">Before you start</h2>
-      <p class="sw-sub">A quick rundown — please read and agree to continue.</p>
+      <p class="sw-sub">A quick rundown â€” please read and agree to continue.</p>
       <div class="sw-terms-box">
         <ul class="sw-terms-list">
           <li><b>Privoo is provided as-is.</b> It reduces tracking but is not a security guarantee. You're responsible for what you do with it.</li>
           <li><b>Your data stays local.</b> Privoo doesn't sync, profile, or send your browsing data anywhere. Everything is stored on this device.</li>
-          <li><b>Bundled engines may have terms of their own.</b> Privoo uses Chromium for rendering and yt-dlp / Widevine when present — their licenses apply where they're used.</li>
+          <li><b>Bundled engines may have terms of their own.</b> Privoo uses Chromium for rendering and yt-dlp / Widevine when present â€” their licenses apply where they're used.</li>
           <li><b>Use it lawfully.</b> Don't use Privoo for fraud, harassment, or anything illegal where you live.</li>
         </ul>
       </div>
@@ -52,8 +52,8 @@
         <span>I have read and agree to the terms above.</span>
       </label>
       <div class="sw-actions">
-        <button class="sw-btn ghost" id="sw-2-back">← Back</button>
-        <button class="sw-btn primary" id="sw-2-next" disabled>Agree &amp; continue →</button>
+        <button class="sw-btn ghost" id="sw-2-back">â† Back</button>
+        <button class="sw-btn primary" id="sw-2-next" disabled>Agree &amp; continue â†’</button>
       </div>
     </div>
 
@@ -91,8 +91,8 @@
         </button>
       </div>
       <div class="sw-actions">
-        <button class="sw-btn ghost" id="sw-3-back">← Back</button>
-        <button class="sw-btn primary" id="sw-3-next">Continue →</button>
+        <button class="sw-btn ghost" id="sw-3-back">â† Back</button>
+        <button class="sw-btn primary" id="sw-3-next">Continue â†’</button>
       </div>
     </div>
 
@@ -104,7 +104,7 @@
       <div class="sw-engine-grid">
         <button class="sw-choice-card" data-engine="brave">
           <b>Brave Search</b>
-          <span>Independent &amp; private — the default</span>
+          <span>Independent &amp; private â€” the default</span>
         </button>
         <button class="sw-choice-card" data-engine="duckduckgo">
           <b>DuckDuckGo</b>
@@ -120,8 +120,8 @@
         </button>
       </div>
       <div class="sw-actions">
-        <button class="sw-btn ghost" id="sw-search-back">← Back</button>
-        <button class="sw-btn primary" id="sw-search-next">Continue →</button>
+        <button class="sw-btn ghost" id="sw-search-back">â† Back</button>
+        <button class="sw-btn primary" id="sw-search-next">Continue â†’</button>
       </div>
     </div>
 
@@ -138,11 +138,11 @@
             <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M13 2L4.09 12.97 11 13.93 11 22l8.91-10.97L13 10.07 13 2z"/></svg>
           </div>
           <b>Hardware acceleration</b>
-          <span>Recommended — fast video and smooth scrolling using your GPU.</span>
+          <span>Recommended â€” fast video and smooth scrolling using your GPU.</span>
         </button>
         <button class="sw-choice-card" data-hwa="off" id="sw-hwa-off">
           <div class="sw-choice-ico">
-            <!-- Cog — software-only is the "manual / fallback" path. -->
+            <!-- Cog â€” software-only is the "manual / fallback" path. -->
             <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84a.49.49 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94 0 .32.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.39.31.61.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.25.41.48.41h3.84c.23 0 .43-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.09.49 0 .61-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg>
           </div>
           <b>Software only</b>
@@ -150,8 +150,8 @@
         </button>
       </div>
       <div class="sw-actions">
-        <button class="sw-btn ghost" id="sw-4-back">← Back</button>
-        <button class="sw-btn primary" id="sw-4-next">Continue →</button>
+        <button class="sw-btn ghost" id="sw-4-back">â† Back</button>
+        <button class="sw-btn primary" id="sw-4-next">Continue â†’</button>
       </div>
     </div>
 
@@ -163,7 +163,7 @@
       <h2 class="sw-headline">Import your data</h2>
       <p class="sw-sub">Bring over bookmarks and history from another browser.</p>
       <div id="sw-profiles-wrap" class="sw-profiles-wrap">
-        <p class="sw-loading">Detecting installed browsers…</p>
+        <p class="sw-loading">Detecting installed browsersâ€¦</p>
       </div>
       <div class="sw-import-checks">
         <label class="sw-chk-label"><input type="checkbox" id="sw-chk-bookmarks" checked> Bookmarks</label>
@@ -171,13 +171,13 @@
       </div>
       <div class="sw-import-msg" id="sw-import-msg"></div>
       <div class="sw-actions">
-        <button class="sw-btn ghost" id="sw-5-back">← Back</button>
+        <button class="sw-btn ghost" id="sw-5-back">â† Back</button>
         <button class="sw-btn ghost" id="sw-5-skip">Skip</button>
-        <button class="sw-btn primary" id="sw-5-import" disabled>Import →</button>
+        <button class="sw-btn primary" id="sw-5-import" disabled>Import â†’</button>
       </div>
     </div>
 
-    <!-- Getting Privoo ready — short loading screen, auto-advances to Done -->
+    <!-- Getting Privoo ready â€” short loading screen, auto-advances to Done -->
     <div class="sw-card sw-step sw-setup" id="sw-step-setup">
       <div class="sw-setup-msg">Getting Privoo ready</div>
       <div class="sw-setup-dots" aria-hidden="true"><span></span><span></span><span></span></div>
@@ -194,17 +194,17 @@
       <h2 class="sw-headline" id="sw-done-headline">You're all set!</h2>
       <p class="sw-sub">Privacy is on by default. Ads, trackers,<br>and fingerprinting scripts are already blocked.</p>
       <div class="sw-actions">
-        <button class="sw-btn primary" id="sw-finish">Start browsing →</button>
+        <button class="sw-btn primary" id="sw-finish">Start browsing â†’</button>
       </div>
     </div>
 
   </div>
 
-  <!-- Focus mode — hover this strip to temporarily reveal the toolbar -->
+  <!-- Focus mode â€” hover this strip to temporarily reveal the toolbar -->
   <div id="focus-strip" class="focus-strip" hidden></div>
 
   <div id="shell" class="shell">
-    <!-- ── Left sidebar — favicon shortcuts + add button ────────────── -->
+    <!-- â”€â”€ Left sidebar â€” favicon shortcuts + add button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
     <aside id="app-sidebar" class="app-sidebar" aria-label="Shortcuts sidebar">
       <div id="sidebar-rail" class="sidebar-rail" role="list"></div>
       <button id="sidebar-add" type="button" title="Add shortcut" aria-label="Add shortcut">
@@ -212,10 +212,10 @@
       </button>
     </aside>
 
-    <!-- Backdrop — transparent click-catcher that dismisses the sidebar panel -->
+    <!-- Backdrop â€” transparent click-catcher that dismisses the sidebar panel -->
     <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
 
-    <!-- ── Sidebar web panel — full-height view shown when clicking a rail icon ── -->
+    <!-- â”€â”€ Sidebar web panel â€” full-height view shown when clicking a rail icon â”€â”€ -->
     <div id="sidebar-panel" class="sidebar-panel" hidden>
       <div class="sidebar-panel-header">
         <button type="button" id="sidebar-panel-back" class="sidebar-panel-nav" title="Go back">
@@ -250,7 +250,7 @@
     <!-- Flyout shown when clicking a sidebar shortcut -->
     <div id="sidebar-flyout" class="hidden" aria-hidden="true" role="dialog"></div>
 
-    <!-- ── Emoji picker (Win+. / Cmd+Ctrl+Space style) ───────────────── -->
+    <!-- â”€â”€ Emoji picker (Win+. / Cmd+Ctrl+Space style) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
     <div id="emoji-picker" class="hidden" role="dialog" aria-modal="false" aria-label="Emoji picker">
       <div class="ep-header">
         <input id="emoji-search" type="text" placeholder="Search emojis" autocomplete="off" spellcheck="false"/>
@@ -261,13 +261,13 @@
       <div id="emoji-categories" role="tablist" aria-label="Emoji categories"></div>
       <div id="emoji-grid" role="grid"></div>
       <div id="emoji-preview" aria-live="polite">
-        <span id="emoji-preview-glyph">😀</span>
+        <span id="emoji-preview-glyph">ðŸ˜€</span>
         <span id="emoji-preview-name">Pick an emoji</span>
       </div>
     </div>
 
     <div class="browser-column">
-      <!-- ── Tab strip / title bar ── -->
+      <!-- â”€â”€ Tab strip / title bar â”€â”€ -->
       <div id="titlebar">
         <div id="tabs-strip">
           <div id="tabs-scroll">
@@ -291,7 +291,7 @@
         </div>
       </div>
 
-      <!-- ── Navigation toolbar ── -->
+      <!-- â”€â”€ Navigation toolbar â”€â”€ -->
       <div id="toolbar">
         <div id="nav-btns">
           <button class="tb-btn round" id="back"    title="Back (Alt+Left)" disabled>
@@ -324,7 +324,7 @@
             <button class="zoom-indicator hidden" id="zoom-indicator" title="Reset zoom (Ctrl+0)" aria-label="Zoom level">100%</button>
           </div>
 
-          <!-- ── Per-page block stats popover (click the omnibox shield) ── -->
+          <!-- â”€â”€ Per-page block stats popover (click the omnibox shield) â”€â”€ -->
           <div id="page-shield-popover" class="toolbar-popover hidden" role="dialog" aria-label="Blocked on this page">
             <div class="ps-hero">
               <div class="ps-hero-shield">
@@ -336,13 +336,13 @@
               </div>
             </div>
             <div class="ps-foot" id="ps-foot">
-              <span id="ps-foot-host">—</span>
+              <span id="ps-foot-host">â€”</span>
             </div>
           </div>
 
           <div id="suggestions" class="hidden"></div>
 
-          <!-- ── Site security popover (Chrome-style click on the lock icon) ── -->
+          <!-- â”€â”€ Site security popover (Chrome-style click on the lock icon) â”€â”€ -->
           <div id="site-info-popover" class="toolbar-popover hidden" role="dialog" aria-label="Site information">
             <div class="si-head">
               <div id="si-icon" class="si-icon">
@@ -350,7 +350,7 @@
               </div>
               <div class="si-text">
                 <div id="si-status" class="si-status">Connection is secure</div>
-                <div id="si-host"   class="si-host">—</div>
+                <div id="si-host"   class="si-host">â€”</div>
               </div>
             </div>
             <div id="si-detail" class="si-detail">Your data is encrypted in transit. Information you send to this site (passwords, credit-card numbers, etc.) cannot be read by others on the network.</div>
@@ -402,7 +402,7 @@
               </div>
             </div>
           </div>
-          <!-- ── Picture-in-Picture button ── -->
+          <!-- â”€â”€ Picture-in-Picture button â”€â”€ -->
           <div class="toolbar-anchor" id="pip-anchor">
             <button class="tb-btn round" id="pip-btn" title="Picture in Picture (Ctrl+Shift+P)" hidden>
               <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 1.98 2 1.98h18c1.1 0 2-.88 2-1.98V5c0-1.1-.9-2-2-2zm0 16.01H3V4.98h18v14.03z"/></svg>
@@ -434,7 +434,7 @@
                 <label class="mini-label" for="ytdlp-folder">Save to folder</label>
                 <div class="vpn-folder-row">
                   <input type="text" id="ytdlp-folder" class="vpn-input" spellcheck="false" placeholder="Default download folder" readonly />
-                  <button type="button" class="vpn-btn secondary" id="ytdlp-choose-folder">Browse…</button>
+                  <button type="button" class="vpn-btn secondary" id="ytdlp-choose-folder">Browseâ€¦</button>
                 </div>
                 <div class="vpn-pop-actions">
                   <button type="button" class="vpn-btn secondary" id="ytdlp-paste">Paste from tab</button>
@@ -468,7 +468,7 @@
                   <option value="tokyo">Tokyo</option>
                   <option value="paris">Paris</option>
                   <option value="sydney">Sydney</option>
-                  <option value="custom">Custom…</option>
+                  <option value="custom">Customâ€¦</option>
                 </select>
                 <div id="geo-custom-wrap" class="geo-custom-wrap hidden">
                   <label class="mini-label" for="geo-lat">Latitude</label>
@@ -495,13 +495,13 @@
               <div id="dl-popover-list" class="toolbar-popover-body"></div>
             </div>
           </div>
-          <!-- ── Notes button + popover ──────────────────────────── -->
+          <!-- â”€â”€ Notes button + popover â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
           <div class="toolbar-anchor" id="notes-anchor">
             <button class="tb-btn round" id="notes-btn" title="Notes" hidden>
               <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M3 5a2 2 0 0 1 2-2h10l4 4v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5zm2 1v13h12V10h-4V6H5zm2.5 4h7v1.5h-7V10zm0 3h7v1.5h-7V13zm0 3h5v1.5h-5V16z"/></svg>
             </button>
             <div id="notes-popover" class="toolbar-popover hidden" role="dialog" aria-label="Notes">
-              <!-- List view ("home") — shows all notes -->
+              <!-- List view ("home") â€” shows all notes -->
               <div id="notes-list-view">
                 <div class="notes-head">
                   <span class="notes-title">Notes</span>
@@ -514,7 +514,7 @@
                   <div class="notes-empty" id="notes-empty">No notes yet. Click <b>New</b> to create one.</div>
                 </div>
               </div>
-              <!-- Editor view — title + body of a single note -->
+              <!-- Editor view â€” title + body of a single note -->
               <div id="notes-edit-view" hidden>
                 <div class="notes-head">
                   <button type="button" id="notes-back" class="notes-iconbtn" title="Back to notes">
@@ -525,7 +525,7 @@
                     <svg viewBox="0 0 24 24" width="14" height="14"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/></svg>
                   </button>
                 </div>
-                <textarea id="notes-edit-body" class="notes-area" placeholder="Write your note here…" spellcheck="true"></textarea>
+                <textarea id="notes-edit-body" class="notes-area" placeholder="Write your note hereâ€¦" spellcheck="true"></textarea>
                 <div class="notes-foot">
                   <span id="notes-status" class="notes-status">Saved</span>
                   <span id="notes-count" class="notes-count">0 chars</span>
@@ -533,7 +533,7 @@
               </div>
             </div>
           </div>
-          <!-- ── Translate button + popover ──────────────────────── -->
+          <!-- â”€â”€ Translate button + popover â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
           <div class="toolbar-anchor" id="translate-anchor">
             <button class="tb-btn round" id="translate-btn" title="Translate page" hidden>
               <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
@@ -653,11 +653,11 @@
 
               <div class="sp-panel-foot">
                 <button id="stats-reset-btn" type="button" class="sp-reset-link">Reset counters</button>
-                <button type="button" class="sp-settings-link" data-action="settings">Privacy settings →</button>
+                <button type="button" class="sp-settings-link" data-action="settings">Privacy settings â†’</button>
               </div>
             </div>
           </div>
-          <!-- ── Extensions button — sits to the right of the shield ── -->
+          <!-- â”€â”€ Extensions button â€” sits to the right of the shield â”€â”€ -->
           <div class="toolbar-anchor" id="extensions-anchor">
             <button class="tb-btn round" id="extensions-btn" title="Extensions">
               <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11z"/></svg>
@@ -700,7 +700,7 @@
                 <span class="menu-ai-tag">AI</span>
               </div>
               <hr/>
-              <div class="menu-item" data-action="zoom-out"><span>Zoom out</span><span class="kbd">Ctrl+−</span></div>
+              <div class="menu-item" data-action="zoom-out"><span>Zoom out</span><span class="kbd">Ctrl+âˆ’</span></div>
               <div class="menu-item" data-action="zoom-in"><span>Zoom in</span><span class="kbd">Ctrl+=</span></div>
               <div class="menu-item" data-action="zoom-reset"><span>Reset zoom</span><span class="kbd">Ctrl+0</span></div>
               <hr/>
@@ -736,7 +736,7 @@
                 <span>Exit</span>
               </div>
               <hr/>
-              <div class="menu-ver" id="menu-ver">Privoo v2.0.1</div>
+              <div class="menu-ver" id="menu-ver">Privoo v2.0.2</div>
             </div>
           </div>
         </div>
@@ -758,15 +758,15 @@
 
       <audio id="bg-music" loop preload="none"></audio>
 
-      <!-- Bottom-left download tray removed — progress shows in the toolbar popover and downloads page. -->
+      <!-- Bottom-left download tray removed â€” progress shows in the toolbar popover and downloads page. -->
       <div id="download-tray" hidden></div>
 
-      <!-- ── Browser-overlay banner (welcome / leaving-Privoo / etc.) ── -->
+      <!-- â”€â”€ Browser-overlay banner (welcome / leaving-Privoo / etc.) â”€â”€ -->
       <div id="overlay-banner" class="overlay-banner hidden" role="dialog" aria-live="polite">
         <img class="ob-logo" src="privoo://newtab/logo.png" alt="" onerror="this.style.display='none'"/>
         <div class="ob-body">
           <div class="ob-title" id="ob-title">Privoo keeps you safe!</div>
-          <div class="ob-text"  id="ob-text">Ads, trackers, and fingerprinting scripts are blocked by default. No accounts, no sync — your browsing stays on this device.</div>
+          <div class="ob-text"  id="ob-text">Ads, trackers, and fingerprinting scripts are blocked by default. No accounts, no sync â€” your browsing stays on this device.</div>
         </div>
         <div class="ob-actions">
           <button type="button" id="ob-dismiss" class="ob-primary">Okay!</button>
@@ -776,33 +776,33 @@
       <!-- Wrap views + devtools so they sit side-by-side when DevTools is docked.
            When DevTools is hidden, #views takes the full width.
            Customize panel ALSO lives inside this wrap so it appears under the
-           toolbar (not full-height alongside it) — matches Chrome's side panel. -->
-      <!-- ── Command Palette (Ctrl+K) ── -->
+           toolbar (not full-height alongside it) â€” matches Chrome's side panel. -->
+      <!-- â”€â”€ Command Palette (Ctrl+K) â”€â”€ -->
       <div id="cmd-palette" class="cmd-palette hidden" role="dialog" aria-label="Command palette" aria-modal="true">
         <div class="cmdp-backdrop"></div>
         <div class="cmdp-box">
           <div class="cmdp-search-row">
             <svg class="cmdp-search-ico" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
-            <input id="cmdp-input" type="text" class="cmdp-input" placeholder="Search tabs, bookmarks, actions…" spellcheck="false" autocomplete="off"/>
+            <input id="cmdp-input" type="text" class="cmdp-input" placeholder="Search tabs, bookmarks, actionsâ€¦" spellcheck="false" autocomplete="off"/>
             <kbd class="cmdp-esc-hint">ESC</kbd>
           </div>
           <div id="cmdp-results" class="cmdp-results"></div>
         </div>
       </div>
 
-      <!-- ── Tab search / quick-switcher (Ctrl+Shift+A) ── -->
+      <!-- â”€â”€ Tab search / quick-switcher (Ctrl+Shift+A) â”€â”€ -->
       <div id="tab-search" class="tab-search hidden" role="dialog" aria-label="Search open tabs">
         <div class="ts-box">
           <div class="ts-search">
             <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
-            <input id="ts-input" type="text" placeholder="Search open tabs by name or address…" spellcheck="false" autocomplete="off"/>
+            <input id="ts-input" type="text" placeholder="Search open tabs by name or addressâ€¦" spellcheck="false" autocomplete="off"/>
           </div>
           <div id="ts-list" class="ts-list"></div>
         </div>
       </div>
 
       <div id="views-wrap">
-        <!-- Vertical tabs panel — shown when vertical-tabs mode is active -->
+        <!-- Vertical tabs panel â€” shown when vertical-tabs mode is active -->
         <div id="vtabs-panel" class="vtabs-panel" hidden>
           <div class="vtabs-header">
             <span class="vtabs-header-title">Tabs</span>
@@ -821,7 +821,7 @@
           <div id="split-divider" role="separator" aria-orientation="vertical" title="Drag to resize" hidden></div>
         </div>
 
-        <!-- ── Docked DevTools panel (Chrome-style, right side) ─────────── -->
+        <!-- â”€â”€ Docked DevTools panel (Chrome-style, right side) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
         <div id="devtools-pane" hidden>
           <div id="devtools-resize" role="separator" aria-orientation="vertical" title="Drag to resize"></div>
           <div id="devtools-pane-inner">
@@ -835,7 +835,7 @@
           </div>
         </div>
 
-        <!-- ── Inline AI side panel — full-height right panel ── -->
+        <!-- â”€â”€ Inline AI side panel â€” full-height right panel â”€â”€ -->
         <aside id="ai-panel" class="ai-panel" hidden aria-label="Privoo AI">
           <div class="ai-panel-header">
             <span class="ai-panel-title">Privoo AI</span>
@@ -851,7 +851,7 @@
           <div class="ai-bar">
             <div class="ai-pill ai-pill-no" id="ai-status">
               <span class="ai-dot"></span>
-              <span id="ai-status-text">No API key — click Setup</span>
+              <span id="ai-status-text">No API key â€” click Setup</span>
             </div>
             <button class="ai-bar-btn" id="ai-cfg-btn" type="button">Setup</button>
           </div>
@@ -860,7 +860,7 @@
           </div>
           <div class="ai-composer">
             <div class="ai-composer-box">
-              <textarea id="ai-input" rows="1" placeholder="Ask Privoo AI anything…"></textarea>
+              <textarea id="ai-input" rows="1" placeholder="Ask Privoo AI anythingâ€¦"></textarea>
               <button id="ai-send" type="button" title="Send" aria-label="Send">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M3 20.5 22 12 3 3.5 3 10l13 2-13 2z"/></svg>
               </button>
@@ -879,10 +879,10 @@
               <div class="ai-field">
                 <label for="ai-provider">Provider</label>
                 <select id="ai-provider">
-                  <option value="anthropic">Claude — Anthropic</option>
-                  <option value="openai">GPT — OpenAI</option>
+                  <option value="anthropic">Claude â€” Anthropic</option>
+                  <option value="openai">GPT â€” OpenAI</option>
                   <option value="deepseek">DeepSeek</option>
-                  <option value="gemini">Gemini — Google</option>
+                  <option value="gemini">Gemini â€” Google</option>
                 </select>
               </div>
               <div class="ai-field">
@@ -893,7 +893,7 @@
               <div class="ai-field">
                 <label for="ai-apikey">API key</label>
                 <input id="ai-apikey" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your key"/>
-                <div class="ai-hint">Stored <b>encrypted</b> on this device — never synced.</div>
+                <div class="ai-hint">Stored <b>encrypted</b> on this device â€” never synced.</div>
               </div>
               <div class="ai-gate-row">
                 <button class="ai-gbtn" id="ai-gate-later" type="button">Later</button>
@@ -903,7 +903,7 @@
           </div>
         </aside>
 
-        <!-- ── Customize side panel — sits under the toolbar, beside views ── -->
+        <!-- â”€â”€ Customize side panel â€” sits under the toolbar, beside views â”€â”€ -->
         <aside id="customize-panel" class="customize-panel hidden" aria-label="Customize Privoo" hidden>
       <header class="cp-header">
         <h2>Customize Privoo</h2>
@@ -939,7 +939,7 @@
           <div class="cp-wp-row">
             <button type="button" id="cp-wp-pick" class="cp-card-btn">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm0 14h14V8.41L13.41 14 11 11.59l-6 6V18zm14-12H5v9.17l6-6L13.41 11.59 19 6z"/></svg>
-              <span>Choose image…</span>
+              <span>Choose imageâ€¦</span>
             </button>
             <button type="button" id="cp-wp-clear" class="cp-card-btn ghost">
               <span>Remove wallpaper</span>
@@ -973,8 +973,8 @@
 
         <section class="cp-section">
           <h3 class="cp-section-title">More</h3>
-          <button type="button" class="cp-link-row" data-action="settings"><span>Open all settings</span><span class="cp-chevron">›</span></button>
-          <button type="button" class="cp-link-row" data-action="extensions"><span>Manage extensions</span><span class="cp-chevron">›</span></button>
+          <button type="button" class="cp-link-row" data-action="settings"><span>Open all settings</span><span class="cp-chevron">â€º</span></button>
+          <button type="button" class="cp-link-row" data-action="extensions"><span>Manage extensions</span><span class="cp-chevron">â€º</span></button>
         </section>
       </div>
         </aside>
@@ -989,20 +989,17 @@
   <div id="updating-overlay" class="updating-overlay" hidden>
     <div class="updating-card">
       <div class="updating-icon-wrap" id="upd-icon-wrap">
-        <svg viewBox="0 0 24 24" width="28" height="28" fill="none">
-          <path d="M12 3v13M5 12l7 7 7-7" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M3 20h18" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
-        </svg>
+        <img src="privoo://newtab/logo.png" width="42" height="42" alt="Privoo" style="object-fit:contain;border-radius:10px;" draggable="false"/>
       </div>
       <div class="updating-spinner" id="upd-spinner" style="display:none"></div>
-      <div class="updating-title" id="upd-title">Downloading update…</div>
+      <div class="updating-title" id="upd-title">Downloading updateâ€¦</div>
       <div class="updating-prog-outer" id="upd-prog-outer" style="display:none">
         <div class="updating-prog-track">
           <div class="updating-prog-bar" id="upd-prog-bar"></div>
         </div>
-        <div class="updating-prog-label" id="upd-prog-label">Starting download…</div>
+        <div class="updating-prog-label" id="upd-prog-label">Starting downloadâ€¦</div>
       </div>
-      <div class="updating-sub" id="upd-sub">Preparing update…</div>
+      <div class="updating-sub" id="upd-sub">Preparing updateâ€¦</div>
       <button id="upd-restart-btn" class="upd-restart-btn" style="display:none">Restart &amp; Update</button>
     </div>
   </div>
@@ -1020,7 +1017,7 @@
 
     restartBtn.addEventListener('click', () => {
       restartBtn.disabled = true;
-      restartBtn.textContent = 'Restarting…';
+      restartBtn.textContent = 'Restartingâ€¦';
       window.privoo?.installUpdateNow();
     });
 
@@ -1029,12 +1026,12 @@
       iconWrap.style.display = 'flex';
       spinner.style.display = 'none';
       restartBtn.style.display = 'none';
-      title.textContent = 'Downloading Privoo ' + ver + '…';
+      title.textContent = 'Downloading Privoo ' + ver + 'â€¦';
       progOuter.style.display = 'block';
       progBar.style.width = (pct || 0) + '%';
       progLabel.textContent = pct > 0
-        ? Math.round(pct) + '%' + (speed > 0 ? '  ·  ' + (speed / 1024 / 1024).toFixed(1) + ' MB/s' : '')
-        : 'Starting download…';
+        ? Math.round(pct) + '%' + (speed > 0 ? '  Â·  ' + (speed / 1024 / 1024).toFixed(1) + ' MB/s' : '')
+        : 'Starting downloadâ€¦';
       sub.textContent = 'Your browser will stay open until you restart.';
     }
 
@@ -1060,7 +1057,7 @@
     if (window.privoo) {
       window.privoo.onUpdateAvailable((info) => { showDownloading(info.version, 0, 0); });
       window.privoo.onUpdateProgress((p) => {
-        const ver = p.version || title.textContent.replace('Downloading Privoo ', '').replace('…', '');
+        const ver = p.version || title.textContent.replace('Downloading Privoo ', '').replace('â€¦', '');
         showDownloading(ver, p.percent, p.bytesPerSecond);
         if (p.percent >= 99.9) armStallTimer();
       });

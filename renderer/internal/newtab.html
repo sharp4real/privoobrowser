@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -8,11 +8,11 @@
 *{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
 html,body{height:100%;overflow:hidden}
 
-/* Hidden until applyNtpLook() has themed the page — kills any flash of an
+/* Hidden until applyNtpLook() has themed the page â€” kills any flash of an
    un-themed new tab. Once themed it reveals with a clean entrance below. */
 body{background:transparent;color:#1f1f1f;user-select:none;opacity:0;}
 body.ntp-ready{opacity:1;}
-/* Clean new-tab entrance — the background is there instantly, the content
+/* Clean new-tab entrance â€” the background is there instantly, the content
    (search bar, shortcuts) gently rises into place. Runs once on load. */
 body.ntp-ready #ntp-root{
   animation:ntp-in .4s cubic-bezier(.16,.84,.44,1) both;
@@ -33,7 +33,7 @@ body.ntp-ready #ntp-root{
 @media (prefers-color-scheme: dark) {
   #ntp-bg { background-color:#202124; }
 }
-/* Increase Transparency on the new tab — drop the solid fill so the OS
+/* Increase Transparency on the new tab â€” drop the solid fill so the OS
    material peeks through. Only kicks in when no wallpaper is set; if the
    user uploaded a wallpaper, that takes precedence (transparency over a
    wallpaper would look muddy). */
@@ -92,7 +92,7 @@ body.ntp-wp .ntp-ghost-name{
   box-shadow:0 1px 6px rgba(32,33,36,.08);
   position:relative;
   -webkit-app-region:no-drag;
-  /* Brave-style focused search. Important: NO scale() transform — that
+  /* Brave-style focused search. Important: NO scale() transform â€” that
      subpixel-rendered the suggestions text and made it blurry. We grow the
      bar by adjusting height/padding/font-size/shadow + a tiny translateY,
      which gives the same "lean forward" feel without any sub-pixel blur. */
@@ -148,7 +148,7 @@ body.ntp-dark:not(.ntp-wp) #search-form{
   background:#303134;border-color:#3c4043;
   box-shadow:0 1px 8px rgba(0,0,0,.35);
 }
-/* Increase Transparency — the new-tab search bar becomes a frosted glass
+/* Increase Transparency â€” the new-tab search bar becomes a frosted glass
    pill so the OS material shows through it. !important + the extra
    :not(.ntp-wp) keeps it winning over the wallpaper / dark variants. */
 body.transparent-ui:not(.ntp-wp) #search-form{
@@ -177,7 +177,7 @@ body.transparent-ui.ntp-wp.ntp-dark #search-form{
 /* Explicit #q text color for every transparent combination */
 body.transparent-ui:not(.ntp-dark) #q{color:#1f1f1f;}
 body.transparent-ui.ntp-dark #q{color:#e8eaed;}
-/* Suggestions — frosted for no-wallpaper case */
+/* Suggestions â€” frosted for no-wallpaper case */
 body.transparent-ui:not(.ntp-wp) #search-suggestions{
   background:rgba(255,255,255,.78) !important;
   backdrop-filter:blur(20px) saturate(170%);
@@ -186,7 +186,7 @@ body.transparent-ui:not(.ntp-wp) #search-suggestions{
 body.transparent-ui.ntp-dark:not(.ntp-wp) #search-suggestions{
   background:rgba(40,41,45,.82) !important;
 }
-/* Suggestions — frosted for wallpaper case */
+/* Suggestions â€” frosted for wallpaper case */
 body.transparent-ui.ntp-wp:not(.ntp-dark) #search-suggestions{
   background:rgba(255,255,255,.84) !important;
   backdrop-filter:blur(20px) saturate(170%);
@@ -439,7 +439,7 @@ footer{
 }
 #ntp-disclaimer{margin:0;}
 
-/* ── Weather widget ── */
+/* â”€â”€ Weather widget â”€â”€ */
 #ntp-weather{
   display:flex;align-items:center;justify-content:center;gap:10px;
   margin-bottom:14px;
@@ -518,7 +518,7 @@ body.ntp-wp .wx-card{
 
 <footer id="ntp-footer">
   <div id="ntp-weather" hidden></div>
-  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee. &nbsp;·&nbsp; <span id="ntp-version" style="opacity:.55">v2.0.1</span></p>
+  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee. &nbsp;Â·&nbsp; <span id="ntp-version" style="opacity:.55">v2.0.2</span></p>
 </footer>
 
 </div>
@@ -608,9 +608,9 @@ function applyNtpLook(settings) {
 
   document.body.classList.toggle('ntp-wp', hasWp);
   document.body.classList.toggle('ntp-dark', dark);
-  // Default ON — toggle in Settings → New tab.
+  // Default ON â€” toggle in Settings â†’ New tab.
   document.body.classList.toggle('ntp-focused-search-on', settings?.ntpFocusedSearch !== false);
-  // Increase Transparency — let the OS material show through the NTP too.
+  // Increase Transparency â€” let the OS material show through the NTP too.
   document.body.classList.toggle('transparent-ui', !!settings?.increaseTransparency);
 
   const ql = document.getElementById('quick-links');
@@ -669,17 +669,17 @@ async function loadNtp() {
   const { settings } = await api.getSettings();
   searchEngine = settings.searchEngine || 'google';
   const links = settings.ntpQuickLinks;
-  // Only fall back to defaults if the user has NEVER set this — an empty
+  // Only fall back to defaults if the user has NEVER set this â€” an empty
   // array is a deliberate "I want no quick links" and must be respected.
   quickLinks = Array.isArray(links) ? links : DEFAULT_QUICK_LINKS;
   applyNtpLook(settings);
-  // Reveal the page only once it's correctly themed — no flash of an
+  // Reveal the page only once it's correctly themed â€” no flash of an
   // un-themed new tab (which read as the search bar flickering).
   document.body.classList.add('ntp-ready');
   syncThemeButtons(settings);
   renderQL();
 
-  // Greeting feature removed — keep the element hidden so legacy DOM stays inert.
+  // Greeting feature removed â€” keep the element hidden so legacy DOM stays inert.
   const ghostEl = document.getElementById('ntp-ghost-name');
   if (ghostEl) ghostEl.hidden = true;
 
@@ -761,7 +761,7 @@ function renderQL() {
   addEl.addEventListener('click', () => openModal());
   frag.appendChild(addEl);
 
-  // Atomic swap — single reflow.
+  // Atomic swap â€” single reflow.
   wrap.replaceChildren(frag);
 }
 
@@ -964,14 +964,14 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// ── Weather widget ──────────────────────────────────────────────────────────
+// â”€â”€ Weather widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const WX_ICONS = {
-  0:'☀️',1:'☀️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',
-  51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',
-  71:'🌨️',73:'🌨️',75:'❄️',77:'🌨️',
-  80:'🌦️',81:'🌧️',82:'⛈️',
-  85:'🌨️',86:'❄️',
-  95:'⛈️',96:'⛈️',99:'⛈️',
+  0:'â˜€ï¸',1:'â˜€ï¸',2:'â›…',3:'â˜ï¸',45:'ðŸŒ«ï¸',48:'ðŸŒ«ï¸',
+  51:'ðŸŒ¦ï¸',53:'ðŸŒ¦ï¸',55:'ðŸŒ§ï¸',61:'ðŸŒ§ï¸',63:'ðŸŒ§ï¸',65:'ðŸŒ§ï¸',
+  71:'ðŸŒ¨ï¸',73:'ðŸŒ¨ï¸',75:'â„ï¸',77:'ðŸŒ¨ï¸',
+  80:'ðŸŒ¦ï¸',81:'ðŸŒ§ï¸',82:'â›ˆï¸',
+  85:'ðŸŒ¨ï¸',86:'â„ï¸',
+  95:'â›ˆï¸',96:'â›ˆï¸',99:'â›ˆï¸',
 };
 const WX_DESC = {
   0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',
@@ -992,7 +992,7 @@ async function fetchWeather(location) {
   // Use cached data if fresh
   if (wxCache && Date.now() - wxCacheTime < WX_TTL) return wxCache;
 
-  // Geocode the location name → lat/lon via Open-Meteo geocoding
+  // Geocode the location name â†’ lat/lon via Open-Meteo geocoding
   const geoRes = await fetch(
     `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=en&format=json`
   );
@@ -1043,25 +1043,25 @@ async function renderWeather(settings) {
 
   el.hidden = false;
   if (!el.innerHTML) {
-    el.innerHTML = '<div class="wx-card" style="opacity:.5;font-size:13px">Loading weather…</div>';
+    el.innerHTML = '<div class="wx-card" style="opacity:.5;font-size:13px">Loading weatherâ€¦</div>';
   }
 
   try {
     const wx = await fetchWeather(loc);
-    const icon = WX_ICONS[wx.code] ?? '🌡️';
+    const icon = WX_ICONS[wx.code] ?? 'ðŸŒ¡ï¸';
     const desc = WX_DESC[wx.code] ?? 'Unknown';
     el.innerHTML = `
       <div class="wx-card">
         <div class="wx-icon">${icon}</div>
         <div class="wx-body">
-          <div class="wx-temp">${wx.temp}°C</div>
+          <div class="wx-temp">${wx.temp}Â°C</div>
           <div class="wx-desc">${desc}</div>
           <div class="wx-loc">${wx.city}${wx.country ? ', ' + wx.country : ''}</div>
         </div>
         <div class="wx-details">
-          <span>Feels like ${wx.feels}°C</span>
-          <span>💧 ${wx.humidity}%</span>
-          <span>💨 ${wx.wind} km/h</span>
+          <span>Feels like ${wx.feels}Â°C</span>
+          <span>ðŸ’§ ${wx.humidity}%</span>
+          <span>ðŸ’¨ ${wx.wind} km/h</span>
         </div>
       </div>`;
   } catch {
@@ -1070,7 +1070,7 @@ async function renderWeather(settings) {
 }
 
 loadNtp();
-// Safety net — reveal even if settings never arrive, so the page can't
+// Safety net â€” reveal even if settings never arrive, so the page can't
 // stay stuck invisible.
 setTimeout(() => document.body.classList.add('ntp-ready'), 800);
 api?.onSettingsChanged?.((settings) => {

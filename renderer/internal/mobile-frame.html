@@ -186,9 +186,7 @@ webview {
       <div class="spinner"></div>
     </div>
 
-    <webview id="wv" src="about:blank" allowpopups
-      webpreferences="contextIsolation=true, nodeIntegration=false, sandbox=false">
-    </webview>
+    <webview id="wv" allowpopups></webview>
 
     <div class="nav">
       <button class="nav-btn" id="btn-back" title="Back">
@@ -233,11 +231,14 @@ const btnClose = document.getElementById('btn-close');
 const urlText  = document.getElementById('url-text');
 const loading  = document.getElementById('loading');
 
-// Read URL from query params (main.js passes it via loadFile query option)
-const params = new URLSearchParams(location.search);
+// Read URL from query params passed by main.js via win.loadFile({ query })
+const params   = new URLSearchParams(location.search);
 const startUrl = params.get('url') || '';
+
+// Set src on the webview element before first paint so Electron attaches the
+// renderer with the correct URL rather than navigating away from about:blank.
 if (startUrl) {
-  wv.src = startUrl;
+  wv.setAttribute('src', startUrl);
   try { urlText.textContent = new URL(startUrl).hostname; } catch { urlText.textContent = startUrl; }
 }
 

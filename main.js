@@ -2215,19 +2215,14 @@ ipcMain.handle('open-mobile-window', (_e, url) => {
         nodeIntegration: false,
         sandbox: false,
         webviewTag: true,
-        preload: path.join(__dirname, 'preload.js'),
+        // No preload — mobile-frame.html is a self-contained page that
+        // doesn't need any Privoo IPC APIs. A preload here was preventing
+        // the inner webview from loading external URLs.
       },
     });
 
     const framePath = path.join(RENDERER_DIR, 'internal', 'mobile-frame.html');
     win.loadFile(framePath, { query: { url: url || '' } });
-
-    // Allow the phone-frame webview to attach correctly
-    win.webContents.on('will-attach-webview', (_e2, prefs) => {
-      prefs.nodeIntegration = false;
-      prefs.contextIsolation = true;
-      prefs.sandbox = false;
-    });
 
     return { ok: true };
   } catch (e) {

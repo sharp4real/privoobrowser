@@ -3230,14 +3230,18 @@ function maybeShowOverlayBanner(url) {
   }
 
   // 2) Welcome banner — only on the very first real website visit, ever.
+  // Mark it shown IMMEDIATELY so navigating away or reinstalling can never
+  // make it appear again (previously the flag was only saved on "Okay!" click,
+  // causing it to re-appear on every session after an update or tab switch).
   let welcomeShown = false;
   try { welcomeShown = localStorage.getItem(OB_WELCOME_KEY) === '1'; } catch {}
   if (!welcomeShown) {
+    try { localStorage.setItem(OB_WELCOME_KEY, '1'); } catch {}
     showOverlayBanner(
       'Privoo keeps you safe!',
       'Ads, trackers, and fingerprinting scripts are blocked by default. No accounts, no sync — your browsing stays on this device.',
-      'Okay!',
-      () => { try { localStorage.setItem(OB_WELCOME_KEY, '1'); } catch {} },
+      'Got it!',
+      null,
     );
     return;
   }
