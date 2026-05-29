@@ -2184,44 +2184,56 @@ ipcMain.handle('get-cursor-pos', (e) => {
 // viewport emulation so the page renders exactly like a real mobile device.
 const _MOBILE_WIN_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
 
-ipcMain.handle('open-mobile-window', async (_e, url) => {
+ipcMain.handle('open-mobile-window', (_e, url) => {
   try {
-    const win = new BrowserWindow({
+    const iconPath = resolveIcon();
+    const winOpts = {
       width: 430,
       height: 932,
       minWidth: 320,
       minHeight: 480,
-      title: 'Mobile View — Privoo',
+      title: 'Mobile View',
       autoHideMenuBar: true,
-      icon: resolveIcon(),
       webPreferences: {
         contextIsolation: true,
         nodeIntegration: false,
         sandbox: false,
-        session: session.defaultSession,
       },
-    });
+    };
+    if (iconPath) winOpts.icon = iconPath;
+
+    const win = new BrowserWindow(winOpts);
 
     win.webContents.setUserAgent(_MOBILE_WIN_UA);
 
-    try {
-      const dbg = win.webContents.debugger;
-      if (!dbg.isAttached()) dbg.attach('1.3');
-      // Mobile viewport so CSS media queries fire correctly.
-      dbg.sendCommand('Emulation.setDeviceMetricsOverride', {
-        width: 390, height: 844, deviceScaleFactor: 3, mobile: true,
-      }).catch(() => {});
-      // Override navigator.userAgent in JS before any page script runs.
-      const ua = _MOBILE_WIN_UA;
-      dbg.sendCommand('Page.addScriptToEvaluateOnNewDocument', {
-        source: `(function(){var u=${JSON.stringify(ua)};try{Object.defineProperty(navigator,'userAgent',{get:function(){return u;},configurable:true});}catch(e){}try{Object.defineProperty(navigator,'maxTouchPoints',{get:function(){return 5;},configurable:true});}catch(e){}})();`,
-        runImmediately: true,
-      }).catch(() => {});
-    } catch {}
+    // Attach CDP for mobile viewport + pre-page UA override.
+    const afterReady = () => {
+      try {
+        const dbg = win.webContents.debugger;
+        if (!dbg.isAttached()) dbg.attach('1.3');
+        dbg.sendCommand('Emulation.setDeviceMetricsOverride', {
+          width: 390, height: 844, deviceScaleFactor: 3, mobile: true,
+        }).catch(() => {});
+        dbg.sendCommand('Page.addScriptToEvaluateOnNewDocument', {
+          source: '(function(){var u=' + JSON.stringify(_MOBILE_WIN_UA) + ';try{Object.defineProperty(navigator,"userAgent",{get:function(){return u;},configurable:true});}catch(e){}try{Object.defineProperty(navigator,"maxTouchPoints",{get:function(){return 5;},configurable:true});}catch(e){}})();',
+          runImmediately: false,
+        }).catch(() => {});
+      } catch {}
+      if (url) {
+        win.webContents.loadURL(url).catch(() => {});
+      }
+    };
 
-    if (url) win.loadURL(url);
+    // Wait for the window's webContents to be ready before attaching debugger.
+    win.webContents.once('did-finish-load', () => {});
+    win.once('ready-to-show', afterReady);
+    // Fallback: if ready-to-show never fires, use a short delay.
+    setTimeout(() => { if (!win.isDestroyed()) afterReady(); }, 500);
+
+    win.show();
     return { ok: true };
   } catch (e) {
+    console.error('open-mobile-window error:', e);
     return { ok: false, error: String(e) };
   }
 });
