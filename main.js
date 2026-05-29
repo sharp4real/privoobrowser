@@ -1215,7 +1215,7 @@ function createWindow(opts = {}) {
       // Win11: acrylic material on a normal (DWM-rounded) window.
       transparencyOpts.backgroundMaterial = 'acrylic';
     } else if (process.platform === 'darwin') {
-      transparencyOpts.vibrancy = 'sidebar';
+      transparencyOpts.vibrancy = 'appearance-based';
     } else {
       // Linux has no native material API — the only way translucency
       // shows is a genuinely transparent window. Frameless Linux windows

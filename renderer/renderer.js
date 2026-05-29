@@ -3004,9 +3004,15 @@ function selectEmoji(glyph) {
   // Keep picker open — matches Chrome/Edge so users can insert several.
 }
 
-function openEmojiPicker(wv) {
+async function openEmojiPicker(wv) {
   if (!emojiPickerEl) return;
   closePopovers();
+  emojiTargetWv = wv || activeTab()?.wv || null;
+  // Try the native Windows emoji panel (Win+. via showEmojiPanel IPC) first
+  try {
+    if (await window.privoo.showEmojiPanel?.()) return;
+  } catch {}
+  // Fallback to our built-in picker
   emojiTargetWv = wv || activeTab()?.wv || null;
   // Snapshot the focused element in the webview BEFORE focus moves to the
   // picker UI. We use it in insertEmojiInWebview to re-focus and insert.
