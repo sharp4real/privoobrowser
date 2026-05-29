@@ -1591,6 +1591,8 @@ function activateTab(id) {
   tab.tabEl.scrollIntoView({ inline: 'nearest', block: 'nearest' });
   syncToolbar();
   updateAudioButton();
+  if (typeof updatePipBtn === 'function') updatePipBtn();
+  if (typeof updateZoomIndicator === 'function') updateZoomIndicator();
   // Re-evaluate the welcome / leaving-Privoo banner for the new active tab
   // so it doesn't stick around from the previous one.
   if (typeof maybeShowOverlayBanner === 'function') maybeShowOverlayBanner(tab.url);
@@ -1783,6 +1785,8 @@ async function openTabContextMenu(x, y, tabId) {
 
   const items = [
     { id: 'pin',          label: tab.pinned ? 'Unpin tab' : 'Pin tab' },
+    { id: 'duplicate',    label: 'Duplicate tab' },
+    { type: 'separator' },
     { id: 'mute',         label: tab.isMuted ? 'Unmute tab' : 'Mute tab' },
     { id: 'close',        label: 'Close tab' },
     { id: 'close-others', label: 'Close other tabs', enabled: tabs.length > 1 },
@@ -1800,6 +1804,9 @@ async function openTabContextMenu(x, y, tabId) {
       enforcePinnedFirst();
       requestAnimationFrame(resizeTabs);
       scheduleSaveSession();
+      break;
+    case 'duplicate':
+      if (tab.url) createTab(tab.url);
       break;
     case 'mute':
       tab.isMuted = !tab.isMuted;
@@ -2178,6 +2185,7 @@ function syncToolbar() {
     backBtn.disabled = forwardBtn.disabled = true;
   }
   updateBookmarkButton();
+  updateZoomIndicator();
 }
 
 function isBlockedHttp(url) {
@@ -2996,16 +3004,17 @@ function selectEmoji(glyph) {
   // Keep picker open — matches Chrome/Edge so users can insert several.
 }
 
-async function openEmojiPicker(wv) {
-  // Prefer the real OS emoji panel (the Win+. flyout) — the exact one
-  // Chrome and Edge open. It inserts straight into the focused field.
-  try {
-    if (await window.privoo.showEmojiPanel?.()) return;
-  } catch {}
-  // Fallback for platforms with no native panel — the built-in picker.
+function openEmojiPicker(wv) {
   if (!emojiPickerEl) return;
   closePopovers();
   emojiTargetWv = wv || activeTab()?.wv || null;
+  // Snapshot the focused element in the webview BEFORE focus moves to the
+  // picker UI. We use it in insertEmojiInWebview to re-focus and insert.
+  if (emojiTargetWv) {
+    emojiTargetWv.executeJavaScript(
+      '(function(){var el=document.activeElement;if(el&&el!==document.body&&el!==document.documentElement)window.__privooEmojiTarget=el;})();'
+    ).catch(() => {});
+  }
   emojiPickerEl.classList.remove('hidden');
   if (!emojiCategoriesEl.children.length) buildEmojiCategories();
   emojiActiveCat = emojiRecent.length ? 'recent' : 'smileys';
@@ -3033,17 +3042,22 @@ function insertEmojiInWebview(wv, em) {
   const js = `(function(){
     try {
       var s = ${JSON.stringify(em)};
-      if (document.execCommand && document.queryCommandSupported && document.queryCommandSupported('insertText')) {
-        document.execCommand('insertText', false, s);
-        return;
-      }
+      // Clicking the emoji button moves focus to the picker UI. Use the
+      // element we snapshotted before the picker opened, then re-focus it.
       var el = document.activeElement;
-      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+      if (!el || el === document.body || el === document.documentElement)
+        el = window.__privooEmojiTarget;
+      if (!el) return;
+      el.focus();
+      if (document.execCommand) { document.execCommand('insertText', false, s); return; }
+      // execCommand fallback unavailable — manually insert into input/textarea.
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
         var v = el.value || '';
-        var a = el.selectionStart || v.length, b = el.selectionEnd || a;
-        el.value = v.slice(0,a) + s + v.slice(b);
+        var a = el.selectionStart !== null ? el.selectionStart : v.length;
+        var b = el.selectionEnd   !== null ? el.selectionEnd   : a;
+        el.value = v.slice(0, a) + s + v.slice(b);
         el.selectionStart = el.selectionEnd = a + s.length;
-        el.dispatchEvent(new Event('input', {bubbles:true}));
+        el.dispatchEvent(new Event('input', {bubbles: true}));
       }
     } catch(e) {}
   })();`;
@@ -3786,13 +3800,15 @@ function handleAction(action) {
     case 'ai-browser': toggleAiPanel(); break;
     case 'settings':   createTab(SETTINGS_URL); break;
     case 'customize':  openCustomizePanel(); break;
-    case 'zoom-in':    activeTab()?.wv.setZoomLevel((activeTab()?.wv.getZoomLevel() || 0) + 1); break;
-    case 'zoom-out':   activeTab()?.wv.setZoomLevel((activeTab()?.wv.getZoomLevel() || 0) - 1); break;
-    case 'zoom-reset': activeTab()?.wv.setZoomLevel(0); break;
+    case 'zoom-in':    activeTab()?.wv.setZoomLevel((activeTab()?.wv.getZoomLevel() || 0) + 1); setTimeout(updateZoomIndicator, 50); break;
+    case 'zoom-out':   activeTab()?.wv.setZoomLevel((activeTab()?.wv.getZoomLevel() || 0) - 1); setTimeout(updateZoomIndicator, 50); break;
+    case 'zoom-reset': activeTab()?.wv.setZoomLevel(0); setTimeout(updateZoomIndicator, 50); break;
     case 'reader-mode':  toggleReaderMode(); break;
+    case 'focus-mode':   toggleFocusMode(); break;
     case 'mobile-view':  openMobileView(); break;
     case 'split-view':   toggleSplitView(); break;
     case 'capture-page': captureFullPage(); break;
+    case 'cmd-palette':  openCmdPalette(); break;
     case 'tab-search':   openTabSearch(); break;
     case 'quit':       window.privoo.close(); break;
   }
@@ -4435,11 +4451,30 @@ window.addEventListener('keydown', (e) => {
     if (t) openDockedDevTools(t);
     return;
   }
-  // Ctrl/Cmd + Period → open emoji picker (matches Windows Win+. and Chrome's accel)
+  // Ctrl/Cmd + Period → open emoji picker
   if (mod && (e.key === '.' || e.key === '>')) {
     e.preventDefault();
     if (emojiPickerEl && !emojiPickerEl.classList.contains('hidden')) closeEmojiPicker();
     else openEmojiPicker(activeTab()?.wv);
+    return;
+  }
+  // Ctrl+K → Command Palette
+  if (mod && !e.shiftKey && e.key.toLowerCase() === 'k') {
+    e.preventDefault();
+    if (cmdPaletteEl && !cmdPaletteEl.classList.contains('hidden')) closeCmdPalette();
+    else openCmdPalette();
+    return;
+  }
+  // Ctrl+Shift+F → Focus mode
+  if (mod && e.shiftKey && e.key.toLowerCase() === 'f') {
+    e.preventDefault();
+    toggleFocusMode();
+    return;
+  }
+  // Ctrl+Shift+P → Picture in Picture
+  if (mod && e.shiftKey && e.key.toLowerCase() === 'p') {
+    e.preventDefault();
+    togglePiP();
     return;
   }
   if (e.altKey && e.key === 'ArrowLeft')  { const w = activeTab()?.wv; if (w?.canGoBack()) w.goBack(); return; }
@@ -5098,3 +5133,248 @@ function toggleAiPanel() {
 
 // AI toolbar button click
 aiBtn?.addEventListener('click', toggleAiPanel);
+
+// =============================================================================
+// v2.0.0 NEW FEATURES
+// =============================================================================
+
+// --- Zoom indicator -----------------------------------------------------------
+const zoomIndicatorEl = document.getElementById('zoom-indicator');
+function updateZoomIndicator() {
+  if (!zoomIndicatorEl) return;
+  try {
+    const tab = activeTab();
+    if (!tab?.wv || tab.url?.startsWith('privoo://')) {
+      zoomIndicatorEl.classList.add('hidden'); return;
+    }
+    const level = tab.wv.getZoomLevel?.() ?? 0;
+    const pct = Math.round(Math.pow(1.2, level) * 100);
+    if (pct === 100) { zoomIndicatorEl.classList.add('hidden'); }
+    else { zoomIndicatorEl.textContent = pct + '%'; zoomIndicatorEl.classList.remove('hidden'); }
+  } catch { zoomIndicatorEl.classList.add('hidden'); }
+}
+zoomIndicatorEl?.addEventListener('click', () => {
+  activeTab()?.wv.setZoomLevel(0);
+  updateZoomIndicator();
+});
+
+// --- Focus Mode (Ctrl+Shift+F) ------------------------------------------------
+const focusStripEl = document.getElementById('focus-strip');
+let _focusMode = false;
+function toggleFocusMode() {
+  _focusMode = !_focusMode;
+  document.body.classList.toggle('focus-mode', _focusMode);
+  if (focusStripEl) focusStripEl.hidden = !_focusMode;
+  privooToast(_focusMode ? 'Focus mode on — press Ctrl+Shift+F to exit' : 'Focus mode off');
+}
+focusStripEl?.addEventListener('click', () => { if (_focusMode) toggleFocusMode(); });
+
+// --- Picture-in-Picture -------------------------------------------------------
+const pipBtn = document.getElementById('pip-btn');
+function togglePiP() {
+  const tab = activeTab();
+  if (!tab?.wv) return;
+  const js = '(function(){try{var v=document.querySelector("video");if(!v)return "no-video";if(document.pictureInPictureElement){document.exitPictureInPicture().catch(function(){});return "exit";}v.requestPictureInPicture().catch(function(){});return "enter";}catch(e){return "err";}})();';
+  tab.wv.executeJavaScript(js).then(function(r) {
+    if (r === 'no-video') privooToast('No video found on this page');
+  }).catch(function() {});
+}
+function updatePipBtn() {
+  if (!pipBtn) return;
+  const tab = activeTab();
+  const show = !!(tab?.url && !tab.url.startsWith('privoo://') && !tab.url.startsWith('about:'));
+  pipBtn.hidden = !show;
+}
+pipBtn?.addEventListener('click', togglePiP);
+
+// --- Command Palette (Ctrl+K) -------------------------------------------------
+const cmdPaletteEl  = document.getElementById('cmd-palette');
+const cmdpInputEl   = document.getElementById('cmdp-input');
+const cmdpResultsEl = document.getElementById('cmdp-results');
+let _cmdpItems = [];
+let _cmdpIdx = -1;
+
+const CMDP_ACTIONS = [
+  { title: 'New tab',              sub: 'Ctrl+T',       action: 'new-tab'       },
+  { title: 'New incognito window', sub: 'Ctrl+Shift+N', action: 'new-incognito' },
+  { title: 'Bookmarks',            sub: '',             action: 'bookmarks'     },
+  { title: 'History',              sub: 'Ctrl+H',       action: 'history'       },
+  { title: 'Downloads',            sub: 'Ctrl+J',       action: 'downloads'     },
+  { title: 'Extensions',           sub: '',             action: 'extensions'    },
+  { title: 'Settings',             sub: '',             action: 'settings'      },
+  { title: 'Privoo AI',            sub: '',             action: 'ai-browser'    },
+  { title: 'Reader mode',          sub: 'Ctrl+Shift+R', action: 'reader-mode'   },
+  { title: 'Focus mode',           sub: 'Ctrl+Shift+F', action: 'focus-mode'    },
+  { title: 'Mobile view',          sub: '',             action: 'mobile-view'   },
+  { title: 'Split view',           sub: 'Ctrl+Shift+E', action: 'split-view'    },
+  { title: 'Full-page screenshot', sub: 'Ctrl+Shift+S', action: 'capture-page'  },
+  { title: 'Search open tabs',     sub: 'Ctrl+Shift+A', action: 'tab-search'    },
+  { title: 'Zoom in',              sub: 'Ctrl+=',       action: 'zoom-in'       },
+  { title: 'Zoom out',             sub: 'Ctrl+-',       action: 'zoom-out'      },
+  { title: 'Reset zoom',           sub: 'Ctrl+0',       action: 'zoom-reset'    },
+  { title: 'Customize Privoo',     sub: '',             action: 'customize'     },
+];
+
+function _cpEsc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function _cpHost(url) {
+  try { return new URL(url).hostname; } catch { return ''; }
+}
+function openCmdPalette() {
+  if (!cmdPaletteEl) return;
+  closePopovers();
+  cmdPaletteEl.classList.remove('hidden');
+  _cmdpIdx = -1;
+  if (cmdpInputEl) cmdpInputEl.value = '';
+  _renderCmdp('');
+  setTimeout(function() { cmdpInputEl && cmdpInputEl.focus(); }, 0);
+}
+function closeCmdPalette() {
+  cmdPaletteEl && cmdPaletteEl.classList.add('hidden');
+}
+function _renderCmdp(query) {
+  if (!cmdpResultsEl) return;
+  const q = query.toLowerCase().trim();
+  _cmdpItems = [];
+  const frag = document.createDocumentFragment();
+
+  // Open tabs
+  const mTabs = tabs.filter(function(t) {
+    return !q || (t.title || '').toLowerCase().includes(q) || (t.url || '').toLowerCase().includes(q);
+  }).slice(0, 5);
+  if (mTabs.length) {
+    _cpSection(frag, 'Open tabs');
+    mTabs.forEach(function(t) {
+      _cpItem(frag, {
+        iconHtml: '<img src="https://www.google.com/s2/favicons?domain=' + _cpHost(t.url) + '&sz=16" width="16" height="16" style="border-radius:2px" onerror="this.style.display=\'none\'"/>',
+        title: t.title || t.url,
+        sub: displayUrl(t.url),
+        onSelect: function() { activateTab(t.id); closeCmdPalette(); },
+      });
+    });
+  }
+
+  // Actions
+  const mActs = q ? CMDP_ACTIONS.filter(function(a) { return a.title.toLowerCase().includes(q); }) : CMDP_ACTIONS;
+  if (mActs.length) {
+    _cpSection(frag, q ? 'Actions' : 'Quick actions');
+    mActs.slice(0, 7).forEach(function(a) {
+      _cpItem(frag, {
+        iconHtml: '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M13 3L4 14h7l-1 7 9-11h-7z"/></svg>',
+        title: a.title,
+        kbd: a.sub,
+        onSelect: function() { handleMenuAction(a.action); closeCmdPalette(); },
+      });
+    });
+  }
+
+  // Bookmarks
+  const mBms = bookmarkList().filter(function(b) {
+    return !q || (b.name || '').toLowerCase().includes(q) || (b.url || '').toLowerCase().includes(q);
+  }).slice(0, 4);
+  if (mBms.length) {
+    _cpSection(frag, 'Bookmarks');
+    mBms.forEach(function(b) {
+      _cpItem(frag, {
+        iconHtml: '<img src="https://www.google.com/s2/favicons?domain=' + _cpHost(b.url) + '&sz=16" width="16" height="16" style="border-radius:2px" onerror="this.style.display=\'none\'"/>',
+        title: b.name,
+        sub: displayUrl(b.url),
+        onSelect: function() { createTab(b.url); closeCmdPalette(); },
+      });
+    });
+  }
+
+  cmdpResultsEl.innerHTML = '';
+  cmdpResultsEl.appendChild(frag);
+  _cmdpIdx = -1;
+}
+function _cpSection(frag, label) {
+  const el = document.createElement('div');
+  el.className = 'cmdp-section-label';
+  el.textContent = label;
+  frag.appendChild(el);
+}
+function _cpItem(frag, opts) {
+  const el = document.createElement('div');
+  el.className = 'cmdp-item';
+  el.innerHTML =
+    '<div class="cmdp-item-icon">' + (opts.iconHtml || '') + '</div>' +
+    '<div class="cmdp-item-body">' +
+      '<div class="cmdp-item-title">' + _cpEsc(opts.title) + '</div>' +
+      (opts.sub && !opts.kbd ? '<div class="cmdp-item-sub">' + _cpEsc(opts.sub) + '</div>' : '') +
+    '</div>' +
+    (opts.kbd ? '<kbd class="cmdp-item-kbd">' + _cpEsc(opts.kbd) + '</kbd>' : '');
+  el.addEventListener('click', opts.onSelect);
+  el.addEventListener('mouseenter', function() {
+    _cmdpItems.forEach(function(i, n) {
+      i.classList.toggle('active', i === el);
+      if (i === el) _cmdpIdx = n;
+    });
+  });
+  _cmdpItems.push(el);
+  frag.appendChild(el);
+}
+function _cmdpMove(dir) {
+  if (!_cmdpItems.length) return;
+  _cmdpItems[_cmdpIdx] && _cmdpItems[_cmdpIdx].classList.remove('active');
+  _cmdpIdx = Math.max(0, Math.min(_cmdpItems.length - 1, _cmdpIdx + dir));
+  const el = _cmdpItems[_cmdpIdx];
+  if (el) { el.classList.add('active'); el.scrollIntoView({ block: 'nearest' }); }
+}
+if (cmdPaletteEl) {
+  const backdrop = cmdPaletteEl.querySelector('.cmdp-backdrop');
+  if (backdrop) backdrop.addEventListener('click', closeCmdPalette);
+  if (cmdpInputEl) {
+    cmdpInputEl.addEventListener('input', function() { _renderCmdp(cmdpInputEl.value); });
+    cmdpInputEl.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape')    { e.preventDefault(); closeCmdPalette(); }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); _cmdpMove(1); }
+      else if (e.key === 'ArrowUp')   { e.preventDefault(); _cmdpMove(-1); }
+      else if (e.key === 'Enter') {
+        e.preventDefault();
+        const active = _cmdpItems[_cmdpIdx] || _cmdpItems[0];
+        if (active) active.click();
+      }
+    });
+  }
+}
+
+// --- Per-site ad-block toggle -------------------------------------------------
+const spSiteToggle = document.getElementById('sp-site-ads-toggle');
+const spSiteLabel  = document.getElementById('sp-site-label');
+function _shieldHost() {
+  try { return new URL(activeTab()?.url || '').hostname; } catch { return null; }
+}
+function updateShieldSiteToggle() {
+  if (!spSiteToggle) return;
+  const host = _shieldHost();
+  const row = spSiteToggle.closest && spSiteToggle.closest('.sp-site-toggle-row');
+  if (!host) { if (row) row.hidden = true; return; }
+  if (row) row.hidden = false;
+  const excl = Array.isArray(settings && settings.adBlockExcludedDomains) ? settings.adBlockExcludedDomains : [];
+  const blocked = !excl.includes(host);
+  spSiteToggle.checked = blocked;
+  if (spSiteLabel) spSiteLabel.textContent = blocked ? 'Ads blocked on this site' : 'Ads allowed on this site';
+}
+if (spSiteToggle) {
+  spSiteToggle.addEventListener('change', function() {
+    const host = _shieldHost();
+    if (!host) return;
+    const excl = Array.isArray(settings && settings.adBlockExcludedDomains) ? settings.adBlockExcludedDomains.slice() : [];
+    if (!spSiteToggle.checked) {
+      if (!excl.includes(host)) excl.push(host);
+    } else {
+      const i = excl.indexOf(host);
+      if (i >= 0) excl.splice(i, 1);
+    }
+    saveBrowserSetting({ adBlockExcludedDomains: excl });
+    if (spSiteLabel) spSiteLabel.textContent = !spSiteToggle.checked ? 'Ads allowed on this site' : 'Ads blocked on this site';
+    const tab = activeTab();
+    if (tab && tab.wv) try { tab.wv.reload(); } catch(_) {}
+  });
+}
+const shieldBtn = document.getElementById('shield-btn');
+if (shieldBtn) {
+  shieldBtn.addEventListener('click', function() { setTimeout(updateShieldSiteToggle, 60); }, true);
+}

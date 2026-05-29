@@ -200,6 +200,9 @@
 
   </div>
 
+  <!-- Focus mode — hover this strip to temporarily reveal the toolbar -->
+  <div id="focus-strip" class="focus-strip" hidden></div>
+
   <div id="shell" class="shell">
     <!-- ── Left sidebar — favicon shortcuts + add button ────────────── -->
     <aside id="app-sidebar" class="app-sidebar" aria-label="Shortcuts sidebar">
@@ -318,6 +321,7 @@
             <button class="tb-btn round small" id="bookmark-btn" title="Bookmark this tab">
               <svg viewBox="0 0 24 24" width="16" height="16"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
             </button>
+            <button class="zoom-indicator hidden" id="zoom-indicator" title="Reset zoom (Ctrl+0)" aria-label="Zoom level">100%</button>
           </div>
 
           <!-- ── Per-page block stats popover (click the omnibox shield) ── -->
@@ -397,6 +401,12 @@
                 <input type="range" id="mp-volume" class="mp-volume-slider" min="0" max="100" value="100" step="1"/>
               </div>
             </div>
+          </div>
+          <!-- ── Picture-in-Picture button ── -->
+          <div class="toolbar-anchor" id="pip-anchor">
+            <button class="tb-btn round" id="pip-btn" title="Picture in Picture (Ctrl+Shift+P)" hidden>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 1.98 2 1.98h18c1.1 0 2-.88 2-1.98V5c0-1.1-.9-2-2-2zm0 16.01H3V4.98h18v14.03z"/></svg>
+            </button>
           </div>
           <div class="toolbar-anchor" id="ytdlp-anchor">
             <button class="tb-btn round" id="ytdlp-toolbar-btn" title="Download media (yt-dlp)" hidden>
@@ -632,6 +642,15 @@
                 </div>
               </div>
 
+              <!-- Per-site ad-blocking toggle -->
+              <div class="sp-site-toggle-row">
+                <span class="sp-site-toggle-label" id="sp-site-label">Ads blocked on this site</span>
+                <label class="switch sp-site-switch">
+                  <input type="checkbox" id="sp-site-ads-toggle" checked>
+                  <span class="slider"></span>
+                </label>
+              </div>
+
               <div class="sp-panel-foot">
                 <button id="stats-reset-btn" type="button" class="sp-reset-link">Reset counters</button>
                 <button type="button" class="sp-settings-link" data-action="settings">Privacy settings →</button>
@@ -688,6 +707,9 @@
               <div class="menu-item" data-action="reader-mode">
                 <span>Reader mode</span><span class="kbd">Ctrl+Shift+R</span>
               </div>
+              <div class="menu-item" data-action="focus-mode">
+                <span>Focus mode</span><span class="kbd">Ctrl+Shift+F</span>
+              </div>
               <div class="menu-item" data-action="mobile-view">
                 <span>Mobile view</span>
               </div>
@@ -696,6 +718,9 @@
               </div>
               <div class="menu-item" data-action="capture-page">
                 <span>Full-page screenshot</span><span class="kbd">Ctrl+Shift+S</span>
+              </div>
+              <div class="menu-item" data-action="cmd-palette">
+                <span>Command palette</span><span class="kbd">Ctrl+K</span>
               </div>
               <div class="menu-item" data-action="tab-search">
                 <span>Search tabs</span><span class="kbd">Ctrl+Shift+A</span>
@@ -711,7 +736,7 @@
                 <span>Exit</span>
               </div>
               <hr/>
-              <div class="menu-ver" id="menu-ver">Privoo v1.9.0</div>
+              <div class="menu-ver" id="menu-ver">Privoo v2.0.0</div>
             </div>
           </div>
         </div>
@@ -752,6 +777,19 @@
            When DevTools is hidden, #views takes the full width.
            Customize panel ALSO lives inside this wrap so it appears under the
            toolbar (not full-height alongside it) — matches Chrome's side panel. -->
+      <!-- ── Command Palette (Ctrl+K) ── -->
+      <div id="cmd-palette" class="cmd-palette hidden" role="dialog" aria-label="Command palette" aria-modal="true">
+        <div class="cmdp-backdrop"></div>
+        <div class="cmdp-box">
+          <div class="cmdp-search-row">
+            <svg class="cmdp-search-ico" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
+            <input id="cmdp-input" type="text" class="cmdp-input" placeholder="Search tabs, bookmarks, actions…" spellcheck="false" autocomplete="off"/>
+            <kbd class="cmdp-esc-hint">ESC</kbd>
+          </div>
+          <div id="cmdp-results" class="cmdp-results"></div>
+        </div>
+      </div>
+
       <!-- ── Tab search / quick-switcher (Ctrl+Shift+A) ── -->
       <div id="tab-search" class="tab-search hidden" role="dialog" aria-label="Search open tabs">
         <div class="ts-box">

@@ -208,6 +208,9 @@ const DEFAULTS = {
 
   // Updates
   autoUpdates: true,      // check for updates on launch and install on quit
+
+  // Per-site ad-blocking exclusions — domains where the ad blocker is paused.
+  adBlockExcludedDomains: [],
 };
 
 let cache = null;

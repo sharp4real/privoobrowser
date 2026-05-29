@@ -59,6 +59,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          draft: false
           name: Privoo ${{ github.ref_name }}
           body: "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection."
           files: |
@@ -92,6 +93,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          draft: false
           name: Privoo ${{ github.ref_name }}
           body: "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection."
           fail_on_unmatched_files: false
@@ -127,6 +129,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          draft: false
           name: Privoo ${{ github.ref_name }}
           body: "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection."
           files: |

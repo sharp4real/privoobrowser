@@ -751,6 +751,13 @@ async function setupAdBlocking(sess) {
       // everything through. Top-level navigation to that host counts too.
       const sourceHost = documentBaseDomain(details.webContentsId) || hostnameOf(details.url);
       if (isSiteCompatibilityHost(sourceHost)) return cb({ cancel: false });
+      // Per-site ad-block exclusion — user toggled ads off for this host.
+      const excl = s2.adBlockExcludedDomains;
+      if (Array.isArray(excl) && excl.length && sourceHost) {
+        if (excl.some((d) => sourceHost === d || sourceHost.endsWith('.' + d))) {
+          return cb({ cancel: false });
+        }
+      }
       // Reset the per-page counter on a fresh main-frame navigation so each
       // page starts at 0 — keeps the omnibox shield accurate.
       if (details.resourceType === 'mainFrame' && details.webContentsId) {
