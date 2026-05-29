@@ -376,6 +376,65 @@ function buildGoogleSpoofScript(opts) {
     };
   } catch(e) {}
 
+  // ── Canvas fingerprint noise ─────────────────────────────────────────────
+  // Adds ±1 noise to pixel values on readback so every canvas fingerprint
+  // is unique per session while remaining visually identical.
+  try {
+    var _cSeed = (Math.random() * 0xFFFFFFFF) >>> 0;
+    function _cRand() {
+      _cSeed ^= _cSeed << 13; _cSeed ^= _cSeed >> 17; _cSeed ^= _cSeed << 5;
+      return (_cSeed >>> 0) / 0x100000000;
+    }
+    function _noiseData(d) {
+      for (var i = 0; i < d.length; i += 4) {
+        var r = _cRand(); var n = r < 0.15 ? -1 : r > 0.85 ? 1 : 0;
+        d[i]   = Math.max(0, Math.min(255, d[i]   + n));
+        d[i+1] = Math.max(0, Math.min(255, d[i+1] + n));
+        d[i+2] = Math.max(0, Math.min(255, d[i+2] + n));
+      }
+    }
+    var _origGID = CanvasRenderingContext2D.prototype.getImageData;
+    CanvasRenderingContext2D.prototype.getImageData = function() {
+      var id = _origGID.apply(this, arguments);
+      _noiseData(id.data); return id;
+    };
+    var _origTDU = HTMLCanvasElement.prototype.toDataURL;
+    HTMLCanvasElement.prototype.toDataURL = function() {
+      var ctx = this.getContext && this.getContext('2d');
+      if (ctx) {
+        var id = _origGID.call(ctx, 0, 0, this.width, this.height);
+        _noiseData(id.data); ctx.putImageData(id, 0, 0);
+      }
+      return _origTDU.apply(this, arguments);
+    };
+    var _origTB = HTMLCanvasElement.prototype.toBlob;
+    HTMLCanvasElement.prototype.toBlob = function(cb) {
+      var ctx = this.getContext && this.getContext('2d');
+      if (ctx) {
+        var id = _origGID.call(ctx, 0, 0, this.width, this.height);
+        _noiseData(id.data); ctx.putImageData(id, 0, 0);
+      }
+      return _origTB.apply(this, arguments);
+    };
+  } catch(e) {}
+
+  // ── WebGL fingerprint normalization ──────────────────────────────────────
+  // Report generic vendor/renderer strings instead of the real GPU identity.
+  try {
+    var _UNMASKED_VENDOR   = 0x9245;
+    var _UNMASKED_RENDERER = 0x9246;
+    var _patchWebGL = function(proto) {
+      var _orig = proto.getParameter;
+      proto.getParameter = function(p) {
+        if (p === _UNMASKED_VENDOR)   return 'Google Inc. (Intel)';
+        if (p === _UNMASKED_RENDERER) return 'ANGLE (Intel, Intel(R) UHD Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)';
+        return _orig.call(this, p);
+      };
+    };
+    if (window.WebGLRenderingContext)  _patchWebGL(WebGLRenderingContext.prototype);
+    if (window.WebGL2RenderingContext) _patchWebGL(WebGL2RenderingContext.prototype);
+  } catch(e) {}
+
   // ── Platform passkey suppression ─────────────────────────────────────────
   // Block requests that would trigger the OS-native credential picker
   // (Windows Hello, Touch ID, etc.) while leaving generic WebAuthn alone so

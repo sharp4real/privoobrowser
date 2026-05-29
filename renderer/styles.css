@@ -4145,6 +4145,21 @@ body.dark .updating-card {
   color: var(--muted);
   margin-top: -4px;
 }
+.upd-restart-btn {
+  margin-top: 6px;
+  align-self: stretch;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 11px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .14s;
+}
+.upd-restart-btn:hover { opacity: .88; }
+.upd-restart-btn:disabled { opacity: .5; cursor: default; }
 .updating-prog-outer { width: 100%; margin-top: 2px; }
 .updating-prog-track {
   width: 100%;

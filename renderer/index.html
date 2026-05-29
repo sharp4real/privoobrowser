@@ -688,6 +688,9 @@
               <div class="menu-item" data-action="reader-mode">
                 <span>Reader mode</span><span class="kbd">Ctrl+Shift+R</span>
               </div>
+              <div class="menu-item" data-action="mobile-view">
+                <span id="mobile-view-label">Mobile view</span>
+              </div>
               <div class="menu-item" data-action="split-view">
                 <span>Split view</span><span class="kbd">Ctrl+Shift+E</span>
               </div>
@@ -944,14 +947,14 @@
   <script src="emoji-data.js"></script>
   <script src="renderer.js"></script>
 
-  <!-- Auto-update overlay — shown on download start, cannot be dismissed -->
+    <!-- Auto-update overlay -->
   <div id="updating-overlay" class="updating-overlay" hidden>
     <div class="updating-card">
       <div class="updating-icon-wrap" id="upd-icon-wrap">
-        <svg viewBox="0 0 52 52" width="56" height="56" fill="none">
-          <circle cx="26" cy="26" r="26" fill="var(--accent)" opacity=".15"/>
-          <path d="M26 13v18M19 25l7 7 7-7" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M16 38h20" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+        <svg viewBox="0 0 56 56" width="60" height="60" fill="none">
+          <circle cx="28" cy="28" r="28" fill="var(--accent)" opacity=".13"/>
+          <path d="M39 31a9 9 0 0 0-8-12.5h-.7A12 12 0 1 0 17 31" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M28 30v10M23 36l5 5 5-5" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
       <div class="updating-spinner" id="upd-spinner" style="display:none"></div>
@@ -962,49 +965,58 @@
         </div>
         <div class="updating-prog-label" id="upd-prog-label">Starting download…</div>
       </div>
-      <div class="updating-sub" id="upd-sub">Privoo will restart automatically when ready.</div>
+      <div class="updating-sub" id="upd-sub">Preparing update…</div>
+      <button id="upd-restart-btn" class="upd-restart-btn" style="display:none">Restart &amp; Update</button>
     </div>
   </div>
   <script>
   (function() {
-    const overlay   = document.getElementById('updating-overlay');
-    const iconWrap  = document.getElementById('upd-icon-wrap');
-    const spinner   = document.getElementById('upd-spinner');
-    const title     = document.getElementById('upd-title');
-    const progOuter = document.getElementById('upd-prog-outer');
-    const progBar   = document.getElementById('upd-prog-bar');
-    const progLabel = document.getElementById('upd-prog-label');
-    const sub       = document.getElementById('upd-sub');
+    const overlay    = document.getElementById('updating-overlay');
+    const iconWrap   = document.getElementById('upd-icon-wrap');
+    const spinner    = document.getElementById('upd-spinner');
+    const title      = document.getElementById('upd-title');
+    const progOuter  = document.getElementById('upd-prog-outer');
+    const progBar    = document.getElementById('upd-prog-bar');
+    const progLabel  = document.getElementById('upd-prog-label');
+    const sub        = document.getElementById('upd-sub');
+    const restartBtn = document.getElementById('upd-restart-btn');
+
+    restartBtn.addEventListener('click', () => {
+      restartBtn.disabled = true;
+      restartBtn.textContent = 'Restarting…';
+      window.privoo?.installUpdateNow();
+    });
 
     function showDownloading(ver, pct, speed) {
       overlay.hidden = false;
       iconWrap.style.display = 'flex';
       spinner.style.display = 'none';
+      restartBtn.style.display = 'none';
       title.textContent = 'Downloading Privoo ' + ver + '…';
       progOuter.style.display = 'block';
       progBar.style.width = (pct || 0) + '%';
       progLabel.textContent = pct > 0
-        ? Math.round(pct) + '%' + (speed > 0 ? ' · ' + (speed / 1024 / 1024).toFixed(1) + ' MB/s' : '')
+        ? Math.round(pct) + '%' + (speed > 0 ? '  ·  ' + (speed / 1024 / 1024).toFixed(1) + ' MB/s' : '')
         : 'Starting download…';
-      sub.textContent = 'Privoo will restart automatically when ready.';
+      sub.textContent = 'Your browser will stay open until you restart.';
     }
 
-    function showInstalling() {
+    function showReady(ver) {
       overlay.hidden = false;
       iconWrap.style.display = 'none';
       progOuter.style.display = 'none';
-      spinner.style.display = 'block';
-      title.textContent = 'Installing update…';
-      sub.textContent = 'Privoo will restart automatically.';
+      spinner.style.display = 'none';
+      title.textContent = 'Privoo ' + ver + ' is ready';
+      sub.textContent = 'Restart to finish installing the update.';
+      restartBtn.style.display = 'block';
+      restartBtn.disabled = false;
+      restartBtn.textContent = 'Restart & Update';
     }
 
     let _stallTimer = null;
     function armStallTimer() {
       clearTimeout(_stallTimer);
-      _stallTimer = setTimeout(() => {
-        overlay.hidden = true;
-        window.privoo?.triggerUpdateCheck?.();
-      }, 20000);
+      _stallTimer = setTimeout(() => { overlay.hidden = true; window.privoo?.triggerUpdateCheck?.(); }, 20000);
     }
     function cancelStallTimer() { clearTimeout(_stallTimer); _stallTimer = null; }
 
@@ -1015,21 +1027,13 @@
         showDownloading(ver, p.percent, p.bytesPerSecond);
         if (p.percent >= 99.9) armStallTimer();
       });
-      window.privoo.onUpdateDownloaded(() => {
-        cancelStallTimer();
-        showInstalling();
-        setTimeout(() => { window.privoo.installUpdateNow(); }, 1500);
-      });
+      window.privoo.onUpdateDownloaded((info) => { cancelStallTimer(); showReady(info.version); });
       window.privoo.onUpdateError?.(() => { cancelStallTimer(); overlay.hidden = true; });
 
       window.privoo.getUpdateStatus().then((s) => {
         if (!s) return;
-        if (s.downloaded) {
-          showInstalling();
-          setTimeout(() => { window.privoo.installUpdateNow(); }, 1500);
-        } else if (s.available) {
-          showDownloading(s.available.version, s.progress?.percent || 0, s.progress?.bytesPerSecond || 0);
-        }
+        if (s.downloaded) showReady(s.downloaded.version);
+        else if (s.available) showDownloading(s.available.version, s.progress?.percent || 0, s.progress?.bytesPerSecond || 0);
       }).catch(() => {});
     }
   })();

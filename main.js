@@ -2180,6 +2180,16 @@ ipcMain.handle('get-cursor-pos', (e) => {
   }
 });
 
+// Per-tab user-agent override for Mobile View toggle.
+ipcMain.handle('set-webcontents-ua', (_e, wcId, ua) => {
+  try {
+    const wc = webContents.fromId(wcId);
+    if (wc && !wc.isDestroyed()) {
+      wc.setUserAgent(ua || session.defaultSession.getUserAgent());
+    }
+  } catch {}
+});
+
 ipcMain.handle('is-default-browser', () => app.isDefaultProtocolClient('https'));
 ipcMain.handle('set-default-browser', () => {
   if (process.platform === 'win32') {

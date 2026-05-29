@@ -3311,6 +3311,7 @@ async function showWvContextMenu(tab, params, vx = 200, vy = 200) {
   }
 
   sep();
+  add(tab.mobileView ? 'Exit mobile view' : 'Mobile view', () => toggleMobileView());
   add('Print…',           () => wv.print(),                                              { accel: 'CmdOrCtrl+P' });
   add('View page source', () => { const u = wv.getURL(); if (u) createTab(`view-source:${u}`); });
   add('Inspect',          () => openDockedDevTools(tab),                                  { accel: 'F12' });
@@ -3789,6 +3790,7 @@ function handleAction(action) {
     case 'zoom-out':   activeTab()?.wv.setZoomLevel((activeTab()?.wv.getZoomLevel() || 0) - 1); break;
     case 'zoom-reset': activeTab()?.wv.setZoomLevel(0); break;
     case 'reader-mode':  toggleReaderMode(); break;
+    case 'mobile-view':  toggleMobileView(); break;
     case 'split-view':   toggleSplitView(); break;
     case 'capture-page': captureFullPage(); break;
     case 'tab-search':   openTabSearch(); break;
@@ -4124,6 +4126,21 @@ function readerModeScript(dark) {
     return "open";
   })();`;
 }
+const MOBILE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+
+async function toggleMobileView() {
+  const tab = activeTab();
+  if (!tab?.wv) return;
+  tab.mobileView = !tab.mobileView;
+  const label = document.getElementById('mobile-view-label');
+  if (label) label.textContent = tab.mobileView ? 'Exit mobile view' : 'Mobile view';
+  try {
+    const wcId = tab.wv.getWebContentsId?.();
+    if (wcId) await window.privoo.setWebContentsUA(wcId, tab.mobileView ? MOBILE_UA : null);
+  } catch {}
+  tab.wv.reload();
+}
+
 function toggleReaderMode() {
   const tab = activeTab();
   if (!tab || !tab.wv) return;
