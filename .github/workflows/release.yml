@@ -35,76 +35,35 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: false
         run: npm run dist
 
-      # Upload exe first — no latest.yml yet. We will hash whatever GitHub
-      # actually serves (CDN bytes may differ from local dist/ bytes if
-      # Defender touches the file during upload). Only after we have
-      # confirmed the CDN hash do we write and upload latest.yml.
-      - name: Upload installer
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          name: Privoo ${{ github.ref_name }}
-          body: "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection."
-          files: dist/Privoo-Setup-*.exe
-
-      - name: Hash CDN-served exe and write latest.yml
-        if: startsWith(github.ref, 'refs/tags/')
-        shell: powershell
-        env:
-          TAG: ${{ github.ref_name }}
+      - name: Recompute sha512 after AV scan
+        shell: node {0}
         run: |
-          $tag     = $env:TAG
-          $version = $tag -replace '^v', ''
-          $exeName = "Privoo-Setup-$version.exe"
-          $url     = "https://github.com/sharp4real/privoobrowser/releases/download/$tag/$exeName"
-          $tmp     = Join-Path $env:RUNNER_TEMP "privoo_cdn.exe"
+          const { createHash } = require('crypto');
+          const { readFileSync, readdirSync, statSync, writeFileSync } = require('fs');
+          const { join } = require('path');
+          const dist = 'dist';
+          const exeFile = readdirSync(dist).find(f => f.endsWith('.exe') && !f.endsWith('.blockmap'));
+          if (!exeFile) { console.error('No exe found in dist'); process.exit(1); }
+          const exePath = join(dist, exeFile);
+          const hash = createHash('sha512').update(readFileSync(exePath)).digest('base64');
+          const size = statSync(exePath).size;
+          const ymlPath = join(dist, 'latest.yml');
+          let yml = readFileSync(ymlPath, 'utf8');
+          yml = yml.replace(/sha512: \S+/g, 'sha512: ' + hash);
+          yml = yml.replace(/size: \d+/g, 'size: ' + size);
+          writeFileSync(ymlPath, yml);
+          console.log('sha512:', hash);
+          console.log('size:', size);
 
-          Write-Host "Waiting for CDN: $url"
-          $ok = $false
-          for ($i = 0; $i -lt 20; $i++) {
-            Start-Sleep -Seconds 20
-            try {
-              curl.exe -fsSL --retry 3 -o $tmp $url
-              if ($LASTEXITCODE -eq 0) {
-                $sz = (Get-Item $tmp -ErrorAction SilentlyContinue).Length
-                if ($sz -gt 1MB) { $ok = $true; Write-Host "Downloaded $sz bytes on attempt $($i+1)"; break }
-              }
-            } catch {}
-            Write-Host "Retry $($i+1)..."
-          }
-          if (-not $ok) { Write-Error "Could not download published exe from CDN"; exit 1 }
-
-          $sha    = [System.Security.Cryptography.SHA512]::Create()
-          $stream = [System.IO.File]::OpenRead($tmp)
-          $bytes  = $sha.ComputeHash($stream)
-          $stream.Close()
-          $hash   = [Convert]::ToBase64String($bytes)
-          $size   = (Get-Item $tmp).Length
-          $date   = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
-
-          $yml = @"
-          version: $version
-          files:
-            - url: $exeName
-              sha512: $hash
-              size: $size
-          path: $exeName
-          sha512: $hash
-          releaseDate: '$date'
-          "@
-          # Strip leading whitespace from here-string indentation
-          $yml = ($yml -split "`n" | ForEach-Object { $_ -replace '^\s{10}','' }) -join "`n"
-          Set-Content -Path "dist\latest.yml" -Value $yml -Encoding utf8NoBOM -NoNewline:$false
-          Write-Host "sha512: $hash"
-          Write-Host "size:   $size"
-
-      - name: Upload latest.yml
+      - name: Upload release assets
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           name: Privoo ${{ github.ref_name }}
           body: "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection."
-          files: dist/latest.yml
+          files: |
+            dist/Privoo-Setup-*.exe
+            dist/latest.yml
 
   build-mac:
     # Use Intel macOS so we can cross-compile x64 + arm64 dmg/zip without
@@ -137,6 +96,7 @@ jobs:
         with:
           name: Privoo ${{ github.ref_name }}
           body: "Privoo Browser ${{ github.ref_name }}. No telemetry. No tracking. No data collection."
+          fail_on_unmatched_files: false
           files: |
             dist/*.dmg
             dist/*.dmg.blockmap
