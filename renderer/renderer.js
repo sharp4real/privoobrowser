@@ -5374,7 +5374,7 @@ if (spSiteToggle) {
     if (tab && tab.wv) try { tab.wv.reload(); } catch(_) {}
   });
 }
-const shieldBtn = document.getElementById('shield-btn');
+// shieldBtn already declared at top of file — just add the listener
 if (shieldBtn) {
   shieldBtn.addEventListener('click', function() { setTimeout(updateShieldSiteToggle, 60); }, true);
 }
