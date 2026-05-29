@@ -66,9 +66,7 @@ jobs:
             dist/latest.yml
 
   build-mac:
-    # Use Intel macOS so we can cross-compile x64 + arm64 dmg/zip without
-    # the arch-specific native-module pitfalls macos-latest (arm64) has.
-    runs-on: macos-13
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
