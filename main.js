@@ -2206,8 +2206,8 @@ ipcMain.handle('open-mobile-window', (_e, url) => {
       minHeight: 700,
       title: 'Mobile View',
       frame: false,
-      transparent: false,
-      backgroundColor: '#0d0f1a',
+      transparent: true,
+      backgroundColor: '#00000000',
       autoHideMenuBar: true,
       ...(iconPath ? { icon: iconPath } : {}),
       webPreferences: {
