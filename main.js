@@ -2180,59 +2180,50 @@ ipcMain.handle('get-cursor-pos', (e) => {
   }
 });
 
-// Per-tab mobile view: override UA at HTTP level + CDP level + device metrics.
-const _mobileViewScripts = new Map(); // wcId → CDP script identifier
+// Mobile View — opens a dedicated narrow BrowserWindow with iPhone UA +
+// viewport emulation so the page renders exactly like a real mobile device.
+const _MOBILE_WIN_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
 
-ipcMain.handle('set-webcontents-ua', async (_e, wcId, ua) => {
+ipcMain.handle('open-mobile-window', async (_e, url) => {
   try {
-    const wc = webContents.fromId(wcId);
-    if (!wc || wc.isDestroyed()) return;
+    const win = new BrowserWindow({
+      width: 430,
+      height: 932,
+      minWidth: 320,
+      minHeight: 480,
+      title: 'Mobile View — Privoo',
+      autoHideMenuBar: true,
+      icon: resolveIcon(),
+      webPreferences: {
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: false,
+        session: session.defaultSession,
+      },
+    });
 
-    if (ua) {
-      // HTTP-level UA so the server receives a mobile request.
-      wc.setUserAgent(ua);
+    win.webContents.setUserAgent(_MOBILE_WIN_UA);
 
-      // Attach CDP if needed.
-      try { if (!wc.debugger.isAttached()) wc.debugger.attach('1.3'); } catch {}
-
-      // Inject a script that runs BEFORE page scripts (after the spoof script
-      // that hardcodes a desktop UA) and overrides navigator.userAgent back to
-      // the mobile UA. Because addScriptToEvaluateOnNewDocument scripts run in
-      // insertion order, this wins over the spoof script.
-      const mobileScript = `(function(){
-        var _mua=${JSON.stringify(ua)};
-        try{Object.defineProperty(navigator,'userAgent',{get:function(){return _mua;},configurable:true});}catch(e){}
-        try{Object.defineProperty(navigator,'maxTouchPoints',{get:function(){return 5;},configurable:true});}catch(e){}
-        try{if(navigator.userAgentData){Object.defineProperty(navigator,'userAgentData',{value:{mobile:true,brands:[],platform:'iPhone',getHighEntropyValues:function(){return Promise.resolve({mobile:true});}},configurable:true});}}catch(e){}
-      })();`;
-
-      const result = await wc.debugger.sendCommand('Page.addScriptToEvaluateOnNewDocument', {
-        source: mobileScript,
-        runImmediately: true,
-      }).catch(() => null);
-      if (result?.identifier) _mobileViewScripts.set(wcId, result.identifier);
-
-      // Simulate an iPhone 14 Pro viewport so CSS media queries behave correctly.
-      wc.debugger.sendCommand('Emulation.setDeviceMetricsOverride', {
+    try {
+      const dbg = win.webContents.debugger;
+      if (!dbg.isAttached()) dbg.attach('1.3');
+      // Mobile viewport so CSS media queries fire correctly.
+      dbg.sendCommand('Emulation.setDeviceMetricsOverride', {
         width: 390, height: 844, deviceScaleFactor: 3, mobile: true,
       }).catch(() => {});
+      // Override navigator.userAgent in JS before any page script runs.
+      const ua = _MOBILE_WIN_UA;
+      dbg.sendCommand('Page.addScriptToEvaluateOnNewDocument', {
+        source: `(function(){var u=${JSON.stringify(ua)};try{Object.defineProperty(navigator,'userAgent',{get:function(){return u;},configurable:true});}catch(e){}try{Object.defineProperty(navigator,'maxTouchPoints',{get:function(){return 5;},configurable:true});}catch(e){}})();`,
+        runImmediately: true,
+      }).catch(() => {});
+    } catch {}
 
-    } else {
-      // Restore desktop UA and viewport.
-      wc.setUserAgent(session.defaultSession.getUserAgent());
-
-      if (_mobileViewScripts.has(wcId)) {
-        try {
-          await wc.debugger.sendCommand('Page.removeScriptToEvaluateOnNewDocument', {
-            identifier: _mobileViewScripts.get(wcId),
-          }).catch(() => {});
-        } catch {}
-        _mobileViewScripts.delete(wcId);
-      }
-
-      wc.debugger.sendCommand('Emulation.clearDeviceMetricsOverride').catch(() => {});
-    }
-  } catch {}
+    if (url) win.loadURL(url);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
 });
 
 ipcMain.handle('is-default-browser', () => app.isDefaultProtocolClient('https'));

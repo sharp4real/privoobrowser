@@ -101,7 +101,7 @@ contextBridge.exposeInMainWorld('privoo', {
   showEmojiPanel: () => ipcRenderer.invoke('show-emoji-panel'),
   captureFullPage:(wcId) => ipcRenderer.invoke('capture-full-page', wcId),
   getCursorPos:       () => ipcRenderer.invoke('get-cursor-pos'),
-  setWebContentsUA:   (wcId, ua) => ipcRenderer.invoke('set-webcontents-ua', wcId, ua),
+  openMobileWindow:   (url) => ipcRenderer.invoke('open-mobile-window', url),
   isDefaultBrowser:   () => ipcRenderer.invoke('is-default-browser'),
   setDefaultBrowser:  () => ipcRenderer.invoke('set-default-browser'),
 
