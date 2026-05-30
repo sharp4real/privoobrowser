@@ -79,7 +79,8 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Privoo",
-      "artifactName": "Privoo-Setup-${version}.${ext}"
+      "artifactName": "Privoo-Setup-${version}.${ext}",
+      "include": "build/nsis-include.nsh"
     },
     "mac": {
       "icon": "logo.icns",

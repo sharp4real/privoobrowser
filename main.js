@@ -2234,6 +2234,14 @@ ipcMain.handle('open-mobile-window', (_e, url) => {
 ipcMain.handle('is-default-browser', () => app.isDefaultProtocolClient('https'));
 ipcMain.handle('set-default-browser', () => {
   if (process.platform === 'win32') {
+    // Register intent first so Windows sees Privoo in the Default Apps list
+    try {
+      app.setAsDefaultProtocolClient('https');
+      app.setAsDefaultProtocolClient('http');
+      app.setAsDefaultProtocolClient('ftp');
+    } catch {}
+    // Windows 10/11 requires the user to confirm via Settings — open
+    // directly to the Default Apps page so they can pick Privoo.
     shell.openExternal('ms-settings:defaultapps');
   } else {
     app.setAsDefaultProtocolClient('https');
