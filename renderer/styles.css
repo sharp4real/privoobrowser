@@ -202,27 +202,57 @@ body.transparent-ui.aero-ui.dark::before {
   to   { background-position: 5% 4%, -4% -3%, 0 0; }
 }
 
-/* ── Your Vibe — user-chosen hue overlaid as a soft ambient gradient ─────────
-   --vibe-hue (0-360) and --vibe-intensity (0.0-1.0) are set by applyAppSettings.
-   Two radial glows: warm bloom top-left (toolbar/titlebar) + cooler drift bottom-right.
-   opacity is driven by --vibe-intensity so the breathe animation layers on top. */
-:root { --vibe-hue: 220; --vibe-intensity: 0.65; }
+/* ── Your Vibe — ambient gradient behind the browser chrome ──────────────────
+   Four styles (glow/flow/aura/edge) controlled by body class.
+   --vibe-hue (0-360) set by applyAppSettings. All use CSS Color Level 4
+   hsl() with alpha — requires Chromium 111+ (Electron 42 / Chrome 143 ✓). */
+:root { --vibe-hue: 220; }
 body.has-vibe::after {
   content: '';
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  opacity: var(--vibe-intensity);
-  background:
-    radial-gradient(ellipse 75% 45% at 10% 0%,
-      hsl(var(--vibe-hue) 75% 65% / .42) 0%, transparent 68%),
-    radial-gradient(ellipse 55% 50% at 92% 95%,
-      hsl(calc(var(--vibe-hue) + 30) 65% 60% / .26) 0%, transparent 65%),
-    radial-gradient(ellipse 45% 35% at 50% 50%,
-      hsl(calc(var(--vibe-hue) + 15) 70% 65% / .08) 0%, transparent 70%);
   animation: vibe-breathe 7s ease-in-out infinite alternate;
 }
+/* ── Glow (default) — soft radial blooms from corners ── */
+body.has-vibe:not(.vibe-flow):not(.vibe-aura):not(.vibe-edge)::after {
+  background:
+    radial-gradient(ellipse 75% 48% at 10% 0%,
+      hsl(var(--vibe-hue) 78% 65% / .40) 0%, transparent 68%),
+    radial-gradient(ellipse 55% 52% at 92% 96%,
+      hsl(calc(var(--vibe-hue) + 35) 68% 60% / .28) 0%, transparent 65%),
+    radial-gradient(ellipse 42% 36% at 50% 48%,
+      hsl(calc(var(--vibe-hue) + 15) 72% 66% / .10) 0%, transparent 70%);
+}
+/* ── Flow — sweeping diagonal wash across the whole window ── */
+body.has-vibe.vibe-flow::after {
+  background:
+    linear-gradient(135deg,
+      hsl(var(--vibe-hue) 80% 62% / .38) 0%,
+      hsl(calc(var(--vibe-hue) + 22) 72% 64% / .18) 45%,
+      hsl(calc(var(--vibe-hue) + 50) 68% 58% / .32) 100%);
+}
+/* ── Aura — single diffuse centred bloom ── */
+body.has-vibe.vibe-aura::after {
+  background:
+    radial-gradient(ellipse 72% 65% at 50% 40%,
+      hsl(var(--vibe-hue) 76% 66% / .42) 0%,
+      hsl(calc(var(--vibe-hue) + 25) 65% 60% / .18) 55%,
+      transparent 78%);
+}
+/* ── Edge — vivid strips along the top and left edges ── */
+body.has-vibe.vibe-edge::after {
+  background:
+    linear-gradient(90deg,
+      hsl(var(--vibe-hue) 82% 62% / .50) 0%,
+      hsl(var(--vibe-hue) 78% 64% / .18) 22%,
+      transparent 40%),
+    linear-gradient(180deg,
+      hsl(calc(var(--vibe-hue) + 32) 74% 60% / .42) 0%,
+      hsl(calc(var(--vibe-hue) + 32) 70% 62% / .14) 18%,
+      transparent 35%);
+}
 @keyframes vibe-breathe {
-  from { filter: brightness(0.92); }
-  to   { filter: brightness(1.06); }
+  from { opacity: .82; }
+  to   { opacity: 1;   }
 }
 
 /* Every floating UI surface — popovers, menus, suggestions, context menus,

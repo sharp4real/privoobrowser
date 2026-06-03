@@ -207,6 +207,27 @@
     transition: background .15s;
   }
   body.dark .vibe-preview { border-color: rgba(255,255,255,.14); }
+  /* Vibe style selector */
+  .vibe-styles { display: flex; gap: 8px; flex-wrap: wrap; padding: 2px 0 4px; }
+  .vibe-style-btn {
+    flex: 1; min-width: 70px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    cursor: default; border: 1.5px solid #dadce0; background: transparent;
+    border-radius: 10px; padding: 8px 6px;
+    transition: border-color .12s, box-shadow .12s;
+  }
+  body.dark .vibe-style-btn { border-color: #5f6368; }
+  .vibe-style-btn.active { border-color: var(--accent); box-shadow: 0 0 0 2.5px var(--accent-soft); }
+  .vibe-style-btn:hover:not(.active) { border-color: #b3b3b3; }
+  body.dark .vibe-style-btn:hover:not(.active) { border-color: #80868b; }
+  .vibe-style-thumb {
+    width: 56px; height: 36px; border-radius: 6px;
+    background: #f1f3f4; overflow: hidden; position: relative;
+    flex-shrink: 0;
+  }
+  body.dark .vibe-style-thumb { background: #3c4043; }
+  .vibe-style-thumb canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .vibe-style-name { font-size: 11px; color: var(--muted); font-weight: 500; white-space: nowrap; }
   /* Preset vibe buttons */
   .vibe-presets { display: flex; flex-wrap: wrap; gap: 8px; padding: 2px 0 4px; }
   .vibe-preset {
@@ -226,33 +247,25 @@
   body.dark .vibe-preset.active .vibe-preset-swatch { border-color: #303134; }
   .vibe-preset-name { font-size: 10.5px; color: var(--muted); letter-spacing: .01em; }
   /* Sliders */
-  .hue-slider, .intensity-slider {
+  .hue-slider {
     flex: 1;
     -webkit-appearance: none; appearance: none;
     height: 10px; border-radius: 5px; outline: none; cursor: default;
-  }
-  .hue-slider {
     background: linear-gradient(to right,
       hsl(0,75%,60%), hsl(30,75%,60%), hsl(60,75%,60%), hsl(90,75%,60%),
       hsl(120,75%,60%), hsl(150,75%,60%), hsl(180,75%,60%), hsl(210,75%,60%),
       hsl(240,75%,60%), hsl(270,75%,60%), hsl(300,75%,60%), hsl(330,75%,60%),
       hsl(360,75%,60%));
   }
-  .intensity-slider {
-    background: linear-gradient(to right, rgba(180,180,200,.25), rgba(138,180,248,.9));
-  }
-  .hue-slider::-webkit-slider-thumb,
-  .intensity-slider::-webkit-slider-thumb {
+  .hue-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     width: 20px; height: 20px; border-radius: 50%;
     background: #fff; border: 2px solid rgba(0,0,0,.22);
     box-shadow: 0 1px 4px rgba(0,0,0,.22); cursor: default;
     transition: transform .12s;
   }
-  .hue-slider::-webkit-slider-thumb:hover,
-  .intensity-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
-  body.dark .hue-slider::-webkit-slider-thumb,
-  body.dark .intensity-slider::-webkit-slider-thumb { background: #e8eaed; border-color: rgba(255,255,255,.3); }
+  .hue-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+  body.dark .hue-slider::-webkit-slider-thumb { background: #e8eaed; border-color: rgba(255,255,255,.3); }
 
   /* ── What's New popup ── */
   .whats-new-overlay {
@@ -829,7 +842,10 @@
             <label class="switch"><input type="checkbox" id="vibeEnabled"><span class="slider"></span></label>
           </div>
           <div class="row stack" id="vibe-controls-row">
-            <div><div class="label">Preset</div></div>
+            <div><div class="label">Style</div><div class="desc">Changes the shape and coverage of the gradient effect.</div></div>
+            <div id="vibe-styles" class="vibe-styles"></div>
+            <div style="height:6px"></div>
+            <div><div class="label">Color preset</div></div>
             <div id="vibe-presets" class="vibe-presets"></div>
             <div style="height:4px"></div>
             <div><div class="label">Custom hue</div></div>
@@ -837,12 +853,6 @@
               <div class="vibe-preview" id="vibe-preview"></div>
               <input type="range" id="vibeHue" min="0" max="360" value="220" class="hue-slider"/>
             </div>
-            <div style="height:4px"></div>
-            <div style="display:flex;align-items:center;justify-content:space-between">
-              <div class="label">Intensity</div>
-              <span id="vibe-intensity-label" style="font-size:12px;color:var(--muted)">65%</span>
-            </div>
-            <input type="range" id="vibeIntensity" min="10" max="100" value="65" class="intensity-slider"/>
           </div>
         </div>
 
@@ -1807,6 +1817,65 @@ async function init() {
     { name: 'Sakura',  hue: 345 },
     { name: 'Galaxy',  hue: 255 },
   ];
+  const VIBE_STYLES = [
+    { id: 'glow',  name: 'Glow',   draw: (ctx, h) => {
+      const g1 = ctx.createRadialGradient(14, 6, 0, 14, 6, 38);
+      g1.addColorStop(0, `hsla(${h},80%,65%,.7)`); g1.addColorStop(1, 'transparent');
+      const g2 = ctx.createRadialGradient(52, 34, 0, 52, 34, 24);
+      g2.addColorStop(0, `hsla(${(h+35)%360},70%,60%,.5)`); g2.addColorStop(1, 'transparent');
+      ctx.fillStyle = g1; ctx.fillRect(0,0,56,36);
+      ctx.fillStyle = g2; ctx.fillRect(0,0,56,36);
+    }},
+    { id: 'flow',  name: 'Flow',   draw: (ctx, h) => {
+      const g = ctx.createLinearGradient(0, 0, 56, 36);
+      g.addColorStop(0, `hsla(${h},80%,62%,.8)`);
+      g.addColorStop(.5, `hsla(${(h+20)%360},70%,65%,.3)`);
+      g.addColorStop(1, `hsla(${(h+45)%360},65%,58%,.6)`);
+      ctx.fillStyle = g; ctx.fillRect(0,0,56,36);
+    }},
+    { id: 'aura',  name: 'Aura',   draw: (ctx, h) => {
+      const g = ctx.createRadialGradient(28, 16, 0, 28, 16, 30);
+      g.addColorStop(0, `hsla(${h},75%,68%,.85)`);
+      g.addColorStop(.6, `hsla(${(h+20)%360},65%,60%,.3)`);
+      g.addColorStop(1, 'transparent');
+      ctx.fillStyle = g; ctx.fillRect(0,0,56,36);
+    }},
+    { id: 'edge',  name: 'Edge',   draw: (ctx, h) => {
+      const gl = ctx.createLinearGradient(0, 0, 18, 0);
+      gl.addColorStop(0, `hsla(${h},80%,62%,.9)`); gl.addColorStop(1, 'transparent');
+      const gt = ctx.createLinearGradient(0, 0, 0, 14);
+      gt.addColorStop(0, `hsla(${(h+30)%360},72%,60%,.7)`); gt.addColorStop(1, 'transparent');
+      ctx.fillStyle = gl; ctx.fillRect(0,0,56,36);
+      ctx.fillStyle = gt; ctx.fillRect(0,0,56,36);
+    }},
+  ];
+
+  function buildVibeStyles(activeStyle, hue) {
+    const wrap = $('vibe-styles');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    for (const s of VIBE_STYLES) {
+      const btn = document.createElement('button');
+      btn.className = 'vibe-style-btn' + (s.id === (activeStyle || 'glow') ? ' active' : '');
+      const thumb = document.createElement('div');
+      thumb.className = 'vibe-style-thumb';
+      const cv = document.createElement('canvas');
+      cv.width = 56; cv.height = 36;
+      const ctx = cv.getContext('2d');
+      s.draw(ctx, hue ?? 220);
+      thumb.appendChild(cv);
+      const nm = document.createElement('span');
+      nm.className = 'vibe-style-name';
+      nm.textContent = s.name;
+      btn.appendChild(thumb); btn.appendChild(nm);
+      btn.addEventListener('click', () => {
+        wrap.querySelectorAll('.vibe-style-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        savePatch({ vibeStyle: s.id }, 'Vibe updated');
+      });
+      wrap.appendChild(btn);
+    }
+  }
 
   function buildVibePresets(activeHue) {
     const wrap = $('vibe-presets');
@@ -1826,10 +1895,11 @@ async function init() {
       btn.addEventListener('click', () => {
         wrap.querySelectorAll('.vibe-preset').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        if ($('vibeHue')) { $('vibeHue').value = p.hue; }
+        if ($('vibeHue')) $('vibeHue').value = p.hue;
         const prev = $('vibe-preview');
         if (prev) prev.style.background = `hsl(${p.hue},75%,60%)`;
         savePatch({ vibeHue: p.hue }, 'Vibe updated');
+        buildVibeStyles(currentSettings.vibeStyle, p.hue);
       });
       wrap.appendChild(btn);
     }
@@ -1837,18 +1907,13 @@ async function init() {
 
   function syncVibeControls(s) {
     const hue = s.vibeHue ?? 220;
-    const intensity = s.vibeIntensity ?? 65;
     const enabled = !!s.vibeEnabled;
     const row = $('vibe-controls-row');
     if (row) row.style.display = enabled ? '' : 'none';
     if ($('vibeHue')) $('vibeHue').value = hue;
-    if ($('vibeIntensity')) {
-      $('vibeIntensity').value = intensity;
-      const lbl = $('vibe-intensity-label');
-      if (lbl) lbl.textContent = intensity + '%';
-    }
     const prev = $('vibe-preview');
     if (prev) prev.style.background = `hsl(${hue},75%,60%)`;
+    buildVibeStyles(s.vibeStyle, hue);
     buildVibePresets(hue);
   }
 
@@ -1862,18 +1927,11 @@ async function init() {
     const h = $('vibeHue').value;
     const prev = $('vibe-preview');
     if (prev) prev.style.background = `hsl(${h},75%,60%)`;
-    // Deselect all presets when slider is manually dragged
     $('vibe-presets')?.querySelectorAll('.vibe-preset').forEach(b => b.classList.remove('active'));
+    buildVibeStyles(currentSettings.vibeStyle, h);
   });
   $('vibeHue')?.addEventListener('change', () => {
     savePatch({ vibeHue: parseInt($('vibeHue').value, 10) }, 'Vibe updated');
-  });
-  $('vibeIntensity')?.addEventListener('input', () => {
-    const lbl = $('vibe-intensity-label');
-    if (lbl) lbl.textContent = $('vibeIntensity').value + '%';
-  });
-  $('vibeIntensity')?.addEventListener('change', () => {
-    savePatch({ vibeIntensity: parseInt($('vibeIntensity').value, 10) }, 'Vibe updated');
   });
 
   // ── What's New popup ─────────────────────────────────────────────────────

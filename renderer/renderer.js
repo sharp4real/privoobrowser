@@ -439,12 +439,13 @@ function applyAppSettings() {
   document.body.classList.toggle('aero-ui', !!settings.aeroGradient);
   document.body.classList.toggle('ui-compact', !!settings.compactMode);
   document.body.classList.toggle('has-vibe', !!settings.vibeEnabled);
+  // Apply vibe style class (glow/flow/aura/edge) — glow is default, no class needed
+  document.body.classList.remove('vibe-flow', 'vibe-aura', 'vibe-edge');
+  const vs = settings.vibeStyle || 'glow';
+  if (vs !== 'glow') document.body.classList.add(`vibe-${vs}`);
   if (settings.vibeHue !== undefined) {
     document.documentElement.style.setProperty('--vibe-hue', String(settings.vibeHue));
   }
-  // vibeIntensity is stored as 10-100 integer; convert to 0.0-1.0 for CSS
-  const vibeOpacity = ((settings.vibeIntensity ?? 65) / 100).toFixed(2);
-  document.documentElement.style.setProperty('--vibe-intensity', vibeOpacity);
   document.body.style.fontSize = `${Math.max(0.85, Math.min(Number(settings.fontSizeScale) || 1, 1.25)) * 100}%`;
   homeBtn.hidden = !settings.showHomeButton;
   // Derive a friendly placeholder. For the "custom" engine we surface the
