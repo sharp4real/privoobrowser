@@ -778,6 +778,23 @@
         </div>
       </div>
 
+      <!-- ── yt-dlp first-run rights disclaimer ── -->
+      <div id="ytdlp-disclaimer" class="mobile-disclaimer hidden" role="dialog" aria-modal="true" aria-label="Download disclaimer">
+        <div class="mdisc-card">
+          <div class="mdisc-icon" style="background:rgba(242,139,130,.15);color:#d93025;">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+          </div>
+          <div class="mdisc-body">
+            <div class="mdisc-title">Before you download</div>
+            <div class="mdisc-text">Only download content you have the right to download. Downloading copyrighted videos, music, or other media without permission from the rights holder may violate copyright law in your country. Privoo is not responsible for how you use this feature.</div>
+          </div>
+          <div class="mdisc-actions">
+            <button type="button" id="ytdlp-disc-cancel" class="mdisc-btn ghost">Cancel</button>
+            <button type="button" id="ytdlp-disc-ok" class="mdisc-btn primary">I understand, download</button>
+          </div>
+        </div>
+      </div>
+
       <!-- ── Browser-overlay banner (welcome / leaving-Privoo / etc.) ── -->
       <div id="overlay-banner" class="overlay-banner hidden" role="dialog" aria-live="polite">
         <img class="ob-logo" src="privoo://newtab/logo.png" alt="" onerror="this.style.display='none'"/>
@@ -828,10 +845,11 @@
             </button>
           </div>
           <button id="vtabs-new" class="vtabs-new-btn" title="New tab (Ctrl+T)">
-            <svg class="vtabs-new-icon" viewBox="0 0 20 20" width="13" height="13"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>
+            <svg class="vtabs-new-icon" viewBox="0 0 20 20" width="14" height="14"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
             <span class="vtabs-new-label">New Tab</span>
           </button>
           <div id="vtabs-list" class="vtabs-list"></div>
+          <div id="vtabs-resize" class="vtabs-resize" title="Drag to resize" role="separator" aria-orientation="vertical"></div>
         </div>
 
         <div id="views">

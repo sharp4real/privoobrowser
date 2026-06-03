@@ -3732,6 +3732,45 @@ document.getElementById('sb-name')?.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { e.preventDefault(); closeSidebarAddModal(); }
 });
 
+// Drag-to-resize the vertical tabs panel (right edge of panel).
+(function wireVtabsResize() {
+  const handle = document.getElementById('vtabs-resize');
+  const panel  = vtabsPanel;
+  if (!handle || !panel) return;
+  const VTABS_WIDTH_KEY = 'privoo:vtabs-width';
+  // Restore saved width
+  try {
+    const saved = localStorage.getItem(VTABS_WIDTH_KEY);
+    if (saved) panel.style.width = saved;
+  } catch {}
+  let dragging = false;
+  let startX = 0, startW = 0;
+  handle.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    dragging = true;
+    startX = e.clientX;
+    startW = panel.offsetWidth;
+    handle.classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    const delta = e.clientX - startX;
+    const wrap  = document.getElementById('views-wrap');
+    const max   = wrap ? wrap.offsetWidth * 0.5 : 500;
+    const w = Math.max(180, Math.min(startW + delta, max));
+    panel.style.width = `${w}px`;
+  });
+  window.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    handle.classList.remove('dragging');
+    document.body.style.cursor = '';
+    try { localStorage.setItem(VTABS_WIDTH_KEY, panel.style.width); } catch {}
+  });
+})();
+
 // Drag-to-resize the DevTools pane (right edge of #views, left edge of pane).
 (function wireDevtoolsResize() {
   const handle = document.getElementById('devtools-resize');
@@ -4013,7 +4052,8 @@ geoApplyBtn?.addEventListener('click', async () => {
   geoPopover?.classList.add('hidden');
 });
 
-ytdlpRunBtn?.addEventListener('click', async () => {
+const YTDLP_DISCLAIMER_KEY = 'privoo:ytdlp-rights-shown';
+async function runYtdlpDownload() {
   const url = (ytdlpUrlInput?.value || '').trim();
   if (!url) return;
   const format = document.getElementById('ytdlp-format')?.value || 'best';
@@ -4030,6 +4070,23 @@ ytdlpRunBtn?.addEventListener('click', async () => {
     ytdlpStatusEl.textContent = String(err?.message || err);
   }
   ytdlpRunBtn.disabled = false;
+}
+
+ytdlpRunBtn?.addEventListener('click', () => {
+  let shown = false;
+  try { shown = !!localStorage.getItem(YTDLP_DISCLAIMER_KEY); } catch {}
+  if (shown) { runYtdlpDownload(); return; }
+  const overlay = document.getElementById('ytdlp-disclaimer');
+  if (!overlay) { runYtdlpDownload(); return; }
+  overlay.classList.remove('hidden');
+  document.getElementById('ytdlp-disc-ok').onclick = () => {
+    try { localStorage.setItem(YTDLP_DISCLAIMER_KEY, '1'); } catch {}
+    overlay.classList.add('hidden');
+    runYtdlpDownload();
+  };
+  document.getElementById('ytdlp-disc-cancel').onclick = () => {
+    overlay.classList.add('hidden');
+  };
 });
 
 document.getElementById('stats-reset-btn')?.addEventListener('click', async () => {
