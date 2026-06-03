@@ -761,6 +761,23 @@
       <!-- Bottom-left download tray removed — progress shows in the toolbar popover and downloads page. -->
       <div id="download-tray" hidden></div>
 
+      <!-- ── Mobile view first-run disclaimer ── -->
+      <div id="mobile-disclaimer" class="mobile-disclaimer hidden" role="dialog" aria-modal="true" aria-label="Mobile view">
+        <div class="mdisc-card">
+          <div class="mdisc-icon">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M17 1.01 7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg>
+          </div>
+          <div class="mdisc-body">
+            <div class="mdisc-title">Mobile view</div>
+            <div class="mdisc-text">This opens the current page in a separate floating phone-frame window simulating a mobile device. The page is re-loaded with a mobile user-agent — some sites may behave differently or ask you to log in again.</div>
+          </div>
+          <div class="mdisc-actions">
+            <button type="button" id="mdisc-cancel" class="mdisc-btn ghost">Cancel</button>
+            <button type="button" id="mdisc-ok" class="mdisc-btn primary">Got it, open</button>
+          </div>
+        </div>
+      </div>
+
       <!-- ── Browser-overlay banner (welcome / leaving-Privoo / etc.) ── -->
       <div id="overlay-banner" class="overlay-banner hidden" role="dialog" aria-live="polite">
         <img class="ob-logo" src="privoo://newtab/logo.png" alt="" onerror="this.style.display='none'"/>

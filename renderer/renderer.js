@@ -438,6 +438,10 @@ function applyAppSettings() {
   // hides the gradient without needing a second toggle.
   document.body.classList.toggle('aero-ui', !!settings.aeroGradient);
   document.body.classList.toggle('ui-compact', !!settings.compactMode);
+  document.body.classList.toggle('has-vibe', !!settings.vibeEnabled);
+  if (settings.vibeHue !== undefined) {
+    document.documentElement.style.setProperty('--vibe-hue', String(settings.vibeHue));
+  }
   document.body.style.fontSize = `${Math.max(0.85, Math.min(Number(settings.fontSizeScale) || 1, 1.25)) * 100}%`;
   homeBtn.hidden = !settings.showHomeButton;
   // Derive a friendly placeholder. For the "custom" engine we surface the
@@ -482,6 +486,14 @@ function onSettingsChanged(next) {
   initBgMusic();
   for (const tab of tabs) {
     if (tab.ready) applyInjections(tab.wv);
+    // Forward settings to NTP tabs — settings-updated IPC only reaches the
+    // main renderer, not webview guest processes, so we push via executeJavaScript.
+    if (tab.url === NEWTAB_URL && tab.wv) {
+      const payload = JSON.stringify(settings);
+      tab.wv.executeJavaScript(
+        `if(typeof window.__privooApplySettings==='function')window.__privooApplySettings(${payload});`
+      ).catch(() => {});
+    }
   }
 }
 
@@ -4164,10 +4176,29 @@ function readerModeScript(dark) {
     return "open";
   })();`;
 }
+const MOBILE_DISCLAIMER_KEY = 'privoo:mobile-view-shown';
 function openMobileView() {
   const tab = activeTab();
   if (!tab?.url || tab.url.startsWith('privoo://') || tab.url.startsWith('about:')) return;
-  window.privoo.openMobileWindow(tab.url).catch?.(() => {});
+  const url = tab.url;
+  let shown = false;
+  try { shown = !!localStorage.getItem(MOBILE_DISCLAIMER_KEY); } catch {}
+  if (shown) {
+    window.privoo.openMobileWindow(url).catch?.(() => {});
+    return;
+  }
+  const overlay = document.getElementById('mobile-disclaimer');
+  if (!overlay) { window.privoo.openMobileWindow(url).catch?.(() => {}); return; }
+  overlay.classList.remove('hidden');
+  const ok = document.getElementById('mdisc-ok');
+  const cancel = document.getElementById('mdisc-cancel');
+  const dismiss = () => overlay.classList.add('hidden');
+  ok.onclick = () => {
+    try { localStorage.setItem(MOBILE_DISCLAIMER_KEY, '1'); } catch {}
+    dismiss();
+    window.privoo.openMobileWindow(url).catch?.(() => {});
+  };
+  cancel.onclick = dismiss;
 }
 
 function toggleReaderMode() {

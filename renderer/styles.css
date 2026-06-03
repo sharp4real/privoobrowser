@@ -202,6 +202,28 @@ body.transparent-ui.aero-ui.dark::before {
   to   { background-position: 5% 4%, -4% -3%, 0 0; }
 }
 
+/* ── Your Vibe — user-chosen hue overlaid as a soft ambient gradient ─────────
+   body.has-vibe exposes --vibe-hue (0-360). Two radial glows: a warm bloom
+   top-left (hits the titlebar/toolbar) and a cooler drift bottom-right.
+   z-index: 0 so the chrome (z-indexed) floats above; translucent fills let
+   the colour bleed through without obscuring anything. Stacks on top of the
+   aero gradient when both are on. */
+:root { --vibe-hue: 220; }
+body.has-vibe::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 75% 45% at 10% 0%,
+      hsla(var(--vibe-hue), 75%, 65%, .28) 0%, transparent 68%),
+    radial-gradient(ellipse 55% 50% at 92% 95%,
+      hsla(calc(var(--vibe-hue) + 30), 65%, 60%, .16) 0%, transparent 65%);
+  animation: vibe-breathe 8s ease-in-out infinite alternate;
+}
+@keyframes vibe-breathe {
+  from { opacity: .85; }
+  to   { opacity: 1;   }
+}
+
 /* Every floating UI surface — popovers, menus, suggestions, context menus,
    modals — becomes translucent with a backdrop blur so the OS material
    still shows through them while text stays readable. */
@@ -3247,6 +3269,84 @@ body.dark .vpn-input { background: var(--omni-bg); color: var(--text); }
   transition: background .12s;
 }
 .ob-primary:hover { background: var(--accent-hover); }
+
+/* ── Mobile view first-run disclaimer ──────────────────────────────── */
+.mobile-disclaimer {
+  position: fixed;
+  inset: 0;
+  z-index: 18000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,.38);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: mdisc-bg-in .18s ease both;
+}
+.mobile-disclaimer.hidden { display: none !important; }
+@keyframes mdisc-bg-in { from { opacity: 0; } to { opacity: 1; } }
+.mdisc-card {
+  background: var(--toolbar);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.28), 0 4px 12px rgba(0,0,0,.14);
+  padding: 28px 28px 22px;
+  max-width: 400px;
+  width: calc(100vw - 48px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: mdisc-card-in .2s cubic-bezier(.2,0,.2,1) both;
+}
+@keyframes mdisc-card-in {
+  from { opacity: 0; transform: scale(.94) translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+.mdisc-icon {
+  width: 52px; height: 52px;
+  border-radius: 14px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.mdisc-body { flex: 1; }
+.mdisc-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+.mdisc-text {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.mdisc-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+.mdisc-btn {
+  padding: 8px 18px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: default;
+  transition: background .12s;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+}
+.mdisc-btn:hover { background: var(--hover); }
+.mdisc-btn.primary {
+  background: var(--accent);
+  color: var(--on-accent, #fff);
+  border-color: var(--accent);
+}
+.mdisc-btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 
 /* ─── DevTools — Chrome-style RIGHT-SIDE docked pane ──────────────── */
 /* views-wrap stacks #views horizontally with #devtools-pane.

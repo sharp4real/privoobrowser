@@ -198,6 +198,42 @@
   }
   .inline-select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 
+  /* ── Your Vibe hue picker ── */
+  .vibe-row { display: flex; align-items: center; gap: 12px; }
+  .vibe-preview {
+    width: 26px; height: 26px; border-radius: 50%;
+    flex-shrink: 0;
+    border: 2px solid rgba(0,0,0,.12);
+    transition: background .15s;
+  }
+  body.dark .vibe-preview { border-color: rgba(255,255,255,.14); }
+  .hue-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 10px;
+    border-radius: 5px;
+    background: linear-gradient(to right,
+      hsl(0,75%,60%), hsl(30,75%,60%), hsl(60,75%,60%), hsl(90,75%,60%),
+      hsl(120,75%,60%), hsl(150,75%,60%), hsl(180,75%,60%), hsl(210,75%,60%),
+      hsl(240,75%,60%), hsl(270,75%,60%), hsl(300,75%,60%), hsl(330,75%,60%),
+      hsl(360,75%,60%));
+    outline: none;
+    cursor: default;
+  }
+  .hue-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid rgba(0,0,0,.22);
+    box-shadow: 0 1px 4px rgba(0,0,0,.22);
+    cursor: default;
+    transition: transform .12s;
+  }
+  .hue-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+  body.dark .hue-slider::-webkit-slider-thumb { background: #e8eaed; border-color: rgba(255,255,255,.3); }
+
   .card {
     background: #fff;
     border: 1px solid #e0e3e7;
@@ -695,6 +731,21 @@
               <div class="desc">Layer a soft drifting blue/violet gradient behind the chrome for a classic Aero look.</div>
             </div>
             <label class="switch"><input type="checkbox" id="aeroGradient"><span class="slider"></span></label>
+          </div>
+          <h3 class="card-subhead">Your Vibe</h3>
+          <div class="row">
+            <div>
+              <div class="label">Vibe color</div>
+              <div class="desc">Ambient color glow that tints the browser chrome. Choose your hue on the slider.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="vibeEnabled"><span class="slider"></span></label>
+          </div>
+          <div class="row stack" id="vibe-hue-row">
+            <div><div class="label">Hue</div></div>
+            <div class="vibe-row">
+              <div class="vibe-preview" id="vibe-preview"></div>
+              <input type="range" id="vibeHue" min="0" max="360" value="220" class="hue-slider"/>
+            </div>
           </div>
         </div>
 
@@ -1259,7 +1310,7 @@ const api = window.privooInternal;
 const TOGGLES = [
   'verticalTabs', 'darkMode', 'forceDarkMode', 'showHomeButton', 'showBookmarksBar',
   'ntpShowWeather', 'ntpFocusedSearch', 'ntpShowQuickLinks', 'ntpShowLogo',
-  'increaseTransparency', 'aeroGradient', 'compactMode', 'searchSuggestions',
+  'increaseTransparency', 'aeroGradient', 'vibeEnabled', 'compactMode', 'searchSuggestions',
   'askDownloadPath', 'adBlocking', 'httpsUpgrade', 'httpsUpgradeShowNotice', 'blockThirdPartyCookies',
   'dnsOverHttps', 'adultContentBlocking', 'spoofUserAgent', 'canvasSpoofing', 'webrtcProtection',
   'doNotTrack', 'allowGeolocation', 'videoPopOut',
@@ -1367,6 +1418,14 @@ function updatePathDisplays(settings, downloadPath) {
   if (fss) {
     const v = String(Number(settings.fontSizeScale || 1).toFixed(1));
     fss.value = fss.querySelector(`option[value="${v}"]`) ? v : '1';
+  }
+  if ($('vibeHue')) {
+    const h = settings.vibeHue ?? 220;
+    $('vibeHue').value = h;
+    const prev = $('vibe-preview');
+    if (prev) prev.style.background = `hsl(${h},75%,60%)`;
+    const row = $('vibe-hue-row');
+    if (row) row.style.display = settings.vibeEnabled ? '' : 'none';
   }
   // yt-dlp executable picker removed — the installer auto-downloads + auto-updates.
   if ($('weatherLocation')) $('weatherLocation').value = settings.weatherLocation || '';
@@ -1650,6 +1709,29 @@ async function init() {
       savePatch({ fontSizeScale: parseFloat($('fontSizeScale').value) }, 'Font size saved');
     });
   }
+
+  function updateVibeHueRow() {
+    const row = $('vibe-hue-row');
+    if (row) row.style.display = $('vibeEnabled')?.checked ? '' : 'none';
+  }
+  function updateVibePreview(hue) {
+    const prev = $('vibe-preview');
+    if (prev) prev.style.background = `hsl(${hue},75%,60%)`;
+  }
+  if ($('vibeHue')) {
+    const hue = currentSettings.vibeHue ?? 220;
+    $('vibeHue').value = hue;
+    updateVibePreview(hue);
+    updateVibeHueRow();
+    $('vibeHue').addEventListener('input', () => {
+      updateVibePreview($('vibeHue').value);
+    });
+    $('vibeHue').addEventListener('change', () => {
+      savePatch({ vibeHue: parseInt($('vibeHue').value, 10) }, 'Vibe updated');
+    });
+  }
+  // Show/hide hue row when vibe toggle changes
+  $('vibeEnabled')?.addEventListener('change', () => updateVibeHueRow());
 
   if ($('weatherLocation')) {
     $('weatherLocation').addEventListener('input', () => updateWeatherHint());

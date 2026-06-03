@@ -1085,6 +1085,22 @@ async function renderWeather(settings) {
   }
 }
 
+// Exposed so renderer.js can push settings live via executeJavaScript —
+// settings-updated IPC never reaches webview guest processes directly.
+window.__privooApplySettings = (s) => {
+  try {
+    searchEngine = s.searchEngine || searchEngine;
+    const links = s.ntpQuickLinks;
+    const next = Array.isArray(links) ? links : DEFAULT_QUICK_LINKS;
+    const sameLinks = next.length === quickLinks.length
+      && next.every((l, i) => l && quickLinks[i] && l.url === quickLinks[i].url && l.name === quickLinks[i].name);
+    applyNtpLook(s);
+    syncThemeButtons(s);
+    if (!sameLinks) { quickLinks = next; renderQL(); }
+    renderWeather(s);
+  } catch {}
+};
+
 loadNtp();
 // Safety net — reveal even if settings never arrive, so the page can't
 // stay stuck invisible.
