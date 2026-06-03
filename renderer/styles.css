@@ -1082,6 +1082,22 @@ body.incognito #omnibox-wrap:hover { background: #1f2022; }
 body.incognito #omnibox-wrap:focus-within { background: #141517; border-color: #5b5e63; }
 body.incognito #omnibox { color: #f1f3f4; }
 body.incognito #omnibox::placeholder { color: #8a8d92; }
+
+/* ── Compact mode ───────────────────────────────────────────────────
+   body.ui-compact tightens the titlebar, toolbar, tabs, and vtabs
+   so more content fits on screen. Triggered by the Compact UI setting. */
+body.ui-compact #titlebar  { height: 30px; min-height: 30px; }
+body.ui-compact .tab       { height: 26px; font-size: 12px; padding: 0 6px 0 8px; }
+body.ui-compact #toolbar   { height: 36px; min-height: 36px; }
+body.ui-compact .tb-btn    { width: 28px; height: 28px; }
+body.ui-compact #omnibox-wrap { height: 28px; }
+body.ui-compact #omnibox   { font-size: 12.5px; }
+body.ui-compact #bookmarks-bar { min-height: 28px; padding: 1px 8px; }
+body.ui-compact .bookmark-chip { height: 24px; font-size: 12px; }
+body.ui-compact .vtab      { height: 28px; font-size: 12px; }
+body.ui-compact .vtabs-header { height: 30px; }
+body.ui-compact .vtabs-new-btn { height: 26px; }
+
 #menu hr {
   border: none; border-top: 1px solid var(--border);
   margin: 5px -6px;

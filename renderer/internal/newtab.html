@@ -628,6 +628,9 @@ function applyNtpLook(settings) {
   const ql = document.getElementById('quick-links');
   if (ql) ql.hidden = settings?.ntpShowQuickLinks === false;
 
+  const logoWrap = document.getElementById('ntp-logo-wrap');
+  if (logoWrap) logoWrap.hidden = settings?.ntpShowLogo === false;
+
   if (hasWp) {
     bg.style.backgroundImage = "url('privoo://newtab/wallpaper?t=" + Date.now() + "')";
     const d = typeof settings.ntpWallpaperDim === 'number' ? settings.ntpWallpaperDim : 0.42;

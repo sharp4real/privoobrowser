@@ -161,6 +161,42 @@
   section { scroll-margin-top: 80px; margin-bottom: 30px; }
   h1 { font-size: 24px; font-weight: 500; margin: 2px 0 22px; }
   h2 { font-size: 16px; font-weight: 500; margin: 0 0 10px; }
+  h3.card-subhead {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; color: #5f6368;
+    padding: 12px 18px 4px; margin: 0;
+  }
+  body.dark h3.card-subhead { color: #9aa0a6; }
+  .card-subhead + .row { border-top: 0; }
+  /* Accent swatches */
+  .swatch-row { display: flex; flex-wrap: wrap; gap: 8px; padding: 2px 0; }
+  .accent-swatch {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: default;
+    transition: transform .12s, border-color .12s;
+    outline: none;
+  }
+  .accent-swatch:hover { transform: scale(1.15); }
+  .accent-swatch.active { border-color: #fff; box-shadow: 0 0 0 2px var(--accent); }
+  body.dark .accent-swatch.active { border-color: #303134; }
+  /* Font scale + compact row inline control */
+  .inline-select {
+    min-width: 130px; height: 32px;
+    border: 1px solid #dadce0; border-radius: 6px;
+    padding: 0 10px; font-size: 13px;
+    background: #fff; color: #1f1f1f;
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235f6368' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+    cursor: default;
+  }
+  body.dark .inline-select { background-color: #303134; border-color: #5f6368; color: #e8eaed;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239aa0a6' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  }
+  .inline-select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 
   .card {
     background: #fff;
@@ -624,57 +660,97 @@
     <main>
       <h1>Settings</h1>
 
-      <section id="appearance" data-keywords="dark home bookmark theme appearance weather widget">
+      <section id="appearance" data-keywords="dark home bookmark theme appearance weather widget compact accent color font transparency">
         <h2>Appearance</h2>
+
+        <!-- Theme & accent -->
         <div class="card">
-          <div class="row">
-            <div><div class="label">Vertical tabs</div><div class="desc">Move tabs from the horizontal strip to a collapsible panel on the left side of the window.</div></div>
-            <label class="switch"><input type="checkbox" id="verticalTabs"><span class="slider"></span></label>
-          </div>
+          <h3 class="card-subhead">Theme</h3>
           <div class="row">
             <div><div class="label">Dark mode</div><div class="desc">Use a dark browser and page theme.</div></div>
             <label class="switch"><input type="checkbox" id="darkMode"><span class="slider"></span></label>
           </div>
           <div class="row">
             <div>
-              <div class="label">Force Dark Mode on all pages <span style="display:inline-block;font-size:10px;font-weight:600;background:#f1f3f4;color:#5f6368;border-radius:4px;padding:1px 6px;vertical-align:middle;margin-left:4px">Experimental</span></div>
+              <div class="label">Force dark on all pages <span style="display:inline-block;font-size:10px;font-weight:600;background:#f1f3f4;color:#5f6368;border-radius:4px;padding:1px 6px;vertical-align:middle;margin-left:4px">Experimental</span></div>
               <div class="desc">Inverts page colours to create a dark look on sites that don't support it natively.</div>
             </div>
             <label class="switch"><input type="checkbox" id="forceDarkMode"><span class="slider"></span></label>
           </div>
-          <div class="row">
-            <div><div class="label">Show Home button</div><div class="desc">Adds Home next to Reload.</div></div>
-            <label class="switch"><input type="checkbox" id="showHomeButton"><span class="slider"></span></label>
-          </div>
           <div class="row stack">
-            <div><div class="label">Home page</div><div class="desc">Where the Home button goes.</div></div>
-            <input type="text" id="homePage" class="wide" spellcheck="false">
+            <div><div class="label">Accent color</div><div class="desc">Used for highlights, active tabs, focus rings, and toggle switches.</div></div>
+            <div id="accent-swatches" class="swatch-row"></div>
           </div>
-          <div class="row">
-            <div><div class="label">Show bookmarks bar</div><div class="desc">Display saved bookmarks under the address bar.</div></div>
-            <label class="switch"><input type="checkbox" id="showBookmarksBar"><span class="slider"></span></label>
-          </div>
-          <div class="row">
-            <div><div class="label">Weather widget</div><div class="desc">Show current weather on the new tab page.</div></div>
-            <label class="switch"><input type="checkbox" id="ntpShowWeather"><span class="slider"></span></label>
-          </div>
-          <div class="row">
-            <div><div class="label">Focused search on new tab</div><div class="desc">When you click the search bar on the new tab page, scale it forward and fade the shortcuts out (Brave-style). Click outside to undo.</div></div>
-            <label class="switch"><input type="checkbox" id="ntpFocusedSearch"><span class="slider"></span></label>
-          </div>
+          <h3 class="card-subhead">Transparency</h3>
           <div class="row">
             <div>
               <div class="label">Increase Transparency</div>
-              <div class="desc">Make the toolbar and tab strip translucent so your desktop shows through. Uses Acrylic on Windows 11, Vibrancy on macOS, and a translucent UI fallback on Linux. Some older systems may render this as solid white.</div>
+              <div class="desc">Frosted-glass toolbar — uses Acrylic on Windows 11, Vibrancy on macOS. Some older systems may appear solid white.</div>
             </div>
             <label class="switch"><input type="checkbox" id="increaseTransparency"><span class="slider"></span></label>
           </div>
           <div class="row">
             <div>
               <div class="label">Aero gradient <span style="display:inline-block;font-size:10px;font-weight:600;background:#f1f3f4;color:#5f6368;border-radius:4px;padding:1px 6px;vertical-align:middle;margin-left:4px">Requires transparency</span></div>
-              <div class="desc">Layer a soft drifting blue/violet gradient behind the chrome — the classic Aero / colour-acrylic look. Only kicks in while Increase Transparency is on.</div>
+              <div class="desc">Layer a soft drifting blue/violet gradient behind the chrome for a classic Aero look.</div>
             </div>
             <label class="switch"><input type="checkbox" id="aeroGradient"><span class="slider"></span></label>
+          </div>
+        </div>
+
+        <!-- Layout & density -->
+        <div class="card">
+          <h3 class="card-subhead">Layout</h3>
+          <div class="row">
+            <div><div class="label">Vertical tabs</div><div class="desc">Move tabs from the horizontal strip to a collapsible Zen-style panel on the left.</div></div>
+            <label class="switch"><input type="checkbox" id="verticalTabs"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Show bookmarks bar</div><div class="desc">Display saved bookmarks under the address bar.</div></div>
+            <label class="switch"><input type="checkbox" id="showBookmarksBar"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Show Home button</div><div class="desc">Adds a Home button next to Reload in the toolbar.</div></div>
+            <label class="switch"><input type="checkbox" id="showHomeButton"><span class="slider"></span></label>
+          </div>
+          <div class="row stack">
+            <div><div class="label">Home page</div><div class="desc">Where the Home button navigates to.</div></div>
+            <input type="text" id="homePage" class="wide" spellcheck="false">
+          </div>
+          <h3 class="card-subhead">Density</h3>
+          <div class="row">
+            <div><div class="label">Compact mode</div><div class="desc">Shrinks the toolbar, tabs, and sidebar rows for a tighter layout.</div></div>
+            <label class="switch"><input type="checkbox" id="compactMode"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Font size</div><div class="desc">Scale the browser UI text size.</div></div>
+            <select id="fontSizeScale" class="inline-select">
+              <option value="0.9">Small</option>
+              <option value="1" selected>Normal</option>
+              <option value="1.1">Large</option>
+              <option value="1.2">Larger</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- New tab page -->
+        <div class="card">
+          <h3 class="card-subhead">New tab page</h3>
+          <div class="row">
+            <div><div class="label">Show quick links</div><div class="desc">Display site shortcut tiles on the new tab page.</div></div>
+            <label class="switch"><input type="checkbox" id="ntpShowQuickLinks"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Show logo</div><div class="desc">Show the Privoo logo above the search bar on the new tab page.</div></div>
+            <label class="switch"><input type="checkbox" id="ntpShowLogo"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Focused search</div><div class="desc">Scale the search bar forward and fade shortcuts when you click it.</div></div>
+            <label class="switch"><input type="checkbox" id="ntpFocusedSearch"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Weather widget</div><div class="desc">Show current weather on the new tab page.</div></div>
+            <label class="switch"><input type="checkbox" id="ntpShowWeather"><span class="slider"></span></label>
           </div>
           <div class="row stack" id="weather-location-row">
             <div><div class="label">Weather location</div><div class="desc">City name to fetch weather for (e.g. London, New York).</div></div>
@@ -1181,7 +1257,9 @@
 <script>
 const api = window.privooInternal;
 const TOGGLES = [
-  'verticalTabs', 'darkMode', 'forceDarkMode', 'showHomeButton', 'showBookmarksBar', 'ntpShowWeather', 'ntpFocusedSearch', 'increaseTransparency', 'aeroGradient', 'searchSuggestions',
+  'verticalTabs', 'darkMode', 'forceDarkMode', 'showHomeButton', 'showBookmarksBar',
+  'ntpShowWeather', 'ntpFocusedSearch', 'ntpShowQuickLinks', 'ntpShowLogo',
+  'increaseTransparency', 'aeroGradient', 'compactMode', 'searchSuggestions',
   'askDownloadPath', 'adBlocking', 'httpsUpgrade', 'httpsUpgradeShowNotice', 'blockThirdPartyCookies',
   'dnsOverHttps', 'adultContentBlocking', 'spoofUserAgent', 'canvasSpoofing', 'webrtcProtection',
   'doNotTrack', 'allowGeolocation', 'videoPopOut',
@@ -1252,9 +1330,44 @@ async function savePatch(patch, message = 'Settings saved') {
   }
 }
 
+const ACCENT_SWATCHES = [
+  { name: 'Blue',    value: '#8ab4f8' },
+  { name: 'Indigo',  value: '#a78bfa' },
+  { name: 'Pink',    value: '#f48fb1' },
+  { name: 'Red',     value: '#f28b82' },
+  { name: 'Orange',  value: '#fcad70' },
+  { name: 'Yellow',  value: '#fdd663' },
+  { name: 'Green',   value: '#81c995' },
+  { name: 'Teal',    value: '#4dd0e1' },
+];
+
+function renderAccentSwatches(currentHex) {
+  const row = $('accent-swatches');
+  if (!row) return;
+  row.innerHTML = '';
+  const active = String(currentHex || ACCENT_SWATCHES[0].value).toLowerCase();
+  for (const a of ACCENT_SWATCHES) {
+    const btn = document.createElement('button');
+    btn.className = 'accent-swatch' + (a.value.toLowerCase() === active ? ' active' : '');
+    btn.style.background = a.value;
+    btn.title = a.name;
+    btn.addEventListener('click', async () => {
+      await savePatch({ accentColor: a.value }, 'Accent color saved');
+      renderAccentSwatches(a.value);
+    });
+    row.appendChild(btn);
+  }
+}
+
 function updatePathDisplays(settings, downloadPath) {
   $('dl-path-display').textContent = downloadPath || '-';
   $('homePage').value = settings.homePage || 'privoo://newtab/';
+  renderAccentSwatches(settings.accentColor);
+  const fss = $('fontSizeScale');
+  if (fss) {
+    const v = String(Number(settings.fontSizeScale || 1).toFixed(1));
+    fss.value = fss.querySelector(`option[value="${v}"]`) ? v : '1';
+  }
   // yt-dlp executable picker removed — the installer auto-downloads + auto-updates.
   if ($('weatherLocation')) $('weatherLocation').value = settings.weatherLocation || '';
   if ($('music-path-display')) {
@@ -1428,10 +1541,12 @@ async function init() {
     });
   }
 
+  // These settings default to ON when unset — treat undefined as true.
+  const DEFAULT_ON = new Set(['ntpShowQuickLinks', 'ntpShowLogo', 'ntpFocusedSearch', 'restoreTabsOnLaunch', 'autoUpdates', 'adBlocking', 'httpsUpgrade', 'passwordManagerEnabled']);
   for (const id of TOGGLES) {
     const input = $(id);
     if (!input) continue;
-    input.checked = !!currentSettings[id];
+    input.checked = id in currentSettings ? !!currentSettings[id] : DEFAULT_ON.has(id);
     input.addEventListener('change', () => {
       // 18+ blocker: every time the user flips it ON, surface a real modal
       // disclaimer. No public blocklist is perfect — we want to set
@@ -1529,6 +1644,12 @@ async function init() {
     const value = $('homePage').value.trim() || 'privoo://newtab/';
     savePatch({ homePage: value });
   });
+
+  if ($('fontSizeScale')) {
+    $('fontSizeScale').addEventListener('change', () => {
+      savePatch({ fontSizeScale: parseFloat($('fontSizeScale').value) }, 'Font size saved');
+    });
+  }
 
   if ($('weatherLocation')) {
     $('weatherLocation').addEventListener('input', () => updateWeatherHint());

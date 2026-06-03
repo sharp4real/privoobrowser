@@ -437,6 +437,7 @@ function applyAppSettings() {
   // gates the CSS overlay either way so toggling transparency off cleanly
   // hides the gradient without needing a second toggle.
   document.body.classList.toggle('aero-ui', !!settings.aeroGradient);
+  document.body.classList.toggle('ui-compact', !!settings.compactMode);
   document.body.style.fontSize = `${Math.max(0.85, Math.min(Number(settings.fontSizeScale) || 1, 1.25)) * 100}%`;
   homeBtn.hidden = !settings.showHomeButton;
   // Derive a friendly placeholder. For the "custom" engine we surface the
