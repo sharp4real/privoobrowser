@@ -203,25 +203,26 @@ body.transparent-ui.aero-ui.dark::before {
 }
 
 /* ── Your Vibe — user-chosen hue overlaid as a soft ambient gradient ─────────
-   body.has-vibe exposes --vibe-hue (0-360). Two radial glows: a warm bloom
-   top-left (hits the titlebar/toolbar) and a cooler drift bottom-right.
-   z-index: 0 so the chrome (z-indexed) floats above; translucent fills let
-   the colour bleed through without obscuring anything. Stacks on top of the
-   aero gradient when both are on. */
-:root { --vibe-hue: 220; }
+   --vibe-hue (0-360) and --vibe-intensity (0.0-1.0) are set by applyAppSettings.
+   Two radial glows: warm bloom top-left (toolbar/titlebar) + cooler drift bottom-right.
+   opacity is driven by --vibe-intensity so the breathe animation layers on top. */
+:root { --vibe-hue: 220; --vibe-intensity: 0.65; }
 body.has-vibe::after {
   content: '';
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  opacity: var(--vibe-intensity);
   background:
     radial-gradient(ellipse 75% 45% at 10% 0%,
-      hsla(var(--vibe-hue), 75%, 65%, .28) 0%, transparent 68%),
+      hsl(var(--vibe-hue) 75% 65% / .42) 0%, transparent 68%),
     radial-gradient(ellipse 55% 50% at 92% 95%,
-      hsla(calc(var(--vibe-hue) + 30), 65%, 60%, .16) 0%, transparent 65%);
-  animation: vibe-breathe 8s ease-in-out infinite alternate;
+      hsl(calc(var(--vibe-hue) + 30) 65% 60% / .26) 0%, transparent 65%),
+    radial-gradient(ellipse 45% 35% at 50% 50%,
+      hsl(calc(var(--vibe-hue) + 15) 70% 65% / .08) 0%, transparent 70%);
+  animation: vibe-breathe 7s ease-in-out infinite alternate;
 }
 @keyframes vibe-breathe {
-  from { opacity: .85; }
-  to   { opacity: 1;   }
+  from { filter: brightness(0.92); }
+  to   { filter: brightness(1.06); }
 }
 
 /* Every floating UI surface — popovers, menus, suggestions, context menus,

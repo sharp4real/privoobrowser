@@ -198,7 +198,7 @@
   }
   .inline-select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 
-  /* ── Your Vibe hue picker ── */
+  /* ── Your Vibe controls ── */
   .vibe-row { display: flex; align-items: center; gap: 12px; }
   .vibe-preview {
     width: 26px; height: 26px; border-radius: 50%;
@@ -207,32 +207,120 @@
     transition: background .15s;
   }
   body.dark .vibe-preview { border-color: rgba(255,255,255,.14); }
-  .hue-slider {
+  /* Preset vibe buttons */
+  .vibe-presets { display: flex; flex-wrap: wrap; gap: 8px; padding: 2px 0 4px; }
+  .vibe-preset {
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    cursor: default; border: none; background: transparent; padding: 0;
+  }
+  .vibe-preset-swatch {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 2px solid transparent;
+    transition: transform .12s, border-color .12s, box-shadow .12s;
+  }
+  .vibe-preset:hover .vibe-preset-swatch { transform: scale(1.15); }
+  .vibe-preset.active .vibe-preset-swatch {
+    border-color: #fff;
+    box-shadow: 0 0 0 2.5px var(--accent);
+  }
+  body.dark .vibe-preset.active .vibe-preset-swatch { border-color: #303134; }
+  .vibe-preset-name { font-size: 10.5px; color: var(--muted); letter-spacing: .01em; }
+  /* Sliders */
+  .hue-slider, .intensity-slider {
     flex: 1;
-    -webkit-appearance: none;
-    appearance: none;
-    height: 10px;
-    border-radius: 5px;
+    -webkit-appearance: none; appearance: none;
+    height: 10px; border-radius: 5px; outline: none; cursor: default;
+  }
+  .hue-slider {
     background: linear-gradient(to right,
       hsl(0,75%,60%), hsl(30,75%,60%), hsl(60,75%,60%), hsl(90,75%,60%),
       hsl(120,75%,60%), hsl(150,75%,60%), hsl(180,75%,60%), hsl(210,75%,60%),
       hsl(240,75%,60%), hsl(270,75%,60%), hsl(300,75%,60%), hsl(330,75%,60%),
       hsl(360,75%,60%));
-    outline: none;
-    cursor: default;
   }
-  .hue-slider::-webkit-slider-thumb {
+  .intensity-slider {
+    background: linear-gradient(to right, rgba(180,180,200,.25), rgba(138,180,248,.9));
+  }
+  .hue-slider::-webkit-slider-thumb,
+  .intensity-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 20px; height: 20px;
-    border-radius: 50%;
-    background: #fff;
-    border: 2px solid rgba(0,0,0,.22);
-    box-shadow: 0 1px 4px rgba(0,0,0,.22);
-    cursor: default;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #fff; border: 2px solid rgba(0,0,0,.22);
+    box-shadow: 0 1px 4px rgba(0,0,0,.22); cursor: default;
     transition: transform .12s;
   }
-  .hue-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
-  body.dark .hue-slider::-webkit-slider-thumb { background: #e8eaed; border-color: rgba(255,255,255,.3); }
+  .hue-slider::-webkit-slider-thumb:hover,
+  .intensity-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+  body.dark .hue-slider::-webkit-slider-thumb,
+  body.dark .intensity-slider::-webkit-slider-thumb { background: #e8eaed; border-color: rgba(255,255,255,.3); }
+
+  /* ── What's New popup ── */
+  .whats-new-overlay {
+    position: fixed; inset: 0; z-index: 900; pointer-events: none;
+    display: flex; align-items: flex-end; justify-content: flex-end;
+    padding: 28px;
+  }
+  .whats-new-card {
+    pointer-events: auto;
+    background: var(--card-bg, #fff);
+    border: 1px solid #e0e3e7;
+    border-radius: 18px;
+    box-shadow: 0 16px 48px rgba(0,0,0,.18), 0 4px 12px rgba(0,0,0,.10);
+    width: 300px;
+    overflow: hidden;
+    animation: wn-rise .28s cubic-bezier(.2,0,.2,1) both;
+  }
+  body.dark .whats-new-card { background: #303134; border-color: #4a4d51; }
+  @keyframes wn-rise {
+    from { opacity: 0; transform: translateY(16px) scale(.97); }
+    to   { opacity: 1; transform: none; }
+  }
+  .wn-banner {
+    height: 90px; position: relative; overflow: hidden;
+    background: linear-gradient(135deg, hsl(210,75%,50%) 0%, hsl(280,65%,55%) 100%);
+  }
+  .wn-banner-glow {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 80% at 20% 10%, hsla(210,80%,70%,.6), transparent 60%),
+      radial-gradient(ellipse 60% 60% at 85% 85%, hsla(280,70%,65%,.5), transparent 55%);
+    animation: wn-glow-shift 4s ease-in-out infinite alternate;
+  }
+  @keyframes wn-glow-shift {
+    from { opacity: .8; }
+    to   { opacity: 1; }
+  }
+  .wn-banner-label {
+    position: absolute; top: 12px; left: 14px;
+    font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    background: rgba(255,255,255,.22); color: #fff;
+    border-radius: 20px; padding: 3px 10px;
+    backdrop-filter: blur(6px);
+  }
+  .wn-banner-title {
+    position: absolute; bottom: 12px; left: 14px;
+    font-size: 20px; font-weight: 700; color: #fff;
+    letter-spacing: -.01em; text-shadow: 0 1px 8px rgba(0,0,0,.2);
+  }
+  .wn-body { padding: 16px 18px 18px; }
+  .wn-desc {
+    font-size: 13px; line-height: 1.55; color: var(--muted, #5f6368);
+    margin-bottom: 16px;
+  }
+  body.dark .wn-desc { color: #9aa0a6; }
+  .wn-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .wn-btn {
+    padding: 8px 16px; border-radius: 9px; font-size: 13px; font-weight: 500;
+    font-family: inherit; cursor: default;
+    border: 1px solid transparent; transition: background .12s;
+  }
+  .wn-btn.ghost { color: var(--muted, #5f6368); background: transparent; border-color: #dadce0; }
+  .wn-btn.ghost:hover { background: #f1f3f4; }
+  body.dark .wn-btn.ghost { border-color: #5f6368; }
+  body.dark .wn-btn.ghost:hover { background: #3c4043; }
+  .wn-btn.primary { background: var(--accent); color: #202124; }
+  .wn-btn.primary:hover { background: var(--accent-hover); }
+  .wn-overlay-hidden { display: none !important; }
 
   .card {
     background: #fff;
@@ -732,20 +820,29 @@
             </div>
             <label class="switch"><input type="checkbox" id="aeroGradient"><span class="slider"></span></label>
           </div>
-          <h3 class="card-subhead">Your Vibe</h3>
+          <h3 class="card-subhead" data-vibe>Your Vibe</h3>
           <div class="row">
             <div>
               <div class="label">Vibe color</div>
-              <div class="desc">Ambient color glow that tints the browser chrome. Choose your hue on the slider.</div>
+              <div class="desc">Ambient color glow behind the browser chrome. Pick a preset or drag the hue slider.</div>
             </div>
             <label class="switch"><input type="checkbox" id="vibeEnabled"><span class="slider"></span></label>
           </div>
-          <div class="row stack" id="vibe-hue-row">
-            <div><div class="label">Hue</div></div>
+          <div class="row stack" id="vibe-controls-row">
+            <div><div class="label">Preset</div></div>
+            <div id="vibe-presets" class="vibe-presets"></div>
+            <div style="height:4px"></div>
+            <div><div class="label">Custom hue</div></div>
             <div class="vibe-row">
               <div class="vibe-preview" id="vibe-preview"></div>
               <input type="range" id="vibeHue" min="0" max="360" value="220" class="hue-slider"/>
             </div>
+            <div style="height:4px"></div>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div class="label">Intensity</div>
+              <span id="vibe-intensity-label" style="font-size:12px;color:var(--muted)">65%</span>
+            </div>
+            <input type="range" id="vibeIntensity" min="10" max="100" value="65" class="intensity-slider"/>
           </div>
         </div>
 
@@ -790,10 +887,6 @@
           <div class="row">
             <div><div class="label">Show quick links</div><div class="desc">Display site shortcut tiles on the new tab page.</div></div>
             <label class="switch"><input type="checkbox" id="ntpShowQuickLinks"><span class="slider"></span></label>
-          </div>
-          <div class="row">
-            <div><div class="label">Show logo</div><div class="desc">Show the Privoo logo above the search bar on the new tab page.</div></div>
-            <label class="switch"><input type="checkbox" id="ntpShowLogo"><span class="slider"></span></label>
           </div>
           <div class="row">
             <div><div class="label">Focused search</div><div class="desc">Scale the search bar forward and fade shortcuts when you click it.</div></div>
@@ -1309,7 +1402,7 @@
 const api = window.privooInternal;
 const TOGGLES = [
   'verticalTabs', 'darkMode', 'forceDarkMode', 'showHomeButton', 'showBookmarksBar',
-  'ntpShowWeather', 'ntpFocusedSearch', 'ntpShowQuickLinks', 'ntpShowLogo',
+  'ntpShowWeather', 'ntpFocusedSearch', 'ntpShowQuickLinks',
   'increaseTransparency', 'aeroGradient', 'vibeEnabled', 'compactMode', 'searchSuggestions',
   'askDownloadPath', 'adBlocking', 'httpsUpgrade', 'httpsUpgradeShowNotice', 'blockThirdPartyCookies',
   'dnsOverHttps', 'adultContentBlocking', 'spoofUserAgent', 'canvasSpoofing', 'webrtcProtection',
@@ -1419,14 +1512,7 @@ function updatePathDisplays(settings, downloadPath) {
     const v = String(Number(settings.fontSizeScale || 1).toFixed(1));
     fss.value = fss.querySelector(`option[value="${v}"]`) ? v : '1';
   }
-  if ($('vibeHue')) {
-    const h = settings.vibeHue ?? 220;
-    $('vibeHue').value = h;
-    const prev = $('vibe-preview');
-    if (prev) prev.style.background = `hsl(${h},75%,60%)`;
-    const row = $('vibe-hue-row');
-    if (row) row.style.display = settings.vibeEnabled ? '' : 'none';
-  }
+  syncVibeControls(settings);
   // yt-dlp executable picker removed — the installer auto-downloads + auto-updates.
   if ($('weatherLocation')) $('weatherLocation').value = settings.weatherLocation || '';
   if ($('music-path-display')) {
@@ -1710,28 +1796,110 @@ async function init() {
     });
   }
 
-  function updateVibeHueRow() {
-    const row = $('vibe-hue-row');
-    if (row) row.style.display = $('vibeEnabled')?.checked ? '' : 'none';
+  // ── Your Vibe full controls ──────────────────────────────────────────────
+  const VIBE_PRESETS = [
+    { name: 'Ocean',   hue: 210 },
+    { name: 'Sunset',  hue: 25  },
+    { name: 'Forest',  hue: 140 },
+    { name: 'Neon',    hue: 280 },
+    { name: 'Ember',   hue: 5   },
+    { name: 'Ice',     hue: 190 },
+    { name: 'Sakura',  hue: 345 },
+    { name: 'Galaxy',  hue: 255 },
+  ];
+
+  function buildVibePresets(activeHue) {
+    const wrap = $('vibe-presets');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    for (const p of VIBE_PRESETS) {
+      const btn = document.createElement('button');
+      btn.className = 'vibe-preset' + (Math.abs(p.hue - (activeHue ?? 220)) < 8 ? ' active' : '');
+      btn.dataset.hue = p.hue;
+      const sw = document.createElement('div');
+      sw.className = 'vibe-preset-swatch';
+      sw.style.background = `linear-gradient(135deg,hsl(${p.hue},80%,62%),hsl(${(p.hue+35)%360},65%,55%))`;
+      const nm = document.createElement('span');
+      nm.className = 'vibe-preset-name';
+      nm.textContent = p.name;
+      btn.appendChild(sw); btn.appendChild(nm);
+      btn.addEventListener('click', () => {
+        wrap.querySelectorAll('.vibe-preset').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if ($('vibeHue')) { $('vibeHue').value = p.hue; }
+        const prev = $('vibe-preview');
+        if (prev) prev.style.background = `hsl(${p.hue},75%,60%)`;
+        savePatch({ vibeHue: p.hue }, 'Vibe updated');
+      });
+      wrap.appendChild(btn);
+    }
   }
-  function updateVibePreview(hue) {
+
+  function syncVibeControls(s) {
+    const hue = s.vibeHue ?? 220;
+    const intensity = s.vibeIntensity ?? 65;
+    const enabled = !!s.vibeEnabled;
+    const row = $('vibe-controls-row');
+    if (row) row.style.display = enabled ? '' : 'none';
+    if ($('vibeHue')) $('vibeHue').value = hue;
+    if ($('vibeIntensity')) {
+      $('vibeIntensity').value = intensity;
+      const lbl = $('vibe-intensity-label');
+      if (lbl) lbl.textContent = intensity + '%';
+    }
     const prev = $('vibe-preview');
     if (prev) prev.style.background = `hsl(${hue},75%,60%)`;
+    buildVibePresets(hue);
   }
-  if ($('vibeHue')) {
-    const hue = currentSettings.vibeHue ?? 220;
-    $('vibeHue').value = hue;
-    updateVibePreview(hue);
-    updateVibeHueRow();
-    $('vibeHue').addEventListener('input', () => {
-      updateVibePreview($('vibeHue').value);
-    });
-    $('vibeHue').addEventListener('change', () => {
-      savePatch({ vibeHue: parseInt($('vibeHue').value, 10) }, 'Vibe updated');
-    });
-  }
-  // Show/hide hue row when vibe toggle changes
-  $('vibeEnabled')?.addEventListener('change', () => updateVibeHueRow());
+
+  syncVibeControls(currentSettings);
+
+  $('vibeEnabled')?.addEventListener('change', () => {
+    const row = $('vibe-controls-row');
+    if (row) row.style.display = $('vibeEnabled').checked ? '' : 'none';
+  });
+  $('vibeHue')?.addEventListener('input', () => {
+    const h = $('vibeHue').value;
+    const prev = $('vibe-preview');
+    if (prev) prev.style.background = `hsl(${h},75%,60%)`;
+    // Deselect all presets when slider is manually dragged
+    $('vibe-presets')?.querySelectorAll('.vibe-preset').forEach(b => b.classList.remove('active'));
+  });
+  $('vibeHue')?.addEventListener('change', () => {
+    savePatch({ vibeHue: parseInt($('vibeHue').value, 10) }, 'Vibe updated');
+  });
+  $('vibeIntensity')?.addEventListener('input', () => {
+    const lbl = $('vibe-intensity-label');
+    if (lbl) lbl.textContent = $('vibeIntensity').value + '%';
+  });
+  $('vibeIntensity')?.addEventListener('change', () => {
+    savePatch({ vibeIntensity: parseInt($('vibeIntensity').value, 10) }, 'Vibe updated');
+  });
+
+  // ── What's New popup ─────────────────────────────────────────────────────
+  const WN_KEY = 'privoo:vibe-announced';
+  (function maybeShowWhatsNew() {
+    const already = (() => { try { return !!localStorage.getItem(WN_KEY); } catch { return true; } })();
+    // Show only if user has never seen it AND vibe has never been explicitly set
+    if (already || currentSettings.vibeEnabled !== undefined) return;
+    const overlay = $('wn-overlay');
+    if (!overlay) return;
+    // Delay slightly so the page is visible first
+    setTimeout(() => overlay.classList.remove('wn-overlay-hidden'), 600);
+    $('wn-later').onclick = () => {
+      overlay.classList.add('wn-overlay-hidden');
+      try { localStorage.setItem(WN_KEY, '1'); } catch {}
+    };
+    $('wn-try').onclick = () => {
+      overlay.classList.add('wn-overlay-hidden');
+      try { localStorage.setItem(WN_KEY, '1'); } catch {}
+      // Scroll to the Your Vibe section and briefly highlight it
+      const vibeHead = document.querySelector('.card-subhead[data-vibe]') ||
+        [...document.querySelectorAll('.card-subhead')].find(el => el.textContent.includes('Your Vibe'));
+      if (vibeHead) vibeHead.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      else document.getElementById('appearance')?.scrollIntoView({ behavior: 'smooth' });
+    };
+  })();
 
   if ($('weatherLocation')) {
     $('weatherLocation').addEventListener('input', () => updateWeatherHint());
@@ -2044,5 +2212,23 @@ document.addEventListener('keydown', (event) => {
 
 init();
 </script>
+
+<!-- ── What's New: Your Vibe popup ── -->
+<div class="whats-new-overlay wn-overlay-hidden" id="wn-overlay">
+  <div class="whats-new-card" id="wn-card">
+    <div class="wn-banner">
+      <div class="wn-banner-glow"></div>
+      <span class="wn-banner-label">All new in settings</span>
+      <span class="wn-banner-title">Your Vibe ✨</span>
+    </div>
+    <div class="wn-body">
+      <p class="wn-desc">Set an ambient color gradient that tints your entire browser chrome. Pick from presets like Ocean, Sunset, or Neon — or drag the hue slider to your own custom color. Control the intensity too.</p>
+      <div class="wn-actions">
+        <button class="wn-btn ghost" id="wn-later">Maybe later</button>
+        <button class="wn-btn primary" id="wn-try">Check it out →</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
