@@ -3002,6 +3002,17 @@ function openEmojiPicker(wv) {
       '(function(){var el=document.activeElement;if(el&&el!==document.body&&el!==document.documentElement)window.__privooEmojiTarget=el;})();'
     ).catch(() => {});
   }
+  // Center the picker inside the actual content area, not the full viewport.
+  // Sidebars (vtabs panel, app sidebar) shift the content area to the right,
+  // so we offset by half the sidebar width to stay visually centered.
+  const viewsEl = document.getElementById('views');
+  if (viewsEl) {
+    const r = viewsEl.getBoundingClientRect();
+    const offset = Math.round(r.left + r.width / 2 - window.innerWidth / 2);
+    emojiPickerEl.style.setProperty('--emoji-center-offset', `${offset}px`);
+  } else {
+    emojiPickerEl.style.removeProperty('--emoji-center-offset');
+  }
   emojiPickerEl.classList.remove('hidden');
   // Always rebuild categories so they're never stale
   buildEmojiCategories();
@@ -3031,23 +3042,40 @@ function insertEmojiInWebview(wv, em) {
   const js = `(function(){
     try {
       var s = ${JSON.stringify(em)};
-      // Clicking the emoji button moves focus to the picker UI. Use the
-      // element we snapshotted before the picker opened, then re-focus it.
       var el = document.activeElement;
       if (!el || el === document.body || el === document.documentElement)
         el = window.__privooEmojiTarget;
       if (!el) return;
       el.focus();
-      if (document.execCommand) { document.execCommand('insertText', false, s); return; }
-      // execCommand fallback unavailable — manually insert into input/textarea.
+
+      // INPUT / TEXTAREA — direct value splice (always works, framework-safe)
       if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
         var v = el.value || '';
         var a = el.selectionStart !== null ? el.selectionStart : v.length;
         var b = el.selectionEnd   !== null ? el.selectionEnd   : a;
         el.value = v.slice(0, a) + s + v.slice(b);
         el.selectionStart = el.selectionEnd = a + s.length;
-        el.dispatchEvent(new Event('input', {bubbles: true}));
+        el.dispatchEvent(new Event('input',  {bubbles: true}));
+        el.dispatchEvent(new Event('change', {bubbles: true}));
+        return;
       }
+
+      // contenteditable — try execCommand (still works in Chromium for
+      // trusted user gestures), then fall back to Selection API
+      var ok = false;
+      try { ok = !!(document.execCommand && document.execCommand('insertText', false, s)); } catch(_) {}
+      if (!ok) {
+        var sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+          var r = sel.getRangeAt(0);
+          r.deleteContents();
+          var tn = document.createTextNode(s);
+          r.insertNode(tn);
+          r.setStartAfter(tn); r.setEndAfter(tn);
+          sel.removeAllRanges(); sel.addRange(r);
+        }
+      }
+      el.dispatchEvent(new Event('input', {bubbles: true}));
     } catch(e) {}
   })();`;
   wv.executeJavaScript(js).catch(() => {});

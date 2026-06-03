@@ -2383,8 +2383,8 @@ ipcMain.handle('open-devtools', (_e, guestWcId) => {
     const guest = webContents.fromId(Number(guestWcId));
     if (!guest || guest.isDestroyed()) return { ok: false };
     if (guest.isDevToolsOpened()) { guest.closeDevTools(); return { ok: true, closed: true }; }
-    guest.openDevTools({ mode: 'detach', activate: true });
-    return { ok: true, detached: true };
+    guest.openDevTools({ mode: 'right', activate: true });
+    return { ok: true };
   } catch (e) {
     return { ok: false };
   }

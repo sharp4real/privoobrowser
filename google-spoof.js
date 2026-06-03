@@ -379,6 +379,12 @@ function buildGoogleSpoofScript(opts) {
   // ── Canvas fingerprint noise ─────────────────────────────────────────────
   // Adds ±1 noise to pixel values on readback so every canvas fingerprint
   // is unique per session while remaining visually identical.
+  // Skip on Google sign-in pages — their reCAPTCHA/bot checks are sensitive
+  // to canvas modification and will show a harder CAPTCHA or block login.
+  var _isGoogleAuth = /(^|\\.)accounts\\.google\\.com$/i.test(location.hostname)
+    || /(^|\\.)gstatic\\.com$/i.test(location.hostname)
+    || /(^|\\.)googleusercontent\\.com$/i.test(location.hostname);
+  if (_isGoogleAuth) {} else
   try {
     var _cSeed = (Math.random() * 0xFFFFFFFF) >>> 0;
     function _cRand() {
@@ -449,9 +455,6 @@ function buildGoogleSpoofScript(opts) {
   // "verify it's you" flow chains passkey + recovery prompts and our
   // synthetic NotAllowedError makes the flow retry in a tight loop, which
   // user-side looks like the Cancel button being spammed.
-  var _isGoogleAuth = /(^|\.)accounts\.google\.com$/i.test(location.hostname)
-    || /(^|\.)gstatic\.com$/i.test(location.hostname)
-    || /(^|\.)googleusercontent\.com$/i.test(location.hostname);
   try {
     if (!_isGoogleAuth && window.PublicKeyCredential) {
       try {

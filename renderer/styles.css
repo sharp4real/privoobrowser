@@ -91,42 +91,44 @@ body.transparent-ui #bookmarks-bar:empty {
    reassert with the same !important AND higher specificity so it wins. */
 body.dark.transparent-ui { background: transparent !important; }
 
-/* Visible widget surfaces — translucent GRADIENT tints, not flat fills, so
-   the chrome reads as a soft glassy sheet over the OS material. Light mode
-   = a lighter-toward-bottom gradient; dark mode = darker-toward-bottom.
-   It's a tint of white/dark over the material, never solid dark/light. */
+/* Visible widget surfaces — frosted glass tint over the OS acrylic/vibrancy
+   material. backdrop-filter on titlebar + toolbar blurs the desktop behind
+   them; the rgba fill is a light tint so text stays readable. Low alphas
+   let the blur/colour of the OS material show through clearly. */
 body.transparent-ui #titlebar {
-  background: linear-gradient(180deg, rgba(255,255,255,.56), rgba(255,255,255,.52)) !important;
+  background: rgba(255,255,255,.22) !important;
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
 }
 body.transparent-ui #toolbar {
-  background: linear-gradient(180deg, rgba(255,255,255,.58), rgba(255,255,255,.54)) !important;
+  background: rgba(255,255,255,.22) !important;
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
 }
 body.transparent-ui #bookmarks-bar {
-  background: linear-gradient(180deg, rgba(255,255,255,.50), rgba(255,255,255,.46)) !important;
+  background: rgba(255,255,255,.18) !important;
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
 }
 body.transparent-ui .tab.active {
-  background: linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,255,255,.72)) !important;
+  background: rgba(255,255,255,.58) !important;
 }
-/* Omnibox — ultra-light frosted pill that reads as part of the glass
-   toolbar. Low alpha so the OS material shows through; becomes more
-   opaque on focus so text is always readable. */
+/* Omnibox — frosted pill sitting inside the already-blurred toolbar.
+   No separate backdrop-filter needed (it inherits the toolbar blur);
+   a light tint + border delineates the pill. Opaque on focus so text
+   is always readable against any desktop background. */
 body.transparent-ui #omnibox-wrap {
-  background: rgba(255, 255, 255, .18) !important;
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  border-color: rgba(255, 255, 255, .28) !important;
+  background: rgba(255, 255, 255, .22) !important;
+  border-color: rgba(255, 255, 255, .38) !important;
 }
-body.transparent-ui #omnibox-wrap:hover { background: rgba(255, 255, 255, .26) !important; }
+body.transparent-ui #omnibox-wrap:hover { background: rgba(255, 255, 255, .30) !important; }
 body.transparent-ui #omnibox-wrap:focus-within {
-  background: rgba(255, 255, 255, .74) !important;
+  background: rgba(255, 255, 255, .80) !important;
   border-color: var(--accent) !important;
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
 }
 body.transparent-ui #omnibox        { background: transparent !important; }
-/* The tab strip is a plain white veil — matching the titlebar, not a separate
-   grey band — so the chrome reads as one cohesive translucent sheet. */
-body.transparent-ui .strip          { background: rgba(255, 255, 255, .44) !important; }
+/* Tab strip — same frosted layer as the titlebar; no extra blur needed. */
+body.transparent-ui .strip          { background: rgba(255, 255, 255, .16) !important; }
 
 /* Light + transparency: the frosted veil sits over the desktop and the
    default --muted (#5f6368) tab/icon text can be hard to read on bright
@@ -146,31 +148,33 @@ body.transparent-ui:not(.dark) .popover       { color: #1f1f1f; }
 body.transparent-ui:not(.dark) .toolbar-popover { color: #1f1f1f; }
 
 body.transparent-ui.dark #titlebar {
-  background: linear-gradient(180deg, rgba(42,43,47,.56), rgba(38,39,43,.52)) !important;
+  background: rgba(28,29,33,.28) !important;
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
 }
 body.transparent-ui.dark #toolbar {
-  background: linear-gradient(180deg, rgba(46,47,51,.58), rgba(42,43,47,.54)) !important;
+  background: rgba(30,31,35,.28) !important;
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
 }
 body.transparent-ui.dark #bookmarks-bar {
-  background: linear-gradient(180deg, rgba(40,41,45,.50), rgba(36,37,41,.46)) !important;
+  background: rgba(28,29,33,.22) !important;
+  backdrop-filter: blur(12px) saturate(130%);
+  -webkit-backdrop-filter: blur(12px) saturate(130%);
 }
 body.transparent-ui.dark .tab.active {
-  background: linear-gradient(180deg, rgba(66,67,72,.66), rgba(58,59,64,.58)) !important;
+  background: rgba(62,63,68,.56) !important;
 }
-body.transparent-ui.dark #omnibox-wrap  {
-  background: rgba(32, 33, 36, .36) !important;
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
-  border-color: rgba(255, 255, 255, .14) !important;
+body.transparent-ui.dark #omnibox-wrap {
+  background: rgba(255, 255, 255, .10) !important;
+  border-color: rgba(255, 255, 255, .16) !important;
 }
-body.transparent-ui.dark #omnibox-wrap:hover { background: rgba(48, 49, 52, .46) !important; }
+body.transparent-ui.dark #omnibox-wrap:hover { background: rgba(255, 255, 255, .16) !important; }
 body.transparent-ui.dark #omnibox-wrap:focus-within {
-  background: rgba(48, 49, 52, .74) !important;
+  background: rgba(48, 49, 52, .80) !important;
   border-color: var(--accent) !important;
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
 }
-body.transparent-ui.dark .strip         { background: rgba(42, 43, 47, .46) !important; }
+body.transparent-ui.dark .strip         { background: rgba(28, 29, 33, .18) !important; }
 
 /* ── Optional Aero gradient overlay — only kicks in when BOTH transparency
    and aeroGradient are on. A soft colored gradient layer drifts behind the
@@ -213,6 +217,7 @@ body.transparent-ui #geo-popover,
 body.transparent-ui #audio-popover,
 body.transparent-ui #notes-popover,
 body.transparent-ui #translate-popover,
+body.transparent-ui #emoji-picker,
 body.transparent-ui .context-menu,
 body.transparent-ui #wv-context-menu,
 body.transparent-ui #tab-context-menu {
@@ -233,6 +238,7 @@ body.transparent-ui.dark #geo-popover,
 body.transparent-ui.dark #audio-popover,
 body.transparent-ui.dark #notes-popover,
 body.transparent-ui.dark #translate-popover,
+body.transparent-ui.dark #emoji-picker,
 body.transparent-ui.dark .context-menu,
 body.transparent-ui.dark #wv-context-menu,
 body.transparent-ui.dark #tab-context-menu {
@@ -2450,13 +2456,15 @@ body.sidebar-resizing #sidebar-panel { pointer-events: auto !important; }
 /* ─── Emoji picker (Win+. / Cmd+Ctrl+. shortcut) ─────────────── */
 #emoji-picker {
   position: fixed;
+  inset: 0;
+  margin: auto;
   z-index: 16000;
-  /* Anchored to bottom-center like Chrome's emoji panel */
-  bottom: 28px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 380px;
-  max-height: 460px;
+  width: 340px;
+  height: fit-content;
+  /* Shift right by the sidebar offset so the picker stays visually centered
+     in the content area rather than the full viewport (set by JS). */
+  translate: var(--emoji-center-offset, 0px) 0;
+  max-height: 440px;
   background: var(--toolbar);
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -2469,8 +2477,8 @@ body.sidebar-resizing #sidebar-panel { pointer-events: auto !important; }
 }
 #emoji-picker.hidden { display: none !important; }
 @keyframes ep-fadein {
-  from { opacity: 0; transform: translate(-50%, 8px); }
-  to   { opacity: 1; transform: translate(-50%, 0); }
+  from { opacity: 0; translate: 0 8px; }
+  to   { opacity: 1; translate: 0 0; }
 }
 
 .ep-header {
@@ -3086,6 +3094,7 @@ body.dark .vpn-input { background: var(--omni-bg); color: var(--text); }
   background: var(--toolbar);
   border: 1px solid var(--border);
   border-radius: 8px;
+  overflow: hidden;
   box-shadow: var(--panel-shadow);
   padding: 6px 0;
   font-size: 13px;
@@ -3592,12 +3601,14 @@ body.dark #split-divider::before { background: #3c4043; }
 
 /* ── Vertical tabs panel ────────────────────────────────────────── */
 #vtabs-panel {
-  width: 240px;
+  width: 220px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   background: var(--strip);
-  border-right: 1px solid var(--border);
+  /* Soft separator — no hard line */
+  border-right: 1px solid transparent;
+  box-shadow: 1px 0 0 var(--border);
   overflow: clip;
   min-height: 0;
   transition: width .22s cubic-bezier(.4,0,.2,1);
@@ -3608,18 +3619,20 @@ body.vertical-tabs #titlebar-trailing-spacer { flex: 1; }
 
 /* Transparent mode */
 body.transparent-ui #vtabs-panel {
-  background: rgba(255,255,255,.46) !important;
-  backdrop-filter: blur(18px) saturate(150%);
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  background: rgba(255,255,255,.18) !important;
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: 1px 0 0 rgba(0,0,0,.06);
 }
 body.transparent-ui.dark #vtabs-panel {
-  background: rgba(36,37,41,.48) !important;
+  background: rgba(28,29,33,.22) !important;
   backdrop-filter: blur(18px) saturate(140%);
   -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: 1px 0 0 rgba(255,255,255,.06);
 }
 
 /* Collapsed: favicon-only rail */
-body.vtabs-collapsed #vtabs-panel { width: 48px; }
+body.vtabs-collapsed #vtabs-panel { width: 52px; }
 body.vtabs-collapsed .vtabs-header-title,
 body.vtabs-collapsed .vtabs-new-label,
 body.vtabs-collapsed .vtab-title { display: none; }
@@ -3628,39 +3641,40 @@ body.vtabs-collapsed .vtabs-collapse-btn svg { transform: rotate(180deg); }
 body.vtabs-collapsed .vtab { justify-content: center; padding: 0 !important; }
 body.vtabs-collapsed .vtabs-new-btn { justify-content: center; padding: 0; }
 
-/* ── Header ── */
+/* ── Header — minimal, no hard border ── */
 .vtabs-header {
   display: flex;
   align-items: center;
-  height: 38px;
+  height: 36px;
   flex-shrink: 0;
-  padding: 0 6px 0 14px;
-  border-bottom: 1px solid var(--border);
+  padding: 0 6px 0 10px;
   gap: 4px;
 }
 .vtabs-header-title {
   flex: 1;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .06em;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .05em;
   text-transform: uppercase;
   color: var(--muted);
   overflow: hidden;
   white-space: nowrap;
   min-width: 0;
+  opacity: .55;
 }
 .vtabs-collapse-btn {
-  width: 28px; height: 28px;
+  width: 26px; height: 26px;
   border: none; background: transparent;
   border-radius: 7px;
   color: var(--muted);
   flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
   cursor: default;
-  transition: background .12s, color .12s;
+  opacity: .55;
+  transition: background .12s, color .12s, opacity .12s;
 }
 .vtabs-collapse-btn svg { transition: transform .22s cubic-bezier(.4,0,.2,1); }
-.vtabs-collapse-btn:hover { background: var(--hover); color: var(--text); }
+.vtabs-collapse-btn:hover { background: var(--hover); color: var(--text); opacity: 1; }
 
 /* ── Tab list ── */
 .vtabs-list {
@@ -3668,52 +3682,55 @@ body.vtabs-collapsed .vtabs-new-btn { justify-content: center; padding: 0; }
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: none;
-  padding: 6px 8px 4px;
+  padding: 4px 6px 6px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
-.vtabs-list::-webkit-scrollbar { width: 4px; }
+.vtabs-list::-webkit-scrollbar { width: 3px; }
 .vtabs-list::-webkit-scrollbar-thumb { background: transparent; border-radius: 2px; }
 .vtabs-list:hover { scrollbar-width: thin; }
 .vtabs-list:hover::-webkit-scrollbar-thumb { background: var(--border); }
 
-/* ── Individual tab row ── */
+/* ── Individual tab row — clean pill, no accent bar ── */
 .vtab {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 0 8px 0 12px;
-  height: 36px;
-  border-radius: 9px;
+  gap: 8px;
+  padding: 0 8px 0 10px;
+  height: 34px;
+  border-radius: 10px;
   cursor: default;
-  font-size: 13.5px;
+  font-size: 13px;
   color: var(--text);
   min-width: 0;
   flex-shrink: 0;
   user-select: none;
-  transition: background .14s;
+  opacity: .72;
+  transition: background .12s, opacity .12s;
 }
-.vtab:hover { background: var(--tab-hover); }
+.vtab:hover { background: var(--hover); opacity: 1; }
 .vtab.active {
   background: var(--accent-soft);
   font-weight: 500;
-  box-shadow: inset 3px 0 0 var(--accent);
+  opacity: 1;
+  /* No left bar — full-pill highlight like Zen */
+  box-shadow: none;
 }
 body.dark .vtab.active {
-  background: rgba(138,180,248,.14);
-  box-shadow: inset 3px 0 0 var(--accent);
+  background: rgba(138,180,248,.18);
+  box-shadow: none;
 }
-/* Entrance animation for newly added tabs */
+/* Entrance animation */
 @keyframes vtab-enter {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: inherit; transform: none; }
 }
-.vtab.vtab-enter { animation: vtab-enter .16s ease both; }
+.vtab.vtab-enter { animation: vtab-enter .18s cubic-bezier(.2,0,.2,1) both; }
 
 /* ── Favicon ── */
 .vtab-favicon {
-  width: 16px; height: 16px;
+  width: 15px; height: 15px;
   flex-shrink: 0;
   object-fit: contain;
   border-radius: 3px;
@@ -3723,7 +3740,7 @@ body.dark .vtab.active {
   border: 2px solid var(--border);
   border-top-color: var(--text);
   animation: _spin .6s linear infinite;
-  width: 14px; height: 14px;
+  width: 13px; height: 13px;
 }
 
 /* ── Title ── */
@@ -3738,7 +3755,7 @@ body.dark .vtab.active {
 
 /* ── Close button ── */
 .vtab-close {
-  width: 18px; height: 18px;
+  width: 16px; height: 16px;
   border: none; background: transparent;
   border-radius: 4px;
   color: var(--muted);
@@ -3747,20 +3764,20 @@ body.dark .vtab.active {
   cursor: default;
   opacity: 0;
   visibility: hidden;
-  transition: background .12s, opacity .12s, visibility .12s;
+  transition: background .1s, opacity .1s, visibility .1s;
 }
-.vtab:hover .vtab-close { opacity: 1; visibility: visible; }
-.vtab-close:hover { background: var(--hover); color: var(--text); }
+.vtab:hover .vtab-close { opacity: .7; visibility: visible; }
+.vtab-close:hover { background: var(--hover); opacity: 1 !important; color: var(--text); }
 
-/* ── New tab button (compact row, no separator) ── */
+/* ── New tab button ── */
 .vtabs-new-btn {
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 9px;
-  padding: 0 8px 0 12px;
-  height: 32px;
+  gap: 8px;
+  padding: 0 8px 0 10px;
+  height: 30px;
   border: none;
   background: transparent;
   color: var(--muted);
@@ -3768,63 +3785,73 @@ body.dark .vtab.active {
   font-family: inherit;
   cursor: default;
   width: 100%;
-  border-radius: 9px;
-  margin: 2px 0 2px;
-  transition: background .12s, color .12s;
+  border-radius: 10px;
+  margin: 3px 0 2px;
+  opacity: .55;
+  transition: background .12s, color .12s, opacity .12s;
 }
-.vtabs-new-btn:hover { background: var(--hover); color: var(--text); }
+.vtabs-new-btn:hover { background: var(--hover); color: var(--text); opacity: 1; }
 
 /* ── Pinned section label + divider ── */
 .vtabs-section-label {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: .06em;
+  letter-spacing: .05em;
   color: var(--muted);
-  padding: 6px 14px 2px;
-  opacity: .65;
+  padding: 8px 12px 2px;
+  opacity: .45;
   user-select: none;
   flex-shrink: 0;
 }
 .vtabs-section-divider {
   height: 1px;
   background: var(--border);
-  margin: 4px 10px 6px;
+  margin: 4px 8px 4px;
+  opacity: .5;
   flex-shrink: 0;
 }
 
-/* ── Pin icon shown on pinned tabs ── */
+/* ── Pin icon ── */
 .vtab-pin-icon {
   flex-shrink: 0;
   color: var(--muted);
   display: flex;
   align-items: center;
-  opacity: .5;
+  opacity: .4;
 }
 
-/* ── Grouped vtab — left color bar overrides the accent bar ── */
-.vtab-grouped { box-shadow: inset 3px 0 0 var(--vtab-group-color, var(--border)); }
-.vtab-grouped.active { box-shadow: inset 3px 0 0 var(--vtab-group-color, var(--accent)) !important; }
+/* ── Grouped vtab — colored dot instead of left bar ── */
+.vtab-grouped { box-shadow: none; }
+.vtab-grouped::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--vtab-group-color, var(--border));
+  flex-shrink: 0;
+  order: -1;
+}
+.vtab-grouped.active { box-shadow: none !important; }
 
 /* ── Group header row in vtabs ── */
 .vtab-group-header {
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 6px 10px 3px 14px;
+  padding: 6px 10px 2px 10px;
   cursor: default;
   user-select: none;
   flex-shrink: 0;
 }
 .vtab-group-header:hover .vtab-group-name { color: var(--text); }
 .vtab-group-dot {
-  width: 9px; height: 9px;
+  width: 7px; height: 7px;
   border-radius: 50%;
   background: var(--vtab-group-color, var(--border));
   flex-shrink: 0;
 }
 .vtab-group-name {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
   color: var(--muted);
   text-transform: uppercase;
@@ -3833,7 +3860,8 @@ body.dark .vtab.active {
   text-overflow: ellipsis;
   white-space: nowrap;
   flex: 1;
-  transition: color .12s;
+  opacity: .65;
+  transition: color .12s, opacity .12s;
 }
 
 /* ── AI panel transparency ── */

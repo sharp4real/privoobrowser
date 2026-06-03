@@ -21,6 +21,18 @@ body.ntp-ready #ntp-root{
   from{opacity:0;transform:translateY(13px);}
   to{opacity:1;transform:none;}
 }
+/* Wallpaper + transparency: #search-form has backdrop-filter whose blur
+   samples from the composited layer stack. When #ntp-root has a transform
+   applied (ntp-in keyframe) it becomes the backdrop-filter's stacking root,
+   causing the blur to trail/drag as the element slides. Use a fade-only
+   animation instead so no transform stacking context is created. */
+body.ntp-ready.ntp-wp.transparent-ui #ntp-root{
+  animation:ntp-in-fade .4s cubic-bezier(.16,.84,.44,1) both;
+}
+@keyframes ntp-in-fade{
+  from{opacity:0;}
+  to{opacity:1;}
+}
 
 #ntp-bg{
   position:fixed;inset:0;z-index:0;
@@ -919,6 +931,7 @@ function renderSS(items, q) {
 function closeSS() { ssSug.classList.remove('open'); ssIdx = -1; }
 
 qInput.addEventListener('blur', () => setTimeout(closeSS, 150));
+document.addEventListener('contextmenu', closeSS);
 
 // Brave-style focused-search: scale the bar forward and hide shortcuts
 // while typing/focused. Wired here in addition to :focus-within so we can
