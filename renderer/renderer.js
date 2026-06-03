@@ -1305,13 +1305,22 @@ function ensureDisclaimer() {
       }
     };
 
-    // ── Step 6: Finish ──
-    document.getElementById('sw-finish').onclick = async () => {
+    // ── Step 6: Done — advance to the independent-project disclaimer ──
+    document.getElementById('sw-finish').onclick = () => {
+      goStep(swSteps.indexOf(document.getElementById('sw-step-disc')));
+    };
+
+    // ── Step 7: Independent-project disclaimer — checkbox gates the accept btn ──
+    const discCheck  = document.getElementById('sw-disc-check');
+    const discAccept = document.getElementById('sw-disc-accept');
+    if (discCheck && discAccept) {
+      discCheck.addEventListener('change', () => {
+        discAccept.disabled = !discCheck.checked;
+      });
+    }
+    async function finishWizard() {
       await saveBrowserSetting({ disclaimerAccepted: true });
-      // Setup is done — let the window be resized again.
       window.privoo.setupFinished?.();
-      // Reveal the browser, then lift the wizard away with a soft fade so the
-      // hand-off feels deliberate rather than an abrupt cut.
       document.body.classList.remove('setup-mode');
       setupOverlay.classList.add('sw-closing');
       fireConfetti();
@@ -1320,7 +1329,13 @@ function ensureDisclaimer() {
         setupOverlay.classList.remove('sw-closing');
       }, 300);
       resolve();
-    };
+    }
+    if (discAccept) {
+      discAccept.onclick = async () => {
+        if (!discCheck?.checked) return;
+        await finishWizard();
+      };
+    }
   });
 }
 

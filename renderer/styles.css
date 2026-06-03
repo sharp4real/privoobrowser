@@ -2107,6 +2107,26 @@ body.dark .cp-row input:checked + .slider { background: var(--accent); }
 }
 @keyframes sw-check-draw { to { stroke-dashoffset: 0; } }
 
+/* ── Disclaimer step (sw-step-disc) ── */
+.sw-disc-icon {
+  width: 68px; height: 68px; border-radius: 50%;
+  background: rgba(249,171,0,.12); color: #f9ab00;
+  display: flex; align-items: center; justify-content: center;
+  margin: 4px auto 20px;
+  border: 2px solid rgba(249,171,0,.35);
+}
+body.dark .sw-disc-icon { background: rgba(249,171,0,.14); border-color: rgba(249,171,0,.3); }
+.sw-disc-box { gap: 0; }
+.sw-disc-para {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--sw-text, #1f1f1f);
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0,0,0,.07);
+}
+.sw-disc-para:last-child { border-bottom: none; padding-bottom: 4px; }
+body.dark .sw-disc-para { color: #e8eaed; border-color: rgba(255,255,255,.08); }
+
 /* Actions row */
 .sw-actions {
   display: flex; align-items: center; justify-content: flex-end;

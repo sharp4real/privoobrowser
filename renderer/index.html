@@ -186,7 +186,7 @@
     <!-- Step 6: Done -->
     <div class="sw-card sw-step" id="sw-step-6">
       <div class="sw-progress-dots">
-        <span class="sw-dot"></span><span class="sw-dot"></span><span class="sw-dot"></span><span class="sw-dot"></span><span class="sw-dot"></span><span class="sw-dot active"></span>
+        <span class="sw-dot"></span><span class="sw-dot"></span><span class="sw-dot"></span><span class="sw-dot"></span><span class="sw-dot"></span><span class="sw-dot"></span><span class="sw-dot active"></span>
       </div>
       <div class="sw-done-ring">
         <svg viewBox="0 0 48 48" width="32" height="32"><path d="M10 26l10 10 20-20" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -194,7 +194,29 @@
       <h2 class="sw-headline" id="sw-done-headline">You're all set!</h2>
       <p class="sw-sub">Privacy is on by default. Ads, trackers,<br>and fingerprinting scripts are already blocked.</p>
       <div class="sw-actions">
-        <button class="sw-btn primary" id="sw-finish">Start browsing →</button>
+        <button class="sw-btn primary" id="sw-finish">Continue →</button>
+      </div>
+    </div>
+
+    <!-- Step 7: Independent project disclaimer — must accept before browser opens -->
+    <div class="sw-card sw-step" id="sw-step-disc">
+      <div class="sw-progress-dots"></div>
+      <div class="sw-disc-icon">
+        <svg viewBox="0 0 48 48" width="30" height="30" fill="currentColor"><path d="M24 4a20 20 0 1 0 0 40A20 20 0 0 0 24 4zm2 30h-4v-4h4v4zm0-8h-4V14h4v12z"/></svg>
+      </div>
+      <h2 class="sw-headline">Important notice</h2>
+      <p class="sw-sub">Please read this before you start browsing.</p>
+      <div class="sw-terms-box sw-disc-box">
+        <p class="sw-disc-para"><b>Privoo Browser is an independent open-source project.</b> It is not a registered company, corporation, or commercial organisation. There is no business, legal entity, or funding organisation behind it — just independent development.</p>
+        <p class="sw-disc-para">Privoo is provided <b>as-is, with no warranty of any kind.</b> The developer(s) cannot be held liable for data loss, privacy incidents, security vulnerabilities, or any other issues arising from your use of this software. You use it entirely at your own risk.</p>
+        <p class="sw-disc-para">Privoo is not affiliated with, endorsed by, or connected to any browser vendor, tech company, or government body.</p>
+      </div>
+      <label class="sw-terms-agree">
+        <input type="checkbox" id="sw-disc-check"/>
+        <span>I understand that Privoo is not a company and I accept full responsibility for my use of it.</span>
+      </label>
+      <div class="sw-actions">
+        <button class="sw-btn primary" id="sw-disc-accept" disabled>Start browsing →</button>
       </div>
     </div>
 
