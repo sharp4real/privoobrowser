@@ -1,6 +1,6 @@
 {
   "name": "privoo-browser",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Privacy focused browser built on Electron.",
   "main": "main.js",
   "scripts": {
@@ -26,20 +26,60 @@
     "protocols": [
       {
         "name": "Web Protocol",
-        "schemes": ["http", "https", "mailto"]
+        "schemes": [
+          "http",
+          "https",
+          "mailto"
+        ]
       }
     ],
     "fileAssociations": [
-      { "ext": "html", "name": "HTML Document", "role": "Viewer", "mimeType": "text/html" },
-      { "ext": "htm",  "name": "HTML Document", "role": "Viewer", "mimeType": "text/html" },
-      { "ext": "xhtml","name": "XHTML Document", "role": "Viewer", "mimeType": "application/xhtml+xml" },
-      { "ext": "pdf",  "name": "PDF Document",  "role": "Viewer", "mimeType": "application/pdf" },
-      { "ext": "svg",  "name": "SVG Image",     "role": "Viewer", "mimeType": "image/svg+xml" },
-      { "ext": "webp", "name": "WebP Image",    "role": "Viewer", "mimeType": "image/webp" }
+      {
+        "ext": "html",
+        "name": "HTML Document",
+        "role": "Viewer",
+        "mimeType": "text/html"
+      },
+      {
+        "ext": "htm",
+        "name": "HTML Document",
+        "role": "Viewer",
+        "mimeType": "text/html"
+      },
+      {
+        "ext": "xhtml",
+        "name": "XHTML Document",
+        "role": "Viewer",
+        "mimeType": "application/xhtml+xml"
+      },
+      {
+        "ext": "pdf",
+        "name": "PDF Document",
+        "role": "Viewer",
+        "mimeType": "application/pdf"
+      },
+      {
+        "ext": "svg",
+        "name": "SVG Image",
+        "role": "Viewer",
+        "mimeType": "image/svg+xml"
+      },
+      {
+        "ext": "webp",
+        "name": "WebP Image",
+        "role": "Viewer",
+        "mimeType": "image/webp"
+      }
     ],
     "extraResources": [
-      { "from": "logo.png", "to": "logo.png" },
-      { "from": "logo.ico", "to": "logo.ico" }
+      {
+        "from": "logo.png",
+        "to": "logo.png"
+      },
+      {
+        "from": "logo.ico",
+        "to": "logo.ico"
+      }
     ],
     "files": [
       "main.js",
@@ -69,7 +109,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },
@@ -86,17 +128,44 @@
       "category": "public.app-category.productivity",
       "identity": null,
       "target": [
-        { "target": "dmg", "arch": ["x64", "arm64"] },
-        { "target": "zip", "arch": ["x64", "arm64"] }
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
       ]
     },
     "linux": {
       "icon": "logo.png",
       "category": "Network",
       "target": [
-        { "target": "AppImage", "arch": ["x64"] },
-        { "target": "deb",      "arch": ["x64"] },
-        { "target": "rpm",      "arch": ["x64"] }
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "rpm",
+          "arch": [
+            "x64"
+          ]
+        }
       ]
     },
     "publish": {

@@ -254,6 +254,45 @@ body.has-vibe.vibe-edge::after {
   from { opacity: .82; }
   to   { opacity: 1;   }
 }
+/* ── Vibe chrome tinting — applies the hue directly to the UI surfaces ───────
+   background-image layers sit on top of the element's background-color so
+   the solid toolbar fill stays intact while a coloured gradient washes over
+   it. Using background-image (not background shorthand) avoids touching the
+   transparent-ui gradient layers. */
+body.has-vibe #titlebar,
+body.has-vibe #toolbar {
+  background-image: linear-gradient(
+    135deg,
+    hsl(var(--vibe-hue) 75% 63% / .22) 0%,
+    hsl(calc(var(--vibe-hue) + 28) 68% 58% / .12) 55%,
+    transparent 100%
+  ) !important;
+}
+/* Active tab picks up a matching tint so the selected tab 'belongs' to the vibe */
+body.has-vibe .tab.active {
+  background-image: linear-gradient(
+    180deg,
+    hsl(var(--vibe-hue) 72% 62% / .18),
+    hsl(var(--vibe-hue) 70% 60% / .10)
+  ) !important;
+}
+/* Vertical tabs panel — top-to-bottom fade so the chrome feels continuous */
+body.has-vibe #vtabs-panel {
+  background-image: linear-gradient(
+    180deg,
+    hsl(var(--vibe-hue) 72% 62% / .16) 0%,
+    hsl(var(--vibe-hue) 68% 60% / .06) 45%,
+    transparent 70%
+  ) !important;
+}
+/* Bookmarks bar */
+body.has-vibe #bookmarks-bar {
+  background-image: linear-gradient(
+    135deg,
+    hsl(var(--vibe-hue) 72% 62% / .14) 0%,
+    transparent 80%
+  ) !important;
+}
 
 /* Every floating UI surface — popovers, menus, suggestions, context menus,
    modals — becomes translucent with a backdrop blur so the OS material
