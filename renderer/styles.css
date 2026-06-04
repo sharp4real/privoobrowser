@@ -263,12 +263,14 @@ body.has-vibe.vibe-edge::after {
    transparent-ui gradient layers. */
 body.has-vibe #titlebar,
 body.has-vibe #toolbar {
-  background-image: linear-gradient(
-    135deg,
-    hsl(var(--vibe-hue) 75% 63% / .22) 0%,
-    hsl(calc(var(--vibe-hue) + 28) 68% 58% / .12) 55%,
-    transparent 100%
-  ) !important;
+  background-image:
+    radial-gradient(ellipse 55% 120% at 0% 50%,
+      hsl(var(--vibe-hue) 78% 62% / .26) 0%, transparent 72%),
+    radial-gradient(ellipse 55% 120% at 100% 50%,
+      hsl(calc(var(--vibe-hue) + 40) 74% 60% / .22) 0%, transparent 72%),
+    linear-gradient(90deg,
+      transparent 18%, hsl(calc(var(--vibe-hue) + 20) 70% 62% / .06) 50%, transparent 82%)
+  !important;
 }
 /* Active tab picks up a matching tint so the selected tab 'belongs' to the vibe */
 body.has-vibe .tab.active {
@@ -289,11 +291,12 @@ body.has-vibe #vtabs-panel {
 }
 /* Bookmarks bar */
 body.has-vibe #bookmarks-bar {
-  background-image: linear-gradient(
-    135deg,
-    hsl(var(--vibe-hue) 72% 62% / .14) 0%,
-    transparent 80%
-  ) !important;
+  background-image:
+    radial-gradient(ellipse 45% 200% at 0% 50%,
+      hsl(var(--vibe-hue) 74% 62% / .16) 0%, transparent 70%),
+    radial-gradient(ellipse 45% 200% at 100% 50%,
+      hsl(calc(var(--vibe-hue) + 40) 70% 60% / .14) 0%, transparent 70%)
+  !important;
 }
 /* Omnibox — subtle inner hue wash so the search bar feels part of the vibe */
 body.has-vibe #omnibox-wrap {
@@ -351,18 +354,22 @@ body.transparent-ui.dark #tab-context-menu {
   backdrop-filter: blur(14px) saturate(140%);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
 }
-/* ── Vibe popover tinting — placed AFTER transparent-ui rules so the
-   background-image layer survives both opaque and frosted-glass modes. */
+/* ── Vibe popover tinting — placed AFTER transparent-ui rules.
+   Use background shorthand to override transparent-ui's rgba base;
+   the hue tint replaces the flat white/dark fill with a coloured surface. */
 body.has-vibe .toolbar-popover,
 body.has-vibe .popover,
 body.has-vibe #menu,
 body.has-vibe #suggestions {
-  border-color: hsl(var(--vibe-hue) 60% 62% / .28) !important;
-  background-image: linear-gradient(
-    160deg,
-    hsl(var(--vibe-hue) 72% 66% / .09) 0%,
-    transparent 48%
-  ) !important;
+  background: color-mix(in srgb, hsl(var(--vibe-hue) 70% 92%) 28%, var(--toolbar)) !important;
+  border-color: hsl(var(--vibe-hue) 55% 60% / .40) !important;
+}
+body.dark.has-vibe .toolbar-popover,
+body.dark.has-vibe .popover,
+body.dark.has-vibe #menu,
+body.dark.has-vibe #suggestions {
+  background: color-mix(in srgb, hsl(var(--vibe-hue) 50% 28%) 30%, var(--toolbar)) !important;
+  border-color: hsl(var(--vibe-hue) 55% 62% / .35) !important;
 }
 
 /* Extension toolbar is just a flex container holding icon buttons — it
