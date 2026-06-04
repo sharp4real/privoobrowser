@@ -136,6 +136,7 @@
     display: flex;
     flex-direction: column;
     gap: 1px;
+    z-index: 5;
   }
   .nav-btn {
     border: none;
@@ -201,48 +202,74 @@
   /* ── Your Vibe controls ── */
   .vibe-row { display: flex; align-items: center; gap: 12px; }
   .vibe-preview {
-    width: 26px; height: 26px; border-radius: 50%;
+    width: 28px; height: 28px; border-radius: 50%;
     flex-shrink: 0;
     border: 2px solid rgba(0,0,0,.12);
-    transition: background .15s;
+    transition: background .2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,.10);
   }
   body.dark .vibe-preview { border-color: rgba(255,255,255,.14); }
   /* Vibe style selector */
-  .vibe-styles { display: flex; gap: 8px; flex-wrap: wrap; padding: 2px 0 4px; }
+  .vibe-styles { display: flex; gap: 8px; flex-wrap: wrap; padding: 4px 0 6px; }
   .vibe-style-btn {
-    flex: 1; min-width: 70px;
-    display: flex; flex-direction: column; align-items: center; gap: 6px;
-    cursor: default; border: 1.5px solid #dadce0; background: transparent;
-    border-radius: 10px; padding: 8px 6px;
-    transition: border-color .12s, box-shadow .12s;
+    flex: 1; min-width: 76px;
+    display: flex; flex-direction: column; align-items: center; gap: 7px;
+    cursor: default;
+    border: 1.5px solid #dadce0;
+    background: #fafafa;
+    border-radius: 12px;
+    padding: 10px 8px;
+    transition: border-color .15s, box-shadow .15s, background .15s, transform .12s;
+    position: relative;
   }
-  body.dark .vibe-style-btn { border-color: #5f6368; }
-  .vibe-style-btn.active { border-color: var(--accent); box-shadow: 0 0 0 2.5px var(--accent-soft); }
-  .vibe-style-btn:hover:not(.active) { border-color: #b3b3b3; }
-  body.dark .vibe-style-btn:hover:not(.active) { border-color: #80868b; }
+  body.dark .vibe-style-btn { border-color: #5f6368; background: #2a2b2e; }
+  .vibe-style-btn.active {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    box-shadow: 0 0 0 2.5px var(--accent-soft), 0 2px 8px rgba(0,0,0,.08);
+  }
+  body.dark .vibe-style-btn.active { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  .vibe-style-btn:hover:not(.active) {
+    border-color: #b3b3b3; background: #f5f5f5;
+    transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,.07);
+  }
+  body.dark .vibe-style-btn:hover:not(.active) { border-color: #80868b; background: #303134; }
   .vibe-style-thumb {
-    width: 56px; height: 36px; border-radius: 6px;
+    width: 72px; height: 44px; border-radius: 7px;
     overflow: hidden; position: relative; flex-shrink: 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,.12);
   }
-  .vibe-style-name { font-size: 11px; color: var(--muted); font-weight: 500; white-space: nowrap; }
+  .vibe-style-btn.active .vibe-style-thumb::after {
+    content: '✓';
+    position: absolute; top: 4px; right: 5px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: rgba(0,0,0,.55); color: #fff;
+    font-size: 9px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; line-height: 1;
+  }
+  .vibe-style-name { font-size: 11.5px; color: var(--muted); font-weight: 500; white-space: nowrap; }
+  .vibe-style-btn.active .vibe-style-name { color: var(--accent); font-weight: 600; }
   /* Preset vibe buttons */
-  .vibe-presets { display: flex; flex-wrap: wrap; gap: 8px; padding: 2px 0 4px; }
+  .vibe-presets { display: flex; flex-wrap: wrap; gap: 10px; padding: 4px 0 6px; }
   .vibe-preset {
     display: flex; flex-direction: column; align-items: center; gap: 5px;
-    cursor: default; border: none; background: transparent; padding: 0;
+    cursor: default; border: none; background: transparent; padding: 2px;
   }
   .vibe-preset-swatch {
-    width: 32px; height: 32px; border-radius: 50%;
+    width: 36px; height: 36px; border-radius: 50%;
     border: 2px solid transparent;
-    transition: transform .12s, border-color .12s, box-shadow .12s;
+    transition: transform .15s, border-color .15s, box-shadow .15s;
+    box-shadow: 0 1px 4px rgba(0,0,0,.14);
   }
-  .vibe-preset:hover .vibe-preset-swatch { transform: scale(1.15); }
+  .vibe-preset:hover .vibe-preset-swatch { transform: scale(1.18); box-shadow: 0 3px 10px rgba(0,0,0,.18); }
   .vibe-preset.active .vibe-preset-swatch {
     border-color: #fff;
-    box-shadow: 0 0 0 2.5px var(--accent);
+    box-shadow: 0 0 0 2.5px var(--accent), 0 2px 8px rgba(0,0,0,.14);
+    transform: scale(1.08);
   }
   body.dark .vibe-preset.active .vibe-preset-swatch { border-color: #303134; }
-  .vibe-preset-name { font-size: 10.5px; color: var(--muted); letter-spacing: .01em; }
+  .vibe-preset-name { font-size: 10.5px; color: var(--muted); letter-spacing: .01em; transition: color .12s; }
+  .vibe-preset.active .vibe-preset-name { color: var(--accent); font-weight: 600; }
   /* Sliders */
   .hue-slider {
     flex: 1;
@@ -256,12 +283,12 @@
   }
   .hue-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 20px; height: 20px; border-radius: 50%;
-    background: #fff; border: 2px solid rgba(0,0,0,.22);
-    box-shadow: 0 1px 4px rgba(0,0,0,.22); cursor: default;
-    transition: transform .12s;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #fff; border: 2.5px solid rgba(0,0,0,.22);
+    box-shadow: 0 1px 6px rgba(0,0,0,.25); cursor: default;
+    transition: transform .12s, box-shadow .12s;
   }
-  .hue-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+  .hue-slider::-webkit-slider-thumb:hover { transform: scale(1.18); box-shadow: 0 2px 10px rgba(0,0,0,.28); }
   body.dark .hue-slider::-webkit-slider-thumb { background: #e8eaed; border-color: rgba(255,255,255,.3); }
 
   /* ── What's New popup ── */
@@ -848,7 +875,7 @@
             <div><div class="label">Custom hue</div></div>
             <div class="vibe-row">
               <div class="vibe-preview" id="vibe-preview"></div>
-              <input type="range" id="vibeHue" min="0" max="360" value="220" class="hue-slider"/>
+              <input type="range" id="vibeHue" min="0" max="360" value="210" class="hue-slider"/>
             </div>
           </div>
         </div>
@@ -1674,7 +1701,7 @@ function buildVibeStyles(activeStyle, hue) {
   const wrap = $('vibe-styles');
   if (!wrap) return;
   wrap.innerHTML = '';
-  const h = hue ?? 220;
+  const h = hue ?? 210;
   for (const id of ['glow', 'flow', 'aura', 'edge']) {
     const btn = document.createElement('button');
     btn.className = 'vibe-style-btn' + (id === (activeStyle || 'glow') ? ' active' : '');
@@ -1700,7 +1727,7 @@ function buildVibePresets(activeHue) {
   wrap.innerHTML = '';
   for (const p of VIBE_PRESETS) {
     const btn = document.createElement('button');
-    btn.className = 'vibe-preset' + (Math.abs(p.hue - (activeHue ?? 220)) < 8 ? ' active' : '');
+    btn.className = 'vibe-preset' + (Math.abs(p.hue - (activeHue ?? 210)) < 8 ? ' active' : '');
     btn.dataset.hue = p.hue;
     const sw = document.createElement('div');
     sw.className = 'vibe-preset-swatch';
@@ -1723,7 +1750,7 @@ function buildVibePresets(activeHue) {
 }
 
 function syncVibeControls(s) {
-  const hue = s.vibeHue ?? 220;
+  const hue = s.vibeHue ?? 210;
   const row = $('vibe-controls-row');
   if (row) row.style.display = s.vibeEnabled ? '' : 'none';
   if ($('vibeHue')) $('vibeHue').value = hue;
@@ -1890,6 +1917,14 @@ async function init() {
   $('vibeEnabled')?.addEventListener('change', () => {
     const row = $('vibe-controls-row');
     if (row) row.style.display = $('vibeEnabled').checked ? '' : 'none';
+    // When first enabling vibe, ensure hue+style defaults are persisted so
+    // the browser chrome immediately picks up the correct values.
+    if ($('vibeEnabled').checked) {
+      const patch = {};
+      if (currentSettings.vibeHue === undefined) patch.vibeHue = 210;
+      if (!currentSettings.vibeStyle) patch.vibeStyle = 'glow';
+      if (Object.keys(patch).length) savePatch(patch);
+    }
   });
   $('vibeHue')?.addEventListener('input', () => {
     const h = $('vibeHue').value;
@@ -2039,6 +2074,7 @@ async function init() {
       for (const id of TOGGLES) {
         if ($(id)) $(id).checked = !!settings[id];
       }
+      syncVibeControls(settings);
       updatePathDisplays(settings, $('dl-path-display').textContent);
       if ($('dohProvider') && providersData) {
         $('dohProvider').value = settings.dohProvider || 'cloudflare';

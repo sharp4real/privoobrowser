@@ -123,6 +123,10 @@ const DEFAULTS = {
   // transparency is on, for the classic Aero / colour-acrylic look. Has no
   // effect when increaseTransparency is off.
   aeroGradient: false,
+  // Your Vibe — ambient hue gradient behind the browser chrome.
+  vibeEnabled: false,
+  vibeHue: 210,    // 210 = Ocean blue default
+  vibeStyle: 'glow',
   fontSizeScale: 1,        // 1 = default, 0.9 = small, 1.2 = large
   showBookmarksBar: false,
   showHomeButton: false,

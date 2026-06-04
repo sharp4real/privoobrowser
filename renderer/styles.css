@@ -206,11 +206,11 @@ body.transparent-ui.aero-ui.dark::before {
    Four styles (glow/flow/aura/edge) controlled by body class.
    --vibe-hue (0-360) set by applyAppSettings. All use CSS Color Level 4
    hsl() with alpha — requires Chromium 111+ (Electron 42 / Chrome 143 ✓). */
-:root { --vibe-hue: 220; }
+:root { --vibe-hue: 210; }
 body.has-vibe::after {
   content: '';
-  position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  animation: vibe-breathe 7s ease-in-out infinite alternate;
+  position: fixed; inset: -12%; z-index: 0; pointer-events: none;
+  animation: vibe-breathe 8s ease-in-out infinite alternate;
 }
 /* ── Glow (default) — soft radial blooms from corners ── */
 body.has-vibe:not(.vibe-flow):not(.vibe-aura):not(.vibe-edge)::after {
@@ -251,8 +251,10 @@ body.has-vibe.vibe-edge::after {
       transparent 35%);
 }
 @keyframes vibe-breathe {
-  from { opacity: .82; }
-  to   { opacity: 1;   }
+  0%   { opacity: .78; transform: scale(1.00) translate(0%,    0%);   }
+  33%  { opacity: 1.00; transform: scale(1.04) translate(2.5%, 1.5%); }
+  66%  { opacity: .90; transform: scale(1.02) translate(-1.5%, 2%);  }
+  100% { opacity: .78; transform: scale(1.00) translate(0%,    0%);   }
 }
 /* ── Vibe chrome tinting — applies the hue directly to the UI surfaces ───────
    background-image layers sit on top of the element's background-color so
@@ -293,7 +295,17 @@ body.has-vibe #bookmarks-bar {
     transparent 80%
   ) !important;
 }
-
+/* Omnibox — subtle inner hue wash so the search bar feels part of the vibe */
+body.has-vibe #omnibox-wrap {
+  background-image: linear-gradient(
+    135deg,
+    hsl(var(--vibe-hue) 70% 65% / .13) 0%,
+    hsl(calc(var(--vibe-hue) + 20) 65% 62% / .06) 100%
+  );
+}
+body.has-vibe #omnibox-wrap:focus-within {
+  background-image: none;
+}
 /* Every floating UI surface — popovers, menus, suggestions, context menus,
    modals — becomes translucent with a backdrop blur so the OS material
    still shows through them while text stays readable. */
@@ -339,6 +351,20 @@ body.transparent-ui.dark #tab-context-menu {
   backdrop-filter: blur(14px) saturate(140%);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
 }
+/* ── Vibe popover tinting — placed AFTER transparent-ui rules so the
+   background-image layer survives both opaque and frosted-glass modes. */
+body.has-vibe .toolbar-popover,
+body.has-vibe .popover,
+body.has-vibe #menu,
+body.has-vibe #suggestions {
+  border-color: hsl(var(--vibe-hue) 60% 62% / .28) !important;
+  background-image: linear-gradient(
+    160deg,
+    hsl(var(--vibe-hue) 72% 66% / .09) 0%,
+    transparent 48%
+  ) !important;
+}
+
 /* Extension toolbar is just a flex container holding icon buttons — it
    must never paint a background of its own (that would draw a visible
    square strip behind the icons). */
