@@ -556,8 +556,14 @@ body.ntp-wp .wx-card{
 #ntp-news{
   width:100%;max-width:480px;
   margin:18px auto 0;
+  transition:opacity .18s;
 }
 #ntp-news[hidden]{display:none;}
+/* Hide when search input is focused so the suggestions aren't crowded */
+main:has(#q:focus) #ntp-news{
+  opacity:0;
+  pointer-events:none;
+}
 .pn-wrap{
   position:relative;
   background:rgba(255,255,255,.74);
@@ -874,8 +880,8 @@ body.ntp-dark .ut-sub, body.ntp-wp .ut-sub{color:#9aa0a6;}
       <span class="mmhm-banner-label">Men's Mental Health Month</span>
     </div>
     <div class="mmhm-body">
-      <div class="mmhm-title" id="mmhm-title">You matter. It's okay to talk.</div>
-      <p class="mmhm-text">November is Men's Mental Health Month. Asking for help is a sign of strength, not weakness — and you're never alone in what you're going through.<br><br>Take care of yourself first. 💙</p>
+      <div class="mmhm-title" id="mmhm-title">It's okay not to be okay.</div>
+      <p class="mmhm-text">November is Men's Mental Health Month — a reminder that mental health matters for everyone. It's okay to talk, to feel, and to ask for help. You're never alone in what you're going through.<br><br>Take care of yourself. 💙</p>
       <button class="mmhm-close" id="mmhm-close">Thank you, got it</button>
     </div>
   </div>
