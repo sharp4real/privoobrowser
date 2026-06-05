@@ -552,104 +552,86 @@ body.ntp-wp .wx-card{
 }
 .wx-details span{white-space:nowrap;}
 
-/* ── Privoo News carousel ── */
+/* ── Privoo News ── */
 #ntp-news{
-  width:100%;max-width:540px;
-  margin:18px auto 0;
-  position:relative;
+  width:100%;max-width:520px;
+  margin:20px auto 0;
+  animation:pn-fade .35s cubic-bezier(.2,0,.2,1) both;
 }
 #ntp-news[hidden]{display:none;}
-.pn-track{
-  overflow:hidden;
-  border-radius:16px;
-}
-.pn-card{
-  display:none;
-  padding:16px 20px 14px;
-  background:rgba(255,255,255,.88);
-  backdrop-filter:blur(14px) saturate(150%);
-  -webkit-backdrop-filter:blur(14px) saturate(150%);
-  border-radius:16px;
-  box-shadow:0 2px 12px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.05);
-  animation:pn-in .28s cubic-bezier(.2,0,.2,1);
-  position:relative;
-}
-body.ntp-dark .pn-card{
-  background:rgba(40,41,45,.84);
-}
-body.ntp-wp .pn-card{
-  background:rgba(0,0,0,.42);
-}
-body.ntp-vibe .pn-card{
-  background:color-mix(in srgb, hsl(var(--ntp-vibe-hue) 70% 94%) 16%, rgba(255,255,255,.86));
-  box-shadow:0 2px 14px hsl(var(--ntp-vibe-hue) 60% 60% / .10), 0 1px 3px rgba(0,0,0,.05);
-}
-body.ntp-vibe.ntp-dark .pn-card{
-  background:color-mix(in srgb, hsl(var(--ntp-vibe-hue) 50% 24%) 22%, rgba(38,39,43,.84));
-}
-.pn-card.active{display:block;}
-@keyframes pn-in{
-  from{opacity:0;transform:translateY(6px);}
+@keyframes pn-fade{
+  from{opacity:0;transform:translateY(8px);}
   to  {opacity:1;transform:none;}
 }
-.pn-head{
-  display:flex;align-items:center;gap:9px;margin-bottom:7px;
+.pn-card{
+  background:rgba(255,255,255,.70);
+  backdrop-filter:blur(14px) saturate(150%);
+  -webkit-backdrop-filter:blur(14px) saturate(150%);
+  border-radius:14px;
+  padding:13px 16px 12px;
+  border:1px solid rgba(0,0,0,.06);
 }
-.pn-badge{
-  font-size:10px;font-weight:700;letter-spacing:.04em;
-  padding:2px 8px;border-radius:20px;
-  background:rgba(138,180,248,.18);color:#4285f4;
-  flex-shrink:0;
+body.ntp-dark .pn-card{
+  background:rgba(38,39,43,.72);
+  border-color:rgba(255,255,255,.07);
 }
-body.ntp-dark .pn-badge{background:rgba(138,180,248,.15);color:#8ab4f8;}
-body.ntp-wp .pn-badge{background:rgba(255,255,255,.18);color:#fff;}
-body.ntp-vibe .pn-badge{
-  background:hsl(var(--ntp-vibe-hue) 70% 60% / .18);
-  color:hsl(var(--ntp-vibe-hue) 60% 42%);
+body.ntp-wp .pn-card{
+  background:rgba(0,0,0,.36);
+  border-color:rgba(255,255,255,.10);
 }
-body.ntp-vibe.ntp-dark .pn-badge{
-  color:hsl(var(--ntp-vibe-hue) 72% 72%);
+body.ntp-vibe .pn-card{
+  background:color-mix(in srgb, hsl(var(--ntp-vibe-hue) 68% 92%) 18%, rgba(255,255,255,.68));
+  border-color:hsl(var(--ntp-vibe-hue) 60% 70% / .20);
 }
-.pn-title{
-  font-size:13.5px;font-weight:600;color:#1f1f1f;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+body.ntp-vibe.ntp-dark .pn-card{
+  background:color-mix(in srgb, hsl(var(--ntp-vibe-hue) 48% 22%) 24%, rgba(36,37,41,.72));
+  border-color:hsl(var(--ntp-vibe-hue) 55% 60% / .18);
 }
-body.ntp-dark .pn-title,body.ntp-wp .pn-title{color:#e8eaed;}
-.pn-body{
-  font-size:12px;color:#5f6368;line-height:1.5;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+.pn-header{
+  display:flex;align-items:center;gap:8px;margin-bottom:10px;
 }
-body.ntp-dark .pn-body,body.ntp-wp .pn-body{color:#9aa0a6;}
-.pn-nav{
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  margin-top:10px;
+.pn-ver{
+  font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  padding:2px 9px;border-radius:20px;flex-shrink:0;
+  background:rgba(66,133,244,.14);color:#3367d6;
 }
-.pn-dot{
-  width:6px;height:6px;border-radius:50%;
-  background:rgba(0,0,0,.18);border:none;padding:0;cursor:default;
-  transition:background .15s,transform .15s;flex-shrink:0;
+body.ntp-dark .pn-ver{background:rgba(138,180,248,.14);color:#8ab4f8;}
+body.ntp-wp .pn-ver{background:rgba(255,255,255,.16);color:#fff;}
+body.ntp-vibe .pn-ver{
+  background:hsl(var(--ntp-vibe-hue) 68% 60% / .16);
+  color:hsl(var(--ntp-vibe-hue) 55% 38%);
 }
-body.ntp-dark .pn-dot{background:rgba(255,255,255,.22);}
-.pn-dot.active{
-  background:#4285f4;transform:scale(1.25);
+body.ntp-vibe.ntp-dark .pn-ver{color:hsl(var(--ntp-vibe-hue) 70% 70%);}
+.pn-label{
+  font-size:11.5px;font-weight:600;color:#3c4043;letter-spacing:.01em;
 }
-body.ntp-vibe .pn-dot.active{background:hsl(var(--ntp-vibe-hue) 65% 52%);}
-.pn-arrow{
-  position:absolute;top:50%;transform:translateY(-50%);
-  width:28px;height:28px;border-radius:50%;border:none;
-  background:rgba(255,255,255,.80);backdrop-filter:blur(8px);
-  box-shadow:0 1px 6px rgba(0,0,0,.12);
-  display:flex;align-items:center;justify-content:center;
-  cursor:default;transition:background .12s,opacity .12s;
-  color:#3c4043;z-index:2;
+body.ntp-dark .pn-label,body.ntp-wp .pn-label{color:#bdc1c6;}
+.pn-chips{
+  display:flex;flex-wrap:wrap;gap:6px;
 }
-body.ntp-dark .pn-arrow{background:rgba(60,61,65,.80);color:#e8eaed;}
-body.ntp-wp .pn-arrow{background:rgba(0,0,0,.35);color:#fff;}
-.pn-arrow:hover{background:rgba(255,255,255,.96);}
-body.ntp-dark .pn-arrow:hover{background:rgba(75,76,80,.96);}
-.pn-arrow.prev{left:-14px;}
-.pn-arrow.next{right:-14px;}
-.pn-arrow[disabled]{opacity:0;pointer-events:none;}
+.pn-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:11.5px;color:#3c4043;
+  background:rgba(0,0,0,.05);
+  border-radius:8px;padding:4px 10px;
+  white-space:nowrap;
+}
+body.ntp-dark .pn-chip{background:rgba(255,255,255,.08);color:#bdc1c6;}
+body.ntp-wp .pn-chip{background:rgba(255,255,255,.12);color:#e8eaed;}
+body.ntp-vibe .pn-chip{
+  background:hsl(var(--ntp-vibe-hue) 65% 60% / .10);
+  color:hsl(var(--ntp-vibe-hue) 50% 32%);
+}
+body.ntp-vibe.ntp-dark .pn-chip{
+  background:hsl(var(--ntp-vibe-hue) 55% 55% / .14);
+  color:hsl(var(--ntp-vibe-hue) 65% 72%);
+}
+.pn-chip-dot{
+  width:4px;height:4px;border-radius:50%;flex-shrink:0;
+  background:#4285f4;opacity:.7;
+}
+body.ntp-vibe .pn-chip-dot{background:hsl(var(--ntp-vibe-hue) 65% 50%);}
+body.ntp-wp .pn-chip-dot{background:rgba(255,255,255,.6);}
 
 .ntp-pen-btn{
   position:fixed;right:18px;bottom:14px;z-index:40;
@@ -756,16 +738,21 @@ body.ntp-dark .ut-sub, body.ntp-wp .ut-sub{color:#9aa0a6;}
 
   <div id="quick-links"></div>
 
-  <!-- Privoo News carousel -->
+  <!-- Privoo News -->
   <div id="ntp-news" hidden>
-    <div class="pn-track" id="pn-track"></div>
-    <div class="pn-nav" id="pn-nav"></div>
-    <button class="pn-arrow prev" id="pn-prev" aria-label="Previous">
-      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
-    </button>
-    <button class="pn-arrow next" id="pn-next" aria-label="Next">
-      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
-    </button>
+    <div class="pn-card">
+      <div class="pn-header">
+        <span class="pn-ver">v2.0.7</span>
+        <span class="pn-label">What's new</span>
+      </div>
+      <div class="pn-chips">
+        <span class="pn-chip"><span class="pn-chip-dot"></span>Vibe popup blending</span>
+        <span class="pn-chip"><span class="pn-chip-dot"></span>Frosted wallpaper search</span>
+        <span class="pn-chip"><span class="pn-chip-dot"></span>Focused search animation fixed</span>
+        <span class="pn-chip"><span class="pn-chip-dot"></span>No more element outlines</span>
+        <span class="pn-chip"><span class="pn-chip-dot"></span>Thank-you heart icon</span>
+      </div>
+    </div>
   </div>
 </main>
 
@@ -1188,88 +1175,6 @@ let ssTimer  = null;
       toastTimer = setTimeout(dismissToast, 4500);
     }, 320);
   }, { once: true });
-})();
-
-// ── Privoo News carousel ─────────────────────────────────────────────────────
-(function initNews() {
-  const NEWS = [
-    {
-      version: 'v2.0.7',
-      title: 'Thank you for trusting Privoo',
-      body: 'SVG icons throughout, vibe popup blending, wallpaper search frosted glass, and focused-search animation restored.',
-    },
-    {
-      version: 'v2.0.6',
-      title: 'Performance fix for heavy pages',
-      body: 'Fixed lag on CSS-heavy sites — the vibe overlay GPU cost was cut by ~70%. Vibe no longer outlines elements.',
-    },
-    {
-      version: 'v2.0.5',
-      title: 'Set as default browser',
-      body: 'Settings → System now properly wires up the default-browser button on Windows, macOS, and Linux.',
-    },
-    {
-      version: 'v2.0.4',
-      title: 'Your Vibe redesign',
-      body: 'New animated gradient, redesigned style selector with active checkmark, vibe tinting on search bar and popups.',
-    },
-    {
-      version: 'v2.0.3',
-      title: 'Vertical tabs & more',
-      body: 'Vertical tabs panel, yt-dlp rights disclaimer, tab-group colours, and a new What\'s New popup.',
-    },
-  ];
-
-  const track = document.getElementById('pn-track');
-  const nav   = document.getElementById('pn-nav');
-  const btnP  = document.getElementById('pn-prev');
-  const btnN  = document.getElementById('pn-next');
-  if (!track || !nav || !btnP || !btnN) return;
-
-  let current = 0;
-  let autoTimer;
-
-  // Build cards
-  NEWS.forEach((item, i) => {
-    const card = document.createElement('div');
-    card.className = 'pn-card' + (i === 0 ? ' active' : '');
-    card.innerHTML = `
-      <div class="pn-head">
-        <span class="pn-badge">${item.version}</span>
-        <span class="pn-title">${item.title}</span>
-      </div>
-      <p class="pn-body">${item.body}</p>`;
-    track.appendChild(card);
-
-    const dot = document.createElement('button');
-    dot.className = 'pn-dot' + (i === 0 ? ' active' : '');
-    dot.setAttribute('aria-label', `News ${i + 1}`);
-    dot.addEventListener('click', () => goTo(i));
-    nav.appendChild(dot);
-  });
-
-  function goTo(idx) {
-    const cards = track.querySelectorAll('.pn-card');
-    const dots  = nav.querySelectorAll('.pn-dot');
-    cards[current].classList.remove('active');
-    dots[current].classList.remove('active');
-    current = (idx + NEWS.length) % NEWS.length;
-    cards[current].classList.add('active');
-    dots[current].classList.add('active');
-    btnP.disabled = false;
-    btnN.disabled = false;
-  }
-
-  function startAuto() {
-    clearInterval(autoTimer);
-    autoTimer = setInterval(() => goTo(current + 1), 6000);
-  }
-
-  btnP.addEventListener('click', () => { goTo(current - 1); startAuto(); });
-  btnN.addEventListener('click', () => { goTo(current + 1); startAuto(); });
-  track.addEventListener('mouseenter', () => clearInterval(autoTimer));
-  track.addEventListener('mouseleave', startAuto);
-  startAuto();
 })();
 
 qInput.addEventListener('input', () => {
