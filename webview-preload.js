@@ -37,6 +37,8 @@ if (location.protocol === 'privoo:') {
 
     getSuggestions: (q, eng) => ipcRenderer.invoke('search-suggestions', { query: q, engine: eng }),
     getAppVersion:  () => ipcRenderer.invoke('get-app-version'),
+    isDefaultBrowser:  () => ipcRenderer.invoke('is-default-browser'),
+    setDefaultBrowser: () => ipcRenderer.invoke('set-default-browser'),
     httpProceed:    (url)    => ipcRenderer.invoke('http-proceed', url),
     clearTikTokData: ()      => ipcRenderer.invoke('clear-tiktok-data'),
     clearSiteData:   (host)  => ipcRenderer.invoke('clear-site-data', host),

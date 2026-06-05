@@ -1321,7 +1321,7 @@
         <div class="card">
           <div class="row">
             <div><div class="label">Privoo Browser</div><div class="desc">Private, local-first browsing controls.</div></div>
-            <span class="desc" id="privoo-version">v2.0.4</span>
+            <span class="desc" id="privoo-version">v2.0.5</span>
           </div>
         </div>
 
@@ -2003,14 +2003,30 @@ async function init() {
 
   $('open-clear').addEventListener('click', openClearModal);
 
-  api.isDefaultBrowser?.().then(isDefault => {
-    if (isDefault) {
-      $('set-default-browser-btn').textContent = 'Already default';
-      $('set-default-browser-btn').disabled = true;
-      $('default-browser-desc').textContent = 'Privoo is your default browser.';
-    }
+  function refreshDefaultBrowserState() {
+    api.isDefaultBrowser?.().then(isDefault => {
+      const btn = $('set-default-browser-btn');
+      const desc = $('default-browser-desc');
+      if (!btn) return;
+      if (isDefault) {
+        btn.textContent = 'Already default';
+        btn.disabled = true;
+        if (desc) desc.textContent = 'Privoo is your default browser.';
+      } else {
+        btn.textContent = 'Set as default';
+        btn.disabled = false;
+        if (desc) desc.textContent = 'Open links and web content in Privoo by default.';
+      }
+    }).catch(() => {});
+  }
+  refreshDefaultBrowserState();
+  $('set-default-browser-btn')?.addEventListener('click', async () => {
+    await api.setDefaultBrowser?.();
+    // On Windows, Settings opens for the user to confirm — show a hint.
+    // On macOS/Linux the change is immediate; recheck after a short delay.
+    showToast('Opening Default Apps — select Privoo to finish');
+    setTimeout(refreshDefaultBrowserState, 1200);
   });
-  $('set-default-browser-btn')?.addEventListener('click', () => api.setDefaultBrowser?.());
   $('clear-cancel').addEventListener('click', closeClearModal);
   $('clear-confirm').addEventListener('click', clearData);
   $('clear-modal').addEventListener('click', (event) => {
