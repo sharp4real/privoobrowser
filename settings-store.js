@@ -194,6 +194,7 @@ const DEFAULTS = {
   musicEnabled: false,
   musicVolume: 0.5,
   ntpShowWeather: false,
+  ntpShowNews: true,
   weatherLocation: '',
   /** Spoof navigator.geolocation for pages (injected). */
   geoSpoofEnabled: false,

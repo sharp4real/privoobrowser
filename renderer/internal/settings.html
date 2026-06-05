@@ -930,6 +930,10 @@
             <div><div class="label">Weather widget</div><div class="desc">Show current weather on the new tab page.</div></div>
             <label class="switch"><input type="checkbox" id="ntpShowWeather"><span class="slider"></span></label>
           </div>
+          <div class="row">
+            <div><div class="label">Privoo News</div><div class="desc">Show browser update cards below the search bar — version highlights and what's new.</div></div>
+            <label class="switch"><input type="checkbox" id="ntpShowNews"><span class="slider"></span></label>
+          </div>
           <div class="row stack" id="weather-location-row">
             <div><div class="label">Weather location</div><div class="desc">City name to fetch weather for (e.g. London, New York).</div></div>
             <input type="text" id="weatherLocation" class="wide" spellcheck="false" placeholder="e.g. London">
@@ -1436,7 +1440,7 @@
 const api = window.privooInternal;
 const TOGGLES = [
   'verticalTabs', 'darkMode', 'forceDarkMode', 'showHomeButton', 'showBookmarksBar',
-  'ntpShowWeather', 'ntpFocusedSearch', 'ntpShowQuickLinks',
+  'ntpShowWeather', 'ntpFocusedSearch', 'ntpShowQuickLinks', 'ntpShowNews',
   'increaseTransparency', 'aeroGradient', 'vibeEnabled', 'compactMode', 'searchSuggestions',
   'askDownloadPath', 'adBlocking', 'httpsUpgrade', 'httpsUpgradeShowNotice', 'blockThirdPartyCookies',
   'dnsOverHttps', 'adultContentBlocking', 'spoofUserAgent', 'canvasSpoofing', 'webrtcProtection',
