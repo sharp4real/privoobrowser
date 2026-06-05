@@ -368,20 +368,32 @@ body.transparent-ui.dark #tab-context-menu {
   backdrop-filter: blur(14px) saturate(140%);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
 }
-/* ── Vibe popover tinting — placed AFTER transparent-ui rules.
-   Use background shorthand to override transparent-ui's rgba base;
-   the hue tint replaces the flat white/dark fill with a coloured surface. */
+/* ── Vibe popover tinting — gradient overlay placed AFTER transparent-ui rules.
+   background-image wins over the shorthand reset from transparent-ui when
+   equal specificity + later source position. Keeps the popup's own solid/
+   frosted background-color intact and just layers a matching gradient wash,
+   so the popup feels continuous with the rest of the vibe chrome. */
 body.has-vibe .toolbar-popover,
 body.has-vibe .popover,
 body.has-vibe #menu,
 body.has-vibe #suggestions {
-  background: color-mix(in srgb, hsl(var(--vibe-hue) 70% 92%) 28%, var(--toolbar)) !important;
+  background-image: linear-gradient(
+    150deg,
+    hsl(var(--vibe-hue) 75% 68% / .13) 0%,
+    hsl(calc(var(--vibe-hue) + 25) 70% 65% / .07) 55%,
+    transparent 100%
+  ) !important;
 }
 body.dark.has-vibe .toolbar-popover,
 body.dark.has-vibe .popover,
 body.dark.has-vibe #menu,
 body.dark.has-vibe #suggestions {
-  background: color-mix(in srgb, hsl(var(--vibe-hue) 50% 28%) 30%, var(--toolbar)) !important;
+  background-image: linear-gradient(
+    150deg,
+    hsl(var(--vibe-hue) 65% 60% / .18) 0%,
+    hsl(calc(var(--vibe-hue) + 25) 60% 55% / .09) 55%,
+    transparent 100%
+  ) !important;
 }
 
 /* Extension toolbar is just a flex container holding icon buttons — it
