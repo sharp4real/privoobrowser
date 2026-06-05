@@ -562,6 +562,75 @@ body.ntp-wp .wx-card{
 }
 .ntp-pen-btn:hover{transform:scale(1.06);background:#111;}
 .ntp-pen-btn svg{fill:currentColor;}
+
+/* ── One-time "thanks for the trust" toast ── */
+#ntp-updates-toast{
+  position:fixed;
+  bottom:72px;
+  left:50%;
+  transform:translateX(-50%) translateY(18px);
+  opacity:0;
+  pointer-events:none;
+  z-index:300;
+  min-width:300px;
+  max-width:420px;
+  width:calc(100% - 48px);
+  background:rgba(255,255,255,.94);
+  backdrop-filter:blur(16px) saturate(160%);
+  -webkit-backdrop-filter:blur(16px) saturate(160%);
+  border-radius:18px;
+  padding:18px 22px 16px;
+  box-shadow:0 8px 36px rgba(0,0,0,.14), 0 2px 8px rgba(0,0,0,.07);
+  text-align:center;
+  transition:opacity .35s cubic-bezier(.2,0,.2,1),
+             transform .35s cubic-bezier(.2,0,.2,1);
+  font-family:inherit;
+}
+body.ntp-dark #ntp-updates-toast{
+  background:rgba(32,33,36,.90);
+}
+body.ntp-wp #ntp-updates-toast{
+  background:rgba(0,0,0,.52);
+}
+body.ntp-vibe #ntp-updates-toast{
+  background:color-mix(in srgb, hsl(var(--ntp-vibe-hue) 72% 94%) 22%, rgba(255,255,255,.92));
+  box-shadow:0 8px 36px hsl(var(--ntp-vibe-hue) 60% 58% / .18),
+             0 2px 8px rgba(0,0,0,.07);
+}
+body.ntp-vibe.ntp-dark #ntp-updates-toast{
+  background:color-mix(in srgb, hsl(var(--ntp-vibe-hue) 50% 24%) 28%, rgba(32,33,36,.88));
+}
+#ntp-updates-toast.visible{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
+  pointer-events:auto;
+}
+#ntp-updates-toast.hiding{
+  opacity:0;
+  transform:translateX(-50%) translateY(12px);
+}
+.ut-icon{
+  font-size:26px;
+  line-height:1;
+  margin-bottom:8px;
+  display:block;
+}
+.ut-title{
+  display:block;
+  font-size:14.5px;
+  font-weight:600;
+  color:#1f1f1f;
+  line-height:1.35;
+  margin-bottom:5px;
+}
+body.ntp-dark .ut-title, body.ntp-wp .ut-title{color:#e8eaed;}
+.ut-sub{
+  display:block;
+  font-size:12.5px;
+  color:#5f6368;
+  line-height:1.45;
+}
+body.ntp-dark .ut-sub, body.ntp-wp .ut-sub{color:#9aa0a6;}
 </style>
 </head>
 <body>
@@ -591,6 +660,13 @@ body.ntp-wp .wx-card{
   <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee. &nbsp;&middot;&nbsp; <span id="ntp-version" style="opacity:.55">v2.0.6</span></p>
 </footer>
 
+</div>
+
+<!-- One-time toast — shown on first search focus, never again -->
+<div id="ntp-updates-toast" role="status" aria-live="polite">
+  <span class="ut-icon">🙏</span>
+  <span class="ut-title">We know Privoo has had a lot of updates lately</span>
+  <span class="ut-sub">Thank you for trusting us — we really appreciate it. Every update is for you.</span>
 </div>
 
 <button type="button" class="ntp-pen-btn" id="ntp-pen" title="Customize new tab" aria-label="Customize">
@@ -966,6 +1042,32 @@ const ssSug  = document.getElementById('search-suggestions');
 let ssItems  = [];
 let ssIdx    = -1;
 let ssTimer  = null;
+
+// ── One-time "thank you" toast on first search focus ─────────────────────────
+(function initUpdatesToast() {
+  const TOAST_KEY = 'privoo:updates-toast-v2.0.6';
+  const toast = document.getElementById('ntp-updates-toast');
+  if (!toast) return;
+  try { if (localStorage.getItem(TOAST_KEY)) return; } catch { return; }
+
+  let toastTimer;
+  function dismissToast() {
+    clearTimeout(toastTimer);
+    toast.classList.add('hiding');
+    toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+  }
+
+  qInput.addEventListener('focus', function showOnce() {
+    qInput.removeEventListener('focus', showOnce);
+    try { localStorage.setItem(TOAST_KEY, '1'); } catch {}
+    // Small delay so the search bar expansion animation plays first
+    setTimeout(() => {
+      toast.classList.add('visible');
+      toast.addEventListener('click', dismissToast, { once: true });
+      toastTimer = setTimeout(dismissToast, 4500);
+    }, 320);
+  }, { once: true });
+})();
 
 qInput.addEventListener('input', () => {
   clearTimeout(ssTimer);
