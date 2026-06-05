@@ -161,6 +161,11 @@ app.commandLine.appendSwitch('no-default-browser-check');
 app.commandLine.appendSwitch('ignore-gpu-blocklist');
 app.commandLine.appendSwitch('enable-gpu-rasterization');
 app.commandLine.appendSwitch('enable-zero-copy');
+// Off-main-thread canvas rasterization + accelerated video decode improve
+// rendering throughput on pages with heavy CSS/canvas/video.
+app.commandLine.appendSwitch('enable-features',
+  'CanvasOopRasterization,AcceleratedVideoDecodeLinuxGL');
+app.commandLine.appendSwitch('num-raster-threads', '4');
 
 // ---------------------------------------------------------------------------
 // Single-instance lock + default-browser registration

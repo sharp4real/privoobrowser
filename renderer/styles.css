@@ -219,7 +219,11 @@ body.transparent-ui.aero-ui.dark::before {
 :root { --vibe-hue: 210; }
 body.has-vibe::after {
   content: '';
-  position: fixed; inset: -12%; z-index: 0; pointer-events: none;
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  /* Promoted to its own compositor layer — opacity changes happen on the
+     GPU thread with zero repaint cost. NO transform animation: scaling an
+     oversized overlay was consuming GPU bandwidth shared with webviews. */
+  will-change: opacity;
   animation: vibe-breathe 8s ease-in-out infinite alternate;
 }
 /* ── Glow (default) — soft radial blooms from corners ── */
@@ -261,10 +265,10 @@ body.has-vibe.vibe-edge::after {
       transparent 35%);
 }
 @keyframes vibe-breathe {
-  0%   { opacity: .78; transform: scale(1.00) translate(0%,    0%);   }
-  33%  { opacity: 1.00; transform: scale(1.04) translate(2.5%, 1.5%); }
-  66%  { opacity: .90; transform: scale(1.02) translate(-1.5%, 2%);  }
-  100% { opacity: .78; transform: scale(1.00) translate(0%,    0%);   }
+  0%   { opacity: .72; }
+  38%  { opacity: 1.00; }
+  62%  { opacity: .86; }
+  100% { opacity: .72; }
 }
 /* ── Vibe chrome tinting — applies the hue directly to the UI surfaces ───────
    background-image layers sit on top of the element's background-color so
@@ -3491,6 +3495,9 @@ body.dark .vpn-input { background: var(--omni-bg); color: var(--text); }
   min-height: 0;
   min-width: 0;
   position: relative;
+  /* Isolate the webview area's layout from the browser chrome so that
+     style recalcs inside a page (heavy CSS) don't cascade outward. */
+  contain: layout;
 }
 #views-wrap > #views {
   flex: 1;
