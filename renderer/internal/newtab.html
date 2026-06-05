@@ -610,10 +610,13 @@ body.ntp-vibe.ntp-dark #ntp-updates-toast{
   transform:translateX(-50%) translateY(12px);
 }
 .ut-icon{
-  font-size:26px;
-  line-height:1;
-  margin-bottom:8px;
-  display:block;
+  display:flex;
+  justify-content:center;
+  margin-bottom:9px;
+  color:#e8505a;
+}
+body.ntp-vibe .ut-icon{
+  color:hsl(var(--ntp-vibe-hue) 72% 52%);
 }
 .ut-title{
   display:block;
@@ -657,14 +660,18 @@ body.ntp-dark .ut-sub, body.ntp-wp .ut-sub{color:#9aa0a6;}
 
 <footer id="ntp-footer">
   <div id="ntp-weather" hidden></div>
-  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee. &nbsp;&middot;&nbsp; <span id="ntp-version" style="opacity:.55">v2.0.6</span></p>
+  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee. &nbsp;&middot;&nbsp; <span id="ntp-version" style="opacity:.55">v2.0.7</span></p>
 </footer>
 
 </div>
 
 <!-- One-time toast — shown on first search focus, never again -->
 <div id="ntp-updates-toast" role="status" aria-live="polite">
-  <span class="ut-icon">🙏</span>
+  <span class="ut-icon">
+    <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+    </svg>
+  </span>
   <span class="ut-title">We know Privoo has had a lot of updates lately</span>
   <span class="ut-sub">Thank you for trusting us — we really appreciate it. Every update is for you.</span>
 </div>
@@ -1045,7 +1052,7 @@ let ssTimer  = null;
 
 // ── One-time "thank you" toast on first search focus ─────────────────────────
 (function initUpdatesToast() {
-  const TOAST_KEY = 'privoo:updates-toast-v2.0.6';
+  const TOAST_KEY = 'privoo:updates-toast-v2.0.7';
   const toast = document.getElementById('ntp-updates-toast');
   if (!toast) return;
   try { if (localStorage.getItem(TOAST_KEY)) return; } catch { return; }
