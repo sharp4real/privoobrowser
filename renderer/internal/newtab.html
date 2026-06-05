@@ -640,56 +640,84 @@ body.ntp-wp .pn-dot.active{background:rgba(255,255,255,.85);}
 /* ── Men's Mental Health Month modal ── */
 #mmhm-overlay{
   position:fixed;inset:0;z-index:8000;
-  background:rgba(0,0,0,.45);
-  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  background:rgba(0,0,0,.50);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
   display:flex;align-items:center;justify-content:center;
   padding:24px;
-  animation:mmhm-bg .25s ease;
+  animation:mmhm-bg .3s cubic-bezier(.2,0,.2,1) both;
 }
 #mmhm-overlay[hidden]{display:none!important;}
 @keyframes mmhm-bg{from{opacity:0;}to{opacity:1;}}
 #mmhm-card{
   background:#fff;
-  border-radius:22px;
-  max-width:400px;width:100%;
-  box-shadow:0 24px 64px rgba(0,0,0,.22),0 4px 16px rgba(0,0,0,.10);
+  border-radius:24px;
+  max-width:380px;width:100%;
+  box-shadow:0 32px 80px rgba(0,0,0,.28),0 8px 24px rgba(0,0,0,.12);
   overflow:hidden;
-  animation:mmhm-rise .3s cubic-bezier(.2,0,.2,1);
+  animation:mmhm-rise .36s cubic-bezier(.16,.84,.44,1) both;
 }
-body.ntp-dark #mmhm-card{background:#1e2026;}
+body.ntp-dark #mmhm-card{background:#22242a;}
 @keyframes mmhm-rise{
-  from{opacity:0;transform:translateY(20px) scale(.96);}
+  from{opacity:0;transform:translateY(28px) scale(.94);}
   to  {opacity:1;transform:none;}
 }
 .mmhm-banner{
-  height:88px;
-  background:linear-gradient(135deg,#0d47a1 0%,#1565c0 45%,#1976d2 100%);
-  display:flex;align-items:center;justify-content:center;position:relative;
-  overflow:hidden;
+  height:116px;
+  background:linear-gradient(140deg,#0a2463 0%,#1565c0 55%,#26a69a 100%);
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:6px;position:relative;overflow:hidden;
+}
+.mmhm-banner::before{
+  content:'';position:absolute;
+  width:200px;height:200px;border-radius:50%;
+  background:rgba(255,255,255,.06);
+  top:-60px;right:-60px;
 }
 .mmhm-banner::after{
-  content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse 80% 80% at 80% 20%,rgba(255,255,255,.15),transparent 65%);
+  content:'';position:absolute;
+  width:140px;height:140px;border-radius:50%;
+  background:rgba(255,255,255,.05);
+  bottom:-50px;left:-30px;
 }
-.mmhm-icon{color:#fff;z-index:1;filter:drop-shadow(0 2px 8px rgba(0,0,0,.25));}
-.mmhm-body{padding:22px 24px 20px;text-align:center;}
+.mmhm-icon{
+  color:#fff;z-index:1;
+  filter:drop-shadow(0 2px 12px rgba(0,0,0,.30));
+}
+.mmhm-banner-label{
+  font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(255,255,255,.75);z-index:1;
+}
+.mmhm-body{padding:24px 26px 22px;text-align:center;}
 .mmhm-title{
-  font-size:17px;font-weight:700;color:#1f1f1f;
-  line-height:1.3;margin-bottom:10px;
+  font-size:18px;font-weight:700;color:#1f1f1f;
+  line-height:1.25;margin-bottom:12px;
+  letter-spacing:-.01em;
 }
 body.ntp-dark .mmhm-title{color:#e8eaed;}
 .mmhm-text{
-  font-size:13px;color:#5f6368;line-height:1.6;margin-bottom:20px;
+  font-size:13px;color:#5f6368;line-height:1.65;margin-bottom:22px;
 }
 body.ntp-dark .mmhm-text{color:#9aa0a6;}
 .mmhm-close{
-  width:100%;padding:11px;border:none;border-radius:12px;
-  background:#1565c0;color:#fff;
-  font-size:13.5px;font-weight:600;cursor:default;
-  transition:background .12s;
-  font-family:inherit;
+  width:100%;padding:13px;border:none;border-radius:14px;
+  background:linear-gradient(135deg,#1565c0,#0d47a1);
+  color:#fff;font-size:14px;font-weight:600;
+  cursor:default;font-family:inherit;
+  box-shadow:0 4px 16px rgba(13,71,161,.30);
+  transition:transform .14s cubic-bezier(.2,0,.2,1),
+             box-shadow .14s cubic-bezier(.2,0,.2,1),
+             filter .14s;
 }
-.mmhm-close:hover{background:#1976d2;}
+.mmhm-close:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(13,71,161,.40);
+  filter:brightness(1.08);
+}
+.mmhm-close:active{
+  transform:translateY(0);
+  box-shadow:0 2px 8px rgba(13,71,161,.25);
+  filter:brightness(.97);
+}
 
 .ntp-pen-btn{
   position:fixed;right:18px;bottom:14px;z-index:40;
@@ -800,7 +828,7 @@ body.ntp-dark .ut-sub, body.ntp-wp .ut-sub{color:#9aa0a6;}
   <div id="ntp-news" hidden>
     <div class="pn-wrap">
       <div class="pn-slide active" id="pn-0">
-        <div class="pn-kicker">Privoo v2.0.8</div>
+        <div class="pn-kicker">Privoo v2.0.9</div>
         <div class="pn-title">Privoo News is here</div>
         <p class="pn-body">Stay up to date with what's new in each release, right from your new tab. Toggle it off any time in Settings → New tab page.</p>
       </div>
@@ -831,7 +859,7 @@ body.ntp-dark .ut-sub, body.ntp-wp .ut-sub{color:#9aa0a6;}
 
 <footer id="ntp-footer">
   <div id="ntp-weather" hidden></div>
-  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee. &nbsp;&middot;&nbsp; <span id="ntp-version" style="opacity:.55">v2.0.8</span></p>
+  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee. &nbsp;&middot;&nbsp; <span id="ntp-version" style="opacity:.55">v2.0.9</span></p>
 </footer>
 
 </div>
@@ -840,14 +868,15 @@ body.ntp-dark .ut-sub, body.ntp-wp .ut-sub{color:#9aa0a6;}
 <div id="mmhm-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="mmhm-title">
   <div id="mmhm-card">
     <div class="mmhm-banner">
-      <svg class="mmhm-icon" viewBox="0 0 24 24" width="44" height="44" fill="currentColor" aria-hidden="true">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-8v4h4l-5 8z"/>
+      <svg class="mmhm-icon" viewBox="0 0 24 24" width="46" height="46" fill="currentColor" aria-hidden="true">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
       </svg>
+      <span class="mmhm-banner-label">Men's Mental Health Month</span>
     </div>
     <div class="mmhm-body">
-      <div class="mmhm-title" id="mmhm-title">Men's Mental Health Month</div>
-      <p class="mmhm-text">November is Men's Mental Health Month. It's okay to talk about how you're feeling — asking for help is a sign of strength, not weakness. You're not alone, and support is always available.<br><br>Take care of yourself. 💙</p>
-      <button class="mmhm-close" id="mmhm-close">Got it — thank you</button>
+      <div class="mmhm-title" id="mmhm-title">You matter. It's okay to talk.</div>
+      <p class="mmhm-text">November is Men's Mental Health Month. Asking for help is a sign of strength, not weakness — and you're never alone in what you're going through.<br><br>Take care of yourself first. 💙</p>
+      <button class="mmhm-close" id="mmhm-close">Thank you, got it</button>
     </div>
   </div>
 </div>
@@ -1242,7 +1271,7 @@ let ssTimer  = null;
 
 // ── One-time "thank you" toast on first search focus ─────────────────────────
 (function initUpdatesToast() {
-  const TOAST_KEY = 'privoo:updates-toast-v2.0.8';
+  const TOAST_KEY = 'privoo:updates-toast-v2.0.9';
   const toast = document.getElementById('ntp-updates-toast');
   if (!toast) return;
   try { if (localStorage.getItem(TOAST_KEY)) return; } catch { return; }
@@ -1301,7 +1330,7 @@ let ssTimer  = null;
 
 // ── Men's Mental Health Month popup ──────────────────────────────────────────
 (function initMmhm() {
-  const MMHM_KEY = 'privoo:mmhm-2.0.8';
+  const MMHM_KEY = 'privoo:mmhm-2.0.9';
   const overlay = document.getElementById('mmhm-overlay');
   const closeBtn = document.getElementById('mmhm-close');
   if (!overlay || !closeBtn) return;
@@ -1309,8 +1338,9 @@ let ssTimer  = null;
 
   function dismiss() {
     try { localStorage.setItem(MMHM_KEY, '1'); } catch {}
-    overlay.style.animation = 'mmhm-bg .22s ease reverse both';
-    overlay.addEventListener('animationend', () => { overlay.hidden = true; }, { once: true });
+    // Set hidden immediately — waiting for animationend is unreliable in
+    // Electron and leaves the overlay blocking all page interactions.
+    overlay.hidden = true;
   }
 
   setTimeout(() => { overlay.hidden = false; }, 800);
