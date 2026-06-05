@@ -123,8 +123,16 @@ body.transparent-ui #omnibox-wrap {
 }
 body.transparent-ui #omnibox-wrap:hover { background: rgba(255, 255, 255, .30) !important; }
 body.transparent-ui #omnibox-wrap:focus-within {
-  background: rgba(255, 255, 255, .80) !important;
+  background: rgba(26, 27, 30, .96) !important;
   border-color: var(--accent) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+}
+body.transparent-ui #omnibox-wrap:focus-within #omnibox,
+body.transparent-ui #omnibox-wrap:focus-within .site-icon,
+body.transparent-ui #omnibox-wrap:focus-within #page-shield,
+body.transparent-ui #omnibox-wrap:focus-within #bookmark-btn {
+  color: #e8eaed !important;
 }
 body.transparent-ui #omnibox        { background: transparent !important; }
 /* Tab strip — same frosted layer as the titlebar; no extra blur needed. */
@@ -171,8 +179,10 @@ body.transparent-ui.dark #omnibox-wrap {
 }
 body.transparent-ui.dark #omnibox-wrap:hover { background: rgba(255, 255, 255, .16) !important; }
 body.transparent-ui.dark #omnibox-wrap:focus-within {
-  background: rgba(48, 49, 52, .80) !important;
+  background: rgba(28, 29, 32, .97) !important;
   border-color: var(--accent) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
 }
 body.transparent-ui.dark .strip         { background: rgba(28, 29, 33, .18) !important; }
 
