@@ -226,6 +226,32 @@ body.transparent-ui.ntp-wp.ntp-dark #search-suggestions{
   -webkit-backdrop-filter:blur(20px) saturate(170%);
   color:#e8eaed;
 }
+/* ── Your Vibe — tint the NTP search bar to match the browser chrome ── */
+:root { --ntp-vibe-hue: 210; }
+body.ntp-vibe #search-form{
+  background:color-mix(in srgb, hsl(var(--ntp-vibe-hue) 72% 92%) 32%, #f1f3f4) !important;
+  border-color:hsl(var(--ntp-vibe-hue) 55% 70% / .50) !important;
+}
+body.ntp-vibe.ntp-dark:not(.ntp-wp) #search-form{
+  background:color-mix(in srgb, hsl(var(--ntp-vibe-hue) 55% 28%) 30%, #303134) !important;
+  border-color:hsl(var(--ntp-vibe-hue) 50% 60% / .40) !important;
+}
+body.ntp-vibe #search-form:focus-within{
+  background:color-mix(in srgb, hsl(var(--ntp-vibe-hue) 72% 94%) 20%, #fff) !important;
+  border-color:hsl(var(--ntp-vibe-hue) 60% 62% / .60) !important;
+}
+body.ntp-vibe.ntp-dark #search-form:focus-within{
+  background:color-mix(in srgb, hsl(var(--ntp-vibe-hue) 50% 26%) 25%, #303134) !important;
+}
+/* Suggestions dropdown also gets the vibe tint */
+body.ntp-vibe #search-suggestions{
+  background:color-mix(in srgb, hsl(var(--ntp-vibe-hue) 70% 94%) 22%, #fff) !important;
+  border-color:hsl(var(--ntp-vibe-hue) 55% 70% / .35) !important;
+}
+body.ntp-vibe.ntp-dark #search-suggestions{
+  background:color-mix(in srgb, hsl(var(--ntp-vibe-hue) 50% 25%) 28%, #303134) !important;
+}
+
 #search-form:focus-within{
   border-color:transparent;
   box-shadow:0 1px 12px rgba(32,33,36,.20);
@@ -639,6 +665,14 @@ function applyNtpLook(settings) {
   document.body.classList.toggle('ntp-focused-search-on', settings?.ntpFocusedSearch !== false);
   // Increase Transparency — let the OS material show through the NTP too.
   document.body.classList.toggle('transparent-ui', !!settings?.increaseTransparency);
+  // Vibe — tint the search bar to match the browser chrome colour.
+  const vibeOn = !!settings?.vibeEnabled;
+  document.body.classList.toggle('ntp-vibe', vibeOn);
+  if (vibeOn && settings?.vibeHue !== undefined) {
+    document.documentElement.style.setProperty('--ntp-vibe-hue', String(settings.vibeHue));
+  } else {
+    document.documentElement.style.removeProperty('--ntp-vibe-hue');
+  }
 
   const ql = document.getElementById('quick-links');
   if (ql) ql.hidden = settings?.ntpShowQuickLinks === false;
