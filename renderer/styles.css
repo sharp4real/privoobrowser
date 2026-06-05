@@ -376,14 +376,12 @@ body.has-vibe .popover,
 body.has-vibe #menu,
 body.has-vibe #suggestions {
   background: color-mix(in srgb, hsl(var(--vibe-hue) 70% 92%) 28%, var(--toolbar)) !important;
-  border-color: hsl(var(--vibe-hue) 55% 60% / .40) !important;
 }
 body.dark.has-vibe .toolbar-popover,
 body.dark.has-vibe .popover,
 body.dark.has-vibe #menu,
 body.dark.has-vibe #suggestions {
   background: color-mix(in srgb, hsl(var(--vibe-hue) 50% 28%) 30%, var(--toolbar)) !important;
-  border-color: hsl(var(--vibe-hue) 55% 62% / .35) !important;
 }
 
 /* Extension toolbar is just a flex container holding icon buttons — it
