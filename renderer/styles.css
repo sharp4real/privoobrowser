@@ -384,6 +384,20 @@ body.transparent-ui.dark .ep-header,
 body.transparent-ui.dark #emoji-categories {
   border-color: rgba(255, 255, 255, .08) !important;
 }
+/* vpn-pop inner hero section has its own --omni-bg background; clear it in
+   transparent mode so the outer popover's frosted look shows through. */
+body.transparent-ui .vpn-pop-hero { background: transparent !important; }
+body.transparent-ui .vpn-input,
+body.transparent-ui .vpn-select   { background: rgba(255,255,255,.28) !important; border-color: rgba(0,0,0,.12) !important; }
+body.transparent-ui.dark .vpn-input,
+body.transparent-ui.dark .vpn-select { background: rgba(255,255,255,.08) !important; border-color: rgba(255,255,255,.12) !important; }
+/* vtab hover — override the solid --hover colour with a translucent tint so the
+   frosted panel stays glassy instead of showing an opaque strip. */
+body.transparent-ui .vtab:hover       { background: rgba(0,0,0,.08) !important; }
+body.transparent-ui.dark .vtab:hover  { background: rgba(255,255,255,.10) !important; }
+/* Mobile disclaimer card */
+body.transparent-ui .mdisc-card { background: rgba(255,255,255,.72) !important; backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+body.transparent-ui.dark .mdisc-card { background: rgba(32,33,36,.72) !important; }
 /* ── Vibe popover tinting — gradient overlay placed AFTER transparent-ui rules.
    background-image wins over the shorthand reset from transparent-ui when
    equal specificity + later source position. Keeps the popup's own solid/
@@ -3933,7 +3947,6 @@ body.vtabs-collapsed .vtab-title { display: none; }
 body.vtabs-collapsed .vtab-close { display: none !important; }
 body.vtabs-collapsed .vtabs-collapse-btn svg { transform: rotate(180deg); }
 body.vtabs-collapsed .vtab { justify-content: center; padding: 0 !important; }
-body.vtabs-collapsed .vtabs-new-btn { justify-content: center; padding: 0; width: 36px; margin: 4px auto 2px; }
 
 /* ── Header — minimal, no hard border ── */
 .vtabs-header {
@@ -4063,38 +4076,75 @@ body.dark .vtab.active {
 .vtab:hover .vtab-close { opacity: .7; visibility: visible; }
 .vtab-close:hover { background: var(--hover); opacity: 1 !important; color: var(--text); }
 
-/* ── New tab button — real pill button, not a dimmed row ── */
+/* ── New tab button ── */
 .vtabs-new-btn {
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 8px;
-  padding: 0 12px;
-  height: 32px;
-  border: 1.5px solid var(--border);
-  background: transparent;
-  color: var(--text);
-  font-size: 12.5px;
-  font-weight: 500;
+  gap: 7px;
+  padding: 0 10px;
+  height: 30px;
+  border: none;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
   font-family: inherit;
   cursor: default;
   width: calc(100% - 12px);
   margin: 4px 6px 2px;
-  border-radius: 10px;
+  border-radius: 8px;
   opacity: 1;
-  transition: background .12s, border-color .12s, color .12s, box-shadow .12s;
+  transition: background .12s, color .12s, box-shadow .12s;
 }
 .vtabs-new-btn:hover {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-  color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,.12);
 }
 body.vtabs-collapsed .vtabs-new-btn {
-  width: 36px; margin: 4px auto 2px; padding: 0;
-  justify-content: center; border-radius: 10px;
+  width: 32px; height: 32px; margin: 4px auto 2px; padding: 0;
+  justify-content: center; border-radius: 8px; background: var(--accent-soft);
 }
+body.vtabs-collapsed .vtabs-new-btn:hover { background: var(--accent); }
+
+/* ── Vtabs footer toolbar ── */
+.vtabs-footer {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px 8px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+body.vtabs-toolbar-bottom .vtabs-footer { display: flex; }
+body.vtabs-toolbar-bottom #nav-btns { display: none; }
+.vtf-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px; height: 30px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  border-radius: 8px;
+  cursor: default;
+  opacity: .7;
+  transition: background .12s, opacity .12s;
+  flex-shrink: 0;
+}
+.vtf-btn:hover:not(:disabled) { background: var(--hover); opacity: 1; }
+.vtf-btn:disabled { opacity: .3; cursor: default; }
+.vtf-new {
+  margin-left: auto;
+  background: var(--accent-soft);
+  color: var(--accent);
+  opacity: 1;
+}
+.vtf-new:hover { background: var(--accent) !important; color: #fff !important; opacity: 1 !important; }
+body.vtabs-collapsed .vtabs-footer { padding: 6px 0 8px; justify-content: center; flex-direction: column; }
+body.vtabs-collapsed .vtf-new { margin-left: 0; }
 /* ── Drag-to-resize handle on the right edge of the vtabs panel ── */
 .vtabs-resize {
   position: absolute;

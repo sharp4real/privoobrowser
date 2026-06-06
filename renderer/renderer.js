@@ -446,7 +446,7 @@ function applyAppSettings() {
   if (settings.vibeHue !== undefined) {
     document.documentElement.style.setProperty('--vibe-hue', String(settings.vibeHue));
   }
-  document.body.style.fontSize = `${Math.max(0.85, Math.min(Number(settings.fontSizeScale) || 1, 1.25)) * 100}%`;
+  document.documentElement.style.zoom = String(Math.max(0.85, Math.min(Number(settings.fontSizeScale) || 1, 1.25)));
   homeBtn.hidden = !settings.showHomeButton;
   // Derive a friendly placeholder. For the "custom" engine we surface the
   // hostname so the user can tell at a glance which resolver is active.
@@ -474,6 +474,7 @@ function applyAppSettings() {
   paintToolbarWidgets();
   applyVerticalTabs(!!settings.verticalTabs);
   document.body.classList.toggle('vtabs-collapsed', !!settings.vtabsCollapsed);
+  document.body.classList.toggle('vtabs-toolbar-bottom', !!settings.vtabsToolbarBottom);
   document.body.classList.toggle('wobbly-windows', !!settings.wobblyWindows);
   document.body.classList.toggle('low-end-device', !!settings.lowEndDevice);
 }
@@ -1469,7 +1470,12 @@ function toUrl(input) {
 }
 
 function displayUrl(url) {
-  if (!url || url.startsWith('privoo://')) return '';
+  if (!url) return '';
+  if (url.startsWith('privoo://')) {
+    // Show clean privoo:// URL without trailing slash (newtab shows blank)
+    if (url === NEWTAB_URL || url.startsWith('privoo://newtab')) return '';
+    return url.endsWith('/') ? url.slice(0, -1) : url;
+  }
   try {
     const u = new URL(url);
     if (u.protocol === 'https:') return url.slice(8); // strip https://
@@ -2244,11 +2250,17 @@ function syncToolbar() {
   updateSiteInfoPopover(tab.url, isInternal, isSecure, isHttp);
   refreshPageShield(tab);
 
+  const vtBack = document.getElementById('vt-back');
+  const vtFwd  = document.getElementById('vt-forward');
   try {
     backBtn.disabled    = !wv.canGoBack();
     forwardBtn.disabled = !wv.canGoForward();
+    if (vtBack)  vtBack.disabled  = backBtn.disabled;
+    if (vtFwd)   vtFwd.disabled   = forwardBtn.disabled;
   } catch {
     backBtn.disabled = forwardBtn.disabled = true;
+    if (vtBack)  vtBack.disabled  = true;
+    if (vtFwd)   vtFwd.disabled   = true;
   }
   updateBookmarkButton();
   updateZoomIndicator();
@@ -3168,7 +3180,6 @@ const obTitleEl       = document.getElementById('ob-title');
 const obTextEl        = document.getElementById('ob-text');
 const obDismissBtn    = document.getElementById('ob-dismiss');
 
-const OB_WELCOME_KEY  = 'privoo:welcome-shown';
 // Leaving-Privoo dismiss is per session only (in-memory). The user wants the
 // nudge to keep appearing on rival browser sites until they navigate away,
 // not be silenced forever after one dismissal.
@@ -3339,13 +3350,11 @@ function maybeShowOverlayBanner(url) {
   }
 
   // 2) Welcome banner — only on the very first real website visit, ever.
-  // Mark it shown IMMEDIATELY so navigating away or reinstalling can never
-  // make it appear again (previously the flag was only saved on "Okay!" click,
-  // causing it to re-appear on every session after an update or tab switch).
-  let welcomeShown = false;
-  try { welcomeShown = localStorage.getItem(OB_WELCOME_KEY) === '1'; } catch {}
-  if (!welcomeShown) {
-    try { localStorage.setItem(OB_WELCOME_KEY, '1'); } catch {}
+  // Persisted in the settings file (not localStorage) so it survives updates
+  // and reinstalls without ever re-appearing.
+  if (!settings.welcomeShown) {
+    settings.welcomeShown = true;
+    window.privoo.setSettings({ welcomeShown: true });
     showOverlayBanner(
       'Privoo keeps you safe!',
       'Ads, trackers, and fingerprinting scripts are blocked by default. No accounts, no sync — your browsing stays on this device.',
@@ -4040,6 +4049,13 @@ omnibox.addEventListener('keydown', (e) => {
 
 backBtn.addEventListener('click',    () => { const w = activeTab()?.wv; if (w?.canGoBack()) w.goBack(); });
 forwardBtn.addEventListener('click', () => { const w = activeTab()?.wv; if (w?.canGoForward()) w.goForward(); });
+
+// Vtabs footer nav buttons — mirror toolbar nav actions
+document.getElementById('vt-back')?.addEventListener('click', () => { const w = activeTab()?.wv; if (w?.canGoBack()) w.goBack(); });
+document.getElementById('vt-forward')?.addEventListener('click', () => { const w = activeTab()?.wv; if (w?.canGoForward()) w.goForward(); });
+document.getElementById('vt-reload')?.addEventListener('click', () => { const w = activeTab()?.wv; if (!w) return; if (w.isLoading()) w.stop(); else w.reload(); });
+document.getElementById('vt-new')?.addEventListener('click', () => newTab());
+
 reloadBtn.addEventListener('click',  () => {
   const w = activeTab()?.wv;
   if (!w) return;

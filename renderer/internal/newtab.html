@@ -1277,28 +1277,29 @@ let ssTimer  = null;
 
 // ── One-time "thank you" toast on first search focus ─────────────────────────
 (function initUpdatesToast() {
-  const TOAST_KEY = 'privoo:updates-toast-shown';
   const toast = document.getElementById('ntp-updates-toast');
-  if (!toast) return;
-  try { if (localStorage.getItem(TOAST_KEY)) return; } catch { return; }
+  if (!toast || !api) return;
 
-  let toastTimer;
-  function dismissToast() {
-    clearTimeout(toastTimer);
-    toast.classList.add('hiding');
-    toast.addEventListener('transitionend', () => toast.remove(), { once: true });
-  }
+  api.getSettings().then(({ settings: s }) => {
+    if (s.updatesToastShown) return;
 
-  qInput.addEventListener('focus', function showOnce() {
-    qInput.removeEventListener('focus', showOnce);
-    try { localStorage.setItem(TOAST_KEY, '1'); } catch {}
-    // Small delay so the search bar expansion animation plays first
-    setTimeout(() => {
-      toast.classList.add('visible');
-      toast.addEventListener('click', dismissToast, { once: true });
-      toastTimer = setTimeout(dismissToast, 4500);
-    }, 320);
-  }, { once: true });
+    let toastTimer;
+    function dismissToast() {
+      clearTimeout(toastTimer);
+      toast.classList.add('hiding');
+      toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+    }
+
+    qInput.addEventListener('focus', function showOnce() {
+      qInput.removeEventListener('focus', showOnce);
+      api.setSettings({ updatesToastShown: true });
+      setTimeout(() => {
+        toast.classList.add('visible');
+        toast.addEventListener('click', dismissToast, { once: true });
+        toastTimer = setTimeout(dismissToast, 4500);
+      }, 320);
+    }, { once: true });
+  }).catch(() => {});
 })();
 
 // ── Privoo News auto-cycle ────────────────────────────────────────────────────
@@ -1336,22 +1337,19 @@ let ssTimer  = null;
 
 // ── Men's Mental Health Month popup ──────────────────────────────────────────
 (function initMmhm() {
-  const MMHM_KEY = 'privoo:mmhm-june-2025';
   const overlay = document.getElementById('mmhm-overlay');
   const closeBtn = document.getElementById('mmhm-close');
-  if (!overlay || !closeBtn) return;
-  try { if (localStorage.getItem(MMHM_KEY)) return; } catch { return; }
+  if (!overlay || !closeBtn || !api) return;
 
-  function dismiss() {
-    try { localStorage.setItem(MMHM_KEY, '1'); } catch {}
-    // Set hidden immediately — waiting for animationend is unreliable in
-    // Electron and leaves the overlay blocking all page interactions.
-    overlay.hidden = true;
-  }
+  api.getSettings().then(({ settings: s }) => {
+    if (s.mmhmShown) return;
+    api.setSettings({ mmhmShown: true });
 
-  setTimeout(() => { overlay.hidden = false; }, 800);
-  closeBtn.addEventListener('click', dismiss);
-  overlay.addEventListener('click', e => { if (e.target === overlay) dismiss(); });
+    function dismiss() { overlay.hidden = true; }
+    setTimeout(() => { overlay.hidden = false; }, 800);
+    closeBtn.addEventListener('click', dismiss);
+    overlay.addEventListener('click', e => { if (e.target === overlay) dismiss(); });
+  }).catch(() => {});
 })();
 
 qInput.addEventListener('input', () => {

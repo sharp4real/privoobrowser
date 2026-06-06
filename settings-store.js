@@ -181,6 +181,7 @@ const DEFAULTS = {
   centerSidebarIcons: false, // vertically center shortcut icons in the sidebar rail
   verticalTabs: false,    // show tabs in a vertical left panel instead of horizontal strip
   vtabsCollapsed: false,  // vertical tabs panel collapsed to icon-only rail
+  vtabsToolbarBottom: false, // move nav buttons to the bottom of the vertical tabs panel
   sidebarLinks: [],
   ghostName: '',          // user-supplied name for the Privoo mascot
   accentColor: '',        // empty = use stylesheet default (light blue)
@@ -188,6 +189,8 @@ const DEFAULTS = {
   windowState: null,
   disclaimerAccepted: false,
   welcomeShown: false,
+  mmhmShown: false,
+  updatesToastShown: false,
 
   // Background music
   musicPath: null,
