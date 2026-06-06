@@ -123,16 +123,8 @@ body.transparent-ui #omnibox-wrap {
 }
 body.transparent-ui #omnibox-wrap:hover { background: rgba(255, 255, 255, .30) !important; }
 body.transparent-ui #omnibox-wrap:focus-within {
-  background: rgba(18, 19, 22, .52) !important;
+  background: rgba(255, 255, 255, .32) !important;
   border-color: var(--accent) !important;
-  backdrop-filter: blur(24px) saturate(200%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
-}
-body.transparent-ui #omnibox-wrap:focus-within #omnibox,
-body.transparent-ui #omnibox-wrap:focus-within .site-icon,
-body.transparent-ui #omnibox-wrap:focus-within #page-shield,
-body.transparent-ui #omnibox-wrap:focus-within #bookmark-btn {
-  color: #e8eaed !important;
 }
 body.transparent-ui #omnibox        { background: transparent !important; }
 /* Tab strip — same frosted layer as the titlebar; no extra blur needed. */
@@ -179,10 +171,8 @@ body.transparent-ui.dark #omnibox-wrap {
 }
 body.transparent-ui.dark #omnibox-wrap:hover { background: rgba(255, 255, 255, .16) !important; }
 body.transparent-ui.dark #omnibox-wrap:focus-within {
-  background: rgba(18, 19, 22, .52) !important;
+  background: rgba(255, 255, 255, .18) !important;
   border-color: var(--accent) !important;
-  backdrop-filter: blur(24px) saturate(200%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
 }
 body.transparent-ui.dark .strip         { background: rgba(28, 29, 33, .18) !important; }
 
@@ -338,7 +328,6 @@ body.transparent-ui #geo-popover,
 body.transparent-ui #audio-popover,
 body.transparent-ui #notes-popover,
 body.transparent-ui #translate-popover,
-body.transparent-ui #emoji-picker,
 body.transparent-ui .context-menu,
 body.transparent-ui #wv-context-menu,
 body.transparent-ui #tab-context-menu {
@@ -346,6 +335,20 @@ body.transparent-ui #tab-context-menu {
   color: #1f1f1f !important;
   backdrop-filter: blur(14px) saturate(160%);
   -webkit-backdrop-filter: blur(14px) saturate(160%);
+}
+body.transparent-ui #emoji-picker {
+  background: rgba(255, 255, 255, .52) !important;
+  color: #1f1f1f !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+body.transparent-ui #emoji-search {
+  background: rgba(255, 255, 255, .28) !important;
+  border-color: rgba(0, 0, 0, .15) !important;
+}
+body.transparent-ui .ep-header,
+body.transparent-ui #emoji-categories {
+  border-color: rgba(0, 0, 0, .10) !important;
 }
 body.transparent-ui.dark .popover,
 body.transparent-ui.dark .toolbar-popover,
@@ -359,7 +362,6 @@ body.transparent-ui.dark #geo-popover,
 body.transparent-ui.dark #audio-popover,
 body.transparent-ui.dark #notes-popover,
 body.transparent-ui.dark #translate-popover,
-body.transparent-ui.dark #emoji-picker,
 body.transparent-ui.dark .context-menu,
 body.transparent-ui.dark #wv-context-menu,
 body.transparent-ui.dark #tab-context-menu {
@@ -367,6 +369,20 @@ body.transparent-ui.dark #tab-context-menu {
   color: #e8eaed !important;
   backdrop-filter: blur(14px) saturate(140%);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
+}
+body.transparent-ui.dark #emoji-picker {
+  background: rgba(28, 29, 33, .52) !important;
+  color: #e8eaed !important;
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+}
+body.transparent-ui.dark #emoji-search {
+  background: rgba(255, 255, 255, .10) !important;
+  border-color: rgba(255, 255, 255, .15) !important;
+}
+body.transparent-ui.dark .ep-header,
+body.transparent-ui.dark #emoji-categories {
+  border-color: rgba(255, 255, 255, .08) !important;
 }
 /* ── Vibe popover tinting — gradient overlay placed AFTER transparent-ui rules.
    background-image wins over the shorthand reset from transparent-ui when
@@ -2481,10 +2497,18 @@ body.transparent-ui #sidebar-panel {
   backdrop-filter: blur(20px) saturate(150%);
   -webkit-backdrop-filter: blur(20px) saturate(150%);
 }
+body.transparent-ui .sidebar-panel-header {
+  background: transparent !important;
+  border-color: rgba(0,0,0,.10) !important;
+}
 body.transparent-ui.dark #sidebar-panel {
   background: rgba(32,33,36,.36) !important;
   backdrop-filter: blur(20px) saturate(140%);
   -webkit-backdrop-filter: blur(20px) saturate(140%);
+}
+body.transparent-ui.dark .sidebar-panel-header {
+  background: transparent !important;
+  border-color: rgba(255,255,255,.08) !important;
 }
 .sidebar-panel-header {
   height: 38px;
@@ -2755,6 +2779,7 @@ body.sidebar-resizing #sidebar-panel { pointer-events: auto !important; }
   grid-template-columns: repeat(8, 1fr);
   gap: 2px;
   align-content: start;
+  contain: content;
 }
 #emoji-grid::-webkit-scrollbar { width: 8px; }
 #emoji-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }

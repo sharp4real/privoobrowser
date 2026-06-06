@@ -3030,10 +3030,9 @@ function renderEmojiGrid() {
     cell.title = name;
     cell.setAttribute('role', 'gridcell');
     cell.setAttribute('aria-label', name || glyph);
+    cell.dataset.glyph = glyph;
+    cell.dataset.name  = name || '';
     cell.textContent = glyph;
-    cell.addEventListener('mouseenter', () => updateEmojiPreview(glyph, name));
-    cell.addEventListener('focus',      () => updateEmojiPreview(glyph, name));
-    cell.addEventListener('click', () => selectEmoji(glyph));
     frag.appendChild(cell);
   }
   emojiGridEl.replaceChildren(frag);
@@ -3096,6 +3095,20 @@ let _emojiSearchTimer = null;
 emojiSearchInp?.addEventListener('input', () => {
   clearTimeout(_emojiSearchTimer);
   _emojiSearchTimer = setTimeout(renderEmojiGrid, 120);
+});
+
+// Delegated handlers — set up once, survive every grid re-render
+emojiGridEl?.addEventListener('mouseover', (e) => {
+  const cell = e.target.closest('.ep-cell');
+  if (cell) updateEmojiPreview(cell.dataset.glyph, cell.dataset.name);
+});
+emojiGridEl?.addEventListener('focusin', (e) => {
+  const cell = e.target.closest('.ep-cell');
+  if (cell) updateEmojiPreview(cell.dataset.glyph, cell.dataset.name);
+});
+emojiGridEl?.addEventListener('click', (e) => {
+  const cell = e.target.closest('.ep-cell');
+  if (cell) selectEmoji(cell.dataset.glyph);
 });
 emojiSearchInp?.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { e.preventDefault(); closeEmojiPicker(); return; }
