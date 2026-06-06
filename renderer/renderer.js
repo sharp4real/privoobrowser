@@ -1671,6 +1671,11 @@ function closeTab(id) {
   setTimeout(() => closingEl.remove(), 240);
   if (tabs.length === 0) {
     try { tab.wv.remove(); } catch (_) {}
+    if (document.body.classList.contains('vertical-tabs') && settings?.vtabsSearchPopup) {
+      renderVtabs();
+      showSearchPopup();
+      return;
+    }
     createTab();
     return;
   }
@@ -3929,7 +3934,10 @@ window.addEventListener('mousedown', (e) => {
 function handleAction(action) {
   closePopovers();
   switch (action) {
-    case 'new-tab':    createTab(); break;
+    case 'new-tab':
+      if (document.body.classList.contains('vertical-tabs') && settings?.vtabsSearchPopup) showSearchPopup();
+      else createTab();
+      break;
     case 'new-incognito':
       window.privoo.openIncognitoWindow?.().catch(() => {});
       break;
@@ -4054,7 +4062,10 @@ forwardBtn.addEventListener('click', () => { const w = activeTab()?.wv; if (w?.c
 document.getElementById('vt-back')?.addEventListener('click', () => { const w = activeTab()?.wv; if (w?.canGoBack()) w.goBack(); });
 document.getElementById('vt-forward')?.addEventListener('click', () => { const w = activeTab()?.wv; if (w?.canGoForward()) w.goForward(); });
 document.getElementById('vt-reload')?.addEventListener('click', () => { const w = activeTab()?.wv; if (!w) return; if (w.isLoading()) w.stop(); else w.reload(); });
-document.getElementById('vt-new')?.addEventListener('click', () => newTab());
+document.getElementById('vt-new')?.addEventListener('click', () => {
+  if (settings?.vtabsSearchPopup) showSearchPopup();
+  else newTab();
+});
 
 reloadBtn.addEventListener('click',  () => {
   const w = activeTab()?.wv;
@@ -4062,7 +4073,10 @@ reloadBtn.addEventListener('click',  () => {
   if (w.isLoading()) w.stop(); else w.reload();
 });
 homeBtn.addEventListener('click', () => navigate(settings?.homePage || NEWTAB_URL));
-newTabBtn.addEventListener('click', () => createTab());
+newTabBtn.addEventListener('click', () => {
+  if (document.body.classList.contains('vertical-tabs') && settings?.vtabsSearchPopup) showSearchPopup();
+  else createTab();
+});
 dlBtn.addEventListener('click',     async (e) => {
   e.stopPropagation();
   const was = !dlPopover?.classList.contains('hidden');
@@ -4828,7 +4842,14 @@ function applyPlatformChrome(platform) {
       restored = await restoreSession(saved);
     } catch { /* ignore */ }
   }
-  if (!restored) createTab();
+  if (!restored) {
+    if (document.body.classList.contains('vertical-tabs') && settings?.vtabsSearchPopup) {
+      renderVtabs();
+      showSearchPopup();
+    } else {
+      createTab();
+    }
+  }
   refreshStats();
   setInterval(refreshStats, 1500);
   // Incognito windows never persist their tab list — that would leak the
@@ -4845,7 +4866,12 @@ function applyPlatformChrome(platform) {
 function applyVerticalTabs(on) {
   document.body.classList.toggle('vertical-tabs', on);
   if (vtabsPanel) vtabsPanel.hidden = !on;
-  if (on) renderVtabs();
+  if (on) {
+    renderVtabs();
+  } else {
+    hideSearchPopup();
+    if (tabs.length === 0) createTab();
+  }
 }
 
 let _vtabsRafPending = false;
@@ -5047,11 +5073,128 @@ function _makeVtabGroupEl(g) {
   return el;
 }
 
-vtabsNewBtn?.addEventListener('click', () => createTab());
+vtabsNewBtn?.addEventListener('click', () => {
+  if (settings?.vtabsSearchPopup) showSearchPopup();
+  else createTab();
+});
 
 document.getElementById('vtabs-collapse')?.addEventListener('click', async () => {
   document.body.classList.toggle('vtabs-collapsed');
   await window.privoo?.saveSettings({ vtabsCollapsed: document.body.classList.contains('vtabs-collapsed') });
+});
+
+// ─── Vtabs Search Popup ───────────────────────────────────────────────────────
+const searchPopupEl    = document.getElementById('search-popup');
+const searchPopupInput = document.getElementById('search-popup-input');
+const searchPopupSugs  = document.getElementById('search-popup-suggestions');
+
+let _spSugTimer = null;
+let _spSugGen   = 0;
+let _spSugItems = [];
+let _spSugIndex = -1;
+
+function showSearchPopup() {
+  if (!searchPopupEl) return;
+  searchPopupEl.classList.remove('hidden');
+  searchPopupInput.value = '';
+  _spSugItems = [];
+  _spSugIndex = -1;
+  if (searchPopupSugs) searchPopupSugs.classList.add('hidden');
+  requestAnimationFrame(() => searchPopupInput?.focus());
+}
+
+function hideSearchPopup() {
+  if (!searchPopupEl) return;
+  searchPopupEl.classList.add('hidden');
+  if (searchPopupSugs) searchPopupSugs.classList.add('hidden');
+  clearTimeout(_spSugTimer);
+  _spSugGen++;
+}
+
+function _spNavigate(text) {
+  hideSearchPopup();
+  if (tabs.length === 0) {
+    createTab(toUrl(text));
+  } else {
+    navigate(text);
+  }
+}
+
+function _spRenderSugs(items) {
+  if (!searchPopupSugs || !items.length) {
+    searchPopupSugs?.classList.add('hidden');
+    _spSugItems = [];
+    return;
+  }
+  _spSugItems = items;
+  _spSugIndex = -1;
+  searchPopupSugs.innerHTML = '';
+  const SUG_SEARCH = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5 1.49-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg>`;
+  const SUG_CLOCK  = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm4.24 16L11 14.67V7h1.5v7l4.74 2.82-1.01 1.18z"/></svg>`;
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    const el = document.createElement('div');
+    el.className = 'sp-sug-item';
+    el.dataset.idx = i;
+    const icon = it.type === 'history' ? SUG_CLOCK : SUG_SEARCH;
+    el.innerHTML =
+      `<span class="sp-sug-icon">${icon}</span>` +
+      `<div class="sp-sug-body"><div class="sp-sug-title">${esc(it.label)}</div>` +
+      (it.type === 'history' && it.text !== it.label ? `<div class="sp-sug-url">${esc(it.text)}</div>` : '') +
+      `</div>`;
+    el.addEventListener('mousedown', (e) => { e.preventDefault(); _spNavigate(it.text); });
+    searchPopupSugs.appendChild(el);
+  }
+  searchPopupSugs.classList.remove('hidden');
+}
+
+function _spHighlight(idx) {
+  _spSugIndex = idx;
+  searchPopupSugs?.querySelectorAll('.sp-sug-item').forEach((el, i) => el.classList.toggle('active', i === idx));
+  if (idx >= 0 && _spSugItems[idx]) searchPopupInput.value = _spSugItems[idx].text;
+}
+
+async function _spFetch(q) {
+  if (!q.trim()) { searchPopupSugs?.classList.add('hidden'); return; }
+  const myGen = ++_spSugGen;
+  const hist = await window.privoo.historyAutocomplete(q).catch(() => []);
+  if (myGen !== _spSugGen) return;
+  let remote = [];
+  if (settings?.searchSuggestions !== false) {
+    remote = await window.privoo.getSuggestions(q, settings?.searchEngine).catch(() => []);
+  }
+  if (myGen !== _spSugGen) return;
+  const items = [
+    ...hist.map(h  => ({ text: h.url,  label: h.title || h.url, type: 'history' })),
+    ...remote.map(r => ({ text: r.text, label: r.text,           type: 'search'  })),
+  ];
+  _spRenderSugs(items);
+}
+
+searchPopupInput?.addEventListener('input', () => {
+  clearTimeout(_spSugTimer);
+  _spSugTimer = setTimeout(() => _spFetch(searchPopupInput.value), 160);
+});
+
+searchPopupInput?.addEventListener('keydown', (e) => {
+  const count = _spSugItems.length;
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    _spHighlight(Math.min(_spSugIndex + 1, count - 1));
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    _spHighlight(Math.max(_spSugIndex - 1, -1));
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    const text = (_spSugIndex >= 0 && _spSugItems[_spSugIndex]) ? _spSugItems[_spSugIndex].text : searchPopupInput.value;
+    if (text.trim()) _spNavigate(text.trim());
+  } else if (e.key === 'Escape') {
+    hideSearchPopup();
+  }
+});
+
+searchPopupEl?.addEventListener('mousedown', (e) => {
+  if (e.target === searchPopupEl) hideSearchPopup();
 });
 
 // ─── Inline AI Panel ─────────────────────────────────────────────────────────

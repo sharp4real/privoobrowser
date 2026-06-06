@@ -182,6 +182,7 @@ const DEFAULTS = {
   verticalTabs: false,    // show tabs in a vertical left panel instead of horizontal strip
   vtabsCollapsed: false,  // vertical tabs panel collapsed to icon-only rail
   vtabsToolbarBottom: false, // move nav buttons to the bottom of the vertical tabs panel
+  vtabsSearchPopup: false,  // show Spotlight-style search overlay instead of loading newtab on New Tab
   sidebarLinks: [],
   ghostName: '',          // user-supplied name for the Privoo mascot
   accentColor: '',        // empty = use stylesheet default (light blue)

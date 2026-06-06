@@ -910,6 +910,10 @@
             <label class="switch"><input type="checkbox" id="vtabsToolbarBottom"><span class="slider"></span></label>
           </div>
           <div class="row">
+            <div><div class="label">Search popup on new tab</div><div class="desc">Opens a Spotlight-style search overlay when opening a new tab in vertical tabs mode.</div></div>
+            <label class="switch"><input type="checkbox" id="vtabsSearchPopup"><span class="slider"></span></label>
+          </div>
+          <div class="row">
             <div><div class="label">Show bookmarks bar</div><div class="desc">Display saved bookmarks under the address bar.</div></div>
             <label class="switch"><input type="checkbox" id="showBookmarksBar"><span class="slider"></span></label>
           </div>
@@ -1365,7 +1369,7 @@
         <div class="card">
           <div class="row">
             <div><div class="label">Privoo Browser</div><div class="desc">Private, local-first browsing controls.</div></div>
-            <span class="desc" id="privoo-version">v2.6.0</span>
+            <span class="desc" id="privoo-version">v2.7.0</span>
           </div>
         </div>
 
@@ -1479,7 +1483,7 @@
 <script>
 const api = window.privooInternal;
 const TOGGLES = [
-  'verticalTabs', 'vtabsToolbarBottom', 'darkMode', 'forceDarkMode', 'showHomeButton', 'showBookmarksBar',
+  'verticalTabs', 'vtabsToolbarBottom', 'vtabsSearchPopup', 'darkMode', 'forceDarkMode', 'showHomeButton', 'showBookmarksBar',
   'ntpShowWeather', 'ntpFocusedSearch', 'ntpShowQuickLinks', 'ntpShowNews',
   'increaseTransparency', 'aeroGradient', 'vibeEnabled', 'compactMode', 'searchSuggestions',
   'askDownloadPath', 'adBlocking', 'httpsUpgrade', 'httpsUpgradeShowNotice', 'blockThirdPartyCookies',
