@@ -313,13 +313,12 @@ body.has-vibe #omnibox-wrap {
 body.has-vibe #omnibox-wrap:focus-within {
   background-image: none;
 }
-/* Every floating UI surface — popovers, menus, suggestions, context menus,
-   modals — becomes translucent with a backdrop blur so the OS material
-   still shows through them while text stays readable. */
+/* Every floating UI surface — popovers, menus, context menus — gets a frosted
+   glass look. backdrop-filter is only applied to elements that appear OUTSIDE
+   the already-blurred toolbar layer; elements inside it (#suggestions) skip
+   the nested backdrop-filter to prevent ghost GPU-layer artefacts. */
 body.transparent-ui .popover,
 body.transparent-ui .toolbar-popover,
-body.transparent-ui #suggestions,
-body.transparent-ui #site-info-popover,
 body.transparent-ui #shield-panel,
 body.transparent-ui #menu,
 body.transparent-ui #dl-popover,
@@ -335,6 +334,11 @@ body.transparent-ui #tab-context-menu {
   color: #1f1f1f !important;
   backdrop-filter: blur(14px) saturate(160%);
   -webkit-backdrop-filter: blur(14px) saturate(160%);
+}
+/* #suggestions lives inside the blurred toolbar — no nested backdrop-filter */
+body.transparent-ui #suggestions {
+  background: rgba(255, 255, 255, .82) !important;
+  color: #1f1f1f !important;
 }
 body.transparent-ui #emoji-picker {
   background: rgba(255, 255, 255, .52) !important;
@@ -352,8 +356,6 @@ body.transparent-ui #emoji-categories {
 }
 body.transparent-ui.dark .popover,
 body.transparent-ui.dark .toolbar-popover,
-body.transparent-ui.dark #suggestions,
-body.transparent-ui.dark #site-info-popover,
 body.transparent-ui.dark #shield-panel,
 body.transparent-ui.dark #menu,
 body.transparent-ui.dark #dl-popover,
@@ -369,6 +371,10 @@ body.transparent-ui.dark #tab-context-menu {
   color: #e8eaed !important;
   backdrop-filter: blur(14px) saturate(140%);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
+}
+body.transparent-ui.dark #suggestions {
+  background: rgba(32, 33, 36, .86) !important;
+  color: #e8eaed !important;
 }
 body.transparent-ui.dark #emoji-picker {
   background: rgba(28, 29, 33, .52) !important;
@@ -391,10 +397,18 @@ body.transparent-ui .vpn-input,
 body.transparent-ui .vpn-select   { background: rgba(255,255,255,.28) !important; border-color: rgba(0,0,0,.12) !important; }
 body.transparent-ui.dark .vpn-input,
 body.transparent-ui.dark .vpn-select { background: rgba(255,255,255,.08) !important; border-color: rgba(255,255,255,.12) !important; }
-/* vtab hover — override the solid --hover colour with a translucent tint so the
-   frosted panel stays glassy instead of showing an opaque strip. */
-body.transparent-ui .vtab:hover       { background: rgba(0,0,0,.08) !important; }
-body.transparent-ui.dark .vtab:hover  { background: rgba(255,255,255,.10) !important; }
+/* vtab panel — all hover/interactive states use translucent tints so the
+   frosted panel stays glassy instead of showing opaque solid strips. */
+body.transparent-ui .vtab:hover                    { background: rgba(0,0,0,.08) !important; }
+body.transparent-ui.dark .vtab:hover               { background: rgba(255,255,255,.10) !important; }
+body.transparent-ui .vtabs-new-btn:hover           { background: rgba(0,0,0,.08) !important; color: var(--text) !important; }
+body.transparent-ui.dark .vtabs-new-btn:hover      { background: rgba(255,255,255,.10) !important; color: var(--text) !important; }
+body.transparent-ui .vtabs-collapse-btn:hover      { background: rgba(0,0,0,.08) !important; }
+body.transparent-ui.dark .vtabs-collapse-btn:hover { background: rgba(255,255,255,.10) !important; }
+body.transparent-ui .vtf-btn:hover:not(:disabled)  { background: rgba(0,0,0,.08) !important; }
+body.transparent-ui.dark .vtf-btn:hover:not(:disabled) { background: rgba(255,255,255,.10) !important; }
+body.transparent-ui .vtf-new                       { background: rgba(138,180,248,.22) !important; }
+body.transparent-ui .vtf-new:hover                 { background: rgba(138,180,248,.38) !important; color: var(--text) !important; }
 /* Mobile disclaimer card */
 body.transparent-ui .mdisc-card { background: rgba(255,255,255,.72) !important; backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
 body.transparent-ui.dark .mdisc-card { background: rgba(32,33,36,.72) !important; }

@@ -1790,7 +1790,7 @@ function showHtmlMenu(items, x, y, el) {
 }
 
 // Backdrop click dismisses any open HTML menu
-ctxBackdrop?.addEventListener('mousedown', (e) => { e.preventDefault(); _closeCtxMenu(null); });
+ctxBackdrop?.addEventListener('mousedown', () => { _closeCtxMenu(null); });
 
 // Delegated handler for tab context menu
 tabContextMenu?.addEventListener('mousedown', (e) => {
