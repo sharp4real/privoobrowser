@@ -111,22 +111,22 @@ body.transparent-ui #bookmarks-bar {
   -webkit-backdrop-filter: blur(12px) saturate(150%);
 }
 body.transparent-ui .tab.active {
-  background: rgba(255,255,255,.58) !important;
+  background: rgba(0,0,0,.10) !important;
 }
 /* Omnibox — frosted pill sitting inside the already-blurred toolbar.
    No separate backdrop-filter needed (it inherits the toolbar blur);
-   a light tint + border delineates the pill. Opaque on focus so text
-   is always readable against any desktop background. */
+   a light tint + border delineates the pill. Semi-transparent on focus
+   so the frosted look is preserved while text stays readable. */
 body.transparent-ui #omnibox-wrap {
   background: rgba(255, 255, 255, .22) !important;
   border-color: rgba(255, 255, 255, .38) !important;
 }
 body.transparent-ui #omnibox-wrap:hover { background: rgba(255, 255, 255, .30) !important; }
 body.transparent-ui #omnibox-wrap:focus-within {
-  background: rgba(26, 27, 30, .96) !important;
+  background: rgba(18, 19, 22, .52) !important;
   border-color: var(--accent) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  backdrop-filter: blur(24px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
 }
 body.transparent-ui #omnibox-wrap:focus-within #omnibox,
 body.transparent-ui #omnibox-wrap:focus-within .site-icon,
@@ -171,7 +171,7 @@ body.transparent-ui.dark #bookmarks-bar {
   -webkit-backdrop-filter: blur(12px) saturate(130%);
 }
 body.transparent-ui.dark .tab.active {
-  background: rgba(62,63,68,.56) !important;
+  background: rgba(255,255,255,.08) !important;
 }
 body.transparent-ui.dark #omnibox-wrap {
   background: rgba(255, 255, 255, .10) !important;
@@ -179,10 +179,10 @@ body.transparent-ui.dark #omnibox-wrap {
 }
 body.transparent-ui.dark #omnibox-wrap:hover { background: rgba(255, 255, 255, .16) !important; }
 body.transparent-ui.dark #omnibox-wrap:focus-within {
-  background: rgba(28, 29, 32, .97) !important;
+  background: rgba(18, 19, 22, .52) !important;
   border-color: var(--accent) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  backdrop-filter: blur(24px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
 }
 body.transparent-ui.dark .strip         { background: rgba(28, 29, 33, .18) !important; }
 
