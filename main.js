@@ -209,6 +209,64 @@ if (!_singleInstanceLock) {
   } catch (e) {
     console.warn('Privoo: protocol client registration failed:', e.message);
   }
+
+  // Write the full StartMenuInternet registry subtree so Windows shows
+  // Privoo in Settings > Default apps as a choosable browser.
+  // setAsDefaultProtocolClient alone does NOT write these keys.
+  if (process.platform === 'win32' && app.isPackaged) {
+    registerWindowsBrowserCapabilities();
+  }
+}
+
+function registerWindowsBrowserCapabilities() {
+  try {
+    const { spawnSync } = require('child_process');
+    const exe     = process.execPath;
+    const exeCmd  = `"${exe}"`;
+    const icon0   = `"${exe}",0`;
+    const icon1   = `"${exe}",1`;
+    const CAP     = 'Software\\Clients\\StartMenuInternet\\Privoo\\Capabilities';
+    const entries = [
+      // ProgID: HTML files
+      ['HKCU\\Software\\Classes\\PrivooBrowserHTM', '/ve', '/d', 'Privoo HTML Document', '/f'],
+      ['HKCU\\Software\\Classes\\PrivooBrowserHTM\\DefaultIcon', '/ve', '/d', icon1, '/f'],
+      ['HKCU\\Software\\Classes\\PrivooBrowserHTM\\shell\\open\\command', '/ve', '/d', `${exeCmd} "%1"`, '/f'],
+      // ProgID: URL protocols
+      ['HKCU\\Software\\Classes\\PrivooBrowser', '/ve', '/d', 'Privoo URL', '/f'],
+      ['HKCU\\Software\\Classes\\PrivooBrowser', '/v', 'URL Protocol', '/d', '', '/f'],
+      ['HKCU\\Software\\Classes\\PrivooBrowser\\DefaultIcon', '/ve', '/d', icon0, '/f'],
+      ['HKCU\\Software\\Classes\\PrivooBrowser\\shell\\open\\command', '/ve', '/d', `${exeCmd} "%1"`, '/f'],
+      // StartMenuInternet entry
+      ['HKCU\\Software\\Clients\\StartMenuInternet\\Privoo', '/ve', '/d', 'Privoo', '/f'],
+      ['HKCU\\Software\\Clients\\StartMenuInternet\\Privoo\\DefaultIcon', '/ve', '/d', icon0, '/f'],
+      ['HKCU\\Software\\Clients\\StartMenuInternet\\Privoo\\shell\\open\\command', '/ve', '/d', exeCmd, '/f'],
+      // Capabilities
+      [`HKCU\\${CAP}`, '/v', 'ApplicationDescription', '/d', 'Private, fast browsing with built-in ad blocking and tracking protection.', '/f'],
+      [`HKCU\\${CAP}`, '/v', 'ApplicationIcon', '/d', icon0, '/f'],
+      [`HKCU\\${CAP}`, '/v', 'ApplicationName', '/d', 'Privoo', '/f'],
+      // File associations
+      [`HKCU\\${CAP}\\FileAssociations`, '/v', '.htm',   '/d', 'PrivooBrowserHTM', '/f'],
+      [`HKCU\\${CAP}\\FileAssociations`, '/v', '.html',  '/d', 'PrivooBrowserHTM', '/f'],
+      [`HKCU\\${CAP}\\FileAssociations`, '/v', '.shtml', '/d', 'PrivooBrowserHTM', '/f'],
+      [`HKCU\\${CAP}\\FileAssociations`, '/v', '.xhtml', '/d', 'PrivooBrowserHTM', '/f'],
+      [`HKCU\\${CAP}\\FileAssociations`, '/v', '.xht',   '/d', 'PrivooBrowserHTM', '/f'],
+      [`HKCU\\${CAP}\\FileAssociations`, '/v', '.webp',  '/d', 'PrivooBrowserHTM', '/f'],
+      [`HKCU\\${CAP}\\FileAssociations`, '/v', '.svg',   '/d', 'PrivooBrowserHTM', '/f'],
+      [`HKCU\\${CAP}\\FileAssociations`, '/v', '.pdf',   '/d', 'PrivooBrowserHTM', '/f'],
+      // URL associations
+      [`HKCU\\${CAP}\\URLAssociations`, '/v', 'http',   '/d', 'PrivooBrowser', '/f'],
+      [`HKCU\\${CAP}\\URLAssociations`, '/v', 'https',  '/d', 'PrivooBrowser', '/f'],
+      [`HKCU\\${CAP}\\URLAssociations`, '/v', 'ftp',    '/d', 'PrivooBrowser', '/f'],
+      [`HKCU\\${CAP}\\URLAssociations`, '/v', 'mailto', '/d', 'PrivooBrowser', '/f'],
+      // RegisteredApplications pointer
+      ['HKCU\\Software\\RegisteredApplications', '/v', 'Privoo', '/d', CAP, '/f'],
+    ];
+    for (const [key, ...args] of entries) {
+      spawnSync('reg', ['add', key, ...args], { windowsHide: true });
+    }
+  } catch (e) {
+    console.warn('Privoo: Windows browser capabilities registration failed:', e.message);
+  }
 }
 
 // Pull a navigable URL or local file path out of a process argv array.
@@ -2320,14 +2378,14 @@ ipcMain.handle('open-mobile-window', (_e, url) => {
 ipcMain.handle('is-default-browser', () => app.isDefaultProtocolClient('https'));
 ipcMain.handle('set-default-browser', () => {
   if (process.platform === 'win32') {
-    // Register intent first so Windows sees Privoo in the Default Apps list
+    // Ensure the StartMenuInternet registry subtree is present, then open
+    // the Default Apps page so the user can select Privoo.
+    if (app.isPackaged) registerWindowsBrowserCapabilities();
     try {
       app.setAsDefaultProtocolClient('https');
       app.setAsDefaultProtocolClient('http');
       app.setAsDefaultProtocolClient('ftp');
     } catch {}
-    // Windows 10/11 requires the user to confirm via Settings — open
-    // directly to the Default Apps page so they can pick Privoo.
     shell.openExternal('ms-settings:defaultapps');
   } else {
     app.setAsDefaultProtocolClient('https');

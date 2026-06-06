@@ -1,6 +1,6 @@
 {
   "name": "privoo-browser",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "Privacy focused browser built on Electron.",
   "main": "main.js",
   "scripts": {
@@ -122,7 +122,8 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Privoo",
-      "artifactName": "Privoo-Setup-${version}.${ext}"
+      "artifactName": "Privoo-Setup-${version}.${ext}",
+      "include": "installer.nsh"
     },
     "mac": {
       "icon": "logo.icns",
