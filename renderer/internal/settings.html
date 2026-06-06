@@ -857,6 +857,10 @@
             </div>
             <label class="switch"><input type="checkbox" id="aeroGradient"><span class="slider"></span></label>
           </div>
+          <div class="row">
+            <div><div class="label">Wobbly Windows</div><div class="desc">Springy wobble animation when switching tabs.</div></div>
+            <label class="switch"><input type="checkbox" id="wobblyWindows"><span class="slider"></span></label>
+          </div>
           <h3 class="card-subhead" data-vibe>Your Vibe</h3>
           <div class="row">
             <div>
@@ -1069,6 +1073,10 @@
             <label class="switch"><input type="checkbox" id="webrtcProtection"><span class="slider"></span></label>
           </div>
           <div class="row">
+            <div><div class="label">Stronger tracking protection</div><div class="desc">Strips tracking URL parameters (utm_*, fbclid, etc.), minimises the Referer header on cross-origin requests, and sends the Global Privacy Control signal.</div></div>
+            <label class="switch"><input type="checkbox" id="strongerTrackingProtection"><span class="slider"></span></label>
+          </div>
+          <div class="row">
             <div><div class="label">Allow location requests</div><div class="desc">Off by default.</div></div>
             <label class="switch"><input type="checkbox" id="allowGeolocation"><span class="slider"></span></label>
           </div>
@@ -1253,7 +1261,7 @@
         </div>
       </section>
 
-      <section id="performance" data-keywords="hardware acceleration gpu performance smooth video">
+      <section id="performance" data-keywords="hardware acceleration gpu performance smooth video low end discord rpc">
         <h2>Performance</h2>
         <div class="card">
           <div class="row">
@@ -1262,6 +1270,20 @@
               <div class="desc">Use your GPU for smoother video, scrolling, and animations. Requires a restart to take effect.</div>
             </div>
             <label class="switch"><input type="checkbox" id="hardwareAcceleration"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div>
+              <div class="label">Low-end device mode</div>
+              <div class="desc">Disables heavy GPU rasterization paths and CSS transitions so the browser stays responsive on weaker hardware. Requires a restart to take full effect.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="lowEndDevice"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div>
+              <div class="label">Discord Rich Presence</div>
+              <div class="desc">Show your current browsing state in Discord.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="discordRpc"><span class="slider"></span></label>
           </div>
         </div>
       </section>
@@ -1444,11 +1466,12 @@ const TOGGLES = [
   'increaseTransparency', 'aeroGradient', 'vibeEnabled', 'compactMode', 'searchSuggestions',
   'askDownloadPath', 'adBlocking', 'httpsUpgrade', 'httpsUpgradeShowNotice', 'blockThirdPartyCookies',
   'dnsOverHttps', 'adultContentBlocking', 'spoofUserAgent', 'canvasSpoofing', 'webrtcProtection',
-  'doNotTrack', 'allowGeolocation', 'videoPopOut',
+  'doNotTrack', 'allowGeolocation', 'videoPopOut', 'strongerTrackingProtection',
+  'wobblyWindows',
   'showYtdlpToolbar', 'showGeoToolbar', 'showNotesButton', 'showSidebar', 'centerSidebarIcons', 'showAiButton', 'showTranslateButton', 'passwordManagerEnabled', 'preferPasswordLogin',
   'musicEnabled',
   'blockAdultSites', 'safeMode',
-  'hardwareAcceleration',
+  'hardwareAcceleration', 'lowEndDevice', 'discordRpc',
   'minimizeToTray', 'restoreTabsOnLaunch', 'autoUpdates',
 ];
 let currentSettings = {};
@@ -1829,7 +1852,7 @@ async function init() {
         });
       }
       if (id === 'ntpShowWeather') updateWeatherLocationRow({ ntpShowWeather: input.checked });
-      if (id === 'hardwareAcceleration') showToast('Restart Privoo to apply this change');
+      if (id === 'hardwareAcceleration' || id === 'lowEndDevice') showToast('Restart Privoo to apply this change');
     });
   }
 

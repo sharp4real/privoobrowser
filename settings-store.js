@@ -216,6 +216,24 @@ const DEFAULTS = {
 
   // Per-site ad-blocking exclusions — domains where the ad blocker is paused.
   adBlockExcludedDomains: [],
+
+  // Low-end device mode — disables heavy GPU rasterization paths and CSS
+  // transitions/animations so the browser stays responsive on weaker hardware.
+  // Requires a restart to take full effect on the GPU side.
+  lowEndDevice: false,
+
+  // Discord Rich Presence — shows current browsing state in Discord.
+  // Off by default; opt-in via Settings → System.
+  discordRpc: false,
+
+  // Wobbly Windows — adds a springy wobble animation when switching tabs.
+  // Off by default; opt-in via Settings → Appearance.
+  wobblyWindows: false,
+
+  // Stronger tracking protection — strips tracking URL parameters (utm_*,
+  // fbclid, etc.), minimises the Referer header on cross-origin requests,
+  // and sends the Global Privacy Control signal.
+  strongerTrackingProtection: false,
 };
 
 let cache = null;

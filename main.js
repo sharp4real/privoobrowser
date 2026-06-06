@@ -156,16 +156,30 @@ app.commandLine.appendSwitch('disable-features', [
 app.commandLine.appendSwitch('no-first-run');
 app.commandLine.appendSwitch('no-default-browser-check');
 
+// Load settings early — hardwareAcceleration and lowEndDevice must be known
+// before the GPU process starts; calling disableHardwareAcceleration() or
+// setting num-raster-threads after app-ready has no effect.
+let _earlySettings = {};
+try {
+  _earlySettings = settingsStore.load();
+  if (_earlySettings.hardwareAcceleration === false) app.disableHardwareAcceleration();
+} catch { /* settings file may not exist yet on first run */ }
+
 // Prevent GPU command-buffer state errors that cause black video frames
 // (particularly visible on the first YouTube video played per session).
-app.commandLine.appendSwitch('ignore-gpu-blocklist');
-app.commandLine.appendSwitch('enable-gpu-rasterization');
-app.commandLine.appendSwitch('enable-zero-copy');
-// Off-main-thread canvas rasterization + accelerated video decode improve
-// rendering throughput on pages with heavy CSS/canvas/video.
-app.commandLine.appendSwitch('enable-features',
-  'CanvasOopRasterization,AcceleratedVideoDecodeLinuxGL');
-app.commandLine.appendSwitch('num-raster-threads', '4');
+// Skip the heavy rasterization paths on low-end device mode.
+if (!_earlySettings.lowEndDevice) {
+  app.commandLine.appendSwitch('ignore-gpu-blocklist');
+  app.commandLine.appendSwitch('enable-gpu-rasterization');
+  app.commandLine.appendSwitch('enable-zero-copy');
+  // Off-main-thread canvas rasterization + accelerated video decode improve
+  // rendering throughput on pages with heavy CSS/canvas/video.
+  app.commandLine.appendSwitch('enable-features',
+    'CanvasOopRasterization,AcceleratedVideoDecodeLinuxGL');
+  app.commandLine.appendSwitch('num-raster-threads', '4');
+} else {
+  app.commandLine.appendSwitch('num-raster-threads', '1');
+}
 
 // ---------------------------------------------------------------------------
 // Single-instance lock + default-browser registration
@@ -217,16 +231,6 @@ function urlFromArgv(argv) {
 // URL Privoo was launched with (if any) — consumed once the first window
 // finishes loading.
 let _pendingLaunchUrl = urlFromArgv(process.argv);
-
-// Apply the user's hardware-acceleration preference from settings BEFORE
-// app.whenReady fires — `disableHardwareAcceleration()` must be called
-// before the GPU process starts, otherwise it has no effect.
-try {
-  const _earlySettings = settingsStore.load();
-  if (_earlySettings.hardwareAcceleration === false) {
-    app.disableHardwareAcceleration();
-  }
-} catch { /* settings file may not exist yet on first run */ }
 
 // Suppress noisy Electron internals:
 //   - "Script failed to execute" — executeJavaScript races during nav
@@ -859,6 +863,26 @@ function setupHeaderPrivacy(sess) {
 
     if (settings.doNotTrack) headers.DNT = '1';
 
+    if (settings.strongerTrackingProtection) {
+      // Global Privacy Control — tells compliant sites not to sell/share data.
+      headers['Sec-GPC'] = '1';
+      // Minimize Referer on cross-origin requests: send origin only, not path+query.
+      const reqOrigin = (() => { try { return new URL(details.url).origin; } catch { return ''; } })();
+      const pageOrigin = (() => {
+        const wc = details.webContentsId ? webContents.fromId(details.webContentsId) : null;
+        if (!wc || wc.isDestroyed()) return '';
+        try { return new URL(wc.getURL()).origin; } catch { return ''; }
+      })();
+      if (reqOrigin && pageOrigin && reqOrigin !== pageOrigin) {
+        for (const key of Object.keys(headers)) {
+          if (key.toLowerCase() === 'referer') {
+            headers[key] = pageOrigin + '/';
+            break;
+          }
+        }
+      }
+    }
+
     if (settings.blockThirdPartyCookies) {
       const reqDomain  = baseDomain(reqHostname);
       const pageDomain = documentBaseDomain(details.webContentsId);
@@ -870,6 +894,25 @@ function setupHeaderPrivacy(sess) {
     }
 
     cb({ requestHeaders: headers });
+  });
+
+  // Strip known tracking URL parameters (utm_*, fbclid, gclid, etc.) when
+  // stronger tracking protection is enabled. We redirect to a cleaned URL so
+  // the page still loads — the only change is removal of tracker params.
+  sess.webRequest.onBeforeRequest({ urls: ['https://*/*', 'http://*/*'] }, (details, cb) => {
+    if (!settingsStore.load().strongerTrackingProtection) return cb({ cancel: false });
+    if (details.resourceType !== 'mainFrame' && details.resourceType !== 'subFrame') {
+      return cb({ cancel: false });
+    }
+    let u;
+    try { u = new URL(details.url); } catch { return cb({ cancel: false }); }
+    const TRACKING_PARAMS = /^(utm_\w+|fbclid|gclid|gad_source|gbraid|wbraid|dclid|msclkid|twclid|mc_eid|igshid|_ga|yclid|zanpid|srsltid|epik|ref_src|ref_url|ttclid|s_kwcid|ef_id|affiliate_id|cmpid|adid|ad_id|campaignid|campaign_id|adgroupid)$/i;
+    let stripped = false;
+    for (const key of [...u.searchParams.keys()]) {
+      if (TRACKING_PARAMS.test(key)) { u.searchParams.delete(key); stripped = true; }
+    }
+    if (!stripped) return cb({ cancel: false });
+    cb({ redirectURL: u.toString() });
   });
 
   // Strip third-party Set-Cookie; also strip CSP for Google auth so UA overrides can inject
@@ -1059,6 +1102,10 @@ function applyRuntimeSettings(settings) {
     try { _tray.destroy(); } catch {}
     _tray = null;
   }
+
+  // Discord RPC — start/stop in response to the setting toggle.
+  if (settings.discordRpc && !_discordRpc) initDiscordRpc();
+  else if (!settings.discordRpc && _discordRpc) shutdownDiscordRpc();
 }
 
 async function saveSettingsAndBroadcast(patch) {
@@ -1622,6 +1669,36 @@ function checkForUpdatesIfEnabled() {
   });
 }
 
+// ---------------------------------------------------------------------------
+// Discord Rich Presence
+// ---------------------------------------------------------------------------
+let _discordRpc = null;
+
+function initDiscordRpc() {
+  if (_discordRpc) return;
+  try {
+    _discordRpc = require('./discord-rpc');
+    _discordRpc.connect();
+  } catch (e) {
+    console.warn('Privoo: Discord RPC unavailable:', e.message);
+    _discordRpc = null;
+  }
+}
+
+function shutdownDiscordRpc() {
+  if (!_discordRpc) return;
+  try { _discordRpc.disconnect(); } catch {}
+  _discordRpc = null;
+}
+
+ipcMain.on('discord-rpc-set-activity', (_e, activity) => {
+  if (!_discordRpc) return;
+  try {
+    if (activity) _discordRpc.setActivity(activity);
+    else _discordRpc.clearActivity();
+  } catch {}
+});
+
 // App lifecycle
 // ---------------------------------------------------------------------------
 app.whenReady().then(async () => {
@@ -1674,6 +1751,8 @@ app.whenReady().then(async () => {
   } catch {}
 
   await syncExtensionsFromSettings(settings);
+
+  if (settings.discordRpc) initDiscordRpc();
 
   createWindow();
 
@@ -2100,6 +2179,8 @@ ipcMain.handle('http-proceed', (_e, url) => {
   } catch (e) { return { ok: false, error: String(e.message || e) }; }
 });
 
+app.on('will-quit', () => { shutdownDiscordRpc(); });
+
 app.on('window-all-closed', () => {
   // With minimize-to-tray on, our `close` handler hides instead of destroys
   // so this event normally won't fire. The check below is a backstop for
@@ -2383,12 +2464,24 @@ ipcMain.handle('capture-full-page', async (e, guestWcId) => {
 // DevTools renders inside our custom right-side panel.  If that throws we
 // fall back to a native right-docked window — either way { detached } tells
 // the renderer whether to show #devtools-pane.
-ipcMain.handle('open-devtools', (_e, guestWcId) => {
+ipcMain.handle('open-devtools', (_e, guestWcId, opts) => {
   try {
     const guest = webContents.fromId(Number(guestWcId));
     if (!guest || guest.isDestroyed()) return { ok: false };
-    if (guest.isDevToolsOpened()) { guest.closeDevTools(); return { ok: true, closed: true }; }
+    if (guest.isDevToolsOpened()) {
+      if (opts?.x !== undefined && opts?.y !== undefined) {
+        guest.inspectElement(opts.x, opts.y);
+        return { ok: true };
+      }
+      guest.closeDevTools();
+      return { ok: true, closed: true };
+    }
     guest.openDevTools({ mode: 'right', activate: true });
+    if (opts?.x !== undefined && opts?.y !== undefined) {
+      guest.once('devtools-opened', () => {
+        if (!guest.isDestroyed()) guest.inspectElement(opts.x, opts.y);
+      });
+    }
     return { ok: true };
   } catch (e) {
     return { ok: false };

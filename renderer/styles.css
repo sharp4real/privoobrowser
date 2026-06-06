@@ -4727,3 +4727,30 @@ body.focus-mode #bookmarks-bar { display: none !important; }
 .sp-site-switch .slider {
   background: var(--border);
 }
+
+/* ── Wobbly Windows ────────────────────────────────────────────────────────── */
+@keyframes wobbly-enter {
+  0%   { transform: translateX(0) scale(1); }
+  15%  { transform: translateX(-3px) scale(1.003); }
+  30%  { transform: translateX(2px) scale(0.998); }
+  45%  { transform: translateX(-1.5px) scale(1.001); }
+  60%  { transform: translateX(1px) scale(0.9995); }
+  75%  { transform: translateX(-0.5px); }
+  100% { transform: translateX(0) scale(1); }
+}
+body.wobbly-windows #views-wrap.wobbly-active {
+  animation: wobbly-enter 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* ── Low-end device mode — disable transitions, animations, backdrop-filter ── */
+body.low-end-device *,
+body.low-end-device *::before,
+body.low-end-device *::after {
+  transition: none !important;
+  animation: none !important;
+}
+body.low-end-device #titlebar,
+body.low-end-device #toolbar {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}

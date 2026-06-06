@@ -474,6 +474,8 @@ function applyAppSettings() {
   paintToolbarWidgets();
   applyVerticalTabs(!!settings.verticalTabs);
   document.body.classList.toggle('vtabs-collapsed', !!settings.vtabsCollapsed);
+  document.body.classList.toggle('wobbly-windows', !!settings.wobblyWindows);
+  document.body.classList.toggle('low-end-device', !!settings.lowEndDevice);
 }
 
 function onSettingsChanged(next) {
@@ -1605,6 +1607,15 @@ function createTab(url = defaultNewTabUrl(), activate = true, opts = {}) {
   return tab;
 }
 
+function triggerWobble() {
+  if (!settings?.wobblyWindows) return;
+  const vw = document.getElementById('views-wrap');
+  if (!vw) return;
+  vw.classList.remove('wobbly-active');
+  requestAnimationFrame(() => vw.classList.add('wobbly-active'));
+  setTimeout(() => vw.classList.remove('wobbly-active'), 500);
+}
+
 function activateTab(id) {
   const tab = getTab(id);
   if (!tab) return;
@@ -1628,9 +1639,11 @@ function activateTab(id) {
   // Re-evaluate the welcome / leaving-Privoo banner for the new active tab
   // so it doesn't stick around from the previous one.
   if (typeof maybeShowOverlayBanner === 'function') maybeShowOverlayBanner(tab.url);
+  triggerWobble();
   requestAnimationFrame(resizeTabs);
   scheduleSaveSession();
   renderVtabs();
+  updateDiscordActivity();
 }
 
 function closeTab(id) {
@@ -2195,6 +2208,23 @@ function recordHistory(tab) {
   const url = tab.url;
   if (!url || url.startsWith('privoo://') || url.startsWith('about:')) return;
   window.privoo.addHistory({ url, title: tab.title || url }).catch?.(() => {});
+}
+
+// ─── Discord Rich Presence ───────────────────────────────────────────────────
+function updateDiscordActivity() {
+  if (!settings?.discordRpc || !window.privoo?.setDiscordActivity) return;
+  const tab = activeTab();
+  if (!tab) { window.privoo.setDiscordActivity(null); return; }
+  const url = tab.url || '';
+  const title = tab.title || '';
+  let details = title || 'Browsing';
+  let state;
+  try { state = new URL(url).hostname || undefined; } catch {}
+  window.privoo.setDiscordActivity({
+    details: details.slice(0, 128),
+    state: state ? state.slice(0, 128) : undefined,
+    timestamps: { start: Math.floor(Date.now() / 1000) },
+  });
 }
 
 // ─── Toolbar sync ────────────────────────────────────────────────────────────
@@ -2882,14 +2912,15 @@ function hideWvContextMenu() {
 }
 
 // ─── DevTools ───────────────────────────────────────────────────────────────
-async function openDockedDevTools(tab) {
+async function openDockedDevTools(tab, inspectX, inspectY) {
   if (!tab?.wv) return;
   try {
-    // Toggle
     if (tab.wv.isDevToolsOpened?.()) { tab.wv.closeDevTools(); return; }
     const wcId = tab.wv.getWebContentsId?.() || 0;
     if (wcId && window.privoo?.openDevTools) {
-      await window.privoo.openDevTools(wcId);
+      const opts = (inspectX !== undefined && inspectY !== undefined)
+        ? { x: Math.round(inspectX), y: Math.round(inspectY) } : undefined;
+      await window.privoo.openDevTools(wcId, opts);
     } else {
       tab.wv.openDevTools();
     }
@@ -2967,7 +2998,6 @@ function emojiList(catId) {
 
 function renderEmojiGrid() {
   if (!emojiGridEl || !window.PRIVOO_EMOJI_DATA) return;
-  emojiGridEl.innerHTML = '';
   // Mark active category button
   emojiCategoriesEl?.querySelectorAll('.ep-cat').forEach(b => {
     b.classList.toggle('active', b.dataset.cat === emojiActiveCat);
@@ -2989,9 +3019,10 @@ function renderEmojiGrid() {
     const empty = document.createElement('div');
     empty.className = 'ep-empty';
     empty.textContent = q ? `No emojis match "${q}"` : 'Nothing here yet — pick an emoji to add it to Recent';
-    emojiGridEl.appendChild(empty);
+    emojiGridEl.replaceChildren(empty);
     return;
   }
+  const frag = document.createDocumentFragment();
   for (const [glyph, name] of entries) {
     const cell = document.createElement('button');
     cell.type = 'button';
@@ -3003,8 +3034,9 @@ function renderEmojiGrid() {
     cell.addEventListener('mouseenter', () => updateEmojiPreview(glyph, name));
     cell.addEventListener('focus',      () => updateEmojiPreview(glyph, name));
     cell.addEventListener('click', () => selectEmoji(glyph));
-    emojiGridEl.appendChild(cell);
+    frag.appendChild(cell);
   }
+  emojiGridEl.replaceChildren(frag);
 }
 
 function updateEmojiPreview(glyph, name) {
@@ -3060,7 +3092,11 @@ function closeEmojiPicker() {
 }
 
 emojiCloseBtn?.addEventListener('click', (e) => { e.stopPropagation(); closeEmojiPicker(); });
-emojiSearchInp?.addEventListener('input', () => renderEmojiGrid());
+let _emojiSearchTimer = null;
+emojiSearchInp?.addEventListener('input', () => {
+  clearTimeout(_emojiSearchTimer);
+  _emojiSearchTimer = setTimeout(renderEmojiGrid, 120);
+});
 emojiSearchInp?.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { e.preventDefault(); closeEmojiPicker(); return; }
   if (e.key === 'Enter') {
@@ -3381,7 +3417,7 @@ async function showWvContextMenu(tab, params, vx = 200, vy = 200) {
   add('Open in mobile view', () => openMobileView());
   add('Print…',           () => wv.print(),                                              { accel: 'CmdOrCtrl+P' });
   add('View page source', () => { const u = wv.getURL(); if (u) createTab(`view-source:${u}`); });
-  add('Inspect',          () => openDockedDevTools(tab),                                  { accel: 'F12' });
+  add('Inspect',          () => openDockedDevTools(tab, params?.x, params?.y),           { accel: 'F12' });
 
   let chosen = null;
   try { chosen = await showHtmlMenu(items, vx, vy); } catch { chosen = null; }

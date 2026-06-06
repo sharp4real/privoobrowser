@@ -1,6 +1,6 @@
 {
   "name": "privoo-browser",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Privacy focused browser built on Electron.",
   "main": "main.js",
   "scripts": {
@@ -89,6 +89,7 @@
       "password-autofill.js",
       "preload.js",
       "webview-preload.js",
+      "discord-rpc.js",
       "settings-store.js",
       "history-store.js",
       "download-store.js",

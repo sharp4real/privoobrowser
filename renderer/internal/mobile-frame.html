@@ -173,7 +173,7 @@ webview {
       <div class="spinner"></div>
     </div>
 
-    <webview id="wv" allowpopups></webview>
+    <webview id="wv" allowpopups useragent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"></webview>
 
     <div class="nav">
       <button class="nav-btn" id="btn-back" title="Back">
@@ -239,8 +239,8 @@ wv.addEventListener('did-navigate', () => {
   updateNav();
 });
 
-wv.addEventListener('did-navigate-in-page', (e) => {
-  try { urlText.textContent = new URL(e.url).hostname; } catch {}
+wv.addEventListener('did-navigate-in-page', () => {
+  updateNav();
 });
 
 btnBack.addEventListener('click',   () => { try { wv.goBack();   } catch {} });
