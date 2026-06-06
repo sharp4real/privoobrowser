@@ -30,8 +30,6 @@ body {
     0 8px 24px rgba(0,0,0,0.6),
     inset 0 1px 0 rgba(255,255,255,0.08);
   flex-shrink: 0;
-  /* Dragging the phone bezel moves the whole transparent window,
-     which visually looks like dragging the phone around the screen. */
   -webkit-app-region: drag;
   cursor: grab;
 }
@@ -77,6 +75,12 @@ body {
   border-radius: 20px;
   z-index: 100;
   pointer-events: none;
+  transition: opacity .2s, transform .2s;
+  transform-origin: center top;
+}
+.dynamic-island.hidden {
+  opacity: 0;
+  transform: translateX(-50%) scaleY(0);
 }
 
 /* ── Content webview ─────────────────────────────────────────── */
@@ -113,7 +117,6 @@ webview {
 .nav-btn:active { transform: scale(0.88); }
 .nav-btn:disabled { opacity: 0.28; pointer-events: none; }
 
-
 /* Home indicator */
 .home-bar {
   position: absolute;
@@ -126,10 +129,18 @@ webview {
   pointer-events: none;
 }
 
-/* ── Close button (outside phone, top-right corner) ─────────── */
-.close-btn {
+/* ── Corner buttons (top-right) ──────────────────────────────── */
+.corner-btns {
   position: fixed;
   top: 18px; right: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  -webkit-app-region: no-drag;
+  z-index: 500;
+}
+
+.corner-btn {
   width: 34px; height: 34px;
   background: rgba(255,255,255,0.1);
   border: 1px solid rgba(255,255,255,0.15);
@@ -137,13 +148,83 @@ webview {
   color: rgba(255,255,255,0.7);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  transition: background 0.12s, color 0.12s;
+  transition: background 0.12s, color 0.12s, transform 0.1s;
   backdrop-filter: blur(8px);
   -webkit-app-region: no-drag;
 }
-.close-btn:hover { background: rgba(220,60,60,0.7); color: #fff; border-color: transparent; }
+.corner-btn:hover  { background: rgba(255,255,255,0.18); color: #fff; }
+.corner-btn:active { transform: scale(0.9); }
+#btn-close:hover   { background: rgba(220,60,60,0.7); color: #fff; border-color: transparent; }
 
-/* ── Loading spinner overlay ─────────────────────────────────── */
+/* ── Settings popup ──────────────────────────────────────────── */
+.mobile-popup {
+  position: fixed;
+  top: 18px; right: 60px;
+  min-width: 186px;
+  background: rgba(26,26,30,0.92);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  padding: 4px 0;
+  backdrop-filter: blur(24px) saturate(160%);
+  z-index: 400;
+  opacity: 0;
+  transform: scale(0.88) translateX(6px);
+  pointer-events: none;
+  transition: opacity .14s, transform .14s;
+  transform-origin: top right;
+  -webkit-app-region: no-drag;
+}
+.mobile-popup.open {
+  opacity: 1;
+  transform: scale(1) translateX(0);
+  pointer-events: all;
+}
+
+.popup-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 14px;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 13px;
+  color: rgba(255,255,255,0.88);
+  user-select: none;
+}
+.popup-row + .popup-row {
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+
+/* Inline toggle */
+.mini-toggle {
+  position: relative;
+  width: 36px; height: 20px;
+  flex-shrink: 0;
+  cursor: pointer;
+  display: block;
+}
+.mini-toggle input { opacity:0; width:0; height:0; position:absolute; }
+.mini-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.2);
+  transition: background .18s;
+}
+.mini-toggle input:checked + .mini-track { background: #5b8ef0; }
+.mini-thumb {
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,.35);
+  transition: transform .18s;
+  pointer-events: none;
+}
+.mini-toggle input:checked ~ .mini-thumb { transform: translateX(16px); }
+
+/* ── Loading spinner ─────────────────────────────────────────── */
 .loading {
   position: absolute;
   inset: 0; top: 60px;
@@ -167,7 +248,7 @@ webview {
 
 <div class="phone">
   <div class="screen">
-    <div class="dynamic-island"></div>
+    <div class="dynamic-island" id="dynamic-island"></div>
 
     <div class="loading" id="loading">
       <div class="spinner"></div>
@@ -197,55 +278,83 @@ webview {
   </div>
 </div>
 
-<button class="close-btn" id="btn-close" title="Close">
-  <svg viewBox="0 0 14 14" width="12" height="12">
-    <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.6" fill="none"/>
-  </svg>
-</button>
+<!-- Top-right corner: close + cog -->
+<div class="corner-btns">
+  <button class="corner-btn" id="btn-close" title="Close">
+    <svg viewBox="0 0 14 14" width="12" height="12">
+      <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.6" fill="none"/>
+    </svg>
+  </button>
+  <button class="corner-btn" id="btn-settings" title="Mobile settings">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+      <path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7 7 0 0 0-1.62-.94l-.36-2.54A.484.484 0 0 0 14 3h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.466.466 0 0 0-.59.22L2.74 8.87a.485.485 0 0 0 .12.61l2.03 1.58c-.04.3-.07.63-.07.94s.03.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.37 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z"/>
+    </svg>
+  </button>
+</div>
+
+<!-- Mobile settings popup -->
+<div class="mobile-popup" id="mobile-popup">
+  <div class="popup-row">
+    <span>Dynamic Island</span>
+    <label class="mini-toggle">
+      <input type="checkbox" id="toggle-island">
+      <div class="mini-track"></div>
+      <div class="mini-thumb"></div>
+    </label>
+  </div>
+</div>
 
 <script>
-const wv       = document.getElementById('wv');
-const btnBack  = document.getElementById('btn-back');
-const btnFwd   = document.getElementById('btn-fwd');
-const btnReload= document.getElementById('btn-reload');
-const btnClose = document.getElementById('btn-close');
-const loading  = document.getElementById('loading');
+const wv            = document.getElementById('wv');
+const btnBack       = document.getElementById('btn-back');
+const btnFwd        = document.getElementById('btn-fwd');
+const btnReload     = document.getElementById('btn-reload');
+const btnClose      = document.getElementById('btn-close');
+const btnSettings   = document.getElementById('btn-settings');
+const loading       = document.getElementById('loading');
+const dynamicIsland = document.getElementById('dynamic-island');
+const popup         = document.getElementById('mobile-popup');
+const toggleIsland  = document.getElementById('toggle-island');
 
-// Read URL from query params passed by main.js via win.loadFile({ query })
+// ── URL from query param ────────────────────────────────────────
 const params   = new URLSearchParams(location.search);
 const startUrl = params.get('url') || '';
+if (startUrl) wv.setAttribute('src', startUrl);
 
-// Set src on the webview element before first paint so Electron attaches the
-// renderer with the correct URL rather than navigating away from about:blank.
-if (startUrl) {
-  wv.setAttribute('src', startUrl);
-}
+// ── Dynamic Island preference ───────────────────────────────────
+const ISLAND_KEY = 'privoo_mobile_island';
+const showIsland = localStorage.getItem(ISLAND_KEY) !== 'false';
+toggleIsland.checked = showIsland;
+if (!showIsland) dynamicIsland.classList.add('hidden');
 
+toggleIsland.addEventListener('change', () => {
+  const show = toggleIsland.checked;
+  localStorage.setItem(ISLAND_KEY, show ? 'true' : 'false');
+  dynamicIsland.classList.toggle('hidden', !show);
+});
+
+// ── Settings popup open/close ───────────────────────────────────
+btnSettings.addEventListener('click', e => {
+  e.stopPropagation();
+  popup.classList.toggle('open');
+});
+document.addEventListener('click', () => popup.classList.remove('open'));
+popup.addEventListener('click', e => e.stopPropagation());
+
+// ── Navigation ──────────────────────────────────────────────────
 function updateNav() {
   btnBack.disabled = !wv.canGoBack();
   btnFwd.disabled  = !wv.canGoForward();
 }
 
-wv.addEventListener('did-start-loading', () => {
-  loading.classList.remove('hidden');
-});
+wv.addEventListener('did-start-loading',    () => loading.classList.remove('hidden'));
+wv.addEventListener('did-stop-loading',     () => { loading.classList.add('hidden'); updateNav(); });
+wv.addEventListener('did-navigate',         () => updateNav());
+wv.addEventListener('did-navigate-in-page', () => updateNav());
 
-wv.addEventListener('did-stop-loading', () => {
-  loading.classList.add('hidden');
-  updateNav();
-});
-
-wv.addEventListener('did-navigate', () => {
-  updateNav();
-});
-
-wv.addEventListener('did-navigate-in-page', () => {
-  updateNav();
-});
-
-btnBack.addEventListener('click',   () => { try { wv.goBack();   } catch {} });
-btnFwd.addEventListener('click',    () => { try { wv.goForward();} catch {} });
-btnReload.addEventListener('click', () => { try { wv.reload();   } catch {} });
+btnBack.addEventListener('click',   () => { try { wv.goBack();    } catch {} });
+btnFwd.addEventListener('click',    () => { try { wv.goForward(); } catch {} });
+btnReload.addEventListener('click', () => { try { wv.reload();    } catch {} });
 btnClose.addEventListener('click',  () => window.close());
 </script>
 </body>
