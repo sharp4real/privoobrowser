@@ -392,7 +392,8 @@ body.transparent-ui.dark #emoji-categories {
 body.has-vibe .toolbar-popover,
 body.has-vibe .popover,
 body.has-vibe #menu,
-body.has-vibe #suggestions {
+body.has-vibe #suggestions,
+body.has-vibe #emoji-picker {
   background-image: linear-gradient(
     150deg,
     hsl(var(--vibe-hue) 75% 68% / .13) 0%,
@@ -403,7 +404,8 @@ body.has-vibe #suggestions {
 body.dark.has-vibe .toolbar-popover,
 body.dark.has-vibe .popover,
 body.dark.has-vibe #menu,
-body.dark.has-vibe #suggestions {
+body.dark.has-vibe #suggestions,
+body.dark.has-vibe #emoji-picker {
   background-image: linear-gradient(
     150deg,
     hsl(var(--vibe-hue) 65% 60% / .18) 0%,
