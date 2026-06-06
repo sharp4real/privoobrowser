@@ -2378,15 +2378,31 @@ ipcMain.handle('open-mobile-window', (_e, url) => {
 ipcMain.handle('is-default-browser', () => app.isDefaultProtocolClient('https'));
 ipcMain.handle('set-default-browser', () => {
   if (process.platform === 'win32') {
-    // Ensure the StartMenuInternet registry subtree is present, then open
-    // the Default Apps page so the user can select Privoo.
     if (app.isPackaged) registerWindowsBrowserCapabilities();
     try {
       app.setAsDefaultProtocolClient('https');
       app.setAsDefaultProtocolClient('http');
       app.setAsDefaultProtocolClient('ftp');
     } catch {}
-    shell.openExternal('ms-settings:defaultapps');
+    // Open the "Set program defaults" dialog for Privoo via COM.
+    // IApplicationAssociationRegistrationUI::LaunchAdvancedAssociationUI shows
+    // ALL of Privoo's registered file types + protocols so the user can enable
+    // them all in one click — not just http/https like ms-settings:defaultapps.
+    // Falls back to the Settings Default apps page if COM call fails.
+    const { spawn } = require('child_process');
+    try {
+      spawn('powershell', [
+        '-NoProfile', '-NonInteractive', '-WindowStyle', 'Hidden', '-Command',
+        `try {` +
+        `  $ui = [Activator]::CreateInstance([Type]::GetTypeFromCLSID([Guid]'1968106d-f3b5-44cf-890e-116a0d5cf8e9'));` +
+        `  $ui.LaunchAdvancedAssociationUI('Privoo')` +
+        `} catch {` +
+        `  Start-Process 'ms-settings:defaultapps'` +
+        `}`,
+      ], { detached: true, windowsHide: true }).unref();
+    } catch {
+      shell.openExternal('ms-settings:defaultapps');
+    }
   } else {
     app.setAsDefaultProtocolClient('https');
     app.setAsDefaultProtocolClient('http');
