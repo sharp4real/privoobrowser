@@ -322,6 +322,12 @@
     animation: wn-rise .28s cubic-bezier(.2,0,.2,1) both;
   }
   body.dark .whats-new-card { background: #303134; border-color: #4a4d51; }
+  body.transparent-ui .whats-new-card {
+    background: rgba(255,255,255,.74) !important;
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+  }
+  body.transparent-ui.dark .whats-new-card { background: rgba(38,40,46,.74) !important; }
   @keyframes wn-rise {
     from { opacity: 0; transform: translateY(16px) scale(.97); }
     to   { opacity: 1; transform: none; }
@@ -547,6 +553,12 @@
     padding: 22px;
   }
   body.dark .modal { background: #303134; color: #e8eaed; }
+  body.transparent-ui .modal {
+    background: rgba(255,255,255,.72) !important;
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+  }
+  body.transparent-ui.dark .modal { background: rgba(38,40,46,.72) !important; }
   .modal h3 { font-size: 18px; font-weight: 500; margin-bottom: 16px; }
   .modal .field { margin-bottom: 14px; }
   .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
@@ -906,12 +918,16 @@
             <label class="switch"><input type="checkbox" id="verticalTabs"><span class="slider"></span></label>
           </div>
           <div class="row">
-            <div><div class="label">Sidebar toolbar</div><div class="desc">Move navigation buttons to the bottom of the vertical tabs panel.</div></div>
-            <label class="switch"><input type="checkbox" id="vtabsToolbarBottom"><span class="slider"></span></label>
+            <div><div class="label">Integrate into vertical tab panel</div><div class="desc">Move toolbar icon buttons into the bottom of the sidebar panel.</div></div>
+            <label class="switch"><input type="checkbox" id="vtabsIntegrated"><span class="slider"></span></label>
           </div>
           <div class="row">
-            <div><div class="label">Search popup on new tab</div><div class="desc">Opens a Spotlight-style search overlay when opening a new tab in vertical tabs mode.</div></div>
-            <label class="switch"><input type="checkbox" id="vtabsSearchPopup"><span class="slider"></span></label>
+            <div><div class="label">Transparent search popup</div><div class="desc">Apply the glass/transparency effect to the vertical-tabs search popup. Turn off to keep it solid.</div></div>
+            <label class="switch"><input type="checkbox" id="searchPopupGlass"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">New search bar style</div><div class="desc">A sleeker, modern pill-shaped address bar in the toolbar.</div></div>
+            <label class="switch"><input type="checkbox" id="newSearchBarStyle"><span class="slider"></span></label>
           </div>
           <div class="row">
             <div><div class="label">Show bookmarks bar</div><div class="desc">Display saved bookmarks under the address bar.</div></div>
@@ -951,6 +967,10 @@
           <div class="row">
             <div><div class="label">Focused search</div><div class="desc">Scale the search bar forward and fade shortcuts when you click it.</div></div>
             <label class="switch"><input type="checkbox" id="ntpFocusedSearch"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Show clock</div><div class="desc">Display the current time and date on the new tab page.</div></div>
+            <label class="switch"><input type="checkbox" id="ntpShowClock"><span class="slider"></span></label>
           </div>
           <div class="row">
             <div><div class="label">Weather widget</div><div class="desc">Show current weather on the new tab page.</div></div>
@@ -1101,6 +1121,22 @@
           <div class="row">
             <div><div class="label">Allow location requests</div><div class="desc">Off by default.</div></div>
             <label class="switch"><input type="checkbox" id="allowGeolocation"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Proxy</div><div class="desc">Route all traffic through a proxy. <b>Tor</b> launches Tor and routes through <code>127.0.0.1:9100</code> (requires Tor installed or bundled).</div></div>
+            <select id="proxyMode">
+              <option value="none">No proxy</option>
+              <option value="manual">Manual</option>
+              <option value="tor">Tor</option>
+            </select>
+          </div>
+          <div class="row stack" id="proxy-url-row" style="display:none">
+            <div><div class="label">Proxy server</div><div class="desc">e.g. <code>socks5://127.0.0.1:1080</code> or <code>http://host:port</code>.</div></div>
+            <input type="text" id="proxyUrl" placeholder="socks5://127.0.0.1:1080" autocomplete="off" spellcheck="false" style="min-width:320px"/>
+          </div>
+          <div class="row" id="proxy-tor-row" style="display:none">
+            <div><div class="label">Tor SOCKS port</div><div class="desc">Privoo launches Tor and routes through <code>127.0.0.1:</code><span id="tor-port-label">9100</span>. Requires Tor installed/bundled.</div></div>
+            <input type="number" id="proxyTorPort" min="1" max="65535" placeholder="9100" style="width:110px"/>
           </div>
         </div>
       </section>
@@ -1483,8 +1519,8 @@
 <script>
 const api = window.privooInternal;
 const TOGGLES = [
-  'verticalTabs', 'vtabsToolbarBottom', 'vtabsSearchPopup', 'darkMode', 'forceDarkMode', 'showHomeButton', 'showBookmarksBar',
-  'ntpShowWeather', 'ntpFocusedSearch', 'ntpShowQuickLinks', 'ntpShowNews',
+  'verticalTabs', 'vtabsIntegrated', 'searchPopupGlass', 'newSearchBarStyle', 'darkMode', 'forceDarkMode', 'showHomeButton', 'showBookmarksBar',
+  'ntpShowWeather', 'ntpShowClock', 'ntpFocusedSearch', 'ntpShowQuickLinks', 'ntpShowNews',
   'increaseTransparency', 'aeroGradient', 'vibeEnabled', 'compactMode', 'searchSuggestions',
   'askDownloadPath', 'adBlocking', 'httpsUpgrade', 'httpsUpgradeShowNotice', 'blockThirdPartyCookies',
   'dnsOverHttps', 'adultContentBlocking', 'spoofUserAgent', 'canvasSpoofing', 'webrtcProtection',
@@ -1945,6 +1981,43 @@ async function init() {
     customDohInp.value = currentSettings.customDohUrl || '';
     customDohInp.addEventListener('change', () => {
       savePatch({ customDohUrl: customDohInp.value.trim() });
+    });
+  }
+
+  const proxyModeSel = $('proxyMode');
+  const proxyUrlInp = $('proxyUrl');
+  const proxyTorPortInp = $('proxyTorPort');
+  function syncProxyRow() {
+    const mode = proxyModeSel ? proxyModeSel.value : 'none';
+    const urlRow = $('proxy-url-row');
+    const torRow = $('proxy-tor-row');
+    if (urlRow) urlRow.style.display = mode === 'manual' ? '' : 'none';
+    if (torRow) torRow.style.display = mode === 'tor' ? '' : 'none';
+  }
+  if (proxyModeSel) {
+    proxyModeSel.value = currentSettings.proxyMode || 'none';
+    syncProxyRow();
+    proxyModeSel.addEventListener('change', () => {
+      savePatch({ proxyMode: proxyModeSel.value },
+        proxyModeSel.value === 'tor' ? 'Tor enabled — connecting…' : 'Proxy updated');
+      syncProxyRow();
+    });
+  }
+  if (proxyUrlInp) {
+    proxyUrlInp.value = currentSettings.proxyUrl || '';
+    proxyUrlInp.addEventListener('change', () => {
+      savePatch({ proxyUrl: proxyUrlInp.value.trim() });
+    });
+  }
+  if (proxyTorPortInp) {
+    proxyTorPortInp.value = currentSettings.proxyTorPort || 9100;
+    const label = $('tor-port-label');
+    if (label) label.textContent = currentSettings.proxyTorPort || 9100;
+    proxyTorPortInp.addEventListener('change', () => {
+      const port = Math.min(65535, Math.max(1, parseInt(proxyTorPortInp.value, 10) || 9100));
+      proxyTorPortInp.value = port;
+      if (label) label.textContent = port;
+      savePatch({ proxyTorPort: port }, 'Tor port updated — reconnecting…');
     });
   }
 

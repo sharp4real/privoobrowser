@@ -169,6 +169,8 @@ body.dark .act-btn:hover{color:#f28b82}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
 .modal-bg.open{display:flex}
 .modal{width:min(420px,100%);background:var(--surface);color:var(--text);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.22);padding:22px;border:1px solid var(--border)}
+body.transparent-ui .modal{background:rgba(255,255,255,.72) !important;backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);}
+body.transparent-ui.dark .modal{background:rgba(38,40,46,.72) !important;}
 .modal h3{font-size:17px;font-weight:500;margin-bottom:16px}
 .modal-field{margin-bottom:14px}
 .modal-field select{

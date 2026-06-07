@@ -112,6 +112,11 @@ const DEFAULTS = {
   doNotTrack: true,
   allowGeolocation: false,
 
+  // Proxy / Tor
+  proxyMode: 'none',   // 'none' | 'manual' | 'tor'
+  proxyUrl: '',        // manual proxy, e.g. socks5://127.0.0.1:1080 or http://host:port
+  proxyTorPort: 9100,  // local SOCKS port Tor listens on / we route through
+
   // Appearance
   darkMode: false,
   forceDarkMode: false,
@@ -181,8 +186,10 @@ const DEFAULTS = {
   centerSidebarIcons: false, // vertically center shortcut icons in the sidebar rail
   verticalTabs: false,    // show tabs in a vertical left panel instead of horizontal strip
   vtabsCollapsed: false,  // vertical tabs panel collapsed to icon-only rail
-  vtabsToolbarBottom: false, // move nav buttons to the bottom of the vertical tabs panel
+  vtabsIntegrated: false,   // move toolbar icon buttons into the vertical tabs panel
   vtabsSearchPopup: false,  // show Spotlight-style search overlay instead of loading newtab on New Tab
+  searchPopupGlass: true,   // apply the transparency/glass effect to the vtabs search popup
+  newSearchBarStyle: false, // modern pill-style top address bar
   sidebarLinks: [],
   ghostName: '',          // user-supplied name for the Privoo mascot
   accentColor: '',        // empty = use stylesheet default (light blue)
@@ -192,6 +199,7 @@ const DEFAULTS = {
   welcomeShown: false,
   mmhmShown: false,
   updatesToastShown: false,
+  discordPromptShown: false,
 
   // Background music
   musicPath: null,
@@ -199,6 +207,7 @@ const DEFAULTS = {
   musicVolume: 0.5,
   ntpShowWeather: false,
   ntpShowNews: false,
+  ntpShowClock: false,    // show a clock on the new tab page
   weatherLocation: '',
   /** Spoof navigator.geolocation for pages (injected). */
   geoSpoofEnabled: false,

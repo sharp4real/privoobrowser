@@ -538,7 +538,8 @@ body.ntp-wp .wx-card{
   border-color:rgba(255,255,255,.15);
   color:#fff;
 }
-.wx-icon{font-size:28px;line-height:1;flex-shrink:0;}
+.wx-icon{line-height:1;flex-shrink:0;}
+.wx-icon svg{display:block;width:32px;height:32px;}
 .wx-body{display:flex;flex-direction:column;gap:1px;}
 .wx-temp{font-size:22px;font-weight:700;line-height:1;}
 .wx-desc{font-size:12px;opacity:.75;text-transform:capitalize;}
@@ -807,6 +808,43 @@ body.ntp-dark .ut-title, body.ntp-wp .ut-title{color:#e8eaed;}
   line-height:1.45;
 }
 body.ntp-dark .ut-sub, body.ntp-wp .ut-sub{color:#9aa0a6;}
+/* vtabs search-popup mode: hide logo, search bar and quick links */
+body.vtabs-popup-mode #ntp-logo-wrap,
+body.vtabs-popup-mode #search-form,
+body.vtabs-popup-mode #quick-links { display:none !important; }
+
+/* New (modern) search bar style — center search box on the new tab */
+body.new-search-bar #search-form{
+  border-radius:14px;
+  background:#fff;
+  border:1.5px solid #e4e6e9;
+  box-shadow:0 2px 14px rgba(32,33,36,.10);
+}
+body.new-search-bar #search-form:focus-within{
+  border-color:#8ab4f8;
+  box-shadow:0 0 0 4px rgba(138,180,248,.25),0 8px 26px rgba(32,33,36,.14);
+}
+body.new-search-bar.ntp-dark:not(.ntp-wp) #search-form{
+  background:#2a2b2f;border-color:rgba(255,255,255,.10);box-shadow:0 2px 14px rgba(0,0,0,.3);
+}
+body.new-search-bar.ntp-dark:not(.ntp-wp) #search-form:focus-within{
+  border-color:#8ab4f8;box-shadow:0 0 0 4px rgba(138,180,248,.22),0 8px 26px rgba(0,0,0,.5);
+}
+body.new-search-bar.ntp-focused-search-on #ntp-root.search-focused #search-form{
+  border-radius:16px;
+}
+/* New-tab clock */
+.ntp-clock{
+  text-align:center;
+  font-variant-numeric:tabular-nums;
+  margin-bottom:14px;
+  color:#1f1f1f;
+  user-select:none;
+}
+.ntp-clock .ntp-clock-time{font-size:48px;font-weight:300;letter-spacing:-.01em;line-height:1.05;}
+.ntp-clock .ntp-clock-date{font-size:14px;font-weight:500;opacity:.7;margin-top:2px;}
+body.ntp-dark .ntp-clock,body.ntp-wp .ntp-clock{color:#fff;}
+body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
 </style>
 </head>
 <body>
@@ -818,6 +856,7 @@ body.ntp-dark .ut-sub, body.ntp-wp .ut-sub{color:#9aa0a6;}
 <div id="ntp-root">
 
 <main>
+  <div id="ntp-clock" class="ntp-clock" hidden></div>
   <div id="ntp-logo-wrap"></div>
   <div id="ntp-ghost-name" class="ntp-ghost-name" hidden></div>
 
@@ -834,30 +873,36 @@ body.ntp-dark .ut-sub, body.ntp-wp .ut-sub{color:#9aa0a6;}
   <div id="ntp-news" hidden>
     <div class="pn-wrap">
       <div class="pn-slide active" id="pn-0">
-        <div class="pn-kicker">Privoo v2.1.0</div>
-        <div class="pn-title">Privoo News is here</div>
-        <p class="pn-body">Stay up to date with what's new in each release, right from your new tab. Toggle it off any time in Settings → New tab page.</p>
+        <div class="pn-kicker">Privoo v2.7.0</div>
+        <div class="pn-title">Vertical tabs, reimagined</div>
+        <p class="pn-body">Switch your tabs to a clean side panel in Settings → Layout. Collapse it to a slim icon rail, drag the edge to resize, and keep everything tidy.</p>
       </div>
       <div class="pn-slide" id="pn-1">
-        <div class="pn-kicker">Your Vibe</div>
-        <div class="pn-title">Popups blend with your vibe</div>
-        <p class="pn-body">Toolbar menus and popovers now carry a gradient wash that flows naturally from your chosen hue — no flat blocks of colour.</p>
+        <div class="pn-kicker">New</div>
+        <div class="pn-title">Drag a tab to split the screen</div>
+        <p class="pn-body">Grab any tab and drop it on the left or right half of the page to open Split View instantly — two sites side by side, with a draggable divider.</p>
       </div>
       <div class="pn-slide" id="pn-2">
-        <div class="pn-kicker">New tab</div>
-        <div class="pn-title">Wallpaper search, now frosted</div>
-        <p class="pn-body">When you upload a wallpaper, the search bar switches to frosted glass instead of a stark white rectangle. Focused search animation is back too.</p>
+        <div class="pn-kicker">Vertical tabs</div>
+        <div class="pn-title">Search popup &amp; integrated toolbar</div>
+        <p class="pn-body">Opening a tab can pop a centered search box over an empty canvas, and your toolbar icons can tuck neatly into the bottom of the sidebar.</p>
       </div>
       <div class="pn-slide" id="pn-3">
-        <div class="pn-kicker">Performance</div>
-        <div class="pn-title">Smoother on heavy pages</div>
-        <p class="pn-body">Heavy CSS pages now render without jank. The vibe overlay GPU overhead was reduced by ~70%, freeing bandwidth for the page itself.</p>
+        <div class="pn-kicker">Appearance</div>
+        <div class="pn-title">New search bar &amp; cleaner glass</div>
+        <p class="pn-body">Try the modern address-bar style in Settings → Layout. Transparency is lighter and sharper now, so your wallpaper shows through clearly.</p>
+      </div>
+      <div class="pn-slide" id="pn-4">
+        <div class="pn-kicker">YouTube</div>
+        <div class="pn-title">Smoother playback</div>
+        <p class="pn-body">Ads are blocked and skippable, and switching the audio-track language now works as it should.</p>
       </div>
       <div class="pn-dots" id="pn-dots">
         <button class="pn-dot active" data-idx="0"></button>
         <button class="pn-dot" data-idx="1"></button>
         <button class="pn-dot" data-idx="2"></button>
         <button class="pn-dot" data-idx="3"></button>
+        <button class="pn-dot" data-idx="4"></button>
       </div>
     </div>
   </div>
@@ -865,7 +910,7 @@ body.ntp-dark .ut-sub, body.ntp-wp .ut-sub{color:#9aa0a6;}
 
 <footer id="ntp-footer">
   <div id="ntp-weather" hidden></div>
-  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee. &nbsp;&middot;&nbsp; <span id="ntp-version" style="opacity:.55">v2.1.0</span></p>
+  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee. &nbsp;&middot;&nbsp; <span id="ntp-version" style="opacity:.55">v2.7.0</span></p>
 </footer>
 
 </div>
@@ -1005,6 +1050,12 @@ function applyNtpLook(settings) {
   const newsEl = document.getElementById('ntp-news');
   if (newsEl) newsEl.hidden = settings?.ntpShowNews === false;
 
+  const clockEl = document.getElementById('ntp-clock');
+  if (clockEl) {
+    clockEl.hidden = !settings?.ntpShowClock;
+    if (settings?.ntpShowClock) startNtpClock(); else stopNtpClock();
+  }
+
   if (hasWp) {
     bg.style.backgroundImage = "url('privoo://newtab/wallpaper?t=" + Date.now() + "')";
     const d = typeof settings.ntpWallpaperDim === 'number' ? settings.ntpWallpaperDim : 0.42;
@@ -1071,6 +1122,13 @@ async function loadNtp() {
   // Greeting feature removed — keep the element hidden so legacy DOM stays inert.
   const ghostEl = document.getElementById('ntp-ghost-name');
   if (ghostEl) ghostEl.hidden = true;
+
+  // In vtabs search-popup mode the overlay handles search — hide logo + search bar
+  if (settings.verticalTabs && settings.vtabsSearchPopup) {
+    document.body.classList.add('vtabs-popup-mode');
+  }
+
+  document.body.classList.toggle('new-search-bar', !!settings.newSearchBarStyle);
 
   renderWeather(settings);
 }
@@ -1302,6 +1360,33 @@ let ssTimer  = null;
   }).catch(() => {});
 })();
 
+// ── New-tab clock ─────────────────────────────────────────────────────────────
+let _ntpClockTimer = null;
+let _ntpClockOn = false;
+function renderNtpClock() {
+  const el = document.getElementById('ntp-clock');
+  if (!el) return;
+  const now = new Date();
+  const time = now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  const date = now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+  el.innerHTML = `<div class="ntp-clock-time">${time}</div><div class="ntp-clock-date">${date}</div>`;
+}
+function _ntpClockTick(on) {
+  // Only run the 1s timer while the page is actually visible — background
+  // new-tab pages shouldn't keep a timer alive.
+  if (on && !document.hidden) {
+    renderNtpClock();
+    if (!_ntpClockTimer) _ntpClockTimer = setInterval(renderNtpClock, 1000);
+  } else if (_ntpClockTimer) {
+    clearInterval(_ntpClockTimer);
+    _ntpClockTimer = null;
+  }
+}
+function startNtpClock() { _ntpClockOn = true; _ntpClockTick(true); }
+function stopNtpClock()  { _ntpClockOn = false; _ntpClockTick(false); }
+document.addEventListener('visibilitychange', () => _ntpClockTick(_ntpClockOn));
+window.addEventListener('pagehide', () => _ntpClockTick(false));
+
 // ── Privoo News auto-cycle ────────────────────────────────────────────────────
 (function initNews() {
   const slides = Array.from(document.querySelectorAll('.pn-slide'));
@@ -1310,11 +1395,11 @@ let ssTimer  = null;
   let cur = 0, timer;
 
   function goTo(n) {
-    slides[cur].classList.remove('active');
-    dots[cur].classList.remove('active');
+    if (slides[cur]) slides[cur].classList.remove('active');
+    if (dots[cur]) dots[cur].classList.remove('active');
     cur = (n + slides.length) % slides.length;
-    slides[cur].classList.add('active');
-    dots[cur].classList.add('active');
+    if (slides[cur]) slides[cur].classList.add('active');
+    if (dots[cur]) dots[cur].classList.add('active');
   }
 
   function startAuto() {
@@ -1327,11 +1412,6 @@ let ssTimer  = null;
     startAuto();
   }));
 
-  const wrap = document.querySelector('.pn-wrap');
-  if (wrap) {
-    wrap.addEventListener('mouseenter', () => clearInterval(timer));
-    wrap.addEventListener('mouseleave', startAuto);
-  }
   startAuto();
 })();
 
@@ -1342,7 +1422,7 @@ let ssTimer  = null;
   if (!overlay || !closeBtn || !api) return;
 
   api.getSettings().then(({ settings: s }) => {
-    if (s.mmhmShown) return;
+    if (s.mmhmShown || !s.disclaimerAccepted) return;
     api.setSettings({ mmhmShown: true });
 
     function dismiss() { overlay.hidden = true; }
@@ -1432,14 +1512,17 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ── Weather widget ──────────────────────────────────────────────────────────
-const WX_ICONS = {
-  0:'â˜€ï¸',1:'â˜€ï¸',2:'â›…',3:'â˜ï¸',45:'ðŸŒ«ï¸',48:'ðŸŒ«ï¸',
-  51:'ðŸŒ¦ï¸',53:'ðŸŒ¦ï¸',55:'ðŸŒ§ï¸',61:'ðŸŒ§ï¸',63:'ðŸŒ§ï¸',65:'ðŸŒ§ï¸',
-  71:'ðŸŒ¨ï¸',73:'ðŸŒ¨ï¸',75:'â„ï¸',77:'ðŸŒ¨ï¸',
-  80:'ðŸŒ¦ï¸',81:'ðŸŒ§ï¸',82:'â›ˆï¸',
-  85:'ðŸŒ¨ï¸',86:'â„ï¸',
-  95:'â›ˆï¸',96:'â›ˆï¸',99:'â›ˆï¸',
+const _wxS=(i)=>'<svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+i+'</svg>';
+const WX_SVG={
+  sun:_wxS('<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2.5 12h2M19.5 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>'),
+  cloud:_wxS('<path d="M7 18a4 4 0 0 1 .5-7.97A5.5 5.5 0 0 1 18 11a3.5 3.5 0 0 1-.5 7H7z"/>'),
+  partly:_wxS('<circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M3.1 3.1l1 1M1.5 8H3M3.1 12.9l1-1"/><path d="M9 18.5a3.5 3.5 0 0 1 .4-6.98A4.8 4.8 0 0 1 18.5 12a3 3 0 0 1-.5 6.5H9z"/>'),
+  fog:_wxS('<path d="M6 15a4 4 0 0 1 .5-7.97A5.5 5.5 0 0 1 17 8a3.5 3.5 0 0 1 .2 7"/><path d="M4 19h16M6 22h12"/>'),
+  rain:_wxS('<path d="M7 15a4 4 0 0 1 .5-7.97A5.5 5.5 0 0 1 18 8a3.5 3.5 0 0 1-.5 7H7z"/><path d="M8 18.5l-1 2M12 18.5l-1 2M16 18.5l-1 2"/>'),
+  snow:_wxS('<path d="M7 14a4 4 0 0 1 .5-7.97A5.5 5.5 0 0 1 18 7a3.5 3.5 0 0 1-.5 7H7z"/><path d="M9 18h.01M12 20h.01M15 18h.01M12 17h.01"/>'),
+  storm:_wxS('<path d="M7 14a4 4 0 0 1 .5-7.97A5.5 5.5 0 0 1 18 7a3.5 3.5 0 0 1-.5 7H7z"/><path d="M12 14l-2 4h3l-2 4"/>'),
 };
+const WX_ICONS={0:WX_SVG.sun,1:WX_SVG.sun,2:WX_SVG.partly,3:WX_SVG.cloud,45:WX_SVG.fog,48:WX_SVG.fog,51:WX_SVG.rain,53:WX_SVG.rain,55:WX_SVG.rain,61:WX_SVG.rain,63:WX_SVG.rain,65:WX_SVG.rain,71:WX_SVG.snow,73:WX_SVG.snow,75:WX_SVG.snow,77:WX_SVG.snow,80:WX_SVG.rain,81:WX_SVG.rain,82:WX_SVG.storm,85:WX_SVG.snow,86:WX_SVG.snow,95:WX_SVG.storm,96:WX_SVG.storm,99:WX_SVG.storm};
 const WX_DESC = {
   0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',
   45:'Foggy',48:'Icy fog',
@@ -1495,42 +1578,29 @@ async function fetchWeather(location) {
 async function renderWeather(settings) {
   const el = document.getElementById('ntp-weather');
   if (!el) return;
-
-  if (!settings?.ntpShowWeather) {
-    el.hidden = true;
-    el.innerHTML = '';
-    return;
-  }
-
+  if (!settings || !settings.ntpShowWeather) { el.hidden = true; el.innerHTML = ''; return; }
   const loc = (settings.weatherLocation || '').trim();
-  if (!loc) {
-    el.hidden = true;
-    return;
-  }
-
+  if (!loc) { el.hidden = true; return; }
   el.hidden = false;
-  if (!el.innerHTML) {
-    el.innerHTML = '<div class="wx-card" style="opacity:.5;font-size:13px">Loading weatherâ€¦</div>';
-  }
-
+  if (!el.innerHTML) el.innerHTML = '<div class="wx-card" style="opacity:.5;font-size:13px">Loading weather...</div>';
   try {
     const wx = await fetchWeather(loc);
-    const icon = WX_ICONS[wx.code] ?? 'ðŸŒ¡ï¸';
-    const desc = WX_DESC[wx.code] ?? 'Unknown';
-    el.innerHTML = `
-      <div class="wx-card">
-        <div class="wx-icon">${icon}</div>
-        <div class="wx-body">
-          <div class="wx-temp">${wx.temp}°C</div>
-          <div class="wx-desc">${desc}</div>
-          <div class="wx-loc">${wx.city}${wx.country ? ', ' + wx.country : ''}</div>
-        </div>
-        <div class="wx-details">
-          <span>Feels like ${wx.feels}°C</span>
-          <span>ðŸ’§ ${wx.humidity}%</span>
-          <span>ðŸ’¨ ${wx.wind} km/h</span>
-        </div>
-      </div>`;
+    const icon = WX_ICONS[wx.code] || WX_SVG.sun;
+    const desc = WX_DESC[wx.code] || 'Unknown';
+    el.innerHTML =
+      '<div class="wx-card">' +
+        '<div class="wx-icon">' + icon + '</div>' +
+        '<div class="wx-body">' +
+          '<div class="wx-temp">' + wx.temp + '°C</div>' +
+          '<div class="wx-desc">' + desc + '</div>' +
+          '<div class="wx-loc">' + wx.city + (wx.country ? ', ' + wx.country : '') + '</div>' +
+        '</div>' +
+        '<div class="wx-details">' +
+          '<span>Feels like ' + wx.feels + '°C</span>' +
+          '<span>Humidity ' + wx.humidity + '%</span>' +
+          '<span>Wind ' + wx.wind + ' km/h</span>' +
+        '</div>' +
+      '</div>';
   } catch {
     el.innerHTML = '<div class="wx-card" style="opacity:.6;font-size:12px">Weather unavailable</div>';
   }

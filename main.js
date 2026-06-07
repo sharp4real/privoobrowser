@@ -4,6 +4,7 @@ const {
 } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { spawn } = require('child_process');
 const { autoUpdater } = require('electron-updater');
 const { pathToFileURL } = require('url');
 const settingsStore = require('./settings-store');
@@ -727,7 +728,6 @@ const _YT_EXTRA_FILTERS = [
   'youtube.com##.video-ads.ytp-ad-module',
   'youtube.com##.ytp-ad-overlay-container',
   'youtube.com##.ytp-ad-player-overlay-layout',
-  'youtube.com##.ytp-ad-skip-button-modern',
   'youtube.com##.ytp-ad-text-overlay',
   'youtube.com##.ytp-ad-simple-ad-badge',
   'youtube.com##.ytp-ad-preview-container',
@@ -1084,6 +1084,8 @@ function applyRuntimeSettings(settings) {
   if (!defaultUserAgent) defaultUserAgent = session.defaultSession.getUserAgent();
   session.defaultSession.setUserAgent(settings.spoofUserAgent ? CHROME_UA : defaultUserAgent);
 
+  applyProxyAll(settings);
+
   for (const wc of webContents.getAllWebContents()) {
     if (wc.isDestroyed() || wc.getType() !== 'webview') continue;
     try {
@@ -1241,10 +1243,87 @@ async function clearSessionData({ cache, cookies, siteData }) {
 // ---------------------------------------------------------------------------
 // Session hardening
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Proxy / Tor
+// ---------------------------------------------------------------------------
+const _proxiedSessions = new Set();
+let _torProc = null;
+let _torPort = null;
+
+function torPortOf(settings) {
+  const p = parseInt(settings.proxyTorPort, 10);
+  return (p >= 1 && p <= 65535) ? p : 9100;
+}
+
+function proxyRulesFor(settings) {
+  if (settings.proxyMode === 'tor') return `socks5://127.0.0.1:${torPortOf(settings)}`;
+  if (settings.proxyMode === 'manual') {
+    const raw = String(settings.proxyUrl || '').trim();
+    if (raw) return raw;
+  }
+  return null;
+}
+
+function applyProxyToSession(sess, settings) {
+  const rules = proxyRulesFor(settings);
+  try {
+    if (rules) sess.setProxy({ proxyRules: rules, proxyBypassRules: '<local>' }).catch(() => {});
+    else sess.setProxy({ mode: 'direct' }).catch(() => {});
+  } catch { /* ignore */ }
+}
+
+function torBinaryPath() {
+  const names = process.platform === 'win32' ? ['tor.exe'] : ['tor'];
+  if (process.resourcesPath) {
+    for (const n of names) {
+      const p = path.join(process.resourcesPath, 'tor', n);
+      if (fs.existsSync(p)) return p;
+    }
+  }
+  return names[0]; // fall back to PATH
+}
+
+function launchTor() {
+  const port = torPortOf(settingsStore.load());
+  // Already running on the right port — nothing to do. If the port changed,
+  // restart Tor so it listens where we route.
+  if (_torProc && _torPort === port) return;
+  stopTor();
+  _torPort = port;
+  const bin = torBinaryPath();
+  const dataDir = path.join(app.getPath('userData'), 'tor-data');
+  try { fs.mkdirSync(dataDir, { recursive: true }); } catch { /* ignore */ }
+  try {
+    _torProc = spawn(bin, ['--SocksPort', `127.0.0.1:${port}`, '--DataDirectory', dataDir], {
+      stdio: 'ignore', windowsHide: true,
+    });
+    _torProc.on('error', () => {
+      // Tor isn't installed / couldn't launch — fall back to direct so the
+      // browser still works instead of pointing at a dead proxy port.
+      _torProc = null;
+      for (const sess of _proxiedSessions) {
+        try { sess.setProxy({ mode: 'direct' }).catch(() => {}); } catch { /* ignore */ }
+      }
+    });
+    _torProc.on('exit', () => { _torProc = null; });
+  } catch { _torProc = null; }
+}
+
+function stopTor() {
+  if (_torProc) { try { _torProc.kill(); } catch { /* ignore */ } _torProc = null; }
+}
+
+function applyProxyAll(settings) {
+  if (settings.proxyMode === 'tor') launchTor(); else stopTor();
+  for (const sess of _proxiedSessions) applyProxyToSession(sess, settings);
+}
+
 async function hardenSession(sess) {
   await setupAdBlocking(sess);
   setupHeaderPrivacy(sess);
   setupDownloads(sess);
+  _proxiedSessions.add(sess);
+  applyProxyToSession(sess, settingsStore.load());
 
   sess.setPermissionRequestHandler((wc, permission, cb) => {
     const settings = settingsStore.load();
@@ -1781,6 +1860,8 @@ app.whenReady().then(async () => {
 
   registerPrivooProtocol();
   await hardenSession(session.defaultSession);
+  // Launch Tor on boot if the saved proxy mode needs it.
+  applyProxyAll(settingsStore.load());
 
   // Resolve any legacy __MSG_*__ placeholders saved into settings before
   // the i18n fix landed (uBlock and friends shipped names/descriptions as
@@ -2018,16 +2099,24 @@ app.on('web-contents-created', (_event, contents) => {
   window.fetch = function(input, ...rest) {
     return _f.call(this, input, ...rest).then(async res => {
       const url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
-      if (url.includes('/youtubei/v1/player') || url.includes('/youtubei/v1/next')) {
-        try {
-          const body = await res.clone().json();
-          if (body.adPlacements !== undefined) body.adPlacements = [];
-          if (body.playerAds    !== undefined) body.playerAds    = [];
-          return new Response(JSON.stringify(body), {
-            status: res.status, statusText: res.statusText, headers: res.headers,
-          });
-        } catch {}
-      }
+      if (!url.includes('/youtubei/v1/player') && !url.includes('/youtubei/v1/next')) return res;
+      try {
+        const body = await res.clone().json();
+        let changed = false;
+        if (Array.isArray(body.adPlacements) && body.adPlacements.length) { body.adPlacements = []; changed = true; }
+        if (Array.isArray(body.playerAds)    && body.playerAds.length)    { body.playerAds    = []; changed = true; }
+        if (Array.isArray(body.adSlots)      && body.adSlots.length)      { body.adSlots      = []; changed = true; }
+        // Only hand back a rebuilt response when we actually stripped ads.
+        // Re-wrapping every player/next response (e.g. when switching audio
+        // track or quality) corrupts it and breaks those features.
+        if (!changed) return res;
+        const headers = new Headers(res.headers);
+        headers.delete('content-length');
+        headers.delete('content-encoding');
+        return new Response(JSON.stringify(body), {
+          status: res.status, statusText: res.statusText, headers,
+        });
+      } catch {}
       return res;
     });
   };
@@ -2237,7 +2326,7 @@ ipcMain.handle('http-proceed', (_e, url) => {
   } catch (e) { return { ok: false, error: String(e.message || e) }; }
 });
 
-app.on('will-quit', () => { shutdownDiscordRpc(); });
+app.on('will-quit', () => { shutdownDiscordRpc(); stopTor(); });
 
 app.on('window-all-closed', () => {
   // With minimize-to-tray on, our `close` handler hides instead of destroys
@@ -2545,6 +2634,7 @@ ipcMain.handle('open-devtools', (_e, guestWcId, opts) => {
     if (guest.isDevToolsOpened()) {
       if (opts?.x !== undefined && opts?.y !== undefined) {
         guest.inspectElement(opts.x, opts.y);
+        guest.devToolsWebContents?.focus();
         return { ok: true };
       }
       guest.closeDevTools();

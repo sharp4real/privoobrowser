@@ -474,9 +474,11 @@ function applyAppSettings() {
   paintToolbarWidgets();
   applyVerticalTabs(!!settings.verticalTabs);
   document.body.classList.toggle('vtabs-collapsed', !!settings.vtabsCollapsed);
-  document.body.classList.toggle('vtabs-toolbar-bottom', !!settings.vtabsToolbarBottom);
+  applyVtabsIntegrated(!!settings.verticalTabs && !!settings.vtabsIntegrated);
   document.body.classList.toggle('wobbly-windows', !!settings.wobblyWindows);
   document.body.classList.toggle('low-end-device', !!settings.lowEndDevice);
+  document.body.classList.toggle('new-search-bar', !!settings.newSearchBarStyle);
+  document.body.classList.toggle('sp-no-glass', settings.searchPopupGlass === false);
 }
 
 function onSettingsChanged(next) {
@@ -1671,7 +1673,11 @@ function closeTab(id) {
   setTimeout(() => closingEl.remove(), 240);
   if (tabs.length === 0) {
     try { tab.wv.remove(); } catch (_) {}
-    if (document.body.classList.contains('vertical-tabs') && settings?.vtabsSearchPopup) {
+    if (document.body.classList.contains('vertical-tabs')) {
+      activeId = null;
+      omnibox.value = '';
+      omnibox.blur();
+      hideOverlayBanner();
       renderVtabs();
       showSearchPopup();
       return;
@@ -1688,9 +1694,10 @@ function closeTab(id) {
 // ─── Tab drag-to-reorder ─────────────────────────────────────────────────────
 function wireDrag(tab) {
   const { tabEl } = tab;
-  tabEl.addEventListener('dragstart', () => tabEl.classList.add('dragging'));
+  tabEl.addEventListener('dragstart', (e) => { tabEl.classList.add('dragging'); beginTabDrag(tab.id, e); });
   tabEl.addEventListener('dragend',   () => {
     tabEl.classList.remove('dragging');
+    endTabDrag();
     const order = [...tabsEl.children].map((el) => tabs.find((t) => t.tabEl === el)).filter(Boolean);
     const pinned = order.filter((t) => t.pinned);
     const rest = order.filter((t) => !t.pinned);
@@ -2227,10 +2234,15 @@ function updateDiscordActivity() {
   const tab = activeTab();
   if (!tab) { window.privoo.setDiscordActivity(null); return; }
   const url = tab.url || '';
-  const title = tab.title || '';
+  const title = (tab.title || '').trim();
+  const isInternal = url.startsWith('privoo://') || url.startsWith('about:');
   let details = title || 'Browsing';
   let state;
-  try { state = new URL(url).hostname || undefined; } catch {}
+  if (!isInternal) {
+    try { state = new URL(url).hostname.replace(/^www\./, '') || undefined; } catch {}
+  }
+  // Don't repeat the same text on both lines (e.g. "New tab" / "newtab").
+  if (state && state.toLowerCase() === details.toLowerCase()) state = undefined;
   window.privoo.setDiscordActivity({
     details: details.slice(0, 128),
     state: state ? state.slice(0, 128) : undefined,
@@ -2255,17 +2267,11 @@ function syncToolbar() {
   updateSiteInfoPopover(tab.url, isInternal, isSecure, isHttp);
   refreshPageShield(tab);
 
-  const vtBack = document.getElementById('vt-back');
-  const vtFwd  = document.getElementById('vt-forward');
   try {
     backBtn.disabled    = !wv.canGoBack();
     forwardBtn.disabled = !wv.canGoForward();
-    if (vtBack)  vtBack.disabled  = backBtn.disabled;
-    if (vtFwd)   vtFwd.disabled   = forwardBtn.disabled;
   } catch {
     backBtn.disabled = forwardBtn.disabled = true;
-    if (vtBack)  vtBack.disabled  = true;
-    if (vtFwd)   vtFwd.disabled   = true;
   }
   updateBookmarkButton();
   updateZoomIndicator();
@@ -2931,16 +2937,17 @@ function hideWvContextMenu() {
 // ─── DevTools ───────────────────────────────────────────────────────────────
 async function openDockedDevTools(tab, inspectX, inspectY) {
   if (!tab?.wv) return;
+  const hasCoords = Number.isFinite(inspectX) && Number.isFinite(inspectY);
   try {
-    if (tab.wv.isDevToolsOpened?.()) { tab.wv.closeDevTools(); return; }
-    const wcId = tab.wv.getWebContentsId?.() || 0;
-    if (wcId && window.privoo?.openDevTools) {
-      const opts = (inspectX !== undefined && inspectY !== undefined)
-        ? { x: Math.round(inspectX), y: Math.round(inspectY) } : undefined;
-      await window.privoo.openDevTools(wcId, opts);
-    } else {
-      tab.wv.openDevTools();
+    // Inspect: use the <webview>'s native inspectElement — the reliable path
+    // for guest pages. It opens DevTools (in its remembered dock side) and
+    // highlights the clicked element.
+    if (hasCoords && typeof tab.wv.inspectElement === 'function') {
+      tab.wv.inspectElement(Math.round(inspectX), Math.round(inspectY));
+      return;
     }
+    if (tab.wv.isDevToolsOpened?.()) tab.wv.closeDevTools();
+    else tab.wv.openDevTools();
   } catch { /* ignore */ }
 }
 
@@ -2963,6 +2970,7 @@ const emojiPrevNameEl  = document.getElementById('emoji-preview-name');
 
 const EMOJI_RECENT_KEY = 'privoo:emoji-recent';
 let emojiTargetWv = null;   // which webview to insert into
+let emojiTargetInput = null; // or a chrome <input> (search popup / omnibox)
 let emojiActiveCat = 'recent';
 const emojiRecent = (() => {
   try { return JSON.parse(localStorage.getItem(EMOJI_RECENT_KEY) || '[]'); } catch { return []; }
@@ -3064,17 +3072,27 @@ function updateEmojiPreview(glyph, name) {
 
 function selectEmoji(glyph) {
   pushRecent(glyph);
-  const wv = emojiTargetWv || activeTab()?.wv;
-  if (wv) insertEmojiInWebview(wv, glyph);
+  if (emojiTargetInput) {
+    const input = emojiTargetInput;
+    input.focus();
+    const s = input.selectionStart ?? input.value.length;
+    const en = input.selectionEnd ?? input.value.length;
+    input.setRangeText(glyph, s, en, 'end');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  } else {
+    const wv = emojiTargetWv || activeTab()?.wv;
+    if (wv) insertEmojiInWebview(wv, glyph);
+  }
   // Try clipboard too — useful if no focused input
   try { navigator.clipboard.writeText(glyph).catch(() => {}); } catch {}
   // Keep picker open — matches Chrome/Edge so users can insert several.
 }
 
-function openEmojiPicker(wv) {
+function openEmojiPicker(wv, inputEl) {
   if (!emojiPickerEl) return;
   closePopovers();
-  emojiTargetWv = wv || activeTab()?.wv || null;
+  emojiTargetInput = inputEl || null;
+  emojiTargetWv = inputEl ? null : (wv || activeTab()?.wv || null);
   // Snapshot the focused element in the webview BEFORE focus moves to the
   // picker UI — we re-focus it when an emoji is clicked so insertText works.
   if (emojiTargetWv) {
@@ -3105,6 +3123,7 @@ function openEmojiPicker(wv) {
 function closeEmojiPicker() {
   emojiPickerEl?.classList.add('hidden');
   emojiTargetWv = null;
+  emojiTargetInput = null;
 }
 
 emojiCloseBtn?.addEventListener('click', (e) => { e.stopPropagation(); closeEmojiPicker(); });
@@ -3354,22 +3373,6 @@ function maybeShowOverlayBanner(url) {
     }
   }
 
-  // 2) Welcome banner — only on the very first real website visit, ever.
-  // Persisted in the settings file (not localStorage) so it survives updates
-  // and reinstalls without ever re-appearing.
-  if (!settings.welcomeShown) {
-    settings.welcomeShown = true;
-    window.privoo.setSettings({ welcomeShown: true });
-    showOverlayBanner(
-      'Privoo keeps you safe!',
-      'Ads, trackers, and fingerprinting scripts are blocked by default. No accounts, no sync — your browsing stays on this device.',
-      'Got it!',
-      null,
-    );
-    return;
-  }
-
-  // Otherwise hide.
   hideOverlayBanner();
 }
 
@@ -3935,7 +3938,7 @@ function handleAction(action) {
   closePopovers();
   switch (action) {
     case 'new-tab':
-      if (document.body.classList.contains('vertical-tabs') && settings?.vtabsSearchPopup) showSearchPopup();
+      if (document.body.classList.contains('vertical-tabs')) showSearchPopup();
       else createTab();
       break;
     case 'new-incognito':
@@ -3980,7 +3983,20 @@ function handleAction(action) {
 );
 
 // ─── Toolbar events ───────────────────────────────────────────────────────────
+// In vertical-tabs mode the top address bar is not editable — clicking (or
+// focusing) it opens the centered search popup instead.
+omnibox.addEventListener('mousedown', (e) => {
+  if (document.body.classList.contains('vertical-tabs')) {
+    e.preventDefault();
+    showSearchPopup(false);
+  }
+});
 omnibox.addEventListener('focus', () => {
+  if (document.body.classList.contains('vertical-tabs')) {
+    omnibox.blur();
+    showSearchPopup(false);
+    return;
+  }
   omnibox.select();
   const val = omnibox.value;
   if (!val) return;
@@ -4058,14 +4074,6 @@ omnibox.addEventListener('keydown', (e) => {
 backBtn.addEventListener('click',    () => { const w = activeTab()?.wv; if (w?.canGoBack()) w.goBack(); });
 forwardBtn.addEventListener('click', () => { const w = activeTab()?.wv; if (w?.canGoForward()) w.goForward(); });
 
-// Vtabs footer nav buttons — mirror toolbar nav actions
-document.getElementById('vt-back')?.addEventListener('click', () => { const w = activeTab()?.wv; if (w?.canGoBack()) w.goBack(); });
-document.getElementById('vt-forward')?.addEventListener('click', () => { const w = activeTab()?.wv; if (w?.canGoForward()) w.goForward(); });
-document.getElementById('vt-reload')?.addEventListener('click', () => { const w = activeTab()?.wv; if (!w) return; if (w.isLoading()) w.stop(); else w.reload(); });
-document.getElementById('vt-new')?.addEventListener('click', () => {
-  if (settings?.vtabsSearchPopup) showSearchPopup();
-  else newTab();
-});
 
 reloadBtn.addEventListener('click',  () => {
   const w = activeTab()?.wv;
@@ -4074,7 +4082,7 @@ reloadBtn.addEventListener('click',  () => {
 });
 homeBtn.addEventListener('click', () => navigate(settings?.homePage || NEWTAB_URL));
 newTabBtn.addEventListener('click', () => {
-  if (document.body.classList.contains('vertical-tabs') && settings?.vtabsSearchPopup) showSearchPopup();
+  if (document.body.classList.contains('vertical-tabs')) showSearchPopup();
   else createTab();
 });
 dlBtn.addEventListener('click',     async (e) => {
@@ -4592,6 +4600,52 @@ if (splitDivider) {
 }
 window.addEventListener('resize', () => { if (isSplit()) layoutSplit(); });
 
+// ─── Drag a tab onto the page area to enter Split View ───────────────────────
+let _draggingTabId = null;
+const splitDropzones = document.getElementById('split-dropzones');
+
+function beginTabDrag(id, e) {
+  _draggingTabId = id;
+  document.body.classList.add('tab-dragging');
+  try { if (e?.dataTransfer) { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(id)); } } catch {}
+}
+function endTabDrag() {
+  _draggingTabId = null;
+  document.body.classList.remove('tab-dragging');
+  splitDropzones?.querySelectorAll('.split-dz').forEach(d => d.classList.remove('drop-active'));
+}
+
+function dragSplit(draggedId, side) {
+  const dragged = getTab(draggedId);
+  if (!dragged) return;
+  let other = activeTab();
+  if (!other || other.id === draggedId) other = tabs.find(t => t.id !== draggedId);
+  if (!other) { activateTab(draggedId); return; }
+  splitLeftId  = side === 'left' ? draggedId : other.id;
+  splitRightId = side === 'left' ? other.id  : draggedId;
+  splitRatio = 0.5;
+  viewsEl.classList.add('split');
+  activateTab(draggedId);
+}
+
+if (splitDropzones) {
+  splitDropzones.querySelectorAll('.split-dz').forEach((dz) => {
+    dz.addEventListener('dragover', (e) => {
+      if (_draggingTabId == null) return;
+      e.preventDefault();
+      try { e.dataTransfer.dropEffect = 'move'; } catch {}
+      dz.classList.add('drop-active');
+    });
+    dz.addEventListener('dragleave', () => dz.classList.remove('drop-active'));
+    dz.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const id = _draggingTabId;
+      if (id != null) dragSplit(id, dz.dataset.side);
+      endTabDrag();
+    });
+  });
+}
+
 // Clicking into either split pane focuses it — the address bar and toolbar
 // then drive whichever side you're actually working in, so typing never
 // lands in the wrong pane.
@@ -4843,12 +4897,15 @@ function applyPlatformChrome(platform) {
     } catch { /* ignore */ }
   }
   if (!restored) {
-    if (document.body.classList.contains('vertical-tabs') && settings?.vtabsSearchPopup) {
+    if (document.body.classList.contains('vertical-tabs')) {
+      activeId = null;
+      omnibox.value = '';
       renderVtabs();
-      showSearchPopup();
     } else {
       createTab();
     }
+  } else if (document.body.classList.contains('vertical-tabs')) {
+    closeVtabsNewTabPages();
   }
   refreshStats();
   setInterval(refreshStats, 1500);
@@ -4863,14 +4920,47 @@ function applyPlatformChrome(platform) {
 
 // ─── Vertical Tabs ───────────────────────────────────────────────────────────
 
+function isNewTabPage(url) {
+  const u = url || '';
+  return u === NEWTAB_URL || u.startsWith('privoo://newtab');
+}
+
+// In vertical-tabs mode there are no blank new-tab pages — the search popup
+// replaces them — so close any that are open.
+function closeVtabsNewTabPages() {
+  if (!document.body.classList.contains('vertical-tabs')) return;
+  for (const t of tabs.filter(t => isNewTabPage(t.url))) closeTab(t.id);
+}
+
 function applyVerticalTabs(on) {
   document.body.classList.toggle('vertical-tabs', on);
   if (vtabsPanel) vtabsPanel.hidden = !on;
   if (on) {
+    closeVtabsNewTabPages();
     renderVtabs();
   } else {
     hideSearchPopup();
     if (tabs.length === 0) createTab();
+  }
+}
+
+// ── Vtabs integrated toolbar ─────────────────────────────────────────────────
+const _toolbarActionsEl   = document.getElementById('toolbar-actions');
+const _toolbarActionsHome = _toolbarActionsEl?.parentElement;
+const _toolbarActionsNext = _toolbarActionsEl?.nextElementSibling;
+
+function applyVtabsIntegrated(on) {
+  document.body.classList.toggle('vtabs-integrated', on);
+  const slot = document.getElementById('vtf-integrated-slot');
+  if (!_toolbarActionsEl || !slot) return;
+  if (on) {
+    slot.appendChild(_toolbarActionsEl);
+  } else if (_toolbarActionsHome && !_toolbarActionsHome.contains(_toolbarActionsEl)) {
+    if (_toolbarActionsNext && _toolbarActionsHome.contains(_toolbarActionsNext)) {
+      _toolbarActionsHome.insertBefore(_toolbarActionsEl, _toolbarActionsNext);
+    } else {
+      _toolbarActionsHome.appendChild(_toolbarActionsEl);
+    }
   }
 }
 
@@ -5040,8 +5130,15 @@ function _makeVtabEl(tab) {
   closeBtn.innerHTML = `<svg viewBox="0 0 14 14" width="10" height="10"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>`;
   el.appendChild(closeBtn);
 
+  el.draggable = true;
+  el.addEventListener('dragstart', (e) => {
+    if (e.target.closest('.vtab-close')) { e.preventDefault(); return; }
+    el.classList.add('dragging'); beginTabDrag(tab.id, e);
+  });
+  el.addEventListener('dragend', () => { el.classList.remove('dragging'); endTabDrag(); });
+  el.addEventListener('mousedown', (e) => { if (e.target.closest('.vtab-close')) e.stopPropagation(); });
   el.addEventListener('click', (e) => {
-    if (e.target.closest('.vtab-close')) { closeTab(tab.id); return; }
+    if (e.target.closest('.vtab-close')) { e.stopPropagation(); closeTab(tab.id); return; }
     activateTab(tab.id);
   });
   el.addEventListener('contextmenu', (e) => {
@@ -5074,7 +5171,7 @@ function _makeVtabGroupEl(g) {
 }
 
 vtabsNewBtn?.addEventListener('click', () => {
-  if (settings?.vtabsSearchPopup) showSearchPopup();
+  if (document.body.classList.contains('vertical-tabs')) showSearchPopup();
   else createTab();
 });
 
@@ -5093,19 +5190,48 @@ let _spSugGen   = 0;
 let _spSugItems = [];
 let _spSugIndex = -1;
 
-function showSearchPopup() {
+let _spCloseTimer = null;
+let _spForNewTab = true;
+
+function showSearchPopup(forNewTab = true) {
   if (!searchPopupEl) return;
-  searchPopupEl.classList.remove('hidden');
+  _spForNewTab = forNewTab !== false;
+  clearTimeout(_spCloseTimer);
+  searchPopupEl.classList.remove('hidden', 'sp-closing');
+  const panelW = (vtabsPanel && !vtabsPanel.hidden) ? vtabsPanel.offsetWidth : 0;
+  searchPopupEl.style.paddingLeft = (panelW + 24) + 'px';
+  const card = searchPopupEl.querySelector('.search-popup-card');
+  for (const el of [searchPopupEl, card]) {
+    if (!el) continue;
+    el.style.animation = 'none';
+    void el.offsetHeight;
+    el.style.animation = '';
+  }
   searchPopupInput.value = '';
+  let engName = searchEngines?.[settings?.searchEngine]?.name?.replace(' Search', '') || 'the web';
+  if (settings?.searchEngine === 'custom') {
+    try { engName = new URL(settings.customSearchUrl || '').hostname || 'your search engine'; }
+    catch { engName = 'your search engine'; }
+  } else if (engName === 'Custom…') { engName = 'the web'; }
+  searchPopupInput.placeholder = `Search ${engName} or enter address`;
   _spSugItems = [];
   _spSugIndex = -1;
-  if (searchPopupSugs) searchPopupSugs.classList.add('hidden');
+  if (searchPopupSugs) {
+    clearTimeout(_spSugHideTimer);
+    searchPopupSugs.classList.remove('sp-sug-closing');
+    searchPopupSugs.classList.add('hidden');
+  }
   requestAnimationFrame(() => searchPopupInput?.focus());
 }
 
 function hideSearchPopup() {
-  if (!searchPopupEl) return;
-  searchPopupEl.classList.add('hidden');
+  if (!searchPopupEl || searchPopupEl.classList.contains('hidden')) return;
+  searchPopupEl.classList.add('sp-closing');
+  clearTimeout(_spCloseTimer);
+  _spCloseTimer = setTimeout(() => {
+    searchPopupEl.classList.add('hidden');
+    searchPopupEl.classList.remove('sp-closing');
+  }, 160);
   if (searchPopupSugs) searchPopupSugs.classList.add('hidden');
   clearTimeout(_spSugTimer);
   _spSugGen++;
@@ -5113,35 +5239,75 @@ function hideSearchPopup() {
 
 function _spNavigate(text) {
   hideSearchPopup();
-  if (tabs.length === 0) {
+  // Opened via a "new tab" trigger (or there's nothing open) → make a new tab.
+  // Opened by clicking the address bar → navigate the current tab instead.
+  if (_spForNewTab || tabs.length === 0) {
     createTab(toUrl(text));
   } else {
     navigate(text);
   }
 }
 
+let _spSugHideTimer = null;
+function _spHideSugs() {
+  if (!searchPopupSugs || searchPopupSugs.classList.contains('hidden')) return;
+  searchPopupSugs.classList.add('sp-sug-closing');
+  clearTimeout(_spSugHideTimer);
+  _spSugHideTimer = setTimeout(() => {
+    searchPopupSugs.classList.add('hidden');
+    searchPopupSugs.classList.remove('sp-sug-closing');
+  }, 150);
+}
+
 function _spRenderSugs(items) {
   if (!searchPopupSugs || !items.length) {
-    searchPopupSugs?.classList.add('hidden');
+    _spHideSugs();
     _spSugItems = [];
     return;
   }
-  _spSugItems = items;
+  clearTimeout(_spSugHideTimer);
+  searchPopupSugs.classList.remove('sp-sug-closing');
+  _spSugItems = items.slice(0, 7);
   _spSugIndex = -1;
   searchPopupSugs.innerHTML = '';
-  const SUG_SEARCH = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5 1.49-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg>`;
-  const SUG_CLOCK  = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm4.24 16L11 14.67V7h1.5v7l4.74 2.82-1.01 1.18z"/></svg>`;
-  for (let i = 0; i < items.length; i++) {
-    const it = items[i];
+  const SP_MAGNIFIER = `<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5 1.49-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg>`;
+  for (let i = 0; i < _spSugItems.length; i++) {
+    const it = _spSugItems[i];
     const el = document.createElement('div');
     el.className = 'sp-sug-item';
     el.dataset.idx = i;
-    const icon = it.type === 'history' ? SUG_CLOCK : SUG_SEARCH;
-    el.innerHTML =
-      `<span class="sp-sug-icon">${icon}</span>` +
-      `<div class="sp-sug-body"><div class="sp-sug-title">${esc(it.label)}</div>` +
-      (it.type === 'history' && it.text !== it.label ? `<div class="sp-sug-url">${esc(it.text)}</div>` : '') +
-      `</div>`;
+
+    const iconWrap = document.createElement('span');
+    iconWrap.className = 'sp-sug-icon-wrap';
+    if (it.type === 'history') {
+      const fav = faviconFallbackForUrl(it.text);
+      if (fav) {
+        const img = document.createElement('img');
+        img.src = fav; img.alt = ''; img.referrerPolicy = 'no-referrer';
+        img.addEventListener('error', () => { iconWrap.innerHTML = SP_MAGNIFIER; }, { once: true });
+        iconWrap.appendChild(img);
+      } else {
+        iconWrap.innerHTML = SP_MAGNIFIER;
+      }
+    } else {
+      iconWrap.innerHTML = SP_MAGNIFIER;
+    }
+
+    const body = document.createElement('div');
+    body.className = 'sp-sug-body';
+    const title = document.createElement('div');
+    title.className = 'sp-sug-title';
+    title.textContent = it.label;
+    body.appendChild(title);
+    if (it.type === 'history' && it.text !== it.label) {
+      const url = document.createElement('div');
+      url.className = 'sp-sug-url';
+      url.textContent = it.text;
+      body.appendChild(url);
+    }
+
+    el.appendChild(iconWrap);
+    el.appendChild(body);
     el.addEventListener('mousedown', (e) => { e.preventDefault(); _spNavigate(it.text); });
     searchPopupSugs.appendChild(el);
   }
@@ -5155,7 +5321,7 @@ function _spHighlight(idx) {
 }
 
 async function _spFetch(q) {
-  if (!q.trim()) { searchPopupSugs?.classList.add('hidden'); return; }
+  if (!q.trim()) { _spHideSugs(); return; }
   const myGen = ++_spSugGen;
   const hist = await window.privoo.historyAutocomplete(q).catch(() => []);
   if (myGen !== _spSugGen) return;
@@ -5196,6 +5362,72 @@ searchPopupInput?.addEventListener('keydown', (e) => {
 searchPopupEl?.addEventListener('mousedown', (e) => {
   if (e.target === searchPopupEl) hideSearchPopup();
 });
+
+// Right-click edit menu for chrome text inputs (search popup + address bar).
+function wireFieldContextMenu(input) {
+  if (!input) return;
+  input.addEventListener('contextmenu', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const hasSel = input.selectionStart != null && input.selectionStart !== input.selectionEnd;
+    let clip = '';
+    try { clip = await navigator.clipboard.readText(); } catch {}
+    const action = await showHtmlMenu([
+      { id: 'emoji', label: 'Emojis' },
+      { type: 'separator' },
+      { id: 'cut',   label: 'Cut',        enabled: hasSel },
+      { id: 'copy',  label: 'Copy',       enabled: hasSel },
+      { id: 'paste', label: 'Paste',      enabled: !!clip },
+      { type: 'separator' },
+      { id: 'all',   label: 'Select all', enabled: input.value.length > 0 },
+    ], e.clientX, e.clientY);
+    if (!action) return;
+    if (action === 'emoji') { openEmojiPicker(null, input); return; }
+    input.focus();
+    const s = input.selectionStart ?? input.value.length;
+    const en = input.selectionEnd ?? input.value.length;
+    if (action === 'copy' && hasSel) {
+      try { await navigator.clipboard.writeText(input.value.slice(s, en)); } catch {}
+    } else if (action === 'cut' && hasSel) {
+      try { await navigator.clipboard.writeText(input.value.slice(s, en)); } catch {}
+      input.setRangeText('', s, en, 'end');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    } else if (action === 'paste') {
+      try {
+        const t = await navigator.clipboard.readText();
+        input.setRangeText(t, s, en, 'end');
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      } catch {}
+    } else if (action === 'all') {
+      input.select();
+    }
+  });
+}
+wireFieldContextMenu(searchPopupInput);
+
+(function initDiscordPrompt() {
+  const popup = document.getElementById('discord-popup');
+  if (!popup) return;
+  const join = document.getElementById('discord-join');
+  const dismiss = document.getElementById('discord-dismiss');
+  const close = () => popup.classList.add('hidden');
+  join?.addEventListener('click', () => { close(); createTab('https://discord.gg/WweUzF3YCQ'); });
+  dismiss?.addEventListener('click', close);
+  popup.addEventListener('mousedown', (e) => { if (e.target === popup) close(); });
+  let firstRun = null;
+  const tryShow = () => {
+    if (!settings) { setTimeout(tryShow, 500); return; }
+    if (firstRun === null) firstRun = !settings.disclaimerAccepted;
+    if (settings.discordPromptShown || firstRun) return;
+    if (setupOverlay && !setupOverlay.hasAttribute('hidden')) { setTimeout(tryShow, 800); return; }
+    setTimeout(() => {
+      settings.discordPromptShown = true;
+      window.privoo.setSettings?.({ discordPromptShown: true });
+      popup.classList.remove('hidden');
+    }, 1400);
+  };
+  tryShow();
+})();
 
 // ─── Inline AI Panel ─────────────────────────────────────────────────────────
 

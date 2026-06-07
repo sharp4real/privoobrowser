@@ -17,26 +17,36 @@ A privacy-first web browser built with Electron, featuring comprehensive ad bloc
 - **Do Not Track** - Sends DNT header with requests
 
 ### Browsing Features
-- **Tabbed Browsing** - Full tab management with drag-to-reorder
-- **Smart Address Bar** - Combined search and URL input
+- **Tabbed Browsing** - Full tab management with drag-to-reorder and tab groups
+- **Vertical Tabs** - Collapsible left side panel; resize it, collapse to an icon rail, integrate the toolbar icons into it, or open a Spotlight-style search popup on new tab
+- **Split View** - Two pages side by side with a draggable divider — **drag a tab onto the left or right half of the page** to split instantly
+- **Smart Address Bar** - Combined search and URL input, with an optional modern style
 - **Search Suggestions** - Real-time suggestions from multiple engines
+- **Reader Mode, Focus Mode & Mobile View** - Strip the clutter, hide the chrome, or emulate a phone
+- **Picture-in-Picture & Media Controls** - Pop out video and control playback from the toolbar
+- **Media Download (yt-dlp)** - Save video/audio when available
 - **Download Manager** - Track and manage downloads
-- **History** - Full browsing history with search
+- **History & Bookmarks** - Full browsing history with search, plus a bookmarks bar
 - **Extensions** - Extension management system (foundation)
 - **Keyboard Shortcuts** - Comprehensive keyboard navigation
 
 ### New Tab Page
-- **Live Clock** - 24-hour format with date
-- **Time-Based Greeting** - Good morning/afternoon/evening
+- **Live Clock** - With date
 - **Quick Links** - Customizable shortcuts with favicons
-- **Search Bar** - Instant search with suggestions
+- **Search Bar** - Instant search with suggestions (with a focused-search animation)
+- **Privoo News** - What's new in each release, right on the new tab
+- **Weather & Wallpaper** - Optional weather widget and custom wallpaper
 - **Privacy Stats** - Real-time blocked content counter
 
 ### Customization
 - **Dark Mode** - System-wide dark filter
-- **Search Engine Choice** - Google, Bing, DuckDuckGo, Brave
+- **Transparency / Glassmorphism** - Translucent, lightly-blurred chrome that shows your desktop through
+- **Vibe & Accent Color** - Color-washed UI and a custom accent
+- **New Search Bar Style** - A sleeker, modern address bar (toolbar + new tab)
+- **Font Scaling & Compact Mode** - Tune UI density
+- **Search Engine Choice** - Google, Bing, DuckDuckGo, Brave, and more
 - **Download Location** - Custom download folder
-- **Appearance Options** - Home button, bookmarks bar toggles
+- **Appearance Options** - Home button, bookmarks bar, sidebar layout toggles
 
 ## 📦 Installation
 
@@ -79,6 +89,12 @@ npm run build
 - `Ctrl + H` - History
 - `Ctrl + J` - Downloads
 - `Ctrl + N` - New window
+- `Ctrl + Shift + N` - New incognito window
+- `Ctrl + Shift + E` - Split view
+- `Ctrl + Shift + R` - Reader mode
+- `Ctrl + Shift + F` - Focus mode
+- `Ctrl + K` - Command palette
+- `Ctrl + Shift + A` - Search tabs
 - `F12` - Developer tools
 
 #### Zoom
@@ -239,13 +255,16 @@ MIT License - see LICENSE file for details
 
 ## 📞 Support
 
-- Issues: [GitHub Issues](https://github.com/sharp4real/privoo/issues)
-- Discussions: [GitHub Discussions](https://github.com/sharp4real/privoo/discussions)
+- Discord: [Join the community](https://discord.gg/WweUzF3YCQ)
+- Issues: [GitHub Issues](https://github.com/sharp4real/privoobrowser/issues)
+- Discussions: [GitHub Discussions](https://github.com/sharp4real/privoobrowser/discussions)
 
 ## 🗺️ Roadmap
 
 - [ ] Creating multiple browser profiles
-- [ ] Reading mode
+- [x] Reader mode
+- [x] Vertical tabs
+- [x] Split view
 
 ---
 

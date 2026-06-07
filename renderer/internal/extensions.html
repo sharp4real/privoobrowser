@@ -185,6 +185,13 @@ body.dark .ext-remove:hover{background:#4a2725}
   width:min(440px,100%);box-shadow:0 12px 40px rgba(0,0,0,.22);
 }
 body.dark #install-modal{background:#303134}
+body.transparent-ui #install-modal{
+  background:rgba(255,255,255,.72) !important;
+  backdrop-filter:blur(28px) saturate(180%);
+  -webkit-backdrop-filter:blur(28px) saturate(180%);
+  box-shadow:0 16px 50px rgba(0,0,0,.28);
+}
+body.transparent-ui.dark #install-modal{background:rgba(38,40,46,.72) !important;}
 #install-modal h3{font-size:16px;font-weight:600;margin-bottom:4px}
 .modal-sub{font-size:12.5px;color:#5f6368;margin-bottom:18px}
 body.dark .modal-sub{color:#bdc1c6}
