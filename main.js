@@ -409,6 +409,18 @@ function buildSecChUaPlatform() {
 }
 
 const CHROME_UA = buildChromeUA();
+// Built once — depends only on the (constant) Chrome version + host platform.
+// Reused for webview guests and OAuth popups so both get spoofed identically.
+const SPOOF_SCRIPT = buildGoogleSpoofScript({
+  chromeVersion: CHROME_VERSION_FULL,
+  platform: process.platform,
+});
+// Preload for OAuth / "Sign in with X" popup windows. It injects the same
+// spoof into the popup's main world at document-start — guaranteed to run
+// before the OAuth page's inline detection scripts, which the CDP attach
+// couldn't always beat (the cause of the intermittent "browser may not be
+// secure" only on popup *windows*, never the in-tab flow).
+const OAUTH_PRELOAD = path.join(__dirname, 'oauth-preload.js');
 const SEC_CH_UA_PLATFORM = buildSecChUaPlatform();
 const SEC_CH_UA =
   `"Chromium";v="${CHROME_MAJOR}", "Google Chrome";v="${CHROME_MAJOR}", "Not_A Brand";v="24"`;
@@ -1965,13 +1977,15 @@ app.on('web-contents-created', (_event, contents) => {
           autoHideMenuBar: true,
           icon: resolveIcon(),
           // Inherit the host BrowserWindow's session so cookies / spoofing /
-          // adblock are all in scope. preload is intentionally omitted — the
-          // popup is just a passthrough to the OAuth provider.
+          // adblock are all in scope. The OAuth preload injects the spoof at
+          // document-start so the popup never trips "browser may not be secure".
           webPreferences: {
             contextIsolation: true,
             nodeIntegration: false,
             sandbox: false,
             session: session.defaultSession,
+            preload: OAUTH_PRELOAD,
+            additionalArguments: ['--privoo-cv=' + CHROME_VERSION_FULL],
           },
         },
       };
@@ -2045,6 +2059,8 @@ app.on('web-contents-created', (_event, contents) => {
               nodeIntegration: false,
               sandbox: false,
               session: session.defaultSession,
+              preload: OAUTH_PRELOAD,
+              additionalArguments: ['--privoo-cv=' + CHROME_VERSION_FULL],
             },
           },
         };
@@ -2056,11 +2072,8 @@ app.on('web-contents-created', (_event, contents) => {
     popupWindow.once('closed', () => { /* free reference */ });
   });
 
-  // Build the spoof script with the actual Chromium version + host platform.
-  const spoofScript = buildGoogleSpoofScript({
-    chromeVersion: CHROME_VERSION_FULL,
-    platform: process.platform,
-  });
+  // Reuse the module-level spoof script (same for every guest + popup).
+  const spoofScript = SPOOF_SCRIPT;
 
   // YouTube ad-block + video-fix script. Injected before any page script runs
   // so it wins the race against YouTube's detection code. Three layers:
