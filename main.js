@@ -1,5 +1,5 @@
 const {
-  app, BrowserWindow, session, ipcMain, webContents, protocol, net, shell, dialog,
+  app, BrowserWindow, BrowserView, session, ipcMain, webContents, protocol, net, shell, dialog,
   Menu, Tray, nativeImage, screen,
 } = require('electron');
 const path = require('path');
@@ -421,6 +421,50 @@ const SPOOF_SCRIPT = buildGoogleSpoofScript({
 // couldn't always beat (the cause of the intermittent "browser may not be
 // secure" only on popup *windows*, never the in-tab flow).
 const OAUTH_PRELOAD = path.join(__dirname, 'oauth-preload.js');
+
+// ── Preferred language ────────────────────────────────────────────────────
+// Sites pick a language from the Accept-Language header and/or the request IP.
+// Behind a VPN the IP belongs to the exit node (e.g. Germany), so without a
+// firm Accept-Language the user gets German pages. We pin Accept-Language and
+// navigator.languages to the *device* locale so content follows the user, not
+// the VPN. Computed lazily — app locale APIs need the app to be ready.
+let _langList = null;
+let _langKey = null;
+function preferredLanguageList() {
+  const pref = (() => {
+    try { return settingsStore.load().preferredLanguage || 'auto'; } catch { return 'auto'; }
+  })();
+  if (_langList && _langKey === pref) return _langList;
+  let langs = [];
+  if (pref && pref !== 'auto') {
+    // Explicit user choice (e.g. 'en-GB', 'de', 'fr').
+    langs = [pref];
+  } else {
+    try { langs = app.getPreferredSystemLanguages() || []; } catch { /* not ready */ }
+    if (!langs.length) { try { const l = app.getLocale(); if (l) langs = [l]; } catch {} }
+  }
+  if (!langs.length) langs = ['en-GB', 'en'];
+  const seen = new Set();
+  const out = [];
+  for (const raw of langs) {
+    const l = String(raw || '').trim();
+    if (!l) continue;
+    if (!seen.has(l)) { seen.add(l); out.push(l); }
+    const base = l.split('-')[0];
+    if (base && base !== l && !seen.has(base)) { seen.add(base); out.push(base); }
+  }
+  if (!out.length) out.push('en');
+  _langList = out;
+  _langKey = pref;
+  return out;
+}
+// HTTP Accept-Language header value with descending q-weights.
+function acceptLanguageHeader() {
+  return preferredLanguageList()
+    .map((l, i) => (i === 0 ? l : `${l};q=${Math.max(1 - i * 0.1, 0.1).toFixed(1)}`))
+    .join(',');
+}
+
 const SEC_CH_UA_PLATFORM = buildSecChUaPlatform();
 const SEC_CH_UA =
   `"Chromium";v="${CHROME_MAJOR}", "Google Chrome";v="${CHROME_MAJOR}", "Not_A Brand";v="24"`;
@@ -608,6 +652,12 @@ function isSiteCompatibilityHost(hostname) {
     h === 'sparxmaths.com'        || h.endsWith('.sparxmaths.com')        ||
     h === 'sparxmaths.uk'         || h.endsWith('.sparxmaths.uk')         ||
     h === 'sparx-learning.com'    || h.endsWith('.sparx-learning.com')    ||
+    // Snapchat web is a heavy SPA with its own bot/integrity checks; request
+    // rewriting + fingerprint farbling left it stuck on a blank page. Give it
+    // the minimal-interference path so it actually loads.
+    h === 'snapchat.com'          || h.endsWith('.snapchat.com')          ||
+    h === 'snap.com'              || h.endsWith('.snap.com')              ||
+    h.endsWith('.sc-cdn.net')     ||
     // Google domains — canvas farbling and friends make Google's bot
     // detection bury the user in reCAPTCHAs. Treat Google as a compat host
     // so its pages get the minimal-interference path.
@@ -914,11 +964,27 @@ async function setupAdBlocking(sess) {
 // Header privacy: UA spoofing + third-party cookie blocking
 // ---------------------------------------------------------------------------
 function setupHeaderPrivacy(sess) {
-  if (settingsStore.load().spoofUserAgent) sess.setUserAgent(CHROME_UA);
+  // Pin the session's accept-languages to the device locale so navigator.languages
+  // matches the forced Accept-Language header below (and isn't the VPN's locale).
+  const _langs = preferredLanguageList().join(',');
+  try {
+    if (settingsStore.load().spoofUserAgent) sess.setUserAgent(CHROME_UA, _langs);
+    else sess.setUserAgent(sess.getUserAgent(), _langs);
+  } catch { /* ignore */ }
 
   sess.webRequest.onBeforeSendHeaders((details, cb) => {
     const settings = settingsStore.load();
     const headers = details.requestHeaders;
+
+    // Always serve the user's real language regardless of the VPN exit IP.
+    {
+      const al = acceptLanguageHeader();
+      let had = false;
+      for (const key of Object.keys(headers)) {
+        if (key.toLowerCase() === 'accept-language') { headers[key] = al; had = true; }
+      }
+      if (!had) headers['Accept-Language'] = al;
+    }
 
     const reqHostname = hostnameOf(details.url);
     if (settings.spoofUserAgent || isGoogleAuthHost(reqHostname)) {
@@ -1094,7 +1160,10 @@ function broadcastSettings(settings) {
 
 function applyRuntimeSettings(settings) {
   if (!defaultUserAgent) defaultUserAgent = session.defaultSession.getUserAgent();
-  session.defaultSession.setUserAgent(settings.spoofUserAgent ? CHROME_UA : defaultUserAgent);
+  session.defaultSession.setUserAgent(
+    settings.spoofUserAgent ? CHROME_UA : defaultUserAgent,
+    preferredLanguageList().join(','),
+  );
 
   applyProxyAll(settings);
 
@@ -1855,8 +1924,8 @@ app.whenReady().then(async () => {
   defaultUserAgent = session.defaultSession.getUserAgent();
   if (settings.minimizeToTray) ensureTray();
 
-  // Force Chrome User-Agent on session
-  session.defaultSession.setUserAgent(CHROME_UA);
+  // Force Chrome User-Agent on session + pin language to the device locale
+  session.defaultSession.setUserAgent(CHROME_UA, preferredLanguageList().join(','));
   console.log('Privoo: Using User-Agent:', CHROME_UA);
 
   if (settings.dnsOverHttps) {
@@ -2135,17 +2204,23 @@ app.on('web-contents-created', (_event, contents) => {
   };
   setInterval(function() {
     try {
+      var wall = document.querySelector('ytd-enforcement-message-view-model');
+      if (wall) wall.remove();
+      // Only act while an ad is ACTUALLY playing. YouTube marks the player with
+      // the 'ad-showing'/'ad-interrupting' class for the duration of an ad and
+      // removes it after — unlike the .ytp-ad-* container elements, which linger
+      // in the DOM and caused real videos to get fast-forwarded to black.
+      var player = document.querySelector('.html5-video-player');
+      var isAd = !!player && (player.classList.contains('ad-showing') || player.classList.contains('ad-interrupting'));
+      if (!isAd) return;
       var skip = document.querySelector('.ytp-skip-ad-button,.ytp-ad-skip-button-modern,.ytp-ad-skip-button');
-      if (skip) { skip.click(); return; }
+      if (skip) skip.click();
       var video = document.querySelector('video.html5-main-video');
-      var isAd  = !!document.querySelector('.ytp-ad-player-overlay,.ytp-ad-simple-ad-badge,.ytp-ad-preview-container');
-      if (video && isAd && isFinite(video.duration) && video.duration > 0) {
+      if (video && isFinite(video.duration) && video.duration > 0) {
         if (!video.muted) video.muted = true;
         video.playbackRate = 16;
         if (video.duration - video.currentTime > 0.1) video.currentTime = video.duration - 0.1;
       }
-      var wall = document.querySelector('ytd-enforcement-message-view-model');
-      if (wall) wall.remove();
     } catch {}
   }, 300);
 })();`;
@@ -2640,29 +2715,129 @@ ipcMain.handle('capture-full-page', async (e, guestWcId) => {
 // DevTools renders inside our custom right-side panel.  If that throws we
 // fall back to a native right-docked window — either way { detached } tells
 // the renderer whether to show #devtools-pane.
+const dockedDevToolsViews = new Map();
+
+function cleanDevToolsBounds(bounds) {
+  if (!bounds || typeof bounds !== 'object') return null;
+  const x = Math.max(0, Math.round(Number(bounds.x) || 0));
+  const y = Math.max(0, Math.round(Number(bounds.y) || 0));
+  const width = Math.max(1, Math.round(Number(bounds.width) || 0));
+  const height = Math.max(1, Math.round(Number(bounds.height) || 0));
+  return { x, y, width, height };
+}
+
+function destroyDockedDevToolsView(guestId) {
+  const id = Number(guestId);
+  const entry = dockedDevToolsViews.get(id);
+  if (!entry) return;
+  dockedDevToolsViews.delete(id);
+  try {
+    if (entry.win && !entry.win.isDestroyed()) entry.win.removeBrowserView(entry.view);
+  } catch {}
+  try {
+    if (!entry.view.webContents.isDestroyed()) entry.view.webContents.destroy();
+  } catch {}
+}
+
+function ensureDockedDevToolsView(guest, bounds) {
+  const guestId = guest.id;
+  const win = BrowserWindow.fromWebContents(guest);
+  const nextBounds = cleanDevToolsBounds(bounds);
+  if (!win || win.isDestroyed() || !nextBounds) return null;
+
+  let entry = dockedDevToolsViews.get(guestId);
+  if (entry && (entry.win !== win || entry.win?.isDestroyed?.() || entry.view.webContents.isDestroyed())) {
+    destroyDockedDevToolsView(guestId);
+    entry = null;
+  }
+  if (!entry) {
+    const view = new BrowserView({
+      webPreferences: {
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: false,
+      },
+    });
+    win.addBrowserView(view);
+    entry = { win, view };
+    dockedDevToolsViews.set(guestId, entry);
+  }
+  entry.view.setBounds(nextBounds);
+  try { entry.view.setAutoResize({ width: false, height: false }); } catch {}
+  try { entry.win.setTopBrowserView(entry.view); } catch {}
+  return entry.view.webContents;
+}
+
 ipcMain.handle('open-devtools', (_e, guestWcId, opts) => {
   try {
     const guest = webContents.fromId(Number(guestWcId));
     if (!guest || guest.isDestroyed()) return { ok: false };
+    const hasCoords = opts && opts.x !== undefined && opts.y !== undefined;
+    const guestId = guest.id;
+
     if (guest.isDevToolsOpened()) {
-      if (opts?.x !== undefined && opts?.y !== undefined) {
+      if (hasCoords) {
         guest.inspectElement(opts.x, opts.y);
-        guest.devToolsWebContents?.focus();
-        return { ok: true };
+        try { guest.devToolsWebContents?.focus(); } catch {}
+        return { ok: true, opened: true, embedded: dockedDevToolsViews.has(guestId) };
       }
       guest.closeDevTools();
+      destroyDockedDevToolsView(guestId);
       return { ok: true, closed: true };
     }
+
+    // Preferred: render DevTools INTO our right-side panel webview (devWcId).
+    // This is the only reliable way to dock DevTools on the right for a
+    // <webview> guest — openDevTools({mode:'right'}) is ignored for guests.
+    const host = ensureDockedDevToolsView(guest, opts?.bounds);
+    if (host && !host.isDestroyed()) {
+      try {
+        guest.setDevToolsWebContents(host);
+        if (hasCoords) {
+          guest.once('devtools-opened', () => {
+            if (!guest.isDestroyed()) guest.inspectElement(opts.x, opts.y);
+          });
+        }
+        guest.openDevTools({ mode: 'detach' });
+        return { ok: true, opened: true, embedded: true };
+      } catch {
+        destroyDockedDevToolsView(guestId);
+      }
+    }
+
+    // Fallback: native right-docked DevTools.
     guest.openDevTools({ mode: 'right', activate: true });
-    if (opts?.x !== undefined && opts?.y !== undefined) {
+    if (hasCoords) {
       guest.once('devtools-opened', () => {
         if (!guest.isDestroyed()) guest.inspectElement(opts.x, opts.y);
       });
     }
-    return { ok: true };
+    return { ok: true, opened: true, embedded: false };
   } catch (e) {
     return { ok: false };
   }
+});
+
+// Detach DevTools from the right-side panel (called when the panel is closed).
+ipcMain.handle('close-devtools', (_e, guestWcId) => {
+  try {
+    const guestId = Number(guestWcId);
+    const guest = webContents.fromId(guestId);
+    if (guest && !guest.isDestroyed() && guest.isDevToolsOpened()) guest.closeDevTools();
+    destroyDockedDevToolsView(guestId);
+    return { ok: true };
+  } catch { return { ok: false }; }
+});
+
+ipcMain.handle('update-devtools-bounds', (_e, guestWcId, bounds) => {
+  try {
+    const entry = dockedDevToolsViews.get(Number(guestWcId));
+    const nextBounds = cleanDevToolsBounds(bounds);
+    if (!entry || !nextBounds || entry.view.webContents.isDestroyed()) return { ok: false };
+    entry.view.setBounds(nextBounds);
+    try { entry.win?.setTopBrowserView(entry.view); } catch {}
+    return { ok: true };
+  } catch { return { ok: false }; }
 });
 
 // ---------------------------------------------------------------------------
@@ -3503,6 +3678,15 @@ ipcMain.handle('save-tab-session', (_e, payload) => {
   } catch (e) {
     return { ok: false, error: String(e?.message || e) };
   }
+});
+
+// Synchronous flush — used from the renderer's pagehide/beforeunload handler so
+// the session is written to disk BEFORE the window unloads on quit. The async
+// (debounced) save above can be lost if the app quits before it fires, which
+// is why closed tabs could reappear after a quick close-and-quit.
+ipcMain.on('save-tab-session-sync', (e, payload) => {
+  try { sessionStore.save(payload && typeof payload === 'object' ? payload : {}); } catch {}
+  e.returnValue = true;
 });
 
 ipcMain.handle('weather-snippet', async (_e, location) => {

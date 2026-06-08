@@ -647,84 +647,46 @@ body.ntp-wp .pn-dot.active{background:rgba(255,255,255,.85);}
 /* ── Men's Mental Health Month modal ── */
 #mmhm-overlay{
   position:fixed;inset:0;z-index:8000;
-  background:rgba(0,0,0,.50);
-  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  background:rgba(0,0,0,.4);
   display:flex;align-items:center;justify-content:center;
   padding:24px;
-  animation:mmhm-bg .3s cubic-bezier(.2,0,.2,1) both;
+  animation:mmhm-bg .2s ease both;
 }
 #mmhm-overlay[hidden]{display:none!important;}
 @keyframes mmhm-bg{from{opacity:0;}to{opacity:1;}}
 #mmhm-card{
   background:#fff;
-  border-radius:24px;
-  max-width:380px;width:100%;
-  box-shadow:0 32px 80px rgba(0,0,0,.28),0 8px 24px rgba(0,0,0,.12);
-  overflow:hidden;
-  animation:mmhm-rise .36s cubic-bezier(.16,.84,.44,1) both;
+  border-radius:14px;
+  width:min(340px,92vw);
+  box-shadow:0 18px 50px rgba(0,0,0,.35);
+  padding:26px 24px 20px;
+  text-align:center;
+  animation:mmhm-rise .24s cubic-bezier(.16,1,.3,1) both;
 }
 body.ntp-dark #mmhm-card{background:#22242a;}
-@keyframes mmhm-rise{
-  from{opacity:0;transform:translateY(28px) scale(.94);}
-  to  {opacity:1;transform:none;}
-}
-.mmhm-banner{
-  height:116px;
-  background:linear-gradient(140deg,#0a2463 0%,#1565c0 55%,#26a69a 100%);
-  display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:6px;position:relative;overflow:hidden;
-}
-.mmhm-banner::before{
-  content:'';position:absolute;
-  width:200px;height:200px;border-radius:50%;
-  background:rgba(255,255,255,.06);
-  top:-60px;right:-60px;
-}
-.mmhm-banner::after{
-  content:'';position:absolute;
-  width:140px;height:140px;border-radius:50%;
-  background:rgba(255,255,255,.05);
-  bottom:-50px;left:-30px;
-}
+@keyframes mmhm-rise{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
 .mmhm-icon{
-  color:#fff;z-index:1;
-  filter:drop-shadow(0 2px 12px rgba(0,0,0,.30));
+  display:block;margin:0 auto 14px;
+  color:#1a73e8;
 }
-.mmhm-banner-label{
-  font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
-  color:rgba(255,255,255,.75);z-index:1;
-}
-.mmhm-body{padding:24px 26px 22px;text-align:center;}
+body.ntp-dark .mmhm-icon{color:#5b9bf3;}
 .mmhm-title{
-  font-size:18px;font-weight:700;color:#1f1f1f;
-  line-height:1.25;margin-bottom:12px;
-  letter-spacing:-.01em;
+  font-size:16px;font-weight:600;color:#1f1f1f;margin-bottom:7px;
 }
 body.ntp-dark .mmhm-title{color:#e8eaed;}
 .mmhm-text{
-  font-size:13px;color:#5f6368;line-height:1.65;margin-bottom:22px;
+  font-size:13px;color:#5f6368;line-height:1.5;margin-bottom:20px;
 }
 body.ntp-dark .mmhm-text{color:#9aa0a6;}
 .mmhm-close{
-  width:100%;padding:13px;border:none;border-radius:14px;
-  background:linear-gradient(135deg,#1565c0,#0d47a1);
-  color:#fff;font-size:14px;font-weight:600;
-  cursor:default;font-family:inherit;
-  box-shadow:0 4px 16px rgba(13,71,161,.30);
-  transition:transform .14s cubic-bezier(.2,0,.2,1),
-             box-shadow .14s cubic-bezier(.2,0,.2,1),
-             filter .14s;
+  width:100%;height:40px;border:none;border-radius:10px;
+  background:#1a73e8;color:#fff;font-size:13.5px;font-weight:600;
+  cursor:pointer;font-family:inherit;
+  transition:filter .12s ease;
 }
-.mmhm-close:hover{
-  transform:translateY(-2px);
-  box-shadow:0 8px 24px rgba(13,71,161,.40);
-  filter:brightness(1.08);
-}
-.mmhm-close:active{
-  transform:translateY(0);
-  box-shadow:0 2px 8px rgba(13,71,161,.25);
-  filter:brightness(.97);
-}
+body.ntp-dark .mmhm-close{background:#8ab4f8;color:#202124;}
+.mmhm-close:hover{filter:brightness(1.08);}
+.mmhm-close:active{filter:brightness(.94);}
 
 .ntp-pen-btn{
   position:fixed;right:18px;bottom:14px;z-index:40;
@@ -873,29 +835,29 @@ body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
   <div id="ntp-news" hidden>
     <div class="pn-wrap">
       <div class="pn-slide active" id="pn-0">
-        <div class="pn-kicker">Privoo v2.8.0</div>
-        <div class="pn-title">Vertical tabs, reimagined</div>
-        <p class="pn-body">Switch your tabs to a clean side panel in Settings → Layout. Collapse it to a slim icon rail, drag the edge to resize, and keep everything tidy.</p>
+        <div class="pn-kicker">Privoo v2.9.0</div>
+        <div class="pn-title">Browse in your language, anywhere</div>
+        <p class="pn-body">On a VPN in another country? Sites stay in your language now. Privoo follows your device locale — or pick any language in Settings → Privacy.</p>
       </div>
       <div class="pn-slide" id="pn-1">
-        <div class="pn-kicker">New</div>
-        <div class="pn-title">Drag a tab to split the screen</div>
-        <p class="pn-body">Grab any tab and drop it on the left or right half of the page to open Split View instantly — two sites side by side, with a draggable divider.</p>
+        <div class="pn-kicker">Privacy</div>
+        <div class="pn-title">Proxy &amp; Tor, built in</div>
+        <p class="pn-body">Route your traffic through a custom proxy, or launch Tor straight from Settings → Privacy for an extra layer of anonymity.</p>
       </div>
       <div class="pn-slide" id="pn-2">
-        <div class="pn-kicker">Vertical tabs</div>
-        <div class="pn-title">Search popup &amp; integrated toolbar</div>
-        <p class="pn-body">Opening a tab can pop a centered search box over an empty canvas, and your toolbar icons can tuck neatly into the bottom of the sidebar.</p>
+        <div class="pn-kicker">Sign-in</div>
+        <div class="pn-title">Smoother Google &amp; TikTok logins</div>
+        <p class="pn-body">"This browser may not be secure" is gone — popup sign-ins now pass cleanly, and logging into TikTok with Google just works.</p>
       </div>
       <div class="pn-slide" id="pn-3">
-        <div class="pn-kicker">Appearance</div>
-        <div class="pn-title">New search bar &amp; cleaner glass</div>
-        <p class="pn-body">Try the modern address-bar style in Settings → Layout. Transparency is lighter and sharper now, so your wallpaper shows through clearly.</p>
+        <div class="pn-kicker">New tab</div>
+        <div class="pn-title">Clock, weather &amp; more</div>
+        <p class="pn-body">Show a live clock and the weather on your new tab page — toggle them in Settings → New tab page and make it yours.</p>
       </div>
       <div class="pn-slide" id="pn-4">
-        <div class="pn-kicker">YouTube</div>
-        <div class="pn-title">Smoother playback</div>
-        <p class="pn-body">Ads are blocked and skippable, and switching the audio-track language now works as it should.</p>
+        <div class="pn-kicker">Vertical tabs</div>
+        <div class="pn-title">Polished side tabs</div>
+        <p class="pn-body">On a website, click the address bar to edit it in place; on a blank tab it opens the search popup. Closing the tab you're on is rock-solid now.</p>
       </div>
       <div class="pn-dots" id="pn-dots">
         <button class="pn-dot active" data-idx="0"></button>
@@ -910,7 +872,7 @@ body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
 
 <footer id="ntp-footer">
   <div id="ntp-weather" hidden></div>
-  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee. &nbsp;&middot;&nbsp; <span id="ntp-version" style="opacity:.55">v2.8.0</span></p>
+  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee. &nbsp;&middot;&nbsp; <span id="ntp-version" style="opacity:.55">v2.9.0</span></p>
 </footer>
 
 </div>
@@ -918,17 +880,12 @@ body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
 <!-- Men's Mental Health Month modal — shown once on v2.0.8 -->
 <div id="mmhm-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="mmhm-title">
   <div id="mmhm-card">
-    <div class="mmhm-banner">
-      <svg class="mmhm-icon" viewBox="0 0 24 24" width="46" height="46" fill="currentColor" aria-hidden="true">
-        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-      </svg>
-      <span class="mmhm-banner-label">Men's Mental Health Month</span>
-    </div>
-    <div class="mmhm-body">
-      <div class="mmhm-title" id="mmhm-title">It's okay not to be okay.</div>
-      <p class="mmhm-text">June is Men's Mental Health Month — a reminder that mental health matters for everyone. It's okay to talk, to feel, and to ask for help. You're never alone in what you're going through.<br><br>Take care of yourself. 💙</p>
-      <button class="mmhm-close" id="mmhm-close">Thank you, got it</button>
-    </div>
+    <svg class="mmhm-icon" viewBox="0 0 24 24" width="38" height="38" fill="currentColor" aria-hidden="true">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+    </svg>
+    <div class="mmhm-title" id="mmhm-title">It's okay not to be okay</div>
+    <p class="mmhm-text">June is Men's Mental Health Month. It's okay to talk, to feel, and to ask for help — you're never alone in what you're going through.</p>
+    <button class="mmhm-close" id="mmhm-close">Got it</button>
   </div>
 </div>
 

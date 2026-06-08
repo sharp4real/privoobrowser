@@ -760,7 +760,7 @@
                 <span>Exit</span>
               </div>
               <hr/>
-              <div class="menu-ver" id="menu-ver">Privoo v2.8.0</div>
+              <div class="menu-ver" id="menu-ver">Privoo v2.9.0</div>
             </div>
         </div>
       </div>
@@ -895,7 +895,7 @@
                 <svg viewBox="0 0 14 14" width="11" height="11"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
               </button>
             </div>
-            <webview id="devtools-view" src="about:blank"></webview>
+            <div id="devtools-view" aria-hidden="true"></div>
           </div>
         </div>
 
@@ -1055,17 +1055,24 @@
     </div>
   </div>
 
-  <div id="discord-popup" class="discord-popup hidden" role="dialog" aria-modal="true" aria-label="Join our Discord">
-    <div class="discord-card">
-      <div class="discord-icon">
-        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+  <div id="discord-popup" class="ty-popup hidden" role="dialog" aria-modal="true" aria-label="Join our community">
+    <div class="ty-card">
+      <svg class="ty-logo" viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      <div class="ty-title">Join our community</div>
+      <div class="ty-text">Get updates, share feedback, and hang out with other Privoo users.</div>
+      <div class="ty-actions">
+        <button class="ty-btn-secondary" id="discord-dismiss">Maybe later</button>
+        <button class="ty-btn" id="discord-join">Join Discord</button>
       </div>
-      <div class="discord-title">Join our Discord community</div>
-      <div class="discord-text">Get updates, share feedback, and hang out with other Privoo users.</div>
-      <div class="discord-actions">
-        <button class="discord-btn-secondary" id="discord-dismiss">Maybe later</button>
-        <button class="discord-btn-primary" id="discord-join">Join Discord</button>
-      </div>
+    </div>
+  </div>
+
+  <div id="thankyou-popup" class="ty-popup hidden" role="dialog" aria-modal="true" aria-label="Thank you for using Privoo">
+    <div class="ty-card">
+      <img class="ty-logo" src="privoo://newtab/logo.png" width="40" height="40" alt="Privoo" draggable="false"/>
+      <div class="ty-title">Thank you for using Privoo</div>
+      <div class="ty-text">A private browser with no tracking and no data collection. Enjoy browsing.</div>
+      <button class="ty-btn" id="thankyou-ok">Continue</button>
     </div>
   </div>
 

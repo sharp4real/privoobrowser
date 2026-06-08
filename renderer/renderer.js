@@ -878,6 +878,15 @@ async function saveSessionNow() {
   await window.privoo.saveTabSession(serializeSession()).catch?.(() => {});
 }
 
+// Flush the session synchronously right before the window unloads (app quit),
+// so a debounced save can't be lost — otherwise tabs you just closed reappear
+// on next launch.
+function flushSessionSync() {
+  try { window.privoo.saveTabSessionSync?.(serializeSession()); } catch { /* ignore */ }
+}
+window.addEventListener('pagehide', flushSessionSync);
+window.addEventListener('beforeunload', flushSessionSync);
+
 function updateGeoStatusLine() {
   if (!geoStatusLine || !settings) return;
   const c = geoCoordsFromSettings(settings);
@@ -1679,6 +1688,7 @@ function closeTab(id) {
       omnibox.blur();
       hideOverlayBanner();
       renderVtabs();
+      scheduleSaveSession();
       showSearchPopup();
       return;
     }
@@ -1688,6 +1698,7 @@ function closeTab(id) {
   if (activeId === id) activateTab(tabs[Math.min(idx, tabs.length - 1)].id);
   else resizeTabs();
   try { tab.wv.remove(); } catch (_) {}
+  renderVtabs();
   scheduleSaveSession();
 }
 
@@ -2935,28 +2946,100 @@ function hideWvContextMenu() {
 }
 
 // ─── DevTools ───────────────────────────────────────────────────────────────
+let dockedDevToolsGuestId = 0;
+
+function devToolsPaneEls() {
+  return {
+    pane: document.getElementById('devtools-pane'),
+    view: document.getElementById('devtools-view'),
+  };
+}
+
+function showDevToolsPane() {
+  const { pane, view } = devToolsPaneEls();
+  if (!pane || !view) return null;
+  pane.hidden = false;
+  if (!pane.style.width) pane.style.width = '460px';
+  return view;
+}
+
+function hideDevToolsPane() {
+  const { pane } = devToolsPaneEls();
+  if (pane) pane.hidden = true;
+  dockedDevToolsGuestId = 0;
+}
+
+function devToolsContentBounds() {
+  const { view } = devToolsPaneEls();
+  if (!view) return null;
+  const r = view.getBoundingClientRect();
+  return {
+    x: r.left,
+    y: r.top,
+    width: r.width,
+    height: r.height,
+  };
+}
+
+function updateDockedDevToolsBounds() {
+  if (!dockedDevToolsGuestId || !window.privoo?.updateDevToolsBounds) return;
+  const bounds = devToolsContentBounds();
+  if (bounds) window.privoo.updateDevToolsBounds(dockedDevToolsGuestId, bounds).catch?.(() => {});
+}
+
+function nextAnimationFrame() {
+  return new Promise(resolve => requestAnimationFrame(resolve));
+}
+
 async function openDockedDevTools(tab, inspectX, inspectY) {
   if (!tab?.wv) return;
   const hasCoords = Number.isFinite(inspectX) && Number.isFinite(inspectY);
+  const guestId = tab.wv.getWebContentsId?.() || 0;
   try {
-    // Inspect: use the <webview>'s native inspectElement — the reliable path
-    // for guest pages. It opens DevTools (in its remembered dock side) and
-    // highlights the clicked element.
-    if (hasCoords && typeof tab.wv.inspectElement === 'function') {
-      tab.wv.inspectElement(Math.round(inspectX), Math.round(inspectY));
+    if (guestId && window.privoo?.openDevTools) {
+      showDevToolsPane();
+      await nextAnimationFrame();
+      const res = await window.privoo.openDevTools(guestId, {
+        bounds: devToolsContentBounds(),
+        ...(hasCoords ? { x: Math.round(inspectX), y: Math.round(inspectY) } : {}),
+      });
+      if (res?.closed || !res?.embedded) {
+        hideDevToolsPane();
+      } else {
+        dockedDevToolsGuestId = guestId;
+        requestAnimationFrame(updateDockedDevToolsBounds);
+        updateDockedDevToolsBounds();
+      }
       return;
     }
-    if (tab.wv.isDevToolsOpened?.()) tab.wv.closeDevTools();
-    else tab.wv.openDevTools();
-  } catch { /* ignore */ }
+
+    showDevToolsPane();
+    if (hasCoords && typeof tab.wv.inspectElement === 'function') {
+      tab.wv.inspectElement(Math.round(inspectX), Math.round(inspectY));
+      dockedDevToolsGuestId = guestId;
+    } else if (tab.wv.isDevToolsOpened?.()) {
+      tab.wv.closeDevTools();
+      hideDevToolsPane();
+    } else {
+      tab.wv.openDevTools();
+      dockedDevToolsGuestId = guestId;
+    }
+  } catch {
+    hideDevToolsPane();
+  }
 }
 
-function closeDockedDevTools() {
-  const pane = document.getElementById('devtools-pane');
-  if (pane) pane.hidden = true;
-  const tab = activeTab();
-  if (!tab?.wv) return;
-  try { if (tab.wv.isDevToolsOpened?.()) tab.wv.closeDevTools(); } catch {}
+async function closeDockedDevTools() {
+  const guestId = dockedDevToolsGuestId || activeTab()?.wv?.getWebContentsId?.() || 0;
+  hideDevToolsPane();
+  try {
+    if (guestId && window.privoo?.closeDevTools) {
+      await window.privoo.closeDevTools(guestId);
+      return;
+    }
+    const tab = activeTab();
+    if (tab?.wv?.isDevToolsOpened?.()) tab.wv.closeDevTools();
+  } catch {}
 }
 
 // ─── Standalone emoji picker (Chrome/Edge-style) ────────────────────────────
@@ -3879,6 +3962,7 @@ document.getElementById('sb-name')?.addEventListener('keydown', (e) => {
     if (w < 300) w = 300;
     if (w > rect.width * 0.8) w = rect.width * 0.8;
     pane.style.width = `${w}px`;
+    updateDockedDevToolsBounds();
   });
   window.addEventListener('mouseup', () => {
     if (!dragging) return;
@@ -3887,6 +3971,10 @@ document.getElementById('sb-name')?.addEventListener('keydown', (e) => {
     document.body.style.cursor = '';
   });
 })();
+
+window.addEventListener('resize', () => {
+  requestAnimationFrame(updateDockedDevToolsBounds);
+});
 
 window.addEventListener('mousedown', (e) => {
   if (e.button !== 0) return;
@@ -3983,16 +4071,24 @@ function handleAction(action) {
 );
 
 // ─── Toolbar events ───────────────────────────────────────────────────────────
-// In vertical-tabs mode the top address bar is not editable — clicking (or
-// focusing) it opens the centered search popup instead.
+// In vertical-tabs mode the top address bar opens the centered search popup
+// when there's no real website to edit (empty state / internal pages). When a
+// http(s) site is loaded it stays a normal, editable address bar so you can
+// edit the current URL in place.
+function vtabsOmniboxShouldPopup() {
+  if (!document.body.classList.contains('vertical-tabs')) return false;
+  const t = activeTab();
+  const u = t && t.url ? t.url : '';
+  return !(u.startsWith('http://') || u.startsWith('https://'));
+}
 omnibox.addEventListener('mousedown', (e) => {
-  if (document.body.classList.contains('vertical-tabs')) {
+  if (vtabsOmniboxShouldPopup()) {
     e.preventDefault();
     showSearchPopup(false);
   }
 });
 omnibox.addEventListener('focus', () => {
-  if (document.body.classList.contains('vertical-tabs')) {
+  if (vtabsOmniboxShouldPopup()) {
     omnibox.blur();
     showSearchPopup(false);
     return;
@@ -5136,9 +5232,20 @@ function _makeVtabEl(tab) {
     el.classList.add('dragging'); beginTabDrag(tab.id, e);
   });
   el.addEventListener('dragend', () => { el.classList.remove('dragging'); endTabDrag(); });
-  el.addEventListener('mousedown', (e) => { if (e.target.closest('.vtab-close')) e.stopPropagation(); });
+  // Close on mousedown, not click. Two reasons: a tiny drag would otherwise
+  // turn the press into a drag and swallow the click, and when the active tab's
+  // <webview> has focus (e.g. the Settings page) the click gets eaten by the
+  // focus transition so the tab only closed once you switched away. mousedown
+  // always fires first, so the X closes the tab you're on immediately.
+  el.addEventListener('mousedown', (e) => {
+    if (e.target.closest('.vtab-close')) {
+      e.stopPropagation();
+      e.preventDefault();
+      closeTab(tab.id);
+    }
+  });
   el.addEventListener('click', (e) => {
-    if (e.target.closest('.vtab-close')) { e.stopPropagation(); closeTab(tab.id); return; }
+    if (e.target.closest('.vtab-close')) { e.stopPropagation(); return; }
     activateTab(tab.id);
   });
   el.addEventListener('contextmenu', (e) => {
@@ -5405,6 +5512,37 @@ function wireFieldContextMenu(input) {
 }
 wireFieldContextMenu(searchPopupInput);
 
+// True while any blocking main-window popup/overlay is on screen — used to
+// keep the one-time popups from stacking on top of each other.
+function _anyBlockingOverlayOpen() {
+  if (setupOverlay && !setupOverlay.hasAttribute('hidden')) return true;
+  const updating = document.getElementById('updating-overlay');
+  if (updating && !updating.hasAttribute('hidden')) return true;
+  return false;
+}
+
+(function initThankYouPopup() {
+  const popup = document.getElementById('thankyou-popup');
+  if (!popup) return;
+  const ok = document.getElementById('thankyou-ok');
+  const close = () => popup.classList.add('hidden');
+  ok?.addEventListener('click', close);
+  popup.addEventListener('mousedown', (e) => { if (e.target === popup) close(); });
+  const tryShow = () => {
+    if (!settings) { setTimeout(tryShow, 500); return; }
+    if (settings.thankYouShown) return;
+    if (_anyBlockingOverlayOpen()) { setTimeout(tryShow, 800); return; }
+    setTimeout(() => {
+      // Mark shown the moment it appears so it can never come back, even if the
+      // app is closed before the user dismisses it.
+      settings.thankYouShown = true;
+      window.privoo.setSettings?.({ thankYouShown: true });
+      popup.classList.remove('hidden');
+    }, 900);
+  };
+  tryShow();
+})();
+
 (function initDiscordPrompt() {
   const popup = document.getElementById('discord-popup');
   if (!popup) return;
@@ -5419,14 +5557,19 @@ wireFieldContextMenu(searchPopupInput);
     if (!settings) { setTimeout(tryShow, 500); return; }
     if (firstRun === null) firstRun = !settings.disclaimerAccepted;
     if (settings.discordPromptShown || firstRun) return;
-    if (setupOverlay && !setupOverlay.hasAttribute('hidden')) { setTimeout(tryShow, 800); return; }
-    setTimeout(() => {
-      settings.discordPromptShown = true;
-      window.privoo.setSettings?.({ discordPromptShown: true });
-      popup.classList.remove('hidden');
-    }, 1400);
+    if (_anyBlockingOverlayOpen()) { setTimeout(tryShow, 800); return; }
+    // Never overlap the thank-you popup: wait while it's pending or on screen,
+    // then show. (Checked here at show time, so there's no race.)
+    const ty = document.getElementById('thankyou-popup');
+    const tyPending = !settings.thankYouShown;
+    const tyVisible = ty && !ty.classList.contains('hidden');
+    if (tyPending || tyVisible) { setTimeout(tryShow, 800); return; }
+    settings.discordPromptShown = true;
+    window.privoo.setSettings?.({ discordPromptShown: true });
+    popup.classList.remove('hidden');
   };
-  tryShow();
+  // Give the thank-you popup a head start so it's first in line.
+  setTimeout(tryShow, 1400);
 })();
 
 // ─── Inline AI Panel ─────────────────────────────────────────────────────────

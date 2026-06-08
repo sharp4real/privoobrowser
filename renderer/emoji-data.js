@@ -1207,7 +1207,6 @@ window.PRIVOO_EMOJI_DATA = {
       ['🏁','chequered flag','race finish'],
       ['🚩','triangular flag','red flag'],
       ['🏳️‍🌈','rainbow flag','pride lgbt'],
-      ['🏳️‍⚧️','transgender flag','pride'],
       ['🏴‍☠️','pirate flag','pirate'],
       ['🇺🇸','flag United States','usa'],
       ['🇬🇧','flag United Kingdom','uk britain'],

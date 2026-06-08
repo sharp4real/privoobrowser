@@ -84,6 +84,7 @@ contextBridge.exposeInMainWorld('privoo', {
   // Tab session
   getTabSession: () => ipcRenderer.invoke('get-tab-session'),
   saveTabSession: (payload) => ipcRenderer.invoke('save-tab-session', payload),
+  saveTabSessionSync: (payload) => { try { return ipcRenderer.sendSync('save-tab-session-sync', payload); } catch { return false; } },
 
   // Search suggestions (proxied through main to avoid CORS)
   getSuggestions: (q, eng) => ipcRenderer.invoke('search-suggestions', { query: q, engine: eng }),
@@ -97,6 +98,8 @@ contextBridge.exposeInMainWorld('privoo', {
   getPlatform:    () => ipcRenderer.invoke('get-platform'),
   getAppVersion:  () => ipcRenderer.invoke('get-app-version'),
   openDevTools:   (guestWcId, opts) => ipcRenderer.invoke('open-devtools', guestWcId, opts),
+  closeDevTools:  (guestWcId) => ipcRenderer.invoke('close-devtools', guestWcId),
+  updateDevToolsBounds: (guestWcId, bounds) => ipcRenderer.invoke('update-devtools-bounds', guestWcId, bounds),
   setDiscordActivity: (activity) => ipcRenderer.send('discord-rpc-set-activity', activity),
   showContextMenu:(items) => ipcRenderer.invoke('show-context-menu', items),
   showEmojiPanel: () => ipcRenderer.invoke('show-emoji-panel'),

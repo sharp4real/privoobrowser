@@ -112,6 +112,11 @@ const DEFAULTS = {
   doNotTrack: true,
   allowGeolocation: false,
 
+  // Language — preferred content language sent to sites (Accept-Language) and
+  // reported via navigator.languages. 'auto' follows the device locale, which
+  // keeps content in your language even behind a VPN in another country.
+  preferredLanguage: 'auto',
+
   // Proxy / Tor
   proxyMode: 'none',   // 'none' | 'manual' | 'tor'
   proxyUrl: '',        // manual proxy, e.g. socks5://127.0.0.1:1080 or http://host:port
@@ -200,6 +205,7 @@ const DEFAULTS = {
   mmhmShown: false,
   updatesToastShown: false,
   discordPromptShown: false,
+  thankYouShown: false,    // one-time "Thank you for using Privoo" popup
 
   // Background music
   musicPath: null,

@@ -28,11 +28,45 @@ function buildGoogleSpoofScript(opts) {
 
   return `(function(){
   'use strict';
+  // Education platforms (Bedrock, Sparx) run anti-cheat that LOCKS task controls
+  // (the audio skip / progress slider stops advancing) the moment they detect a
+  // non-standard environment. Unlike bot-detectors, they want a *legit* browser,
+  // and our spoof — fake plugins, synthetic chrome object, farbled canvas, the
+  // __privoo_spoofed__ marker — reads as tampering. Bail out completely so they
+  // get a pristine page. Safe: the webview already runs contextIsolation +
+  // nodeIntegration:false with a real Chrome UA, so nothing Electron leaks.
+  try {
+    var _eduH = location.hostname || '';
+    if (/(^|\\.)bedrocklearning\\.(org|com|co\\.uk)$/i.test(_eduH)
+      || /(^|\\.)sparxmaths\\.(com|uk)$/i.test(_eduH)
+      || /(^|\\.)sparx-learning\\.com$/i.test(_eduH)) return;
+  } catch(e) {}
   if (window.__privoo_spoofed__) return;
   try { Object.defineProperty(window, '__privoo_spoofed__', { value: true, configurable: false, writable: false }); } catch(e) { window.__privoo_spoofed__ = true; }
 
   var _win = window;
   var _nav = navigator;
+
+  // Hosts with aggressive integrity / bot checks. For these we keep the Chrome
+  // *identity* spoof (webdriver, chrome object, UA, Electron-trace removal) but
+  // skip the fingerprint *farbling* (canvas noise, WebGL renderer override,
+  // performance.now jitter). Farbled values are inconsistent with the rest of
+  // the environment, which these sites flag — e.g. TikTok's "maximum number of
+  // attempts reached", Google's reCAPTCHA loops, Bedrock locking task controls.
+  var _h = location.hostname;
+  var _isGoogleAuth = /(^|\\.)accounts\\.google\\.com$/i.test(_h)
+    || /(^|\\.)gstatic\\.com$/i.test(_h)
+    || /(^|\\.)googleusercontent\\.com$/i.test(_h);
+  var _isTikTok = /(^|\\.)tiktok\\.com$/i.test(_h)
+    || /(^|\\.)tiktokv\\.com$/i.test(_h)
+    || /(^|\\.)tiktokcdn\\.com$/i.test(_h)
+    || /(^|\\.)byteoversea\\.com$/i.test(_h);
+  var _isSnap = /(^|\\.)snapchat\\.com$/i.test(_h)
+    || /(^|\\.)snap\\.com$/i.test(_h);
+  var _isEdu = /(^|\\.)bedrocklearning\\.(org|com|co\\.uk)$/i.test(_h)
+    || /(^|\\.)sparxmaths\\.(com|uk)$/i.test(_h)
+    || /(^|\\.)sparx-learning\\.com$/i.test(_h);
+  var _isStrictFp = _isGoogleAuth || _isTikTok || _isSnap || _isEdu;
 
   function def(obj, prop, val) {
     try {
@@ -232,8 +266,9 @@ function buildGoogleSpoofScript(opts) {
   // sites use feature detection to choose between password and WebAuthn flows.
 
   // ── Misc navigator properties ─────────────────────────────────────────────
-  try { def(_nav, 'languages',          ['en-US','en']); } catch(e) {}
-  try { def(_nav, 'language',           'en-US'); } catch(e) {}
+  // navigator.language(s) are intentionally NOT overridden here — they reflect
+  // the session's accept-languages (pinned to the device locale in main), so a
+  // VPN exit-node region never changes the reported language.
   try { def(_nav, 'hardwareConcurrency', 8); } catch(e) {}
   try { def(_nav, 'deviceMemory',        8); } catch(e) {}
   try { def(_nav, 'maxTouchPoints',      0); } catch(e) {}
@@ -366,9 +401,11 @@ function buildGoogleSpoofScript(opts) {
     };
   } catch(e) {}
 
-  // ── Timing APIs (TikTok checks for consistent timing) ────────────────────
+  // ── Timing APIs ──────────────────────────────────────────────────────────
+  // A constant offset on performance.now() is itself a fingerprint-tampering
+  // tell, so skip it on strict hosts (TikTok et al. flag inconsistent timing).
+  if (_isStrictFp) {} else
   try {
-    // Add small random variations to performance.now() to appear more human
     var _origNow = Performance.prototype.now;
     var _timeOffset = Math.random() * 0.1;
     Performance.prototype.now = function() {
@@ -378,20 +415,23 @@ function buildGoogleSpoofScript(opts) {
 
   // ── Canvas fingerprint noise ─────────────────────────────────────────────
   // Adds ±1 noise to pixel values on readback so every canvas fingerprint
-  // is unique per session while remaining visually identical.
-  // Skip on Google sign-in pages — their reCAPTCHA/bot checks are sensitive
-  // to canvas modification and will show a harder CAPTCHA or block login.
-  var _isGoogleAuth = /(^|\\.)accounts\\.google\\.com$/i.test(location.hostname)
-    || /(^|\\.)gstatic\\.com$/i.test(location.hostname)
-    || /(^|\\.)googleusercontent\\.com$/i.test(location.hostname);
-  if (_isGoogleAuth) {} else
+  // is unique per session while remaining visually identical. Skipped on
+  // strict-fingerprint hosts (see _isStrictFp at the top) so their bot/integrity
+  // checks see a real, consistent canvas.
+  if (_isStrictFp) {} else
   try {
-    var _cSeed = (Math.random() * 0xFFFFFFFF) >>> 0;
+    // Seed is fixed for the page's lifetime and reset before every readback so
+    // the SAME canvas always hashes the same way within a session. (Advancing
+    // the seed across calls produced a different hash each time — an unstable
+    // fingerprint that bot detectors flag.)
+    var _cBase = (Math.random() * 0xFFFFFFFF) >>> 0;
+    var _cSeed = _cBase;
     function _cRand() {
       _cSeed ^= _cSeed << 13; _cSeed ^= _cSeed >> 17; _cSeed ^= _cSeed << 5;
       return (_cSeed >>> 0) / 0x100000000;
     }
     function _noiseData(d) {
+      _cSeed = _cBase;
       for (var i = 0; i < d.length; i += 4) {
         var r = _cRand(); var n = r < 0.15 ? -1 : r > 0.85 ? 1 : 0;
         d[i]   = Math.max(0, Math.min(255, d[i]   + n));
@@ -426,6 +466,9 @@ function buildGoogleSpoofScript(opts) {
 
   // ── WebGL fingerprint normalization ──────────────────────────────────────
   // Report generic vendor/renderer strings instead of the real GPU identity.
+  // Skipped on strict hosts: a generic renderer that doesn't match the rest of
+  // the environment is a detection signal there (let the real GPU show).
+  if (_isStrictFp) {} else
   try {
     var _UNMASKED_VENDOR   = 0x9245;
     var _UNMASKED_RENDERER = 0x9246;
