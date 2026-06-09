@@ -66,6 +66,14 @@ contextBridge.exposeInMainWorld('privoo', {
   aiGetConfig: ()        => ipcRenderer.invoke('ai-get-config'),
   aiSetConfig: (cfg)     => ipcRenderer.invoke('ai-set-config', cfg),
   aiChat:      (payload) => ipcRenderer.invoke('ai-chat', payload),
+  aiChatStream: (payload, onChunk) => {
+    const channel = 'ai-stream-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    const listener = (_e, delta) => { try { onChunk(delta); } catch {} };
+    ipcRenderer.on(channel, listener);
+    return ipcRenderer.invoke('ai-chat-stream', { ...payload, _channel: channel })
+      .finally(() => ipcRenderer.removeListener(channel, listener));
+  },
+  aiDetectOllama: ()     => ipcRenderer.invoke('ai-detect-ollama'),
 
   // yt-dlp (main window)
   ytdlpDownload:      (url, opts) => ipcRenderer.invoke('ytdlp-download', url, opts || {}),

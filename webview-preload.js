@@ -47,6 +47,9 @@ if (location.protocol === 'privoo:') {
     aiGetConfig:  ()        => ipcRenderer.invoke('ai-get-config'),
     aiSetConfig:  (cfg)     => ipcRenderer.invoke('ai-set-config', cfg),
     aiChat:       (payload) => ipcRenderer.invoke('ai-chat', payload),
+    aiDetectOllama: ()      => ipcRenderer.invoke('ai-detect-ollama'),
+    // One-time new-tab popups: claim the single per-launch slot (true once).
+    claimNtpPopup: ()       => ipcRenderer.invoke('claim-newtab-popup'),
     // Frameless AI window controls.
     aiWindowMinimize: () => ipcRenderer.send('ai-window-minimize'),
     aiWindowClose:    () => ipcRenderer.send('ai-window-close'),

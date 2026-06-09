@@ -5578,6 +5578,12 @@ let _aiPanelInited = false;
 let _aiConfig = { provider: 'anthropic', model: 'claude-sonnet-4-6', hasKey: false, hasKeyFor: {}, accepted: false };
 let _aiMessages = [];
 let _aiBusy = false;
+// Persisted chat history (kept in localStorage on this device).
+const AI_STORE_KEY = 'privoo-ai-chats-v1';
+let _aiConvos = [];       // [{ id, title, messages:[{role,content}], updatedAt }]
+let _aiCurrentId = null;  // id of the conversation currently on screen (null = unsaved new chat)
+// Assistant avatar = the Privoo logo (falls back to "AI" text if it won't load).
+const AI_AVATAR_HTML = '<img class="ai-av-img" src="privoo://newtab/logo.png" alt="AI" draggable="false" onerror="this.replaceWith(document.createTextNode(\'AI\'))">';
 
 const AI_MODELS = {
   anthropic: [
@@ -5604,22 +5610,162 @@ const AI_MODELS = {
     { id: 'gemini-2.5-pro',   label: 'Gemini 2.5 Pro — most capable' },
     { id: 'gemini-1.5-pro',   label: 'Gemini 1.5 Pro' },
   ],
+  // Ollama models are discovered at runtime from the local server.
+  ollama: [],
 };
 const AI_DEFAULT_MODELS = {
   anthropic: 'claude-sonnet-4-6',
   openai:    'gpt-4o-mini',
   deepseek:  'deepseek-chat',
   gemini:    'gemini-2.0-flash',
+  ollama:    '',
 };
 const AI_KEY_HINTS = {
   anthropic: 'Get a key from <b>console.anthropic.com</b>',
   openai:    'Get a key from <b>platform.openai.com</b>',
   deepseek:  'Get a key from <b>platform.deepseek.com</b>',
   gemini:    'Get a key from <b>aistudio.google.com</b>',
+  ollama:    'Runs locally — no key needed.',
 };
-const AI_PROVIDER_LABELS = { anthropic: 'Claude', openai: 'GPT (OpenAI)', deepseek: 'DeepSeek', gemini: 'Gemini' };
+const AI_PROVIDER_LABELS = { anthropic: 'Claude', openai: 'GPT (OpenAI)', deepseek: 'DeepSeek', gemini: 'Gemini', ollama: 'Ollama (Local)' };
 
 function _aiEl(id) { return document.getElementById(id); }
+
+// ── Chat history (localStorage) ──────────────────────────────────────────────
+function _aiLoadConvos() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(AI_STORE_KEY));
+    _aiConvos = Array.isArray(raw) ? raw : [];
+  } catch { _aiConvos = []; }
+}
+function _aiSaveConvos() {
+  try { localStorage.setItem(AI_STORE_KEY, JSON.stringify(_aiConvos.slice(0, 100))); } catch {}
+}
+function _aiNewId() { return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+// Sync the on-screen messages into the current conversation (creating it on the
+// first message), retitle it from the first user line, and float it to the top.
+function _aiPersistCurrent() {
+  const msgs = _aiMessages.filter(m => m.role === 'user' || m.role === 'assistant')
+                          .map(m => ({ role: m.role, content: m.content }));
+  if (!msgs.length) return;
+  let convo = _aiConvos.find(c => c.id === _aiCurrentId);
+  if (!convo) {
+    convo = { id: _aiCurrentId || _aiNewId(), title: '', messages: [], updatedAt: 0 };
+    _aiCurrentId = convo.id;
+  }
+  convo.messages = msgs;
+  const firstUser = msgs.find(m => m.role === 'user');
+  convo.title = (firstUser ? firstUser.content : 'New chat').replace(/\s+/g, ' ').trim().slice(0, 60) || 'New chat';
+  convo.updatedAt = Date.now();
+  _aiConvos = [convo, ..._aiConvos.filter(c => c.id !== convo.id)];
+  _aiSaveConvos();
+  _aiRenderHistory();
+}
+
+function _aiNewChat() {
+  if (_aiBusy) return;
+  _aiMessages = [];
+  _aiCurrentId = null;       // a fresh conversation is created on first send
+  _aiRenderChat();
+  _aiRenderHistory();
+  _aiEl('ai-input')?.focus();
+}
+function _aiOpenConvo(id) {
+  const c = _aiConvos.find(x => x.id === id);
+  if (!c) return;
+  _aiCurrentId = id;
+  _aiMessages = (c.messages || []).map(m => ({ role: m.role, content: m.content }));
+  _aiRenderChat();
+  _aiRenderHistory();
+  _aiEl('ai-input')?.focus();
+}
+function _aiDeleteConvo(id) {
+  _aiConvos = _aiConvos.filter(c => c.id !== id);
+  _aiSaveConvos();
+  if (_aiCurrentId === id) { _aiCurrentId = null; _aiMessages = []; _aiRenderChat(); }
+  _aiRenderHistory();
+}
+
+function _aiRelTime(ts) {
+  const d = Date.now() - (ts || 0), m = 60000, h = 3600000, day = 86400000;
+  if (d < m) return 'just now';
+  if (d < h) return Math.floor(d / m) + 'm ago';
+  if (d < day) return Math.floor(d / h) + 'h ago';
+  if (d < day * 7) return Math.floor(d / day) + 'd ago';
+  return new Date(ts).toLocaleDateString();
+}
+
+function _aiRenderHistory() {
+  const list = _aiEl('ai-history-list');
+  if (!list) return;
+  list.innerHTML = '';
+  if (!_aiConvos.length) {
+    const e = document.createElement('div');
+    e.className = 'ai-hist-empty';
+    e.textContent = 'No conversations yet';
+    list.appendChild(e);
+    return;
+  }
+  for (const c of _aiConvos) {
+    const item = document.createElement('div');
+    item.className = 'ai-hist-item' + (c.id === _aiCurrentId ? ' active' : '');
+
+    const open = document.createElement('button');
+    open.type = 'button'; open.className = 'ai-hist-open';
+    const title = document.createElement('span'); title.className = 'ai-hist-title';
+    title.textContent = c.title || 'New chat';
+    const time = document.createElement('span'); time.className = 'ai-hist-time';
+    time.textContent = _aiRelTime(c.updatedAt);
+    open.appendChild(title); open.appendChild(time);
+    open.addEventListener('click', () => _aiOpenConvo(c.id));
+
+    const del = document.createElement('button');
+    del.type = 'button'; del.className = 'ai-hist-del'; del.title = 'Delete chat';
+    del.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
+    del.addEventListener('click', (e) => { e.stopPropagation(); _aiDeleteConvo(c.id); });
+
+    item.appendChild(open); item.appendChild(del);
+    list.appendChild(item);
+  }
+}
+function _aiToggleSidebar() { _aiEl('ai-sidebar')?.classList.toggle('collapsed'); }
+
+// ── Minimal, safe markdown for assistant replies ─────────────────────────────
+function _aiEscapeHtml(t) {
+  return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+// Inline + block formatting for a (non-code) segment that is already escaped.
+function _aiRenderInline(s) {
+  s = s.replace(/`([^`]+)`/g, '<code class="ai-ic">$1</code>');
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+  s = s.replace(/(?:^|\n)((?:[ \t]*[-*] .*(?:\n|$))+)/g, (_m, blk) => {
+    const items = blk.trim().split('\n')
+      .map(l => '<li>' + l.replace(/^[ \t]*[-*]\s+/, '') + '</li>').join('');
+    return '\n<ul class="ai-ul">' + items + '</ul>\n';
+  });
+  return s.split(/\n{2,}/).map(p => {
+    p = p.trim();
+    if (!p) return '';
+    if (/^<ul/.test(p)) return p;
+    return '<p>' + p.replace(/\n/g, '<br>') + '</p>';
+  }).join('');
+}
+function _aiRenderMd(text) {
+  // Split on fenced code so code is escaped and never run through inline rules.
+  const segs = String(text).split('```');
+  let html = '';
+  for (let i = 0; i < segs.length; i++) {
+    if (i % 2 === 1) {
+      const code = segs[i].replace(/^[^\n]*\n/, '');   // drop the optional language line
+      html += '<pre class="ai-code"><code>' + _aiEscapeHtml(code.replace(/\n$/, '')) + '</code></pre>';
+    } else if (segs[i]) {
+      html += _aiRenderInline(_aiEscapeHtml(segs[i]));
+    }
+  }
+  return html;
+}
 
 function _aiModelLabel(provider, modelId) {
   const m = (AI_MODELS[provider] || []).find(x => x.id === modelId);
@@ -5642,6 +5788,45 @@ function _aiFillModels(provider, selected) {
     sel.appendChild(o);
   }
   sel.value = selected || AI_DEFAULT_MODELS[provider] || (list[0]?.id) || '';
+}
+
+// Probe the local Ollama server and fill the model dropdown with whatever is
+// installed — no API key, runs offline.
+async function _aiLoadOllama(selected) {
+  const hint = _aiEl('ai-model-hint');
+  if (hint) hint.textContent = 'Scanning for Ollama…';
+  let info = { running: false, models: [] };
+  try { info = await window.privoo.aiDetectOllama(); } catch {}
+  AI_MODELS.ollama = (info.models || []).map(n => ({ id: n, label: n }));
+  _aiFillModels('ollama', selected);
+  if (!hint) return;
+  if (!info.running) {
+    hint.innerHTML = 'Ollama not detected. Install it from <b>ollama.com</b>, start it, then click <b>Re-scan</b>.';
+  } else if (!AI_MODELS.ollama.length) {
+    hint.innerHTML = 'Ollama is running, but no models are installed. Run <b>ollama pull llama3.2</b>, then <b>Re-scan</b>.';
+  } else {
+    const n = AI_MODELS.ollama.length;
+    hint.innerHTML = 'Found <b>' + n + '</b> local model' + (n > 1 ? 's' : '') + ' — runs fully offline on this device.';
+  }
+}
+
+// Show the right controls for the chosen provider (Ollama hides the API-key
+// field and auto-detects local models; others use a key + fixed model list).
+function _aiApplyProviderUI(provider, selected) {
+  const isOllama = provider === 'ollama';
+  const keyField = _aiEl('ai-apikey-field');
+  if (keyField) keyField.style.display = isOllama ? 'none' : '';
+  const rescan = _aiEl('ai-ollama-rescan');
+  if (rescan) rescan.style.display = isOllama ? '' : 'none';
+  if (isOllama) {
+    _aiLoadOllama(selected || '');
+  } else {
+    _aiFillModels(provider, selected);
+    const hint = _aiEl('ai-model-hint');
+    if (hint) hint.innerHTML = AI_KEY_HINTS[provider] || '';
+    const keyInp = _aiEl('ai-apikey');
+    if (keyInp) keyInp.placeholder = _aiConfig.hasKeyFor?.[provider] ? 'Key saved — leave blank to keep' : 'Paste your key';
+  }
 }
 
 function _aiRefreshStatus() {
@@ -5668,9 +5853,9 @@ function _aiRenderChat() {
     const e = document.createElement('div');
     e.className = 'ai-empty';
     e.innerHTML =
-      '<div class="ai-empty-mark"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg></div>' +
+      '<div class="ai-empty-mark"><img src="privoo://newtab/logo.png" alt="" draggable="false" onerror="this.style.display=\'none\'"></div>' +
       '<h3>How can I help?</h3>' +
-      '<p>Ask anything — summaries, ideas, code. Powered by your own API key.</p>' +
+      '<p>Ask anything — summaries, ideas, code. Your chats are saved on this device.</p>' +
       '<div class="ai-chips" id="ai-chips"></div>';
     inner.appendChild(e);
     ['Explain a concept', 'Summarize text', 'Write some code', 'Brainstorm ideas'].forEach(c => {
@@ -5690,8 +5875,10 @@ function _aiRenderChat() {
     const av = document.createElement('div'); av.className = 'ai-av';
     if (m.role === 'user') av.textContent = 'You';
     else if (m.role === 'err') av.textContent = '!';
-    else av.textContent = 'AI';
-    const b = document.createElement('div'); b.className = 'ai-bubble'; b.textContent = m.content;
+    else av.innerHTML = AI_AVATAR_HTML;
+    const b = document.createElement('div'); b.className = 'ai-bubble';
+    if (m.role === 'assistant') b.innerHTML = _aiRenderMd(m.content);
+    else b.textContent = m.content;
     wrap.appendChild(av); wrap.appendChild(b);
     inner.appendChild(wrap);
   }
@@ -5699,11 +5886,32 @@ function _aiRenderChat() {
   if (area) area.scrollTop = area.scrollHeight;
 }
 
+// Privoo AI runs third-party models with no reliable knowledge of Privoo itself,
+// so questions about the browser tend to be answered with confident nonsense.
+// We catch those and warn instead of sending.
+function _aiIsAboutPrivoo(text) {
+  const t = text.toLowerCase();
+  if (!/\bprivoo\b/.test(t)) return false;
+  return /\b(privoo)\b.*\b(browser|app|feature|setting|version|made|built|who|what|how|why|when|company|owner|developer|safe|secure|privacy|vpn|tor|proxy|update)\b/.test(t)
+      || /\b(browser|app|who|what|how|tell me|about|is|are|does|do)\b.*\bprivoo\b/.test(t);
+}
+
 async function _aiSend() {
   if (_aiBusy) return;
   const inp = _aiEl('ai-input');
   const text = inp?.value?.trim();
   if (!text) return;
+
+  // Block questions about Privoo itself — the model will likely make things up.
+  if (_aiIsAboutPrivoo(text)) {
+    _aiMessages.push({ role: 'user', content: text });
+    _aiMessages.push({ role: 'err', content: '⚠ Privoo AI can\'t reliably answer questions about Privoo itself — it uses third-party models that don\'t have accurate info about this browser, so it may make things up. For real answers, check Settings → About or the Privoo website. (Message not sent.)' });
+    if (inp) { inp.value = ''; inp.style.height = 'auto'; }
+    _aiRenderChat();
+    _aiPersistCurrent();
+    return;
+  }
+
   if (!_aiConfig.hasKey) {
     _aiMessages.push({ role: 'err', content: '⚠ Add your API key first — click Setup.' });
     _aiRenderChat();
@@ -5713,32 +5921,69 @@ async function _aiSend() {
   _aiMessages.push({ role: 'user', content: text });
   if (inp) { inp.value = ''; inp.style.height = 'auto'; }
   _aiRenderChat();
+  _aiPersistCurrent();
+
+  const payloadMsgs = _aiMessages
+    .filter(m => m.role === 'user' || m.role === 'assistant')
+    .map(m => ({ role: m.role, content: m.content }));
+
   _aiBusy = true;
   const sendBtn = _aiEl('ai-send');
   if (sendBtn) sendBtn.disabled = true;
-  // Typing indicator
   const area = _aiEl('ai-chat-area');
-  const typing = document.createElement('div');
-  typing.className = 'ai-msg ai-typing';
-  typing.innerHTML = '<div class="ai-av">AI</div><div class="ai-bubble"><span class="ai-dots"><i></i><i></i><i></i></span></div>';
-  _aiEl('ai-chat-inner')?.appendChild(typing);
-  if (area) area.scrollTop = area.scrollHeight;
+
+  // Create the reply bubble right away with a blinking caret (no "..." dots).
+  const assistant = { role: 'assistant', content: '' };
+  _aiMessages.push(assistant);
+  _aiRenderChat();
+  const bubble = _aiEl('ai-chat-inner')?.lastElementChild?.querySelector('.ai-bubble');
+  if (bubble) bubble.innerHTML = '<span class="ai-caret"></span>';
+
+  // Smooth typewriter: tokens land in `pending`; a steady timer reveals them so
+  // the reply always types out, even if the backend delivers it in big bursts.
+  let pending = '', finished = false;
+  const typer = new Promise((resolve) => {
+    const iv = setInterval(() => {
+      if (pending.length) {
+        const n = Math.max(2, Math.ceil(pending.length / 40));   // speed up on big backlogs
+        assistant.content += pending.slice(0, n);
+        pending = pending.slice(n);
+        if (bubble) bubble.innerHTML = _aiRenderMd(assistant.content) + '<span class="ai-caret"></span>';
+        if (area) area.scrollTop = area.scrollHeight;
+      } else if (finished) {
+        clearInterval(iv);
+        resolve();
+      }
+    }, 16);
+  });
+
   let res;
   try {
-    res = await window.privoo.aiChat({ messages: _aiMessages.map(m => ({ role: m.role, content: m.content })) });
+    res = await window.privoo.aiChatStream({ messages: payloadMsgs }, (delta) => { if (delta) pending += delta; });
   } catch (e) { res = { ok: false, error: String(e?.message || e) }; }
-  typing.remove();
+
   if (res?.ok) {
-    _aiMessages.push({ role: 'assistant', content: res.text || '(empty response)' });
-  } else if (res?.error === 'NO_KEY') {
-    _aiMessages.push({ role: 'err', content: '⚠ Add your API key first — click Setup.' });
-    _aiOpenGate();
+    const fullText = res.text || (assistant.content + pending) || '(empty response)';
+    pending = fullText.slice(assistant.content.length);   // queue whatever isn't typed yet
+    finished = true;
+    await typer;                                          // let it finish typing out
+    assistant.content = fullText;
   } else {
-    _aiMessages.push({ role: 'err', content: '⚠ ' + (res?.error || 'Request failed.') });
+    pending = ''; finished = true;
+    await typer;
+    _aiMessages = _aiMessages.filter(m => m !== assistant);   // drop the empty reply bubble
+    if (res?.error === 'NO_KEY') {
+      _aiMessages.push({ role: 'err', content: '⚠ Add your API key first — click Setup.' });
+      _aiOpenGate();
+    } else {
+      _aiMessages.push({ role: 'err', content: '⚠ ' + (res?.error || 'Request failed.') });
+    }
   }
+
   _aiBusy = false;
   if (sendBtn) sendBtn.disabled = false;
-  _aiRenderChat();
+  _aiRenderChat();        // final clean render — drops the caret
+  _aiPersistCurrent();
 }
 
 function _aiOpenGate() {
@@ -5746,34 +5991,71 @@ function _aiOpenGate() {
   if (!gate) return;
   const provSel = _aiEl('ai-provider');
   if (provSel) provSel.value = _aiConfig.provider;
-  _aiFillModels(_aiConfig.provider, _aiConfig.model);
   const keyInp = _aiEl('ai-apikey');
-  if (keyInp) {
-    keyInp.value = '';
-    keyInp.placeholder = _aiConfig.hasKeyFor?.[_aiConfig.provider] ? 'Key saved — leave blank to keep' : 'Paste your key';
-  }
-  const hint = _aiEl('ai-model-hint');
-  if (hint) hint.innerHTML = AI_KEY_HINTS[_aiConfig.provider] || '';
+  if (keyInp) keyInp.value = '';
+  _aiApplyProviderUI(_aiConfig.provider, _aiConfig.model);
   const title = _aiEl('ai-gate-title');
   if (title) title.textContent = _aiConfig.hasKey ? 'AI settings' : 'Connect an AI';
   gate.hidden = false;
-  setTimeout(() => keyInp?.focus(), 50);
+  if (_aiConfig.provider !== 'ollama') setTimeout(() => keyInp?.focus(), 50);
+}
+
+// Drag the left edge of the panel to resize it; width is remembered.
+// A full-window overlay is shown during the drag so the <webview> page content
+// can't swallow the mouse events (which is why resizing did nothing before).
+function _aiInitResize() {
+  const handle = _aiEl('ai-resize');
+  const panel = document.getElementById('ai-panel');
+  if (!handle || !panel) return;
+  const MIN = 320, MAX = 900;
+  try {
+    const saved = parseInt(localStorage.getItem('privoo-ai-width') || '', 10);
+    if (saved >= MIN && saved <= MAX) panel.style.width = saved + 'px';
+  } catch {}
+
+  let startX = 0, startW = 0, overlay = null;
+  const onMove = (e) => {
+    let w = startW + (startX - e.clientX);   // panel sits on the right: drag left → wider
+    const cap = Math.min(MAX, window.innerWidth - 260);   // always leave room for the page
+    w = Math.max(MIN, Math.min(cap, w));
+    panel.style.width = w + 'px';
+  };
+  const onUp = () => {
+    if (overlay) { overlay.remove(); overlay = null; }
+    handle.classList.remove('dragging');
+    try { localStorage.setItem('privoo-ai-width', String(Math.round(panel.getBoundingClientRect().width))); } catch {}
+  };
+  handle.addEventListener('mousedown', (e) => {
+    startX = e.clientX;
+    startW = panel.getBoundingClientRect().width;
+    handle.classList.add('dragging');
+    // Overlay above everything (incl. webviews) captures the drag reliably.
+    overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:2147483647;cursor:ew-resize;';
+    overlay.addEventListener('mousemove', onMove);
+    overlay.addEventListener('mouseup', onUp);
+    document.body.appendChild(overlay);
+    e.preventDefault();
+  });
 }
 
 function initAiPanel() {
   if (_aiPanelInited) return;
   _aiPanelInited = true;
 
+  _aiLoadConvos();
+  _aiInitResize();
+  _aiRenderHistory();
+
   // Close button
   _aiEl('ai-panel-close')?.addEventListener('click', () => toggleAiPanel());
 
-  // New chat
-  _aiEl('ai-new-chat')?.addEventListener('click', () => {
-    if (_aiBusy) return;
-    _aiMessages = [];
-    _aiRenderChat();
-    _aiEl('ai-input')?.focus();
-  });
+  // New chat (header + sidebar)
+  _aiEl('ai-new-chat')?.addEventListener('click', _aiNewChat);
+  _aiEl('ai-sidebar-new')?.addEventListener('click', _aiNewChat);
+
+  // Show / hide the chats sidebar
+  _aiEl('ai-sidebar-toggle')?.addEventListener('click', _aiToggleSidebar);
 
   // Setup button
   _aiEl('ai-cfg-btn')?.addEventListener('click', _aiOpenGate);
@@ -5782,11 +6064,12 @@ function initAiPanel() {
   _aiEl('ai-provider')?.addEventListener('change', () => {
     const p = _aiEl('ai-provider')?.value;
     if (!p) return;
-    _aiFillModels(p, p === _aiConfig.provider ? _aiConfig.model : null);
-    const hint = _aiEl('ai-model-hint');
-    if (hint) hint.innerHTML = AI_KEY_HINTS[p] || '';
-    const keyInp = _aiEl('ai-apikey');
-    if (keyInp) keyInp.placeholder = _aiConfig.hasKeyFor?.[p] ? 'Key saved — leave blank to keep' : 'Paste your key';
+    _aiApplyProviderUI(p, p === _aiConfig.provider ? _aiConfig.model : null);
+  });
+
+  // Re-scan for local Ollama models
+  _aiEl('ai-ollama-rescan')?.addEventListener('click', () => {
+    _aiLoadOllama(_aiEl('ai-model')?.value || _aiConfig.model || '');
   });
 
   // Gate save
@@ -5795,7 +6078,7 @@ function initAiPanel() {
     const model    = _aiEl('ai-model')?.value?.trim() || AI_DEFAULT_MODELS[provider];
     const apiKey   = _aiEl('ai-apikey')?.value?.trim();
     const patch    = { provider, model, accepted: true };
-    if (apiKey) patch.apiKey = apiKey;
+    if (apiKey && provider !== 'ollama') patch.apiKey = apiKey;
     try { _aiConfig = await window.privoo.aiSetConfig(patch); } catch {}
     _aiRefreshStatus();
     const gate = _aiEl('ai-gate');

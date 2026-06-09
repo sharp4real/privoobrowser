@@ -206,6 +206,9 @@ const DEFAULTS = {
   updatesToastShown: false,
   discordPromptShown: false,
   thankYouShown: false,    // one-time "Thank you for using Privoo" popup
+  britainShown: false,     // one-time "Made with care in Britain" popup
+  siteVisitCount: 0,       // running count of real website visits — paces one-time popups
+  popupVisitMark: 0,       // siteVisitCount when the last one-time popup was released
 
   // Background music
   musicPath: null,

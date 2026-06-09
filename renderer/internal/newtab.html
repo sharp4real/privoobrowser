@@ -555,7 +555,7 @@ body.ntp-wp .wx-card{
 
 /* ── Privoo News ── */
 #ntp-news{
-  width:100%;max-width:480px;
+  width:100%;max-width:460px;
   margin:18px auto 0;
   transition:opacity .18s;
 }
@@ -568,81 +568,111 @@ main:has(#q:focus) #ntp-news{
 .pn-wrap{
   position:relative;
   background:rgba(255,255,255,.74);
-  backdrop-filter:blur(16px) saturate(160%);
-  -webkit-backdrop-filter:blur(16px) saturate(160%);
-  border-radius:16px;
+  backdrop-filter:blur(18px) saturate(170%);
+  -webkit-backdrop-filter:blur(18px) saturate(170%);
+  border-radius:18px;
   border:1px solid rgba(0,0,0,.07);
+  box-shadow:0 12px 32px rgba(0,0,0,.07);
   overflow:hidden;
 }
 body.ntp-dark .pn-wrap{
-  background:rgba(36,37,41,.76);
+  background:rgba(36,37,41,.78);
   border-color:rgba(255,255,255,.07);
+  box-shadow:0 12px 32px rgba(0,0,0,.30);
 }
 body.ntp-wp .pn-wrap{
-  background:rgba(0,0,0,.38);
-  border-color:rgba(255,255,255,.10);
+  background:rgba(0,0,0,.40);
+  border-color:rgba(255,255,255,.12);
 }
 body.ntp-vibe .pn-wrap{
   background:color-mix(in srgb,hsl(var(--ntp-vibe-hue) 70% 92%) 16%,rgba(255,255,255,.72));
   border-color:hsl(var(--ntp-vibe-hue) 60% 68%/.18);
 }
 body.ntp-vibe.ntp-dark .pn-wrap{
-  background:color-mix(in srgb,hsl(var(--ntp-vibe-hue) 48% 22%) 22%,rgba(34,35,39,.76));
+  background:color-mix(in srgb,hsl(var(--ntp-vibe-hue) 48% 22%) 22%,rgba(34,35,39,.78));
 }
-/* accent line at top */
-.pn-wrap::before{
-  content:'';display:block;height:2.5px;
-  background:linear-gradient(90deg,#4285f4,#34a853,#fbbc04,#ea4335);
-  opacity:.55;
+
+/* header bar */
+.pn-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 12px 9px 14px;
+  border-bottom:1px solid rgba(0,0,0,.06);
 }
-body.ntp-vibe .pn-wrap::before{
-  background:linear-gradient(90deg,
-    hsl(var(--ntp-vibe-hue) 72% 58%),
-    hsl(calc(var(--ntp-vibe-hue)+40) 70% 60%));
-  opacity:.7;
+body.ntp-dark .pn-head,body.ntp-wp .pn-head{border-color:rgba(255,255,255,.08);}
+.pn-head-label{
+  display:flex;align-items:center;gap:7px;
+  font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:#5f6368;
 }
-/* cards */
+body.ntp-dark .pn-head-label,body.ntp-wp .pn-head-label{color:#c4c7cc;}
+.pn-spark{width:14px;height:14px;fill:var(--accent,#4285f4);flex-shrink:0;}
+body.ntp-dark .pn-spark{fill:var(--accent,#8ab4f8);}
+body.ntp-vibe .pn-spark{fill:hsl(var(--ntp-vibe-hue) 65% 52%);}
+.pn-nav{display:flex;gap:4px;}
+.pn-arrow{
+  width:24px;height:24px;border-radius:8px;border:none;cursor:pointer;padding:0;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.05);color:#5f6368;
+  transition:background .15s,color .15s;
+}
+.pn-arrow:hover{background:rgba(0,0,0,.10);color:#1f1f1f;}
+body.ntp-dark .pn-arrow,body.ntp-wp .pn-arrow{background:rgba(255,255,255,.08);color:#c4c7cc;}
+body.ntp-dark .pn-arrow:hover,body.ntp-wp .pn-arrow:hover{background:rgba(255,255,255,.16);color:#fff;}
+.pn-arrow svg{width:16px;height:16px;fill:currentColor;}
+
+/* slides */
+.pn-track{position:relative;}
 .pn-slide{
-  padding:14px 18px 12px;
+  padding:14px 16px 14px;
   display:none;
-  animation:pn-in .3s cubic-bezier(.2,0,.2,1);
+  animation:pn-in .32s cubic-bezier(.2,0,.2,1);
 }
 .pn-slide.active{display:block;}
 @keyframes pn-in{
-  from{opacity:0;transform:translateX(12px);}
+  from{opacity:0;transform:translateX(14px);}
   to  {opacity:1;transform:none;}
 }
+/* category chip (formerly a plain kicker) */
 .pn-kicker{
-  font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
-  color:#4285f4;margin-bottom:5px;
+  display:inline-block;
+  font-size:10px;font-weight:700;letter-spacing:.02em;
+  color:var(--accent,#4285f4);background:var(--accent-soft,rgba(66,133,244,.12));
+  padding:3px 9px;border-radius:999px;margin-bottom:9px;
 }
-body.ntp-dark .pn-kicker{color:#8ab4f8;}
-body.ntp-wp .pn-kicker{color:rgba(255,255,255,.75);}
-body.ntp-vibe .pn-kicker{color:hsl(var(--ntp-vibe-hue) 60% 44%);}
-body.ntp-vibe.ntp-dark .pn-kicker{color:hsl(var(--ntp-vibe-hue) 70% 68%);}
+body.ntp-dark .pn-kicker{color:var(--accent,#8ab4f8);background:var(--accent-soft,rgba(138,180,248,.16));}
+body.ntp-wp .pn-kicker{color:#fff;background:rgba(255,255,255,.18);}
+body.ntp-vibe .pn-kicker{color:hsl(var(--ntp-vibe-hue) 60% 42%);background:hsl(var(--ntp-vibe-hue) 65% 55%/.16);}
+body.ntp-vibe.ntp-dark .pn-kicker{color:hsl(var(--ntp-vibe-hue) 70% 72%);background:hsl(var(--ntp-vibe-hue) 65% 60%/.20);}
 .pn-title{
-  font-size:14px;font-weight:600;color:#1f1f1f;line-height:1.3;margin-bottom:5px;
+  font-size:14.5px;font-weight:600;color:#1f1f1f;line-height:1.32;margin-bottom:5px;
 }
 body.ntp-dark .pn-title,body.ntp-wp .pn-title{color:#e8eaed;}
 .pn-body{
-  font-size:12px;color:#5f6368;line-height:1.5;
+  font-size:12px;color:#5f6368;line-height:1.55;
 }
 body.ntp-dark .pn-body,body.ntp-wp .pn-body{color:#9aa0a6;}
 /* dots */
 .pn-dots{
   display:flex;align-items:center;justify-content:center;gap:5px;
-  padding:8px 0 12px;
+  padding:3px 0 12px;
 }
 .pn-dot{
-  width:5px;height:5px;border-radius:50%;border:none;padding:0;cursor:default;
+  width:5px;height:5px;border-radius:50%;border:none;padding:0;cursor:pointer;
   background:rgba(0,0,0,.18);transition:background .2s,width .2s,border-radius .2s;
 }
-body.ntp-dark .pn-dot{background:rgba(255,255,255,.22);}
+body.ntp-dark .pn-dot,body.ntp-wp .pn-dot{background:rgba(255,255,255,.22);}
 .pn-dot.active{
-  width:18px;border-radius:3px;background:#4285f4;
+  width:18px;border-radius:3px;background:var(--accent,#4285f4);
 }
+body.ntp-dark .pn-dot.active{background:var(--accent,#8ab4f8);}
 body.ntp-vibe .pn-dot.active{background:hsl(var(--ntp-vibe-hue) 65% 50%);}
 body.ntp-wp .pn-dot.active{background:rgba(255,255,255,.85);}
+/* small disclaimer under the news card */
+.pn-disclaimer{
+  margin:9px 8px 0;text-align:center;
+  font-size:10px;line-height:1.45;color:rgba(0,0,0,.42);
+}
+body.ntp-dark .pn-disclaimer,body.ntp-wp .pn-disclaimer{color:rgba(255,255,255,.45);}
 
 /* ── Men's Mental Health Month modal ── */
 #mmhm-overlay{
@@ -687,6 +717,55 @@ body.ntp-dark .mmhm-text{color:#9aa0a6;}
 body.ntp-dark .mmhm-close{background:#8ab4f8;color:#202124;}
 .mmhm-close:hover{filter:brightness(1.08);}
 .mmhm-close:active{filter:brightness(.94);}
+
+/* ── "Made with care in Britain" modal (reuses mmhm-bg / mmhm-rise) ── */
+#britain-overlay{
+  position:fixed;inset:0;z-index:8000;
+  background:rgba(0,0,0,.42);
+  display:flex;align-items:center;justify-content:center;
+  padding:24px;
+  animation:mmhm-bg .2s ease both;
+}
+#britain-overlay[hidden]{display:none!important;}
+#britain-card{
+  position:relative;overflow:hidden;
+  background:#fff;border-radius:16px;width:min(348px,92vw);
+  box-shadow:0 18px 50px rgba(0,0,0,.35);
+  padding:30px 26px 22px;text-align:center;
+  animation:mmhm-rise .24s cubic-bezier(.16,1,.3,1) both;
+}
+body.ntp-dark #britain-card{background:#22242a;}
+/* slim red·white·blue ribbon across the top */
+#britain-card::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:4px;
+  background:linear-gradient(90deg,#C8102E 0 33.3%,#fff 33.3% 66.6%,#012169 66.6% 100%);
+}
+body.ntp-dark #britain-card::before{
+  background:linear-gradient(90deg,#ff5d73 0 33.3%,#e8eaed 33.3% 66.6%,#4f73d6 66.6% 100%);
+}
+.britain-flagwrap{
+  width:84px;height:42px;margin:4px auto 16px;
+  border-radius:8px;overflow:hidden;
+  box-shadow:0 6px 16px rgba(1,33,105,.34),0 0 0 1px rgba(0,0,0,.06);
+}
+.britain-flag{display:block;width:100%;height:100%;}
+.britain-kicker{
+  font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  color:#C8102E;margin-bottom:8px;
+}
+body.ntp-dark .britain-kicker{color:#ff7a8c;}
+.britain-title{font-size:17px;font-weight:700;color:#1f1f1f;margin-bottom:8px;}
+body.ntp-dark .britain-title{color:#e8eaed;}
+.britain-text{font-size:13px;color:#5f6368;line-height:1.55;margin-bottom:22px;}
+body.ntp-dark .britain-text{color:#9aa0a6;}
+.britain-close{
+  width:100%;height:42px;border:none;border-radius:11px;
+  background:#012169;color:#fff;font-size:13.5px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:filter .12s ease,transform .1s ease;
+}
+body.ntp-dark .britain-close{background:#4f73d6;}
+.britain-close:hover{filter:brightness(1.14);}
+.britain-close:active{transform:translateY(1px);}
 
 .ntp-pen-btn{
   position:fixed;right:18px;bottom:14px;z-index:40;
@@ -834,10 +913,21 @@ body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
   <!-- Privoo News -->
   <div id="ntp-news" hidden>
     <div class="pn-wrap">
+      <div class="pn-head">
+        <div class="pn-head-label">
+          <svg class="pn-spark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l1.9 5.5L19.5 9l-4.6 3.4L16.5 18 12 14.7 7.5 18l1.6-5.6L4.5 9l5.6-1.5L12 2z"/></svg>
+          <span>What's new</span>
+        </div>
+        <div class="pn-nav">
+          <button class="pn-arrow" id="pn-prev" type="button" aria-label="Previous"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.4 7.4 14 6l-6 6 6 6 1.4-1.4-4.6-4.6 4.6-4.6z"/></svg></button>
+          <button class="pn-arrow" id="pn-next" type="button" aria-label="Next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.6 7.4 10 6l6 6-6 6-1.4-1.4 4.6-4.6-4.6-4.6z"/></svg></button>
+        </div>
+      </div>
+      <div class="pn-track">
       <div class="pn-slide active" id="pn-0">
-        <div class="pn-kicker">Privoo v2.9.0</div>
-        <div class="pn-title">Browse in your language, anywhere</div>
-        <p class="pn-body">On a VPN in another country? Sites stay in your language now. Privoo follows your device locale — or pick any language in Settings → Privacy.</p>
+        <div class="pn-kicker">Privoo v3.0.0</div>
+        <div class="pn-title">Local AI, 100% private</div>
+        <p class="pn-body">Privoo AI now auto-detects <b>Ollama</b> running on your machine. Pick a local model in AI → Setup — no API key, no cloud, nothing ever leaves your device.</p>
       </div>
       <div class="pn-slide" id="pn-1">
         <div class="pn-kicker">Privacy</div>
@@ -859,20 +949,28 @@ body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
         <div class="pn-title">Polished side tabs</div>
         <p class="pn-body">On a website, click the address bar to edit it in place; on a blank tab it opens the search popup. Closing the tab you're on is rock-solid now.</p>
       </div>
+      <div class="pn-slide" id="pn-5">
+        <div class="pn-kicker">Languages</div>
+        <div class="pn-title">Browse in your language, anywhere</div>
+        <p class="pn-body">On a VPN in another country? Sites stay in your language now. Privoo follows your device locale — or pick any language in Settings → Privacy.</p>
+      </div>
+      </div><!-- /pn-track -->
       <div class="pn-dots" id="pn-dots">
         <button class="pn-dot active" data-idx="0"></button>
         <button class="pn-dot" data-idx="1"></button>
         <button class="pn-dot" data-idx="2"></button>
         <button class="pn-dot" data-idx="3"></button>
         <button class="pn-dot" data-idx="4"></button>
+        <button class="pn-dot" data-idx="5"></button>
       </div>
     </div>
+    <p class="pn-disclaimer">Shown locally from this version of Privoo — nothing here is tracked or fetched from the web.</p>
   </div>
 </main>
 
 <footer id="ntp-footer">
   <div id="ntp-weather" hidden></div>
-  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee. &nbsp;&middot;&nbsp; <span id="ntp-version" style="opacity:.55">v2.9.0</span></p>
+  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee. &nbsp;&middot;&nbsp; <span id="ntp-version" style="opacity:.55">v3.0.0</span></p>
 </footer>
 
 </div>
@@ -886,6 +984,28 @@ body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
     <div class="mmhm-title" id="mmhm-title">It's okay not to be okay</div>
     <p class="mmhm-text">June is Men's Mental Health Month. It's okay to talk, to feel, and to ask for help — you're never alone in what you're going through.</p>
     <button class="mmhm-close" id="mmhm-close">Got it</button>
+  </div>
+</div>
+
+<!-- "Made with care in Britain" modal — shown once -->
+<div id="britain-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="britain-title">
+  <div id="britain-card">
+    <div class="britain-flagwrap">
+      <svg class="britain-flag" viewBox="0 0 60 30" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <clipPath id="uj-clip"><rect width="60" height="30"/></clipPath>
+        <g clip-path="url(#uj-clip)">
+          <rect width="60" height="30" fill="#012169"/>
+          <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/>
+          <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" stroke-width="4"/>
+          <path d="M30,0 V30 M0,15 H60" stroke="#fff" stroke-width="10"/>
+          <path d="M30,0 V30 M0,15 H60" stroke="#C8102E" stroke-width="6"/>
+        </g>
+      </svg>
+    </div>
+    <div class="britain-kicker">Proudly British</div>
+    <div class="britain-title" id="britain-title">Made with care in Britain</div>
+    <p class="britain-text">Privoo is designed, built and looked after in Britain — crafted with care for your privacy, and never funded by selling your data. Thank you for being part of the journey.</p>
+    <button class="britain-close" id="britain-close">Okay!</button>
   </div>
 </div>
 
@@ -1369,24 +1489,53 @@ window.addEventListener('pagehide', () => _ntpClockTick(false));
     startAuto();
   }));
 
+  const prev = document.getElementById('pn-prev');
+  const next = document.getElementById('pn-next');
+  if (prev) prev.addEventListener('click', () => { goTo(cur - 1); startAuto(); });
+  if (next) next.addEventListener('click', () => { goTo(cur + 1); startAuto(); });
+
   startAuto();
 })();
 
-// ── Men's Mental Health Month popup ──────────────────────────────────────────
-(function initMmhm() {
-  const overlay = document.getElementById('mmhm-overlay');
-  const closeBtn = document.getElementById('mmhm-close');
-  if (!overlay || !closeBtn || !api) return;
+// ── One-time new-tab popups (paced by browsing activity) ─────────────────────
+// Each popup shows once ever. The main process releases the next one only after
+// the user has visited a batch of websites since the last popup, so they never
+// stack and don't fire instantly — they're spread across normal browsing.
+(function initNtpPopups() {
+  if (!api) return;
 
-  api.getSettings().then(({ settings: s }) => {
-    if (s.mmhmShown || !s.disclaimerAccepted) return;
-    api.setSettings({ mmhmShown: true });
+  const SHOW_DELAY_MS = 2600; // ease in after the tab settles — never instant
+  const MAP = {
+    britain: { overlay: 'britain-overlay', close: 'britain-close' },
+    mmhm:    { overlay: 'mmhm-overlay',    close: 'mmhm-close' },
+  };
+
+  // Is any one-time popup already on screen? Guards against ever stacking.
+  function anyPopupVisible() {
+    return Object.values(MAP).some(m => {
+      const el = document.getElementById(m.overlay);
+      return el && !el.hidden;
+    });
+  }
+
+  (async () => {
+    let key = null;
+    try { key = await api.claimNtpPopup(); } catch {}
+    const cfg = key && MAP[key];
+    if (!cfg) return;
+
+    const overlay  = document.getElementById(cfg.overlay);
+    const closeBtn = document.getElementById(cfg.close);
+    if (!overlay || !closeBtn) return;
 
     function dismiss() { overlay.hidden = true; }
-    setTimeout(() => { overlay.hidden = false; }, 800);
+    setTimeout(() => {
+      if (anyPopupVisible()) return; // never overlap another popup
+      overlay.hidden = false;
+    }, SHOW_DELAY_MS);
     closeBtn.addEventListener('click', dismiss);
     overlay.addEventListener('click', e => { if (e.target === overlay) dismiss(); });
-  }).catch(() => {});
+  })();
 })();
 
 qInput.addEventListener('input', () => {

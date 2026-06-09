@@ -901,7 +901,12 @@
 
         <!-- ── Inline AI side panel — full-height right panel ── -->
         <aside id="ai-panel" class="ai-panel" hidden aria-label="Privoo AI">
+          <div class="ai-resize" id="ai-resize" title="Drag to resize"></div>
           <div class="ai-panel-header">
+            <button type="button" id="ai-sidebar-toggle" class="ai-hdr-btn" title="Show / hide chats">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M3 5h18v2H3V5zm0 6h18v2H3v-2zm0 6h18v2H3v-2z"/></svg>
+            </button>
+            <img class="ai-hdr-logo" src="privoo://newtab/logo.png" alt="" draggable="false" onerror="this.style.display='none'">
             <span class="ai-panel-title">Privoo AI</span>
             <span class="beta-tag" style="font-size:9px;padding:2px 6px">Beta</span>
             <div style="flex:1"></div>
@@ -912,24 +917,38 @@
               <svg viewBox="0 0 14 14" width="11" height="11"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
             </button>
           </div>
-          <div class="ai-bar">
-            <div class="ai-pill ai-pill-no" id="ai-status">
-              <span class="ai-dot"></span>
-              <span id="ai-status-text">No API key — click Setup</span>
-            </div>
-            <button class="ai-bar-btn" id="ai-cfg-btn" type="button">Setup</button>
-          </div>
-          <div class="ai-chat-area" id="ai-chat-area">
-            <div id="ai-chat-inner" class="ai-chat-inner"></div>
-          </div>
-          <div class="ai-composer">
-            <div class="ai-composer-box">
-              <textarea id="ai-input" rows="1" placeholder="Ask Privoo AI anything…"></textarea>
-              <button id="ai-send" type="button" title="Send" aria-label="Send">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M3 20.5 22 12 3 3.5 3 10l13 2-13 2z"/></svg>
+          <div class="ai-body">
+            <!-- Chats sidebar -->
+            <div class="ai-sidebar" id="ai-sidebar">
+              <button type="button" id="ai-sidebar-new" class="ai-side-new">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z"/></svg>
+                <span>New chat</span>
               </button>
+              <div class="ai-side-label">Recent chats</div>
+              <div class="ai-history-list" id="ai-history-list"></div>
             </div>
-            <div class="ai-foot">AI can make mistakes. Messages go to your chosen provider.</div>
+            <!-- Chat column -->
+            <div class="ai-main">
+              <div class="ai-bar">
+                <div class="ai-pill ai-pill-no" id="ai-status">
+                  <span class="ai-dot"></span>
+                  <span id="ai-status-text">No API key — click Setup</span>
+                </div>
+                <button class="ai-bar-btn" id="ai-cfg-btn" type="button">Setup</button>
+              </div>
+              <div class="ai-chat-area" id="ai-chat-area">
+                <div id="ai-chat-inner" class="ai-chat-inner"></div>
+              </div>
+              <div class="ai-composer">
+                <div class="ai-composer-box">
+                  <textarea id="ai-input" rows="1" placeholder="Ask Privoo AI anything…"></textarea>
+                  <button id="ai-send" type="button" title="Send" aria-label="Send">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M3 20.5 22 12 3 3.5 3 10l13 2-13 2z"/></svg>
+                  </button>
+                </div>
+                <div class="ai-foot">AI can make mistakes. Messages go to your chosen provider.</div>
+              </div>
+            </div>
           </div>
           <!-- Setup modal -->
           <div class="ai-gate" id="ai-gate" hidden>
@@ -947,14 +966,16 @@
                   <option value="openai">GPT — OpenAI</option>
                   <option value="deepseek">DeepSeek</option>
                   <option value="gemini">Gemini — Google</option>
+                  <option value="ollama">Ollama — Local AI (no key)</option>
                 </select>
               </div>
               <div class="ai-field">
                 <label for="ai-model">Model</label>
                 <select id="ai-model"></select>
                 <div class="ai-hint" id="ai-model-hint"></div>
+                <button type="button" id="ai-ollama-rescan" class="ai-gbtn" style="display:none;margin-top:8px;padding:5px 11px;font-size:12px;width:auto">Re-scan for models</button>
               </div>
-              <div class="ai-field">
+              <div class="ai-field" id="ai-apikey-field">
                 <label for="ai-apikey">API key</label>
                 <input id="ai-apikey" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your key"/>
                 <div class="ai-hint">Stored <b>encrypted</b> on this device — never synced.</div>

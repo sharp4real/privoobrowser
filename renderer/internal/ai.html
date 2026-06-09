@@ -211,6 +211,34 @@ body.dark .warn{background:rgba(252,213,99,.10);border-color:rgba(252,213,99,.28
 .f select:focus,.f input:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
 .f .hint{font-size:10.5px;color:var(--muted);margin-top:5px;line-height:1.5}
 .f .hint b{color:var(--accent);font-weight:600}
+/* Custom model dropdown — native <select> popups are unreliable in this
+   frameless window, so we render our own list we can fully control + style. */
+.msel{position:relative}
+.msel-btn{
+  width:100%;height:38px;border-radius:9px;
+  border:1px solid var(--border);background:var(--bg);color:var(--text);
+  padding:0 10px 0 11px;font-size:13px;font-family:inherit;cursor:pointer;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;
+}
+.msel-btn:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.msel-btn>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.msel-caret{width:18px;height:18px;flex-shrink:0;fill:var(--muted);transition:transform .15s ease}
+.msel.open .msel-caret{transform:rotate(180deg)}
+.msel-menu{
+  position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:20;
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  box-shadow:0 14px 34px rgba(0,0,0,.28);
+  max-height:236px;overflow-y:auto;padding:5px;
+}
+.msel-menu[hidden]{display:none}
+.msel-item{
+  display:block;width:100%;text-align:left;border:none;background:transparent;
+  color:var(--text);font-size:12.5px;font-family:inherit;line-height:1.35;
+  padding:8px 9px;border-radius:7px;cursor:pointer;
+}
+.msel-item:hover{background:var(--surface-2)}
+.msel-item.sel{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.msel-empty{padding:9px;font-size:12px;color:var(--muted)}
 .gate-row{display:flex;gap:8px;margin-top:6px}
 .gbtn{
   flex:1;height:38px;border-radius:19px;font-size:13px;font-weight:600;cursor:default;
@@ -389,7 +417,7 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
       <ul class="disc-list">
         <li>
           <span class="disc-li-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg></span>
-          <span><strong>Your messages are sent to the AI provider you choose</strong> (Anthropic, OpenAI, DeepSeek, or Google). Privoo does not see or store them.</span>
+          <span><strong>Your messages are sent to the AI provider you choose</strong> (Anthropic, OpenAI, DeepSeek, or Google). Privoo does not see or store them. Prefer to keep everything on-device? Pick <strong>Ollama</strong> to run a local model with no key and no data leaving your computer.</span>
         </li>
         <li>
           <span class="disc-li-icon"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg></span>
@@ -426,14 +454,23 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
           <option value="openai">GPT — OpenAI</option>
           <option value="deepseek">DeepSeek</option>
           <option value="gemini">Gemini — Google</option>
+          <option value="ollama">Ollama — Local AI (no key)</option>
         </select>
       </div>
       <div class="f">
-        <label for="model">Model</label>
-        <select id="model"></select>
+        <label>Model</label>
+        <div class="msel" id="model-sel">
+          <button type="button" class="msel-btn" id="model-btn" aria-haspopup="listbox" aria-expanded="false">
+            <span id="model-btn-label">Select a model</span>
+            <svg class="msel-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg>
+          </button>
+          <div class="msel-menu" id="model-menu" role="listbox" hidden></div>
+        </div>
+        <input type="hidden" id="model">
         <div class="hint" id="model-hint"></div>
+        <button type="button" id="ollama-rescan" class="gbtn" style="display:none;margin-top:8px;padding:6px 12px;font-size:12px;align-self:flex-start">Re-scan for models</button>
       </div>
-      <div class="f">
+      <div class="f" id="apikey-field">
         <label for="apikey">API key</label>
         <input id="apikey" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your key"/>
         <div class="hint">Stored <b>encrypted</b> on this device via your OS keychain — never synced.</div>
@@ -449,7 +486,7 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
 <script>
 (function(){
   const api = window.privooInternal;
-  const PROVIDER_NAME = { anthropic:'Claude', openai:'GPT (OpenAI)', deepseek:'DeepSeek', gemini:'Gemini' };
+  const PROVIDER_NAME = { anthropic:'Claude', openai:'GPT (OpenAI)', deepseek:'DeepSeek', gemini:'Gemini', ollama:'Ollama (Local)' };
 
   // Selectable models per provider — no typing needed. First entry is the
   // default. `id` is sent to the API; `label` is shown in the dropdown.
@@ -483,18 +520,23 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
       { id:'gemini-2.0-flash',  label:'Gemini 2.0 Flash' },
       { id:'gemini-1.5-pro',    label:'Gemini 1.5 Pro' },
     ],
+    // Ollama models are discovered at runtime from the local server, so this
+    // list starts empty and is filled by loadOllama().
+    ollama:[],
   };
   const DEFAULT_MODELS = {
     anthropic: MODELS.anthropic[0].id,
     openai:    MODELS.openai[0].id,
     deepseek:  MODELS.deepseek[0].id,
     gemini:    MODELS.gemini[0].id,
+    ollama:    '',
   };
   const KEY_HINTS = {
     anthropic:'Get a key from <b>console.anthropic.com</b>',
     openai:'Get a key from <b>platform.openai.com</b>',
     deepseek:'Get a key from <b>platform.deepseek.com</b>',
     gemini:'Get a key from <b>aistudio.google.com</b>',
+    ollama:'Runs locally — no key needed.',
   };
 
   // ── Markdown renderer (safe — HTML-escaped before transformation) ──
@@ -544,23 +586,60 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
     return s;
   }
 
-  // Fill the model <select> for a provider, selecting `selected` if present.
+  // ── Custom model dropdown ──
+  // Selects a model: stores the id on the hidden <input> the rest of the code
+  // reads, updates the button label, and highlights the chosen menu row.
+  function setModel(value, label){
+    $('model').value = value || '';
+    $('model-btn-label').textContent = label || value || 'Select a model';
+    document.querySelectorAll('#model-menu .msel-item').forEach((it) => {
+      it.classList.toggle('sel', it.dataset.value === (value || ''));
+    });
+  }
+  function closeModelMenu(){
+    $('model-menu').hidden = true;
+    $('model-sel').classList.remove('open');
+    $('model-btn').setAttribute('aria-expanded', 'false');
+  }
+  function openModelMenu(){
+    if (!$('model-menu').querySelector('.msel-item')) return; // nothing to pick
+    $('model-menu').hidden = false;
+    $('model-sel').classList.add('open');
+    $('model-btn').setAttribute('aria-expanded', 'true');
+  }
+
+  // Build the dropdown rows for a provider, picking `selected` if present.
   function fillModels(provider, selected){
-    const sel = $('model');
-    sel.innerHTML = '';
-    const list = MODELS[provider] || [];
-    for (const m of list){
-      const o = document.createElement('option');
-      o.value = m.id; o.textContent = m.label;
-      sel.appendChild(o);
+    const menu = $('model-menu');
+    menu.innerHTML = '';
+    const items = (MODELS[provider] || []).slice();
+    // If the saved model isn't in the list (e.g. a local Ollama model that was
+    // removed, or an older custom id), keep it so the user doesn't lose it.
+    if (selected && !items.some(m => m.id === selected)){
+      items.push({ id: selected, label: selected + ' — saved' });
     }
-    // If the saved model isn't in the list (e.g. an older custom one), keep it.
-    if (selected && !list.some(m => m.id === selected)){
-      const o = document.createElement('option');
-      o.value = selected; o.textContent = selected + ' — saved';
-      sel.appendChild(o);
+    if (!items.length){
+      const e = document.createElement('div');
+      e.className = 'msel-empty';
+      e.textContent = provider === 'ollama'
+        ? 'No local models found yet.'
+        : 'No models available.';
+      menu.appendChild(e);
+      setModel('', provider === 'ollama' ? 'No models found' : 'Select a model');
+      return;
     }
-    sel.value = selected || DEFAULT_MODELS[provider] || (list[0] && list[0].id) || '';
+    for (const m of items){
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'msel-item';
+      b.dataset.value = m.id; b.textContent = m.label;
+      b.addEventListener('click', () => { setModel(m.id, m.label); closeModelMenu(); });
+      menu.appendChild(b);
+    }
+    const want = (selected && items.some(m => m.id === selected))
+      ? selected
+      : (DEFAULT_MODELS[provider] || items[0].id);
+    const chosen = items.find(m => m.id === want) || items[0];
+    setModel(chosen.id, chosen.label);
   }
 
   let config = { provider:'anthropic', model:DEFAULT_MODELS.anthropic, hasKey:false, hasKeyFor:{}, accepted:false };
@@ -615,32 +694,77 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
     }
   }
 
+  // Probe the local Ollama server and fill the model dropdown with whatever is
+  // installed. `selected` keeps a previously chosen model picked if still there.
+  async function loadOllama(selected){
+    const hint = $('model-hint');
+    hint.textContent = 'Scanning for Ollama…';
+    $('model-menu').innerHTML = '';
+    setModel('', 'Scanning…');
+    let info = { running:false, models:[] };
+    try { info = await api.aiDetectOllama(); } catch {}
+    MODELS.ollama = (info.models || []).map(name => ({ id:name, label:name }));
+    fillModels('ollama', selected);
+    if (!info.running){
+      hint.innerHTML = 'Ollama not detected. Install it from <b>ollama.com</b>, start it, then click <b>Re-scan</b>.';
+    } else if (!MODELS.ollama.length){
+      hint.innerHTML = 'Ollama is running, but no models are installed. Run <b>ollama pull llama3.2</b> in a terminal, then <b>Re-scan</b>.';
+    } else {
+      const n = MODELS.ollama.length;
+      hint.innerHTML = 'Found <b>' + n + '</b> local model' + (n>1?'s':'') + ' — runs fully offline on this device.';
+    }
+  }
+
+  // Show the right controls for the chosen provider (Ollama hides the key field
+  // and auto-detects models; everyone else uses an API key + fixed model list).
+  function applyProviderUI(provider, selected){
+    const isOllama = provider === 'ollama';
+    $('apikey-field').style.display = isOllama ? 'none' : '';
+    $('ollama-rescan').style.display = isOllama ? '' : 'none';
+    if (isOllama){
+      loadOllama(selected || '');
+    } else {
+      fillModels(provider, selected);
+      $('model-hint').innerHTML = KEY_HINTS[provider] || '';
+      $('apikey').placeholder = config.hasKeyFor?.[provider] ? 'Key saved — leave blank to keep it' : 'Paste your key';
+    }
+  }
+
   // ── Setup modal ──
   function openGate(){
     $('provider').value = config.provider;
-    fillModels(config.provider, config.model);
     $('apikey').value = '';
-    $('apikey').placeholder = config.hasKeyFor?.[config.provider] ? 'Key saved — leave blank to keep it' : 'Paste your key';
-    $('model-hint').innerHTML = KEY_HINTS[config.provider] || '';
+    applyProviderUI(config.provider, config.model);
     $('gate-title').textContent = config.hasKey ? 'Privoo AI settings' : 'Connect an AI';
     $('gate').classList.remove('hidden');
-    setTimeout(() => $('apikey').focus(), 50);
+    setTimeout(() => { if ($('provider').value !== 'ollama') $('apikey').focus(); }, 50);
   }
   function closeGate(){ $('gate').classList.add('hidden'); }
 
   $('provider').addEventListener('change', () => {
     const p = $('provider').value;
-    fillModels(p, p === config.provider ? config.model : null);
-    $('model-hint').innerHTML = KEY_HINTS[p] || '';
-    $('apikey').placeholder = config.hasKeyFor?.[p] ? 'Key saved — leave blank to keep it' : 'Paste your key';
+    applyProviderUI(p, p === config.provider ? config.model : null);
   });
+
+  $('ollama-rescan').addEventListener('click', () => {
+    loadOllama($('model').value || config.model || '');
+  });
+
+  // Custom model dropdown open/close.
+  $('model-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    if ($('model-menu').hidden) openModelMenu(); else closeModelMenu();
+  });
+  $('model-menu').addEventListener('click', (e) => e.stopPropagation());
+  document.addEventListener('click', closeModelMenu);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModelMenu(); });
 
   $('gate-save').addEventListener('click', async () => {
     const provider = $('provider').value;
     const model = $('model').value.trim() || DEFAULT_MODELS[provider];
     const apiKey = $('apikey').value.trim();
     const patch = { provider, model, accepted:true };
-    if (apiKey) patch.apiKey = apiKey;
+    if (apiKey && provider !== 'ollama') patch.apiKey = apiKey;
     try { config = await api.aiSetConfig(patch); } catch {}
     refreshStatus();
     closeGate();
@@ -671,7 +795,7 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
       e.innerHTML =
         '<div class="mark"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 9h-2V9h2v2zm0-4h-2V5h2v2zm4 4h-2V9h2v2zm0-4h-2V5h2v2zM9 11H7V9h2v2zm0-4H7V5h2v2z"/></svg></div>' +
         '<h2>How can I help?</h2>' +
-        '<p>Ask anything — explanations, summaries, ideas, code. Powered by your own API key.</p>' +
+        '<p>Ask anything — explanations, summaries, ideas, code. Powered by your chosen AI, cloud or local.</p>' +
         '<div class="chips" id="chips"></div>';
       inner.appendChild(e);
       ['Explain a tricky topic','Summarise some text','Brainstorm ideas','Help me write code'].forEach(c => {

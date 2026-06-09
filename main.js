@@ -3558,7 +3558,12 @@ ipcMain.handle('clear-site-data', async (_e, rawHost) => {
 // ---------------------------------------------------------------------------
 // IPC — history
 // ---------------------------------------------------------------------------
-ipcMain.handle('add-history',    (_e, entry) => historyStore.add(entry));
+ipcMain.handle('add-history',    (_e, entry) => {
+  // Count each real website visit so one-time popups can be paced by browsing
+  // activity (see claim-newtab-popup) rather than firing instantly.
+  try { settingsStore.save({ siteVisitCount: (settingsStore.load().siteVisitCount || 0) + 1 }); } catch {}
+  return historyStore.add(entry);
+});
 ipcMain.handle('get-history',    (_e, query) => historyStore.search(query, 500));
 ipcMain.handle('history-autocomplete', (_e, prefix) => historyStore.autocomplete(prefix, 4));
 ipcMain.handle('clear-history',  () => historyStore.clearAll());
@@ -3737,6 +3742,45 @@ ipcMain.handle('ai-set-config', (_e, cfg) => aiBrowser.setConfig(cfg || {}));
 ipcMain.handle('ai-chat', async (_e, payload) => {
   const messages = Array.isArray(payload?.messages) ? payload.messages : [];
   return aiBrowser.chat(messages, { systemPrompt: payload?.systemPrompt });
+});
+// Streaming chat — forwards each token to the caller's renderer over a private
+// channel, then resolves with the full text once the stream ends.
+ipcMain.handle('ai-chat-stream', async (event, payload) => {
+  const messages = Array.isArray(payload?.messages) ? payload.messages : [];
+  const channel = payload?._channel;
+  return aiBrowser.chatStream(messages, {
+    systemPrompt: payload?.systemPrompt,
+    onChunk: (delta) => {
+      try { if (channel && !event.sender.isDestroyed()) event.sender.send(channel, delta); } catch {}
+    },
+  });
+});
+ipcMain.handle('ai-detect-ollama', () => aiBrowser.detectOllama());
+
+// One-time new-tab popups (Britain, Men's Mental Health, …) are paced by
+// browsing activity: the next one is only released once the user has visited
+// POPUP_VISIT_GAP more websites since the last popup. The decision is made here
+// (single-threaded, so it's atomic) and the popup is marked shown immediately,
+// so two tabs opening at once can never show the same — or two different —
+// popups together. Returns the popup key to show, or null.
+const POPUP_VISIT_GAP = 10; // websites to visit between popups
+const NTP_POPUP_ORDER = [
+  { key: 'britain', flag: 'britainShown' },
+  { key: 'mmhm',    flag: 'mmhmShown' },
+];
+ipcMain.handle('claim-newtab-popup', () => {
+  try {
+    const s = settingsStore.load();
+    if (!s.disclaimerAccepted) return null;
+    const visits = s.siteVisitCount || 0;
+    const mark   = s.popupVisitMark || 0;
+    if (visits - mark < POPUP_VISIT_GAP) return null;        // not enough browsing yet
+    const next = NTP_POPUP_ORDER.find(p => !s[p.flag]);
+    if (!next) return null;                                   // all already shown
+    // Mark shown + re-anchor the gap so the following popup waits another batch.
+    settingsStore.save({ [next.flag]: true, popupVisitMark: visits });
+    return next.key;
+  } catch { return null; }
 });
 
 // Privoo AI opens in its own compact, frameless window — a companion
