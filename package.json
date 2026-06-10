@@ -24,7 +24,7 @@
     "appId": "com.privoo.browser",
     "productName": "Privoo",
     "electronDist": "node_modules/electron/dist",
-    "afterPack": "build/afterPack-vmp.js",
+    "afterPack": "afterPack-vmp.js",
     "protocols": [
       {
         "name": "Web Protocol",
