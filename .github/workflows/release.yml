@@ -26,6 +26,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # npm ci doesn't reliably run the castLabs electron fork's binary
+      # download, leaving node_modules/electron/dist empty and breaking
+      # electron-builder's electronDist path. Fetch it explicitly.
+      - name: Download castLabs Electron binary
+        run: node node_modules/electron/install.js
+
       - name: Set up Python (for Widevine VMP signing)
         uses: actions/setup-python@v5
         with:
@@ -92,6 +98,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # npm ci doesn't reliably run the castLabs electron fork's binary
+      # download, leaving node_modules/electron/dist empty and breaking
+      # electron-builder's electronDist path. Fetch it explicitly.
+      - name: Download castLabs Electron binary
+        run: node node_modules/electron/install.js
+
       - name: Build
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
@@ -132,6 +144,12 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      # npm ci doesn't reliably run the castLabs electron fork's binary
+      # download, leaving node_modules/electron/dist empty and breaking
+      # electron-builder's electronDist path. Fetch it explicitly.
+      - name: Download castLabs Electron binary
+        run: node node_modules/electron/install.js
 
       - name: Build
         env:

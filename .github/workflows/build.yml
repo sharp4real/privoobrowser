@@ -55,6 +55,12 @@ jobs:
       - name: Install dependencies
         run: npm ci || npm install
 
+      # npm ci doesn't reliably run the castLabs electron fork's binary
+      # download, which leaves node_modules/electron/dist empty and makes
+      # electron-builder's electronDist path fail. Fetch it explicitly.
+      - name: Download castLabs Electron binary
+        run: node node_modules/electron/install.js
+
       # Linux needs rpmbuild for .rpm targets; ubuntu-latest doesn't ship it.
       - name: Install rpm tooling (Linux only)
         if: matrix.os == 'ubuntu-latest'
