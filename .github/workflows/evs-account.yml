@@ -1,0 +1,62 @@
+name: EVS Account
+
+# One-off helper to create / confirm the castLabs EVS account that VMP-signs
+# the Widevine build — entirely in CI, so nothing has to be installed locally.
+#
+# Flow:
+#   1. Run with mode=help    → prints the exact CLI flags (no secrets needed).
+#   2. Run with mode=signup  → creates the account, emails a confirmation code.
+#   3. Run with mode=confirm → completes signup with that code.
+# Then EVS_ACCOUNT_NAME / EVS_PASSWD are used by the release build to sign.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'help | signup | confirm'
+        required: true
+        default: 'help'
+      code:
+        description: 'confirmation code (confirm mode only)'
+        required: false
+        default: ''
+
+jobs:
+  evs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install EVS client
+        run: python -m pip install --upgrade castlabs-evs
+
+      - name: Show CLI help
+        if: ${{ inputs.mode == 'help' }}
+        run: |
+          echo "===== account ====="
+          python -m castlabs_evs.account --help || true
+          echo "===== signup ====="
+          python -m castlabs_evs.account signup --help || true
+          echo "===== confirm-signup ====="
+          python -m castlabs_evs.account confirm-signup --help || true
+
+      - name: Sign up
+        if: ${{ inputs.mode == 'signup' }}
+        env:
+          EVS_ACCOUNT_NAME: ${{ secrets.EVS_ACCOUNT_NAME }}
+          EVS_PASSWD: ${{ secrets.EVS_PASSWD }}
+          EVS_EMAIL: ${{ secrets.EVS_EMAIL }}
+        run: |
+          echo "filled in after help reveals the exact flags"
+          exit 1
+
+      - name: Confirm sign up
+        if: ${{ inputs.mode == 'confirm' }}
+        env:
+          EVS_ACCOUNT_NAME: ${{ secrets.EVS_ACCOUNT_NAME }}
+          EVS_PASSWD: ${{ secrets.EVS_PASSWD }}
+        run: |
+          echo "filled in after help reveals the exact flags (code: ${{ inputs.code }})"
+          exit 1
