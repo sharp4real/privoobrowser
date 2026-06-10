@@ -15,8 +15,8 @@
  */
 function buildGoogleSpoofScript(opts) {
   opts = opts || {};
-  const chromeFull = String(opts.chromeVersion || '143.0.0.0');
-  const chromeMajor = chromeFull.split('.')[0] || '143';
+  const chromeFull = String(opts.chromeVersion || '142.0.0.0');
+  const chromeMajor = chromeFull.split('.')[0] || '142';
   const hostPlatform = String(opts.platform || 'win32');
   const winUA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/' + chromeFull + ' Safari/537.36';
   const macUA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/' + chromeFull + ' Safari/537.36';
@@ -55,6 +55,8 @@ function buildGoogleSpoofScript(opts) {
   // attempts reached", Google's reCAPTCHA loops, Bedrock locking task controls.
   var _h = location.hostname;
   var _isGoogleAuth = /(^|\\.)accounts\\.google\\.com$/i.test(_h)
+    || /(^|\\.)google\\.(com|[a-z]{2,3}|co\\.[a-z]{2})$/i.test(_h)
+    || /(^|\\.)youtube\\.com$/i.test(_h)
     || /(^|\\.)gstatic\\.com$/i.test(_h)
     || /(^|\\.)googleusercontent\\.com$/i.test(_h);
   var _isTikTok = /(^|\\.)tiktok\\.com$/i.test(_h)

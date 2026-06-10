@@ -1,7 +1,16 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-// NOTE: Spoofing is handled by main process via executeJavaScript (main world injection).
-// eval() here runs in the isolated preload context and cannot override navigator for the page.
+// IMPORTANT: do NOT `require('./google-spoof')` (or any app-relative module) here.
+// This <webview> preload runs in Electron's *sandboxed* preload bundle, where a
+// relative require throws "module not found" and aborts the ENTIRE preload —
+// which stops the contextBridge.exposeInMainWorld('privooInternal') below from
+// ever running, breaking every privoo:// page (settings, history, downloads,
+// passwords). That was the v3.0.1 settings regression.
+//
+// The Chrome identity spoof is injected by the main process via CDP
+// (Page.addScriptToEvaluateOnNewDocument at document-start) with an
+// executeJavaScript fallback at dom-ready — see main.js. No preload-side
+// injection is needed or safe here.
 
 if (location.protocol === 'privoo:') {
   contextBridge.exposeInMainWorld('privooInternal', {

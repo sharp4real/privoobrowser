@@ -1,6 +1,6 @@
 const {
   app, BrowserWindow, BrowserView, session, ipcMain, webContents, protocol, net, shell, dialog,
-  Menu, Tray, nativeImage, screen,
+  Menu, Tray, nativeImage, screen, components,
 } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -385,10 +385,9 @@ const INTERNAL_PAGES = {
   ai:         'ai.html',
 };
 
-// Pin Chrome version centrally — buildChromeUA and the spoof script both read
-// from CHROME_VERSION_FULL so the UA header, sec-ch-ua headers, and the
-// userAgentData injection all match. Bumping this is a single-line change.
-const CHROME_VERSION_FULL = '143.0.0.0';
+// Pin Chrome identity centrally. It must match Electron's bundled Chromium
+// version so UA, Client Hints, and navigator.userAgentData all agree.
+const CHROME_VERSION_FULL = process.versions.chrome || '142.0.0.0';
 const CHROME_MAJOR = CHROME_VERSION_FULL.split('.')[0];
 
 function buildChromeUA() {
@@ -409,7 +408,8 @@ function buildSecChUaPlatform() {
 }
 
 const CHROME_UA = buildChromeUA();
-// Built once — depends only on the (constant) Chrome version + host platform.
+try { app.userAgentFallback = CHROME_UA; } catch { /* older Electron */ }
+// Built once — depends only on the runtime Chromium version + host platform.
 // Reused for webview guests and OAuth popups so both get spoofed identically.
 const SPOOF_SCRIPT = buildGoogleSpoofScript({
   chromeVersion: CHROME_VERSION_FULL,
@@ -468,6 +468,12 @@ function acceptLanguageHeader() {
 const SEC_CH_UA_PLATFORM = buildSecChUaPlatform();
 const SEC_CH_UA =
   `"Chromium";v="${CHROME_MAJOR}", "Google Chrome";v="${CHROME_MAJOR}", "Not_A Brand";v="24"`;
+const SEC_CH_UA_FULL_VERSION_LIST =
+  `"Chromium";v="${CHROME_VERSION_FULL}", "Google Chrome";v="${CHROME_VERSION_FULL}", "Not_A Brand";v="24.0.0.0"`;
+const SEC_CH_UA_PLATFORM_VERSION =
+  process.platform === 'darwin' ? '"14.0.0"'
+    : process.platform === 'linux' ? '"6.5.0"'
+      : '"15.0.0"';
 
 const stats = { blockedAds: 0, blockedCookies: 0, upgradedHttps: 0 };
 // Per-webContents block counts — reset on each main-frame navigation so the
@@ -988,12 +994,27 @@ function setupHeaderPrivacy(sess) {
 
     const reqHostname = hostnameOf(details.url);
     if (settings.spoofUserAgent || isGoogleAuthHost(reqHostname)) {
+      const seenSpoofHeaders = new Set();
       for (const key of Object.keys(headers)) {
         const low = key.toLowerCase();
-        if (low === 'sec-ch-ua')               headers[key] = SEC_CH_UA;
-        else if (low === 'sec-ch-ua-mobile')   headers[key] = '?0';
-        else if (low === 'sec-ch-ua-platform') headers[key] = SEC_CH_UA_PLATFORM;
-        else if (low === 'user-agent')         headers[key] = CHROME_UA;
+        seenSpoofHeaders.add(low);
+        if (low === 'sec-ch-ua')                         headers[key] = SEC_CH_UA;
+        else if (low === 'sec-ch-ua-mobile')             headers[key] = '?0';
+        else if (low === 'sec-ch-ua-platform')           headers[key] = SEC_CH_UA_PLATFORM;
+        else if (low === 'sec-ch-ua-full-version-list')  headers[key] = SEC_CH_UA_FULL_VERSION_LIST;
+        else if (low === 'sec-ch-ua-full-version')       headers[key] = `"${CHROME_VERSION_FULL}"`;
+        else if (low === 'sec-ch-ua-platform-version')   headers[key] = SEC_CH_UA_PLATFORM_VERSION;
+        else if (low === 'sec-ch-ua-arch')               headers[key] = '"x86"';
+        else if (low === 'sec-ch-ua-bitness')            headers[key] = '"64"';
+        else if (low === 'sec-ch-ua-model')              headers[key] = '""';
+        else if (low === 'sec-ch-ua-form-factors')       headers[key] = '"Desktop"';
+        else if (low === 'user-agent')                   headers[key] = CHROME_UA;
+      }
+      if (!seenSpoofHeaders.has('user-agent')) headers['User-Agent'] = CHROME_UA;
+      if (isGoogleAuthHost(reqHostname)) {
+        if (!seenSpoofHeaders.has('sec-ch-ua')) headers['sec-ch-ua'] = SEC_CH_UA;
+        if (!seenSpoofHeaders.has('sec-ch-ua-mobile')) headers['sec-ch-ua-mobile'] = '?0';
+        if (!seenSpoofHeaders.has('sec-ch-ua-platform')) headers['sec-ch-ua-platform'] = SEC_CH_UA_PLATFORM;
       }
     }
 
@@ -1973,6 +1994,23 @@ app.whenReady().then(async () => {
   await syncExtensionsFromSettings(settings);
 
   if (settings.discordRpc) initDiscordRpc();
+
+  // castLabs Electron (ECS) ships the Widevine CDM as a runtime component that
+  // downloads/verifies on first launch. Wait for it before opening any window
+  // so DRM playback (Spotify, Netflix, etc.) works immediately. `components`
+  // only exists on the castLabs fork, so this is a harmless no-op on stock
+  // Electron — and we never let a slow/failed CDM fetch block startup forever.
+  if (components && typeof components.whenReady === 'function') {
+    try {
+      await Promise.race([
+        components.whenReady(),
+        new Promise((res) => setTimeout(res, 15000)),
+      ]);
+      console.log('Privoo: Widevine components:', components.status ? components.status() : 'ready');
+    } catch (e) {
+      console.warn('Privoo: Widevine components failed to load:', e.message);
+    }
+  }
 
   createWindow();
 

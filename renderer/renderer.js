@@ -4928,18 +4928,20 @@ window.privoo.onGoogleSignInSystemDone?.((data) => {
   });
 });
 
-// ─── Google sign-in via system browser ───────────────────────────────────────
+// ─── Google sign-in (directly inside Privoo's webview) ────────────────────────
+// Earlier builds bounced sign-in to the system browser, but Electron can't
+// import those cookies back across the OS boundary, so you'd sign in there and
+// still be logged out inside Privoo. The document-start Chrome spoof plus the
+// Sec-CH-UA header rewrite now let the in-tab flow pass Google's "this browser
+// may not be secure" check, so we sign in right here in a tab — and the session
+// actually sticks because it's Privoo's own session.
 async function handleGoogleSignIn() {
   closePopovers();
-  const continueUrl = activeTab()?.url?.startsWith('http') ? activeTab().url : 'https://www.google.com';
-  try {
-    const result = await window.privoo.googleSignIn(continueUrl);
-    if (!result?.ok) {
-      console.warn('Privoo: Google sign-in failed to start:', result?.error);
-    }
-  } catch (err) {
-    console.error('Privoo: handleGoogleSignIn error:', err);
-  }
+  const cur = activeTab()?.url;
+  const continueUrl = (cur && cur.startsWith('http')) ? cur : 'https://www.google.com';
+  let url;
+  try { url = await window.privoo.googleSignInGetUrl(continueUrl); } catch {}
+  createTab(url || 'https://accounts.google.com/signin/v2/identifier?flowName=GlifWebSignIn&flowEntry=ServiceLogin');
 }
 
 // ─── Utility ─────────────────────────────────────────────────────────────────

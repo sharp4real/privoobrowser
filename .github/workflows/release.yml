@@ -26,6 +26,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Set up Python (for Widevine VMP signing)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install EVS (castLabs VMP signer)
+        run: python -m pip install --upgrade castlabs-evs
+
       - name: Disable Windows Defender realtime monitoring
         shell: powershell
         run: Set-MpPreference -DisableRealtimeMonitoring $true
@@ -33,6 +41,11 @@ jobs:
       - name: Build
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          # Widevine VMP signing — afterPack-vmp.js signs the packed app so
+          # Spotify/Netflix will issue licenses. If these secrets are unset the
+          # hook skips signing and still produces a working (non-DRM) installer.
+          EVS_ACCOUNT_NAME: ${{ secrets.EVS_ACCOUNT_NAME }}
+          EVS_PASSWD: ${{ secrets.EVS_PASSWD }}
         run: npm run dist
 
       - name: Recompute sha512 after AV scan

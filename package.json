@@ -1,6 +1,6 @@
 {
   "name": "privoo-browser",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Privacy focused browser built on Electron.",
   "main": "main.js",
   "scripts": {
@@ -13,7 +13,7 @@
   "author": "Privoo <dev@privoo.app>",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^42.0.1",
+    "electron": "https://github.com/castlabs/electron-releases#v42.3.3+wvcus",
     "electron-builder": "^26.0.0"
   },
   "dependencies": {
@@ -23,6 +23,8 @@
   "build": {
     "appId": "com.privoo.browser",
     "productName": "Privoo",
+    "electronDist": "node_modules/electron/dist",
+    "afterPack": "build/afterPack-vmp.js",
     "protocols": [
       {
         "name": "Web Protocol",
