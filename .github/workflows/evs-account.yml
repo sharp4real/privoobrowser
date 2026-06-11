@@ -49,8 +49,13 @@ jobs:
           EVS_PASSWD: ${{ secrets.EVS_PASSWD }}
           EVS_EMAIL: ${{ secrets.EVS_EMAIL }}
         run: |
-          echo "filled in after help reveals the exact flags"
-          exit 1
+          set +e
+          python -m castlabs_evs.account -n signup \
+            -A "$EVS_ACCOUNT_NAME" -P "$EVS_PASSWD" -E "$EVS_EMAIL" \
+            -F "Privoo" -L "Browser" -O "Privoo Browser"
+          echo "signup exit: $?"
+          echo "A confirmation code should now be in the account email inbox."
+          echo "Re-run this workflow with mode=confirm and that code to finish."
 
       - name: Confirm sign up
         if: ${{ inputs.mode == 'confirm' }}
@@ -58,5 +63,6 @@ jobs:
           EVS_ACCOUNT_NAME: ${{ secrets.EVS_ACCOUNT_NAME }}
           EVS_PASSWD: ${{ secrets.EVS_PASSWD }}
         run: |
-          echo "filled in after help reveals the exact flags (code: ${{ inputs.code }})"
-          exit 1
+          python -m castlabs_evs.account -n confirm-signup \
+            -A "$EVS_ACCOUNT_NAME" -P "$EVS_PASSWD" -C "${{ inputs.code }}"
+          echo "Account confirmed. VMP signing is ready — re-release to sign the build."
