@@ -292,6 +292,10 @@ function buildGoogleSpoofScript(opts) {
   } catch(e) {}
 
   // ── Permissions API ───────────────────────────────────────────────────────
+  // Skipped on strict-fingerprint hosts (TikTok, Google auth, Snapchat, edu):
+  // swapping permissions.query for a non-native function is itself a tamper
+  // signal their bot checks flag. Let the real, native API run there.
+  if (_isStrictFp) {} else
   try {
     if (_nav.permissions && _nav.permissions.query) {
       var _origQuery = _nav.permissions.query.bind(_nav.permissions);
@@ -311,7 +315,10 @@ function buildGoogleSpoofScript(opts) {
     }
   } catch(e) {}
 
-  // ── Battery API (TikTok checks this) ──────────────────────────────────────
+  // ── Battery API ───────────────────────────────────────────────────────────
+  // Real getBattery values are plausible on desktop; a non-native wrapper is a
+  // tamper tell on strict hosts, so only patch it elsewhere.
+  if (_isStrictFp) {} else
   try {
     if (_nav.getBattery) {
       var _origGetBattery = _nav.getBattery.bind(_nav);
@@ -331,7 +338,9 @@ function buildGoogleSpoofScript(opts) {
     }
   } catch(e) {}
 
-  // ── Connection API (TikTok checks this) ───────────────────────────────────
+  // ── Connection API ────────────────────────────────────────────────────────
+  // Same reasoning: let the real navigator.connection through on strict hosts.
+  if (_isStrictFp) {} else
   try {
     if (_nav.connection || _nav.mozConnection || _nav.webkitConnection) {
       var conn = _nav.connection || _nav.mozConnection || _nav.webkitConnection || {};
@@ -371,6 +380,13 @@ function buildGoogleSpoofScript(opts) {
   } catch(e) {}
 
   // ── Override toString to hide function modifications ──────────────────────
+  // CRITICAL: this replaces the global Function.prototype.toString with a
+  // non-native function — and calling toString on toString itself then reveals
+  // the tampering, which is exactly what TikTok's anti-bot checks for (the cause
+  // of "maximum number of attempts reached"). We only install it on non-strict
+  // hosts, and ONLY to mask the permissions/battery wrappers that also only
+  // exist there — so strict hosts keep a pristine, native prototype.
+  if (_isStrictFp) {} else
   try {
     var origToString = Function.prototype.toString;
     var origCall = Function.prototype.call;
@@ -386,22 +402,10 @@ function buildGoogleSpoofScript(opts) {
   } catch(e) {}
 
   // ── Mouse and touch events (TikTok checks for human-like behavior) ────────
-  try {
-    // Add realistic mouse movement tracking
-    var _lastMouseMove = Date.now();
-    var _mouseMoves = 0;
-    document.addEventListener('mousemove', function() {
-      _lastMouseMove = Date.now();
-      _mouseMoves++;
-    }, true);
-    
-    // Override getComputedStyle to hide our injected styles
-    var _origGetComputedStyle = window.getComputedStyle;
-    window.getComputedStyle = function(el, pseudo) {
-      var result = _origGetComputedStyle.call(window, el, pseudo);
-      return result;
-    };
-  } catch(e) {}
+  // NOTE: a window.getComputedStyle passthrough wrapper used to live here. It
+  // did nothing but turn a native function into a non-native one — a free
+  // bot-detection signal (its .toString() is no longer native code) — so it was
+  // removed. Don't re-add no-op wrappers around native APIs.
 
   // ── Timing APIs ──────────────────────────────────────────────────────────
   // A constant offset on performance.now() is itself a fingerprint-tampering
