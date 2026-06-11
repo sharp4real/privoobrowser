@@ -225,12 +225,11 @@ function registerWindowsBrowserCapabilities() {
     const exe     = process.execPath;
     const exeCmd  = `"${exe}"`;
     const icon0   = `"${exe}",0`;
-    const icon1   = `"${exe}",1`;
     const CAP     = 'Software\\Clients\\StartMenuInternet\\Privoo\\Capabilities';
     const entries = [
       // ProgID: HTML files
       ['HKCU\\Software\\Classes\\PrivooBrowserHTM', '/ve', '/d', 'Privoo HTML Document', '/f'],
-      ['HKCU\\Software\\Classes\\PrivooBrowserHTM\\DefaultIcon', '/ve', '/d', icon1, '/f'],
+      ['HKCU\\Software\\Classes\\PrivooBrowserHTM\\DefaultIcon', '/ve', '/d', icon0, '/f'],
       ['HKCU\\Software\\Classes\\PrivooBrowserHTM\\shell\\open\\command', '/ve', '/d', `${exeCmd} "%1"`, '/f'],
       // ProgID: URL protocols
       ['HKCU\\Software\\Classes\\PrivooBrowser', '/ve', '/d', 'Privoo URL', '/f'],
@@ -606,6 +605,28 @@ function hostnameOf(url) {
 }
 
 /**
+ * Spotify web-player ad / telemetry endpoints.
+ *
+ * We deliberately match only (a) Spotify's dedicated ad / analytics subdomains
+ * and (b) the ad-serving + ad-event PATHS on the main API host — never the API
+ * host wholesale (spclient.wg.spotify.com also drives real playback) and never
+ * the audio CDNs (scdn.co), so music keeps streaming while audio/visual ads and
+ * their tracking are cut off. Pairs with the in-page spotifyAdScript that mutes
+ * and skips any ad slot that still slips through.
+ */
+function isSpotifyAdRequest(url) {
+  let u;
+  try { u = new URL(url); } catch { return false; }
+  const h = u.hostname.toLowerCase();
+  if (!(h === 'spotify.com' || h.endsWith('.spotify.com'))) return false;
+  // Dedicated ad / analytics / logging subdomains — block wholesale.
+  if (/^(pixel|pixel-static|analytics|ads-fa|adstudio|adeventtracker|log\d*|crashdump)\./.test(h)) return true;
+  // Ad-serving + ad-event paths on the API host(s).
+  if (/\/(ads|ad-logic|adlogic|gabo-receiver-service|ad-content|adapt-ads)(\/|$)/i.test(u.pathname)) return true;
+  return false;
+}
+
+/**
  * Heuristic: would loading this URL in a fresh tab be pointless because the
  * server is going to respond with Content-Disposition: attachment anyway?
  * Used in setWindowOpenHandler to route window.open() download links straight
@@ -899,6 +920,15 @@ async function setupAdBlocking(sess) {
           return cb({ cancel: false });
         }
       }
+      // Spotify web-player ads: block ad/telemetry endpoints so the audio ads
+      // never load (the in-page script skips any that do).
+      if (isSpotifyAdRequest(details.url)) {
+        stats.blockedAds++;
+        if (details.webContentsId) {
+          pageBlockedCounts.set(details.webContentsId, (pageBlockedCounts.get(details.webContentsId) || 0) + 1);
+        }
+        return cb({ cancel: true });
+      }
       // Reset the per-page counter on a fresh main-frame navigation so each
       // page starts at 0 — keeps the omnibox shield accurate.
       if (details.resourceType === 'mainFrame' && details.webContentsId) {
@@ -948,6 +978,15 @@ async function setupAdBlocking(sess) {
     // sites unblocked even on the fallback list.
     const sourceHost = documentBaseDomain(details.webContentsId) || host;
     if (isSiteCompatibilityHost(sourceHost)) return cb({ cancel: false });
+
+    // Spotify web-player ad / telemetry endpoints.
+    if (isSpotifyAdRequest(details.url)) {
+      stats.blockedAds++;
+      if (details.webContentsId) {
+        pageBlockedCounts.set(details.webContentsId, (pageBlockedCounts.get(details.webContentsId) || 0) + 1);
+      }
+      return cb({ cancel: true });
+    }
 
     if (isBlockedHost(host)) {
       stats.blockedAds++;
@@ -2263,6 +2302,58 @@ app.on('web-contents-created', (_event, contents) => {
   }, 300);
 })();`;
 
+  // Spotify web player: cosmetic ad removal + audio-ad skip. The network layer
+  // (isSpotifyAdRequest) already starves ad/telemetry endpoints; this catches
+  // whatever still renders — hides ad billboards/upgrade nags and, when an ad
+  // track plays, mutes it and seeks to the end so playback advances to the next
+  // real song. Bails out immediately off Spotify so it costs nothing elsewhere.
+  const spotifyAdScript = `(function(){
+  if (!/(^|\\.)spotify\\.com$/.test(location.hostname)) return;
+  if (window.__privoo_spotify_ads__) return;
+  window.__privoo_spotify_ads__ = true;
+
+  // Hide ad billboards, sponsored slots and the upgrade nags.
+  try {
+    var st = document.createElement('style');
+    st.textContent = [
+      '[data-testid="ad-slot-container"]',
+      '[data-testid="hpto-container"]',
+      '[data-testid="bannerAd"]',
+      '[aria-label="Advertisement"]',
+      '.sponsor-container',
+      '.ad-container',
+      'iframe[src*="adstudio"]'
+    ].join(',') + '{display:none !important;height:0 !important;}';
+    (document.head || document.documentElement).appendChild(st);
+  } catch(e){}
+
+  function adPlaying() {
+    try {
+      var w = document.querySelector('[data-testid="now-playing-widget"]');
+      var label = (w && (w.getAttribute('aria-label') || '')) || '';
+      if (/advert/i.test(label)) return true;
+      var link = document.querySelector('[data-testid="context-item-link"],[data-testid="context-item-info-title"] a');
+      var href = (link && (link.getAttribute('href') || '')) || '';
+      if (/spotify:ad|\\/ad[\\/:]/i.test(href)) return true;
+    } catch(e){}
+    return false;
+  }
+
+  // When an ad slips through, mute it and fast-forward to the end so the
+  // player moves on to the next real track.
+  setInterval(function(){
+    try {
+      if (!adPlaying()) return;
+      var media = document.querySelector('audio, video');
+      if (!media) return;
+      media.muted = true;
+      if (isFinite(media.duration) && media.duration > 0 && media.duration - media.currentTime > 0.2) {
+        media.currentTime = media.duration;
+      }
+    } catch(e){}
+  }, 400);
+})();`;
+
   // ── PRIMARY: CDP injection ─────────────────────────────────────────────────
   // Page.addScriptToEvaluateOnNewDocument runs the script BEFORE any page
   // script executes — including inline <script> tags. This is the only way
@@ -2280,6 +2371,10 @@ app.on('web-contents-created', (_event, contents) => {
       }).catch(() => { /* command may fail on internal pages */ });
       contents.debugger.sendCommand('Page.addScriptToEvaluateOnNewDocument', {
         source: ytAdScript,
+        runImmediately: true,
+      }).catch(() => {});
+      contents.debugger.sendCommand('Page.addScriptToEvaluateOnNewDocument', {
+        source: spotifyAdScript,
         runImmediately: true,
       }).catch(() => {});
 
@@ -2389,6 +2484,7 @@ app.on('web-contents-created', (_event, contents) => {
     if (!cdpAttached) tryAttachCdp();
     contents.executeJavaScript(spoofScript, true).catch(() => {});
     contents.executeJavaScript(ytAdScript, true).catch(() => {});
+    contents.executeJavaScript(spotifyAdScript, true).catch(() => {});
     // Safe Mode — blur explicit imagery, but only on hosts the adult-domain
     // classifier flagged. Applying it on every page (its previous behaviour)
     // blurred normal photos on completely innocuous sites.

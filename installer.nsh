@@ -6,7 +6,7 @@
 !macro customInstall
   ; ── ProgID: HTML / web document files ────────────────────────────────────
   WriteRegStr HKCU "Software\Classes\PrivooBrowserHTM" "" "Privoo HTML Document"
-  WriteRegStr HKCU "Software\Classes\PrivooBrowserHTM\DefaultIcon" "" "$INSTDIR\Privoo.exe,1"
+  WriteRegStr HKCU "Software\Classes\PrivooBrowserHTM\DefaultIcon" "" "$INSTDIR\Privoo.exe,0"
   WriteRegStr HKCU "Software\Classes\PrivooBrowserHTM\shell\open\command" "" '"$INSTDIR\Privoo.exe" "%1"'
 
   ; ── ProgID: URL protocol handler ─────────────────────────────────────────

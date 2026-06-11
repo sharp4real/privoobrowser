@@ -1,6 +1,6 @@
 {
   "name": "privoo-browser",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Privacy focused browser built on Electron.",
   "main": "main.js",
   "scripts": {
