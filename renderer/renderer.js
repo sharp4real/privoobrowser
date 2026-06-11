@@ -479,7 +479,64 @@ function applyAppSettings() {
   document.body.classList.toggle('low-end-device', !!settings.lowEndDevice);
   document.body.classList.toggle('new-search-bar', !!settings.newSearchBarStyle);
   document.body.classList.toggle('sp-no-glass', settings.searchPopupGlass === false);
+  applyChromeWallpaper();
 }
+
+// Full-browser wallpaper — stretch the new-tab wallpaper behind the whole
+// browser chrome (toolbar + tab strip). The host runs from file://, so we get a
+// correctly-encoded file:// URL from main and use it for the image/video layer.
+let _chromeWpReqId = 0;
+async function applyChromeWallpaper() {
+  const on = !!settings?.ntpWallpaperFullBrowser
+    && settings?.ntpWallpaperPath !== '' && settings?.ntpWallpaperPath != null;
+  const isVideo = on && settings?.ntpWallpaperType === 'video';
+  const imgEl = document.getElementById('chrome-wallpaper');
+  const vidEl = document.getElementById('chrome-wallpaper-video');
+  document.documentElement.classList.toggle('wallpaper-chrome-host', on);
+  document.body.classList.toggle('wallpaper-chrome', on);
+  document.body.classList.toggle('wallpaper-chrome-video', !!isVideo);
+
+  if (!on) {
+    if (imgEl) imgEl.style.backgroundImage = '';
+    if (vidEl) { try { vidEl.pause(); } catch {} vidEl.removeAttribute('src'); vidEl.dataset.ver = ''; }
+    return;
+  }
+  // Resolve the on-disk file:// URL (guards against a stale path after switch).
+  const reqId = ++_chromeWpReqId;
+  let url = '';
+  try { url = await window.privoo.getNtpWallpaperUrl?.(); } catch {}
+  if (reqId !== _chromeWpReqId || !url) return;   // superseded or no wallpaper
+  const ver = String(settings?.ntpWallpaperVersion || '1');
+  if (isVideo) {
+    if (imgEl) imgEl.style.backgroundImage = '';
+    if (vidEl && vidEl.dataset.ver !== ver) {
+      vidEl.dataset.ver = ver;
+      vidEl.src = url;
+      vidEl.load();
+    }
+    if (vidEl) { vidEl.muted = true; maybePlayChromeVideo(vidEl); }
+  } else {
+    if (vidEl) { try { vidEl.pause(); } catch {} vidEl.removeAttribute('src'); vidEl.dataset.ver = ''; }
+    if (imgEl) imgEl.style.backgroundImage = "url('" + url.replace(/'/g, "%27") + "')";
+  }
+}
+
+function maybePlayChromeVideo(vid) {
+  try {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) { vid.pause(); return; }
+    if (document.hidden) { vid.pause(); return; }
+    const p = vid.play();
+    if (p && p.catch) p.catch(() => {});
+  } catch {}
+}
+
+// Pause the chrome live wallpaper when the window isn't visible — saves CPU/GPU.
+document.addEventListener('visibilitychange', () => {
+  const vid = document.getElementById('chrome-wallpaper-video');
+  if (!vid || !document.body.classList.contains('wallpaper-chrome-video')) return;
+  if (document.hidden) { try { vid.pause(); } catch {} }
+  else maybePlayChromeVideo(vid);
+});
 
 function onSettingsChanged(next) {
   settings = { ...(settings || {}), ...(next || {}) };
@@ -1682,7 +1739,7 @@ function closeTab(id) {
   setTimeout(() => closingEl.remove(), 240);
   if (tabs.length === 0) {
     try { tab.wv.remove(); } catch (_) {}
-    if (document.body.classList.contains('vertical-tabs')) {
+    if (document.body.classList.contains('vertical-tabs') && vtabsSearchPopupEnabled()) {
       activeId = null;
       omnibox.value = '';
       omnibox.blur();
@@ -3572,7 +3629,9 @@ const cpShowNotes      = document.getElementById('cp-show-notes');
 const cpVerticalTabs   = document.getElementById('cp-vertical-tabs');
 // cpShowGreet removed — greeting feature deleted
 const cpWpPickBtn   = document.getElementById('cp-wp-pick');
+const cpWpLiveBtn   = document.getElementById('cp-wp-live');
 const cpWpClearBtn  = document.getElementById('cp-wp-clear');
+const cpWpFull      = document.getElementById('cp-wp-full');
 
 function paintAccentSwatches() {
   if (!cpAccentRow) return;
@@ -3646,6 +3705,7 @@ function paintCustomizePanel() {
   if (cpShowSidebar)    cpShowSidebar.checked    = !!settings?.showSidebar;
   if (cpVerticalTabs)   cpVerticalTabs.checked   = !!settings?.verticalTabs;
   if (cpShowNotes)      cpShowNotes.checked      = !!settings?.showNotesButton;
+  if (cpWpFull)         cpWpFull.checked         = !!settings?.ntpWallpaperFullBrowser;
 }
 
 function openCustomizePanel() {
@@ -3686,8 +3746,14 @@ cpShowNotes?.addEventListener('change',   () => saveBrowserSetting({ showNotesBu
 cpWpPickBtn?.addEventListener('click', async () => {
   try { await window.privoo.chooseNtpWallpaper?.(); } catch {}
 });
+cpWpLiveBtn?.addEventListener('click', async () => {
+  try { await window.privoo.chooseNtpLiveWallpaper?.(); } catch {}
+});
 cpWpClearBtn?.addEventListener('click', async () => {
   try { await window.privoo.clearNtpWallpaper?.(); } catch {}
+});
+cpWpFull?.addEventListener('change', () => {
+  saveBrowserSetting({ ntpWallpaperFullBrowser: cpWpFull.checked });
 });
 
 // Link rows inside panel — Settings / Extensions
@@ -3901,6 +3967,9 @@ document.getElementById('sb-name')?.addEventListener('keydown', (e) => {
 });
 
 // Drag-to-resize the vertical tabs panel (right edge of panel).
+// A full-window overlay is shown during the drag so the <webview> can't swallow
+// the mouse — without it, releasing over a page meant mouseup never fired, so
+// the new width was never saved (and the drag stuttered over the content).
 (function wireVtabsResize() {
   const handle = document.getElementById('vtabs-resize');
   const panel  = vtabsPanel;
@@ -3911,31 +3980,33 @@ document.getElementById('sb-name')?.addEventListener('keydown', (e) => {
     const saved = localStorage.getItem(VTABS_WIDTH_KEY);
     if (saved) panel.style.width = saved;
   } catch {}
-  let dragging = false;
-  let startX = 0, startW = 0;
-  handle.addEventListener('mousedown', (e) => {
-    if (e.button !== 0) return;
-    dragging = true;
-    startX = e.clientX;
-    startW = panel.offsetWidth;
-    handle.classList.add('dragging');
-    document.body.style.cursor = 'col-resize';
-    e.preventDefault();
-  });
-  window.addEventListener('mousemove', (e) => {
-    if (!dragging) return;
+  let startX = 0, startW = 0, overlay = null;
+  const onMove = (e) => {
     const delta = e.clientX - startX;
     const wrap  = document.getElementById('views-wrap');
     const max   = wrap ? wrap.offsetWidth * 0.5 : 500;
     const w = Math.max(180, Math.min(startW + delta, max));
     panel.style.width = `${w}px`;
-  });
-  window.addEventListener('mouseup', () => {
-    if (!dragging) return;
-    dragging = false;
+  };
+  const onUp = () => {
+    if (overlay) { overlay.remove(); overlay = null; }
     handle.classList.remove('dragging');
     document.body.style.cursor = '';
     try { localStorage.setItem(VTABS_WIDTH_KEY, panel.style.width); } catch {}
+  };
+  handle.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    startX = e.clientX;
+    startW = panel.offsetWidth;
+    handle.classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    // Overlay above everything (incl. webviews) captures the drag reliably.
+    overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:2147483647;cursor:col-resize;';
+    overlay.addEventListener('mousemove', onMove);
+    overlay.addEventListener('mouseup', onUp);
+    document.body.appendChild(overlay);
+    e.preventDefault();
   });
 })();
 
@@ -4026,7 +4097,7 @@ function handleAction(action) {
   closePopovers();
   switch (action) {
     case 'new-tab':
-      if (document.body.classList.contains('vertical-tabs')) showSearchPopup();
+      if (document.body.classList.contains('vertical-tabs') && vtabsSearchPopupEnabled()) showSearchPopup();
       else createTab();
       break;
     case 'new-incognito':
@@ -4077,6 +4148,7 @@ function handleAction(action) {
 // edit the current URL in place.
 function vtabsOmniboxShouldPopup() {
   if (!document.body.classList.contains('vertical-tabs')) return false;
+  if (!vtabsSearchPopupEnabled()) return false;
   const t = activeTab();
   const u = t && t.url ? t.url : '';
   return !(u.startsWith('http://') || u.startsWith('https://'));
@@ -4178,7 +4250,7 @@ reloadBtn.addEventListener('click',  () => {
 });
 homeBtn.addEventListener('click', () => navigate(settings?.homePage || NEWTAB_URL));
 newTabBtn.addEventListener('click', () => {
-  if (document.body.classList.contains('vertical-tabs')) showSearchPopup();
+  if (document.body.classList.contains('vertical-tabs') && vtabsSearchPopupEnabled()) showSearchPopup();
   else createTab();
 });
 dlBtn.addEventListener('click',     async (e) => {
@@ -5023,10 +5095,19 @@ function isNewTabPage(url) {
   return u === NEWTAB_URL || u.startsWith('privoo://newtab');
 }
 
-// In vertical-tabs mode there are no blank new-tab pages — the search popup
-// replaces them — so close any that are open.
+// Whether the vtabs Spotlight search overlay is enabled (Settings → Layout).
+// Default ON. When off, New Tab opens a normal new-tab page and the address
+// bar behaves like the horizontal-tabs omnibox.
+function vtabsSearchPopupEnabled() {
+  return settings?.vtabsSearchPopup !== false;
+}
+
+// In vertical-tabs mode with the search popup ON there are no blank new-tab
+// pages — the popup replaces them — so close any that are open. With the popup
+// OFF we keep normal new-tab pages, so this is a no-op.
 function closeVtabsNewTabPages() {
   if (!document.body.classList.contains('vertical-tabs')) return;
+  if (!vtabsSearchPopupEnabled()) return;
   for (const t of tabs.filter(t => isNewTabPage(t.url))) closeTab(t.id);
 }
 
@@ -5036,6 +5117,9 @@ function applyVerticalTabs(on) {
   if (on) {
     closeVtabsNewTabPages();
     renderVtabs();
+    // With the popup disabled there's no overlay to fall back on, so make sure
+    // there's always at least one real tab open.
+    if (!vtabsSearchPopupEnabled() && tabs.length === 0) createTab();
   } else {
     hideSearchPopup();
     if (tabs.length === 0) createTab();
@@ -5280,7 +5364,7 @@ function _makeVtabGroupEl(g) {
 }
 
 vtabsNewBtn?.addEventListener('click', () => {
-  if (document.body.classList.contains('vertical-tabs')) showSearchPopup();
+  if (document.body.classList.contains('vertical-tabs') && vtabsSearchPopupEnabled()) showSearchPopup();
   else createTab();
 });
 

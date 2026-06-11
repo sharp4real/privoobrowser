@@ -91,6 +91,44 @@ body.transparent-ui #bookmarks-bar:empty {
    reassert with the same !important AND higher specificity so it wins. */
 body.dark.transparent-ui { background: transparent !important; }
 
+/* ─── Full-browser wallpaper ("Stretch over whole browser") ───────────────
+   A fixed layer behind all chrome, revealed by a translucent title/tab strip +
+   toolbar (same idea as Increase Transparency, but the backdrop is the user's
+   own wallpaper rather than the OS material). The content webview is opaque, so
+   the wallpaper shows in the chrome around it — and the new-tab page paints the
+   same wallpaper in its content area, so together they read as one full image. */
+#chrome-wallpaper,
+#chrome-wallpaper-video {
+  position: fixed; inset: 0; z-index: -1;
+  pointer-events: none; display: none;
+}
+#chrome-wallpaper { background-size: cover; background-position: center; }
+#chrome-wallpaper-video { width: 100%; height: 100%; object-fit: cover; background: #000; }
+html.wallpaper-chrome-host { background: transparent !important; }
+body.wallpaper-chrome,
+body.wallpaper-chrome #shell,
+body.wallpaper-chrome .browser-column,
+body.wallpaper-chrome #views-wrap,
+body.wallpaper-chrome #views {
+  background: transparent !important;
+}
+body.dark.wallpaper-chrome { background: transparent !important; }
+body.wallpaper-chrome #chrome-wallpaper { display: block; }
+body.wallpaper-chrome.wallpaper-chrome-video #chrome-wallpaper { display: none; }
+body.wallpaper-chrome.wallpaper-chrome-video #chrome-wallpaper-video { display: block; }
+body.wallpaper-chrome #titlebar,
+body.wallpaper-chrome #toolbar,
+body.wallpaper-chrome #bookmarks-bar {
+  background: rgba(255,255,255,.16) !important;
+  backdrop-filter: blur(6px) saturate(140%);
+  -webkit-backdrop-filter: blur(6px) saturate(140%);
+}
+body.wallpaper-chrome.dark #titlebar,
+body.wallpaper-chrome.dark #toolbar,
+body.wallpaper-chrome.dark #bookmarks-bar {
+  background: rgba(22,23,27,.34) !important;
+}
+
 /* Visible widget surfaces — frosted glass tint over the OS acrylic/vibrancy
    material. backdrop-filter on titlebar + toolbar blurs the desktop behind
    them; the rgba fill is a light tint so text stays readable. Low alphas

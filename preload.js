@@ -28,6 +28,8 @@ contextBridge.exposeInMainWorld('privoo', {
   chooseFolder:        ()      => ipcRenderer.invoke('choose-folder'),
   // Wallpaper pickers — used by the Customize side panel and the NTP
   chooseNtpWallpaper:  ()      => ipcRenderer.invoke('choose-ntp-wallpaper'),
+  chooseNtpLiveWallpaper: ()   => ipcRenderer.invoke('choose-ntp-live-wallpaper'),
+  getNtpWallpaperUrl:  ()      => ipcRenderer.invoke('get-ntp-wallpaper-url'),
   clearNtpWallpaper:   ()      => ipcRenderer.invoke('clear-ntp-wallpaper'),
   listBrowserProfiles: ()      => ipcRenderer.invoke('list-browser-profiles'),
   chooseBrowserProfile: ()     => ipcRenderer.invoke('choose-browser-profile'),

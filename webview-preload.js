@@ -70,6 +70,7 @@ if (location.protocol === 'privoo:') {
     importBrowserData:   (opts) => ipcRenderer.invoke('import-browser-data', opts),
     openDirectory:      (p) => ipcRenderer.invoke('open-directory', p),
     chooseNtpWallpaper: () => ipcRenderer.invoke('choose-ntp-wallpaper'),
+    chooseNtpLiveWallpaper: () => ipcRenderer.invoke('choose-ntp-live-wallpaper'),
     clearNtpWallpaper:  () => ipcRenderer.invoke('clear-ntp-wallpaper'),
     // chooseYtdlpBinary removed — auto-installer handles the binary.
     chooseMusicFile:    () => ipcRenderer.invoke('choose-music-file'),

@@ -50,6 +50,14 @@ body.ntp-ready.ntp-wp.transparent-ui #ntp-root{
    user uploaded a wallpaper, that takes precedence (transparency over a
    wallpaper would look muddy). */
 body.transparent-ui:not(.ntp-wp) #ntp-bg{background-color:transparent;}
+/* Live (video) wallpaper — sits in the same plane as #ntp-bg, beneath the dim
+   overlay and content. Only shown when a video wallpaper is active. */
+#ntp-bg-video{
+  position:fixed;inset:0;z-index:0;width:100%;height:100%;
+  object-fit:cover;display:none;pointer-events:none;background:#000;
+}
+body.ntp-live #ntp-bg-video{display:block;}
+body.ntp-live #ntp-bg{background-image:none !important;}
 #ntp-bg-dim{
   position:fixed;inset:0;z-index:1;
   background:#000;pointer-events:none;opacity:0;
@@ -891,6 +899,7 @@ body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
 <body>
 
 <div id="ntp-bg" aria-hidden="true"></div>
+<video id="ntp-bg-video" aria-hidden="true" muted loop playsinline preload="auto" disablepictureinpicture></video>
 <div id="ntp-bg-dim" aria-hidden="true"></div>
 
 
@@ -925,9 +934,14 @@ body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
       </div>
       <div class="pn-track">
       <div class="pn-slide active" id="pn-0">
-        <div class="pn-kicker">Privoo v3.0.0</div>
-        <div class="pn-title">Local AI, 100% private</div>
-        <p class="pn-body">Privoo AI now auto-detects <b>Ollama</b> running on your machine. Pick a local model in AI → Setup — no API key, no cloud, nothing ever leaves your device.</p>
+        <div class="pn-kicker">Privoo v3.0.3</div>
+        <div class="pn-title">Live wallpapers</div>
+        <p class="pn-body">Set a <b>video as your wallpaper</b> — it plays muted behind your new tab and pauses when you look away to save battery. Add one from Customize → <b>Live wallpaper…</b></p>
+      </div>
+      <div class="pn-slide" id="pn-custom">
+        <div class="pn-kicker">Make it yours</div>
+        <div class="pn-title">Wallpaper everywhere, your way</div>
+        <p class="pn-body">Stretch your wallpaper behind the <b>whole browser</b> — toolbar and tabs included — from Customize. And in vertical-tabs mode you can now switch the search popup off for a classic new tab page.</p>
       </div>
       <div class="pn-slide" id="pn-1">
         <div class="pn-kicker">Privacy</div>
@@ -962,6 +976,7 @@ body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
         <button class="pn-dot" data-idx="3"></button>
         <button class="pn-dot" data-idx="4"></button>
         <button class="pn-dot" data-idx="5"></button>
+        <button class="pn-dot" data-idx="6"></button>
       </div>
     </div>
     <p class="pn-disclaimer">Shown locally from this version of Privoo — nothing here is tracked or fetched from the web.</p>
@@ -970,7 +985,7 @@ body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
 
 <footer id="ntp-footer">
   <div id="ntp-weather" hidden></div>
-  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee. &nbsp;&middot;&nbsp; <span id="ntp-version" style="opacity:.55">v3.0.0</span></p>
+  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee. &nbsp;&middot;&nbsp; <span id="ntp-version" style="opacity:.55">v3.0.3</span></p>
 </footer>
 
 </div>
@@ -1133,11 +1148,31 @@ function applyNtpLook(settings) {
     if (settings?.ntpShowClock) startNtpClock(); else stopNtpClock();
   }
 
-  if (hasWp) {
+  const vid = document.getElementById('ntp-bg-video');
+  const isVideo = hasWp && settings?.ntpWallpaperType === 'video';
+  document.body.classList.toggle('ntp-live', !!isVideo);
+
+  if (isVideo) {
+    // Load the video only when the wallpaper actually changed (version token),
+    // so unrelated settings broadcasts (clock toggle, accent, …) don't restart
+    // playback.
+    const ver = String(settings.ntpWallpaperVersion || '1');
+    if (vid && vid.dataset.ver !== ver) {
+      vid.dataset.ver = ver;
+      vid.src = "privoo://newtab/wallpaper?v=" + ver;
+      vid.load();
+    }
+    if (vid) { vid.muted = true; maybePlayVideo(vid); }
+    bg.style.backgroundImage = '';
+    const d = typeof settings.ntpWallpaperDim === 'number' ? settings.ntpWallpaperDim : 0.42;
+    dim.style.opacity = String(Math.min(0.85, Math.max(0, d)));
+  } else if (hasWp) {
+    if (vid) { vid.pause(); vid.removeAttribute('src'); vid.dataset.ver = ''; vid.load(); }
     bg.style.backgroundImage = "url('privoo://newtab/wallpaper?t=" + Date.now() + "')";
     const d = typeof settings.ntpWallpaperDim === 'number' ? settings.ntpWallpaperDim : 0.42;
     dim.style.opacity = String(Math.min(0.85, Math.max(0, d)));
   } else {
+    if (vid) { vid.pause(); vid.removeAttribute('src'); vid.dataset.ver = ''; }
     bg.style.backgroundImage = '';
     dim.style.opacity = '0';
     // When transparency is on, leave the NTP background fully transparent
@@ -1153,6 +1188,31 @@ function applyNtpLook(settings) {
   // Apply custom accent color
   applyAccent(settings?.accentColor);
 }
+
+// Play the live wallpaper only when it makes sense — never while the tab is
+// hidden, and not at all when the user prefers reduced motion (we leave the
+// first frame showing). Keeps the GPU/CPU idle when nothing's watching.
+function maybePlayVideo(vid) {
+  try {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      vid.pause();
+      return;
+    }
+    if (document.hidden) { vid.pause(); return; }
+    const p = vid.play();
+    if (p && p.catch) p.catch(() => {});
+  } catch (e) {}
+}
+
+// Pause the live wallpaper whenever the new tab isn't visible (you switched
+// tabs, minimized, or the window lost focus) and resume when it returns —
+// this is the bulk of the optimization, so an idle video never burns battery.
+document.addEventListener('visibilitychange', () => {
+  const vid = document.getElementById('ntp-bg-video');
+  if (!vid || !document.body.classList.contains('ntp-live')) return;
+  if (document.hidden) { try { vid.pause(); } catch (e) {} }
+  else maybePlayVideo(vid);
+});
 
 function applyAccent(hex){const r=document.documentElement;if(!hex){r.style.removeProperty('--accent');r.style.removeProperty('--accent-hover');r.style.removeProperty('--accent-soft');return;}r.style.setProperty('--accent',hex);const m=hex.replace('#','').match(/.{2}/g);if(m){const[rv,g,b]=m.map(x=>parseInt(x,16));const h=`rgb(${Math.min(255,Math.round(rv+(255-rv)*.18))},${Math.min(255,Math.round(g+(255-g)*.18))},${Math.min(255,Math.round(b+(255-b)*.18))})`;r.style.setProperty('--accent-hover',h);r.style.setProperty('--accent-soft',`rgba(${rv},${g},${b},.18)`);} }
 
@@ -1200,10 +1260,10 @@ async function loadNtp() {
   const ghostEl = document.getElementById('ntp-ghost-name');
   if (ghostEl) ghostEl.hidden = true;
 
-  // In vtabs search-popup mode the overlay handles search — hide logo + search bar
-  if (settings.verticalTabs && settings.vtabsSearchPopup) {
-    document.body.classList.add('vtabs-popup-mode');
-  }
+  // In vtabs search-popup mode the overlay handles search — hide logo + search bar.
+  // With the popup disabled the new-tab page shows its normal search bar.
+  document.body.classList.toggle('vtabs-popup-mode',
+    !!settings.verticalTabs && settings.vtabsSearchPopup !== false);
 
   document.body.classList.toggle('new-search-bar', !!settings.newSearchBarStyle);
 

@@ -922,6 +922,10 @@
             <label class="switch"><input type="checkbox" id="vtabsIntegrated"><span class="slider"></span></label>
           </div>
           <div class="row">
+            <div><div class="label">Search popup</div><div class="desc">In vertical-tabs mode, open a centered search overlay when you click New Tab. Turn off to open a normal new tab page instead.</div></div>
+            <label class="switch"><input type="checkbox" id="vtabsSearchPopup"><span class="slider"></span></label>
+          </div>
+          <div class="row">
             <div><div class="label">Transparent search popup</div><div class="desc">Apply the glass/transparency effect to the vertical-tabs search popup. Turn off to keep it solid.</div></div>
             <label class="switch"><input type="checkbox" id="searchPopupGlass"><span class="slider"></span></label>
           </div>
@@ -1549,7 +1553,7 @@
 <script>
 const api = window.privooInternal;
 const TOGGLES = [
-  'verticalTabs', 'vtabsIntegrated', 'searchPopupGlass', 'newSearchBarStyle', 'darkMode', 'forceDarkMode', 'showHomeButton', 'showBookmarksBar',
+  'verticalTabs', 'vtabsIntegrated', 'vtabsSearchPopup', 'searchPopupGlass', 'newSearchBarStyle', 'darkMode', 'forceDarkMode', 'showHomeButton', 'showBookmarksBar',
   'ntpShowWeather', 'ntpShowClock', 'ntpFocusedSearch', 'ntpShowQuickLinks', 'ntpShowNews',
   'increaseTransparency', 'aeroGradient', 'vibeEnabled', 'compactMode', 'searchSuggestions',
   'askDownloadPath', 'adBlocking', 'httpsUpgrade', 'httpsUpgradeShowNotice', 'blockThirdPartyCookies',

@@ -7,6 +7,13 @@
 </head>
 <body>
 
+  <!-- ── Full-browser wallpaper layer ──
+       Customize → "Stretch over whole browser". Sits behind all chrome; the
+       title/tab strip + toolbar go translucent over it so the new-tab wallpaper
+       appears to span the entire window, top included. -->
+  <div id="chrome-wallpaper" aria-hidden="true"></div>
+  <video id="chrome-wallpaper-video" aria-hidden="true" muted loop playsinline preload="auto" disablepictureinpicture></video>
+
   <!-- ── Setup wizard (first-run) ── -->
   <div id="setup-overlay" class="setup-overlay" hidden>
 
@@ -1026,9 +1033,17 @@
               <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm0 14h14V8.41L13.41 14 11 11.59l-6 6V18zm14-12H5v9.17l6-6L13.41 11.59 19 6z"/></svg>
               <span>Choose image…</span>
             </button>
+            <button type="button" id="cp-wp-live" class="cp-card-btn">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm0 2v12h16V6H4zm6 2.5 5 3.5-5 3.5v-7z"/></svg>
+              <span>Live wallpaper…</span>
+            </button>
             <button type="button" id="cp-wp-clear" class="cp-card-btn ghost">
               <span>Remove wallpaper</span>
             </button>
+          </div>
+          <div class="cp-row">
+            <span>Stretch over whole browser</span>
+            <label class="switch"><input type="checkbox" id="cp-wp-full"><span class="slider"></span></label>
           </div>
         </section>
 

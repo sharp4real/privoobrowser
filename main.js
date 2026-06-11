@@ -494,6 +494,9 @@ protocol.registerSchemesAsPrivileged([
       secure: true,
       supportFetchAPI: true,
       corsEnabled: true,
+      // Required so the new-tab live (video) wallpaper can stream from
+      // privoo://newtab/wallpaper with range requests.
+      stream: true,
     },
   },
 ]);
@@ -547,9 +550,12 @@ function buildPrivooProtocolHandler() {
       if (wp === '') {
         return new Response('', { status: 404 });
       }
-      // Serve wallpaper if it exists (either default or custom)
+      // Serve wallpaper if it exists (either default or custom). Forward the
+      // Range header so a live (video) wallpaper streams + loops smoothly
+      // (the media element issues range requests; net.fetch returns 206).
       if (wp && fs.existsSync(wp)) {
-        return net.fetch(pathToFileURL(wp).toString());
+        const range = request.headers.get('range');
+        return net.fetch(pathToFileURL(wp).toString(), range ? { headers: { range } } : undefined);
       }
       return new Response('', { status: 404 });
     }
@@ -3087,6 +3093,20 @@ ipcMain.handle('open-directory', async (_e, dirPath) => {
   }
 });
 
+// Remove any previously-copied wallpaper file (image OR video) from userData so
+// switching between an image and a live wallpaper never leaves a stale file and
+// the privoo://newtab/wallpaper route always resolves to the current one.
+function removeNtpWallpaperFiles() {
+  try {
+    const dir = app.getPath('userData');
+    for (const f of fs.readdirSync(dir)) {
+      if (/^ntp-wallpaper\.[a-z0-9]+$/i.test(f)) {
+        try { fs.unlinkSync(path.join(dir, f)); } catch { /* ignore */ }
+      }
+    }
+  } catch { /* ignore */ }
+}
+
 ipcMain.handle('choose-ntp-wallpaper', async (e) => {
   const { dialog } = require('electron');
   const win = winOf(e);
@@ -3101,15 +3121,52 @@ ipcMain.handle('choose-ntp-wallpaper', async (e) => {
   const src = result.filePaths[0];
   const ext = path.extname(src).toLowerCase() || '.jpg';
   const safeExt = /^\.(jpe?g|png|gif|webp|bmp)$/i.test(ext) ? ext : '.jpg';
+  removeNtpWallpaperFiles();
   const dest = path.join(app.getPath('userData'), `ntp-wallpaper${safeExt}`);
   try {
     fs.copyFileSync(src, dest);
-    saveSettingsAndBroadcast({ ntpWallpaperPath: dest });
+    saveSettingsAndBroadcast({ ntpWallpaperPath: dest, ntpWallpaperType: 'image', ntpWallpaperVersion: Date.now() });
     return dest;
   } catch (err) {
     console.warn('choose-ntp-wallpaper:', err.message);
     return null;
   }
+});
+
+// Live (video) wallpaper — a muted, looping video plays behind the new tab.
+ipcMain.handle('choose-ntp-live-wallpaper', async (e) => {
+  const { dialog } = require('electron');
+  const win = winOf(e);
+  const result = await dialog.showOpenDialog(win, {
+    title: 'Choose a live wallpaper (video)',
+    properties: ['openFile'],
+    filters: [
+      { name: 'Videos', extensions: ['mp4', 'webm', 'mov', 'm4v', 'ogv', 'ogg'] },
+    ],
+  });
+  if (result.canceled || !result.filePaths[0]) return null;
+  const src = result.filePaths[0];
+  const ext = path.extname(src).toLowerCase() || '.mp4';
+  const safeExt = /^\.(mp4|webm|mov|m4v|ogv|ogg)$/i.test(ext) ? ext : '.mp4';
+  removeNtpWallpaperFiles();
+  const dest = path.join(app.getPath('userData'), `ntp-wallpaper${safeExt}`);
+  try {
+    fs.copyFileSync(src, dest);
+    saveSettingsAndBroadcast({ ntpWallpaperPath: dest, ntpWallpaperType: 'video', ntpWallpaperVersion: Date.now() });
+    return dest;
+  } catch (err) {
+    console.warn('choose-ntp-live-wallpaper:', err.message);
+    return null;
+  }
+});
+
+// The browser-chrome (full-window) wallpaper is rendered by the host renderer,
+// which runs from file://. Hand it a correctly-encoded file:// URL to the
+// wallpaper so it can use it as a background / <video> src same-origin.
+ipcMain.handle('get-ntp-wallpaper-url', () => {
+  const wp = settingsStore.load().ntpWallpaperPath;
+  if (!wp || wp === '' || !fs.existsSync(wp)) return '';
+  try { return pathToFileURL(wp).toString(); } catch { return ''; }
 });
 
 ipcMain.handle('clear-ntp-wallpaper', () => {
@@ -3121,8 +3178,9 @@ ipcMain.handle('clear-ntp-wallpaper', () => {
       try { fs.unlinkSync(s.ntpWallpaperPath); } catch { /* ignore */ }
     }
   }
+  removeNtpWallpaperFiles();
   // Set to empty string to indicate "no wallpaper" (vs null which means "use default")
-  saveSettingsAndBroadcast({ ntpWallpaperPath: '' });
+  saveSettingsAndBroadcast({ ntpWallpaperPath: '', ntpWallpaperType: '' });
   return true;
 });
 

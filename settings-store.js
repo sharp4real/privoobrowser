@@ -192,8 +192,9 @@ const DEFAULTS = {
   verticalTabs: false,    // show tabs in a vertical left panel instead of horizontal strip
   vtabsCollapsed: false,  // vertical tabs panel collapsed to icon-only rail
   vtabsIntegrated: false,   // move toolbar icon buttons into the vertical tabs panel
-  vtabsSearchPopup: false,  // show Spotlight-style search overlay instead of loading newtab on New Tab
+  vtabsSearchPopup: true,   // show the Spotlight-style search overlay on New Tab in vtabs mode (off = open a normal new tab page)
   searchPopupGlass: true,   // apply the transparency/glass effect to the vtabs search popup
+  ntpWallpaperFullBrowser: false, // stretch the new-tab wallpaper behind the whole browser chrome (toolbar + tab strip)
   newSearchBarStyle: false, // modern pill-style top address bar
   sidebarLinks: [],
   ghostName: '',          // user-supplied name for the Privoo mascot
