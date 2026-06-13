@@ -129,6 +129,7 @@ const DEFAULTS = {
   // and a translucent toolbar fallback on Linux. Off by default; turn it on
   // in Settings → Appearance for the frosted look.
   increaseTransparency: false,
+  transparencyStyle: 'frosted', // glass look when transparency is on: frosted | liquid | acrylic | clear
   // Aero gradient — layers a soft colored gradient behind the chrome when
   // transparency is on, for the classic Aero / colour-acrylic look. Has no
   // effect when increaseTransparency is off.
@@ -157,6 +158,7 @@ const DEFAULTS = {
   // New tab
   ntpShowClock: true,
   ntpShowStats: true,
+  ntpShowLogo: true,
   ntpShowQuickLinks: true,
   // Brave-style focused search: when the user clicks/focuses the search bar
   // on the new tab page, it scales up and the shortcuts below fade out so
@@ -195,7 +197,19 @@ const DEFAULTS = {
   vtabsSearchPopup: true,   // show the Spotlight-style search overlay on New Tab in vtabs mode (off = open a normal new tab page)
   searchPopupGlass: true,   // apply the transparency/glass effect to the vtabs search popup
   ntpWallpaperFullBrowser: false, // stretch the new-tab wallpaper behind the whole browser chrome (toolbar + tab strip)
-  newSearchBarStyle: false, // modern pill-style top address bar
+  ntpWaveEnabled: false,  // animated colour-theme gradient as the new-tab background (takes precedence over wallpaper)
+  ntpWaveColors: ['#7c5cff', '#b14bff', '#ff5c9e', '#4bc5ff'], // 4-colour palette for the wave background
+  ntpWaveAnimate: true,   // whether the theme background slowly animates (off = static)
+  ntpThemeId: '',         // selected curated theme id (e.g. 'aurora'); '' = custom/none
+  ntpThemeStyle: 'aurora',// visual style of the background: aurora | waves | glow | beams | solid
+  ntpThemeMusic: 'none',  // per-theme looped soundscape id: none | drift | warm | rain | waves | deep | chime
+  ntpThemeMusicVolume: 0.4, // 0..1 volume for the soundscape
+  uiSounds: true,         // play short blips on typing/clicks/tab open+close (uses the active theme's character)
+  uiSoundVolume: 0.7,     // 0..1 volume for the UI blips
+  newSearchBarStyle: false, // legacy boolean for the "soft" address bar (superseded by searchBarStyle)
+  searchBarStyle: '',     // address-bar appearance: classic | soft | pill | square ('' = derive from newSearchBarStyle)
+  tabStyle: 'classic',    // tab strip appearance: classic | pill | underline | chrome | modern
+  newTabBtnCircle: false, // draw a circle around the new-tab "+" button
   sidebarLinks: [],
   ghostName: '',          // user-supplied name for the Privoo mascot
   accentColor: '',        // empty = use stylesheet default (light blue)

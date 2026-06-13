@@ -83,6 +83,7 @@ if (location.protocol === 'privoo:') {
       ipcRenderer.on('download-update', (_e, data) => fn(data));
     },
 
+    uiSound: (kind) => ipcRenderer.sendToHost('ui-sound', kind),
     navigate: (url) => ipcRenderer.sendToHost('navigate', url),
     httpNavigate: (url) => ipcRenderer.sendToHost('http-navigate', url),
     openTab:  (url) => ipcRenderer.sendToHost('open-tab', url),

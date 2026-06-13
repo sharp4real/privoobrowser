@@ -515,6 +515,28 @@ function buildPrivooProtocolHandler() {
       pathname = u.pathname;
     } catch { /* use defaults */ }
 
+    // Theme background images live in renderer/themes/<id>.jpg. Checked before
+    // the generic root-image handler so the subfolder path is honoured. Missing
+    // files return 404 so the CSS gradient fallback shows through.
+    const themeMatch = pathname.toLowerCase().match(/^\/themes\/([a-z0-9_-]+\.(?:jpe?g|png|webp))$/);
+    if (themeMatch) {
+      const tname = path.basename(themeMatch[1]);
+      const text  = path.extname(tname).slice(1).replace('jpg', 'jpeg');
+      const tcands = [
+        path.join(__dirname, 'renderer', 'themes', tname),
+        process.resourcesPath ? path.join(process.resourcesPath, 'themes', tname) : null,
+      ].filter(Boolean);
+      for (const asset of tcands) {
+        if (fs.existsSync(asset)) {
+          try {
+            const data = await fs.promises.readFile(asset);
+            return new Response(data, { headers: { 'content-type': 'image/' + text } });
+          } catch { /* try next */ }
+        }
+      }
+      return new Response('', { status: 404 });
+    }
+
     // Serve root image assets (logo.png, europeprivoobanner.png, …) for any
     // privoo://*/<name>.<ext> request. path.basename strips any directory
     // parts so this can't be used to traverse outside the app root.
@@ -4019,7 +4041,7 @@ ipcMain.handle('open-ai-window', () => {
       },
     });
     aiWindow.setMenuBarVisibility(false);
-    aiWindow.loadURL('privoo://ai/');
+    aiWindow.loadURL('privoo://ai/?window=1');
     aiWindow.on('closed', () => { aiWindow = null; });
     return { ok: true };
   } catch (e) {

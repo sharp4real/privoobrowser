@@ -439,6 +439,26 @@ function applyAppSettings() {
   document.body.classList.toggle('aero-ui', !!settings.aeroGradient);
   document.body.classList.toggle('ui-compact', !!settings.compactMode);
   document.body.classList.toggle('has-vibe', !!settings.vibeEnabled);
+  // Themed mode (a colour Theme is active) — extends the Vibe chrome tint up to
+  // the tab strip so the whole browser shifts with the theme.
+  document.body.classList.toggle('themed', !!settings.ntpWaveEnabled);
+  // Chrome saturation follows the palette, so greyscale themes (Mono) stay grey
+  // instead of picking up a hue tint from an arbitrary "vivid" colour.
+  {
+    let maxSat = 1;
+    if (settings.ntpWaveEnabled && Array.isArray(settings.ntpWaveColors)) {
+      maxSat = 0;
+      for (const c of settings.ntpWaveColors) {
+        const m = String(c).replace('#', '').match(/.{2}/g);
+        if (!m) continue;
+        const [r, g, b] = m.map(x => parseInt(x, 16) / 255);
+        const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+        const s = mx ? (mx - mn) / mx : 0;
+        if (s > maxSat) maxSat = s;
+      }
+    }
+    document.documentElement.style.setProperty('--vibe-sat', String(Math.round(maxSat * 100) / 100));
+  }
   // Apply vibe style class (glow/flow/aura/edge) — glow is default, no class needed
   document.body.classList.remove('vibe-flow', 'vibe-aura', 'vibe-edge');
   const vs = settings.vibeStyle || 'glow';
@@ -477,28 +497,97 @@ function applyAppSettings() {
   applyVtabsIntegrated(!!settings.verticalTabs && !!settings.vtabsIntegrated);
   document.body.classList.toggle('wobbly-windows', !!settings.wobblyWindows);
   document.body.classList.toggle('low-end-device', !!settings.lowEndDevice);
-  document.body.classList.toggle('new-search-bar', !!settings.newSearchBarStyle);
+  // Address-bar style: explicit searchBarStyle, else legacy newSearchBarStyle.
+  const _sbs = settings.searchBarStyle || (settings.newSearchBarStyle ? 'soft' : 'classic');
+  document.body.classList.toggle('new-search-bar', _sbs === 'soft');
+  document.body.classList.remove('search-pill', 'search-square');
+  if (_sbs === 'pill' || _sbs === 'square') document.body.classList.add('search-' + _sbs);
   document.body.classList.toggle('sp-no-glass', settings.searchPopupGlass === false);
+  // Tab strip style (classic = default, no class).
+  document.body.classList.remove('tabs-pill', 'tabs-underline', 'tabs-chrome', 'tabs-modern');
+  const _ts = settings.tabStyle || 'classic';
+  if (_ts !== 'classic') document.body.classList.add('tabs-' + _ts);
+  document.body.classList.toggle('newtab-circle', !!settings.newTabBtnCircle);
+  // Transparency glass style (only takes effect when transparency is on).
+  document.body.classList.remove('tstyle-liquid', 'tstyle-acrylic', 'tstyle-clear');
+  const _tst = settings.transparencyStyle || 'frosted';
+  if (_tst !== 'frosted') document.body.classList.add('tstyle-' + _tst);
   applyChromeWallpaper();
+  applyThemeMusic();
 }
 
 // Full-browser wallpaper — stretch the new-tab wallpaper behind the whole
 // browser chrome (toolbar + tab strip). The host runs from file://, so we get a
 // correctly-encoded file:// URL from main and use it for the image/video layer.
+const WAVE_DEFAULT = ['#7c5cff', '#b14bff', '#ff5c9e', '#4bc5ff'];
+// Curated themes: each has a name, a 4-colour palette, a visual style and its own
+// looped soundscape. Shared by the Customize popup gallery.
+const THEME_LIST = [
+  { id: 'aurora',   name: 'Aurora',   colors: ['#7c5cff', '#b14bff', '#ff5c9e', '#4bc5ff'], style: 'aurora', sound: 'drift' },
+  { id: 'neon',     name: 'Neon',     colors: ['#06111f', '#00e5ff', '#7c3cff', '#ff2bd6'], style: 'beams',  sound: 'pulse' },
+  { id: 'sunset',   name: 'Sunset',   colors: ['#ff6a3d', '#ff2e63', '#a02cff', '#2c7bff'], style: 'waves',  sound: 'warm'  },
+  { id: 'solar',    name: 'Solar',    colors: ['#301400', '#ff7a18', '#ffd166', '#fff3b0'], style: 'glow',   sound: 'solar' },
+  { id: 'forest',   name: 'Forest',   colors: ['#0b6b3a', '#1f9d55', '#7ee787', '#c7f9cc'], style: 'glow',   sound: 'rain'  },
+  { id: 'mint',     name: 'Mint',     colors: ['#033f3a', '#00c2a8', '#a7f3d0', '#f0fdfa'], style: 'aurora', sound: 'mist'  },
+  { id: 'ocean',    name: 'Ocean',    colors: ['#012a4a', '#2563eb', '#0ea5e9', '#76e0f0'], style: 'waves',  sound: 'waves' },
+  { id: 'lagoon',   name: 'Lagoon',   colors: ['#052e2b', '#0891b2', '#22d3ee', '#99f6e4'], style: 'waves',  sound: 'waves' },
+  { id: 'ember',    name: 'Ember',    colors: ['#3a0ca3', '#f72585', '#ff6a3d', '#ffd166'], style: 'beams',  sound: 'warm'  },
+  { id: 'orchid',   name: 'Orchid',   colors: ['#210124', '#7e22ce', '#d946ef', '#f0abfc'], style: 'aurora', sound: 'bloom' },
+  { id: 'midnight', name: 'Midnight', colors: ['#0b1020', '#1e293b', '#334155', '#5b6b86'], style: 'glow',   sound: 'deep'  },
+  { id: 'cyberpunk',name: 'Cyberpunk',colors: ['#0b0220', '#ff2bd6', '#7a2bff', '#00eaff'], style: 'glow',   sound: 'cyber' },
+  { id: 'candy',    name: 'Candy',    colors: ['#ff5c9e', '#ff9ec7', '#a06bff', '#6bd5ff'], style: 'aurora', sound: 'chime' },
+  { id: 'paper',    name: 'Paper',    colors: ['#f8fafc', '#e2e8f0', '#94a3b8', '#38bdf8'], style: 'solid',  sound: 'mist'  },
+  { id: 'mono',     name: 'Mono',     colors: ['#101010', '#2b2b2b', '#484848', '#6c6c6c'], style: 'solid',  sound: 'none'  },
+];
+function applyWaveColors(el) {
+  if (!el) return;
+  const c = Array.isArray(settings?.ntpWaveColors) ? settings.ntpWaveColors : [];
+  for (let i = 0; i < 4; i++) el.style.setProperty('--wave-' + (i + 1), c[i] || WAVE_DEFAULT[i]);
+}
+function themeVisualClass(id) {
+  const clean = String(id || '').toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  return clean ? ' tw-' + clean : '';
+}
+
 let _chromeWpReqId = 0;
 async function applyChromeWallpaper() {
-  const on = !!settings?.ntpWallpaperFullBrowser
-    && settings?.ntpWallpaperPath !== '' && settings?.ntpWallpaperPath != null;
-  const isVideo = on && settings?.ntpWallpaperType === 'video';
-  const imgEl = document.getElementById('chrome-wallpaper');
-  const vidEl = document.getElementById('chrome-wallpaper-video');
+  const full    = !!settings?.ntpWallpaperFullBrowser;
+  const wave    = full && !!settings?.ntpWaveEnabled;
+  const hasWp   = settings?.ntpWallpaperPath !== '' && settings?.ntpWallpaperPath != null;
+  const on      = full && (wave || hasWp);
+  const isVideo = on && !wave && settings?.ntpWallpaperType === 'video';
+  const imgEl  = document.getElementById('chrome-wallpaper');
+  const vidEl  = document.getElementById('chrome-wallpaper-video');
+  const waveEl = document.getElementById('chrome-wave');
   document.documentElement.classList.toggle('wallpaper-chrome-host', on);
   document.body.classList.toggle('wallpaper-chrome', on);
   document.body.classList.toggle('wallpaper-chrome-video', !!isVideo);
+  document.body.classList.toggle('wallpaper-chrome-wave', !!wave);
+
+  // Stop the video whenever we're not in video mode.
+  if (!isVideo && vidEl) { try { vidEl.pause(); } catch {} vidEl.removeAttribute('src'); vidEl.dataset.ver = ''; }
+
+  if (wave) {
+    if (imgEl) imgEl.style.backgroundImage = '';
+    if (waveEl) {
+      const cols = Array.isArray(settings?.ntpWaveColors) ? settings.ntpWaveColors : WAVE_DEFAULT;
+      const id = settings?.ntpThemeId;
+      if (id) {
+        waveEl.className = '';
+        waveEl.style.background = "url('privoo://newtab/themes/" + id + ".png') center/cover no-repeat, linear-gradient(135deg, " + cols.join(',') + ")";
+      } else {
+        waveEl.style.background = '';
+        const st = settings?.ntpThemeStyle || 'aurora';
+        waveEl.className = 'wave-bg ts-' + st + themeVisualClass(settings?.ntpThemeId) + (settings?.ntpWaveAnimate === false ? ' wave-static' : '');
+        applyWaveColors(waveEl);
+      }
+    }
+    return;
+  }
+  if (waveEl) { waveEl.className = ''; waveEl.style.background = ''; }
 
   if (!on) {
     if (imgEl) imgEl.style.backgroundImage = '';
-    if (vidEl) { try { vidEl.pause(); } catch {} vidEl.removeAttribute('src'); vidEl.dataset.ver = ''; }
     return;
   }
   // Resolve the on-disk file:// URL (guards against a stale path after switch).
@@ -516,7 +605,6 @@ async function applyChromeWallpaper() {
     }
     if (vidEl) { vidEl.muted = true; maybePlayChromeVideo(vidEl); }
   } else {
-    if (vidEl) { try { vidEl.pause(); } catch {} vidEl.removeAttribute('src'); vidEl.dataset.ver = ''; }
     if (imgEl) imgEl.style.backgroundImage = "url('" + url.replace(/'/g, "%27") + "')";
   }
 }
@@ -537,6 +625,316 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) { try { vid.pause(); } catch {} }
   else maybePlayChromeVideo(vid);
 });
+
+// ── Ambient theme music ────────────────────────────────────────────────────
+// A small *generative* engine (Web Audio) — no bundled audio files. Each sound
+// is a soft drone plus an ever-changing melody that random-walks over a musical
+// scale, so it evolves instead of holding one note. Everything runs through a
+// reverb so it sounds like spacious ambience, not raw synth.
+const ThemeAudio = (function () {
+  let ctx = null, master = null, droneNodes = [], voices = [], stepTimer = null, curId = null, idx = 0;
+  let lastNote = null, phrase = [], phraseAt = 0;
+
+  const semi = (root, n) => root * Math.pow(2, n / 12);
+
+  // root = base note (Hz); scale = semitone offsets; beat = ms between notes;
+  // dur = note length (s); pad = drone intervals; noise = airy texture amount.
+  const MUSIC = {
+    drift: { root: 261.63, scale: [0, 2, 4, 7, 9, 12, 16], wave: 'sine',     beat: 1680, dur: 2.7, pad: [-12, -5, 0], noise: 0,    drift: 2 },
+    warm:  { root: 196.00, scale: [0, 3, 5, 7, 10, 12, 15], wave: 'triangle', beat: 1980, dur: 3.0, pad: [-12, -5, 3], noise: 0,    drift: 3 },
+    rain:  { root: 233.08, scale: [0, 2, 3, 5, 7, 10, 12], wave: 'sine',     beat: 1320, dur: 2.1, pad: [-12, -7, 0], noise: 0.045, drift: 2 },
+    waves: { root: 174.61, scale: [0, 2, 4, 7, 9, 12, 14], wave: 'sine',     beat: 2220, dur: 3.4, pad: [-12, -5, 2], noise: 0.055, drift: 2 },
+    deep:  { root: 130.81, scale: [0, 3, 7, 10, 12, 15], wave: 'sine',       beat: 2650, dur: 3.8, pad: [-24, -12, -5], noise: 0,  drift: 1 },
+    chime: { root: 523.25, scale: [0, 4, 7, 9, 12, 16, 19], wave: 'triangle', beat: 1080, dur: 1.9, pad: [-12, 0, 7], noise: 0,    drift: 4 },
+    pulse: { root: 246.94, scale: [0, 2, 5, 7, 10, 12, 14, 17], wave: 'sawtooth', beat: 880,  dur: 1.25, pad: [-12, -5], noise: 0.012, drift: 4 },
+    solar: { root: 220.00, scale: [0, 2, 4, 7, 9, 11, 12, 16], wave: 'triangle', beat: 1520, dur: 2.35, pad: [-12, -5, 4], noise: 0, drift: 3 },
+    mist:  { root: 293.66, scale: [0, 2, 5, 7, 9, 12, 14], wave: 'sine',     beat: 1820, dur: 2.9, pad: [-12, -7, 2], noise: 0.035, drift: 2 },
+    bloom: { root: 329.63, scale: [0, 3, 5, 7, 10, 12, 17], wave: 'triangle', beat: 1420, dur: 2.4, pad: [-12, -5, 0], noise: 0, drift: 3 },
+    cyber: { root: 277.18, scale: [0, 3, 6, 7, 10, 13, 14], wave: 'sawtooth', beat: 1180, dur: 1.8, pad: [-24, -12, -5], noise: 0.02, drift: 4 },
+  };
+  MUSIC.calm = MUSIC.drift; MUSIC.focus = MUSIC.drift; // legacy aliases
+
+  function makeIR(seconds, decay) {
+    const rate = ctx.sampleRate, len = Math.floor(rate * seconds);
+    const buf = ctx.createBuffer(2, len, rate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = buf.getChannelData(ch);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+    }
+    return buf;
+  }
+  function ensure() {
+    if (ctx) return ctx;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    ctx = new AC();
+    master = ctx.createGain();
+    master.gain.value = 0;
+    const dry = ctx.createGain(); dry.gain.value = 0.62;
+    const wet = ctx.createGain(); wet.gain.value = 0.6;
+    const rev = ctx.createConvolver(); rev.buffer = makeIR(3.4, 2.6);
+    master.connect(dry); dry.connect(ctx.destination);
+    master.connect(rev); rev.connect(wet); wet.connect(ctx.destination);
+    return ctx;
+  }
+
+  // One plucked/blown note with a soft attack + long release.
+  function note(freq, wave, dur, gain, pan = 0, cutoff = 1600) {
+    const o = ctx.createOscillator(); o.type = wave; o.frequency.value = freq;
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cutoff; f.Q.value = 0.5;
+    const p = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+    const g = ctx.createGain(); g.gain.value = 0;
+    o.connect(f);
+    if (p) { f.connect(p); p.pan.value = pan; p.connect(g); }
+    else f.connect(g);
+    g.connect(master);
+    const t = ctx.currentTime;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(gain, t + 0.09 + Math.random() * 0.12);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.start(t); o.stop(t + dur + 0.1);
+    voices.push(o);
+    o.onended = () => { try { o.disconnect(); f.disconnect(); p?.disconnect(); g.disconnect(); } catch {} voices = voices.filter(x => x !== o); };
+  }
+
+  function startDrone(cfg) {
+    cfg.pad.forEach(s => {
+      const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = semi(cfg.root, s);
+      const g = ctx.createGain(); g.gain.value = 0.05;
+      const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 520;
+      const l = ctx.createOscillator(); l.frequency.value = 0.05;
+      const lg = ctx.createGain(); lg.gain.value = 120;
+      l.connect(lg); lg.connect(f.frequency); l.start();
+      o.connect(g); g.connect(f); f.connect(master); o.start();
+      droneNodes.push(o, g, f, l, lg);
+    });
+    if (cfg.noise) {
+      const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+      const d = buf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+      const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 720;
+      const g = ctx.createGain(); g.gain.value = cfg.noise;
+      src.connect(f); f.connect(g); g.connect(master); src.start();
+      droneNodes.push(src, f, g);
+    }
+  }
+
+  function step(cfg) {
+    if (!phrase.length || phraseAt >= phrase.length || Math.random() < 0.14) {
+      const len = 4 + Math.floor(Math.random() * 5);
+      phrase = [];
+      for (let i = 0; i < len; i++) {
+        const leap = Math.random() < 0.28 ? cfg.drift : 1;
+        idx += (Math.random() < 0.5 ? -1 : 1) * leap;
+        idx = Math.max(0, Math.min(cfg.scale.length - 1, idx));
+        phrase.push(idx);
+      }
+      phraseAt = 0;
+    }
+
+    let next = phrase[phraseAt++];
+    if (next === lastNote) {
+      next += Math.random() < 0.5 ? -1 : 1;
+      next = Math.max(0, Math.min(cfg.scale.length - 1, next));
+      if (next === lastNote) next = (next + 2) % cfg.scale.length;
+    }
+    idx = next;
+    lastNote = next;
+
+    const octave = Math.random() < 0.16 ? 12 : 0;
+    const pan = (Math.random() - 0.5) * 0.8;
+    const cutoff = 900 + Math.random() * 2200;
+    note(semi(cfg.root, cfg.scale[idx] + octave), cfg.wave, cfg.dur * (0.85 + Math.random() * 0.35), 0.09 + Math.random() * 0.045, pan, cutoff);
+
+    if (Math.random() < 0.42) {
+      const harmonySteps = Math.random() < 0.55 ? 2 : 3;
+      const up = cfg.scale[Math.min(cfg.scale.length - 1, idx + harmonySteps)] + (Math.random() < 0.22 ? 12 : 0);
+      note(semi(cfg.root, up), cfg.wave === 'sawtooth' ? 'triangle' : cfg.wave, cfg.dur * 0.72, 0.045, -pan * 0.7, cutoff * 0.9);
+    }
+    if (Math.random() < 0.18) {
+      const low = cfg.scale[Math.max(0, idx - 2)] - 12;
+      note(semi(cfg.root, low), 'sine', cfg.dur * 1.25, 0.035, 0, 760);
+    }
+  }
+
+  function scheduleStep(cfg) {
+    if (!curId) return;
+    step(cfg);
+    const swing = cfg.beat * (0.72 + Math.random() * 0.62);
+    stepTimer = setTimeout(() => scheduleStep(cfg), swing);
+  }
+
+  function clearAll() {
+    if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
+    droneNodes.forEach(n => { try { n.stop && n.stop(); } catch {} try { n.disconnect(); } catch {} });
+    droneNodes = [];
+    voices.forEach(o => { try { o.stop(); } catch {} });
+    voices = [];
+  }
+
+  function start(id, vol) {
+    if (!ensure()) return;
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    const cfg = MUSIC[id] || MUSIC.drift;
+    if (curId !== id) {
+      clearAll();
+      curId = id; idx = Math.floor(Math.random() * cfg.scale.length);
+      lastNote = null; phrase = []; phraseAt = 0;
+      startDrone(cfg);
+      scheduleStep(cfg);
+    }
+    const now = ctx.currentTime;
+    master.gain.cancelScheduledValues(now);
+    master.gain.setValueAtTime(master.gain.value, now);
+    master.gain.linearRampToValueAtTime(Math.max(0, Math.min(1, vol)), now + 1.2);
+  }
+  function stop() {
+    if (!ctx || !curId) return;
+    const now = ctx.currentTime;
+    master.gain.cancelScheduledValues(now);
+    master.gain.setValueAtTime(master.gain.value, now);
+    master.gain.linearRampToValueAtTime(0, now + 0.7);
+    curId = null;
+    setTimeout(clearAll, 800);
+  }
+  return { start, stop, isPlaying: () => !!curId };
+})();
+
+// Short browser UI sounds for themed mode: typing, deleting, clicking, confirming.
+// Separate from the background soundscape so the browser feels responsive without
+// turning the ambience into a noisy loop.
+const ThemeUiSfx = (function () {
+  let ctx = null, out = null, lastAt = 0, lastKind = '';
+  const scale = [0, 2, 4, 7, 9, 12];
+  const PROFILES = {
+    aurora:   { root: 330, wave: 'sine',     bright: 1800, click: [0, 7], type: [0, 4, 7], del: [-5, 0], gain: .045 },
+    neon:     { root: 247, wave: 'square',   bright: 2600, click: [12, 19], type: [0, 7, 12], del: [-2, 5], gain: .034 },
+    sunset:   { root: 220, wave: 'triangle', bright: 1600, click: [4, 9], type: [0, 3, 7], del: [-5, -2], gain: .045 },
+    solar:    { root: 196, wave: 'triangle', bright: 2100, click: [7, 12], type: [0, 4, 9], del: [-7, -3], gain: .048 },
+    forest:   { root: 294, wave: 'sine',     bright: 1200, click: [0, 5], type: [0, 2, 7], del: [-5, 0], gain: .04  },
+    mint:     { root: 349, wave: 'sine',     bright: 1700, click: [2, 9], type: [0, 5, 9], del: [-5, 2], gain: .038 },
+    ocean:    { root: 175, wave: 'sine',     bright: 1300, click: [0, 7], type: [0, 2, 9], del: [-7, -2], gain: .042 },
+    lagoon:   { root: 196, wave: 'sine',     bright: 1500, click: [5, 12], type: [0, 5, 7], del: [-7, 0], gain: .04  },
+    ember:    { root: 208, wave: 'triangle', bright: 1900, click: [3, 10], type: [0, 3, 7], del: [-7, -3], gain: .047 },
+    orchid:   { root: 330, wave: 'triangle', bright: 2000, click: [5, 12], type: [0, 3, 10], del: [-5, 0], gain: .04  },
+    midnight: { root: 147, wave: 'sine',     bright: 900,  click: [0, 7], type: [0, 3, 7], del: [-12, -5], gain: .04  },
+    cyberpunk:{ root: 277, wave: 'square',   bright: 3000, click: [0, 12], type: [0, 7, 12], del: [-5, 2], gain: .04  },
+    candy:    { root: 523, wave: 'triangle', bright: 2800, click: [7, 16], type: [0, 4, 9], del: [-5, 0], gain: .032 },
+    paper:    { root: 392, wave: 'sine',     bright: 1500, click: [0, 7], type: [0, 2, 7], del: [-5, 0], gain: .032 },
+    mono:     { root: 196, wave: 'sine',     bright: 900,  click: [0, 12], type: [0, 7],    del: [-12, 0], gain: .026 },
+  };
+  const semi = (root, n) => root * Math.pow(2, n / 12);
+  function ensure() {
+    if (ctx) return ctx;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    ctx = new AC();
+    out = ctx.createGain();
+    out.gain.value = 0.95;
+    out.connect(ctx.destination);
+    return ctx;
+  }
+  function currentProfile() {
+    // Play whenever UI sounds are on (default), using the active theme's
+    // character if one's applied, otherwise a sensible default.
+    if (settings?.uiSounds === false) return null;
+    const id = String(settings?.ntpThemeId || '').toLowerCase();
+    return PROFILES[id] || PROFILES.aurora;
+  }
+  function blip(freq, dur, gain, wave, cutoff, pan) {
+    if (!ensure()) return;
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    const t = ctx.currentTime;
+    const o = ctx.createOscillator();
+    const f = ctx.createBiquadFilter();
+    const g = ctx.createGain();
+    const p = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+    o.type = wave;
+    o.frequency.setValueAtTime(freq, t);
+    o.frequency.exponentialRampToValueAtTime(Math.max(40, freq * 0.985), t + dur);
+    f.type = 'lowpass';
+    f.frequency.value = cutoff;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(f);
+    if (p) { f.connect(p); p.pan.value = pan || 0; p.connect(g); } else f.connect(g);
+    g.connect(out);
+    o.start(t);
+    o.stop(t + dur + 0.02);
+    o.onended = () => { try { o.disconnect(); f.disconnect(); p?.disconnect(); g.disconnect(); } catch {} };
+  }
+  function play(kind) {
+    const p = currentProfile();
+    if (!p) return;
+    const now = performance.now();
+    if (kind === lastKind && now - lastAt < 34) return;
+    lastKind = kind; lastAt = now;
+    // Audible by default; scaled by the optional uiSoundVolume (0..1).
+    const uiVol = Math.max(0.25, Math.min(1, settings?.uiSoundVolume ?? 0.7));
+    const gain = Math.min(0.34, p.gain * uiVol * 7);
+    if (kind === 'type') {
+      const n = p.type[Math.floor(Math.random() * p.type.length)];
+      blip(semi(p.root, n), 0.055, gain, p.wave, p.bright, (Math.random() - 0.5) * 0.3);
+    } else if (kind === 'delete') {
+      blip(semi(p.root, p.del[0]), 0.07, gain * 0.9, p.wave, p.bright * 0.72, -0.12);
+      setTimeout(() => blip(semi(p.root, p.del[1]), 0.045, gain * 0.55, p.wave, p.bright * 0.62, 0.12), 28);
+    } else if (kind === 'confirm') {
+      blip(semi(p.root, p.click[0]), 0.075, gain, p.wave, p.bright, -0.08);
+      setTimeout(() => blip(semi(p.root, p.click[1]), 0.09, gain * 0.85, p.wave, p.bright * 1.15, 0.1), 42);
+    } else if (kind === 'open') {
+      // rising two-note flourish for a new tab
+      blip(semi(p.root, p.click[0]), 0.08, gain, p.wave, p.bright, -0.1);
+      setTimeout(() => blip(semi(p.root, p.click[1] + 5), 0.11, gain * 0.85, p.wave, p.bright * 1.2, 0.12), 40);
+    } else if (kind === 'close') {
+      // falling two-note flourish for a closed tab
+      blip(semi(p.root, p.click[1]), 0.08, gain, p.wave, p.bright, 0.1);
+      setTimeout(() => blip(semi(p.root, p.del[0]), 0.11, gain * 0.7, p.wave, p.bright * 0.7, -0.1), 40);
+    } else {
+      const n = p.click[Math.floor(Math.random() * p.click.length)];
+      blip(semi(p.root, n), 0.05, gain * 0.75, p.wave, p.bright, 0);
+    }
+  }
+  return { play };
+})();
+
+function isEditableTarget(el) {
+  if (!el) return false;
+  const tag = el.tagName;
+  return el.isContentEditable || tag === 'TEXTAREA' || tag === 'INPUT';
+}
+function isClickSoundTarget(el) {
+  return !!el?.closest?.('button, [role="button"], .tab, .bookmark-chip, .menu-item, .ctx-item, .suggestion, .ts-item, .cp-card-btn, .cp-link-row, input[type="checkbox"], input[type="range"], select');
+}
+document.addEventListener('pointerdown', (e) => {
+  if (e.button !== 0 || isEditableTarget(e.target)) return;
+  if (isClickSoundTarget(e.target)) ThemeUiSfx.play('click');
+}, true);
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (!isEditableTarget(e.target)) return;
+  if (e.key === 'Backspace' || e.key === 'Delete') ThemeUiSfx.play('delete');
+  else if (e.key === 'Enter') ThemeUiSfx.play('confirm');
+  else if (e.key.length === 1) ThemeUiSfx.play('type');
+}, true);
+
+// Drive the soundscape from settings. Music only plays while a theme is active.
+let _musicGestureHooked = false;
+function applyThemeMusic() {
+  const mood = settings?.ntpThemeMusic;
+  const want = !!settings?.ntpWaveEnabled && mood && mood !== 'none';
+  const vol = Math.max(0, Math.min(1, typeof settings?.ntpThemeMusicVolume === 'number' ? settings.ntpThemeMusicVolume : 0.4));
+  if (!want) { ThemeAudio.stop(); return; }
+  ThemeAudio.start(mood, vol);
+  // Browsers gate audio until a user gesture — if it didn't start, resume on the
+  // next click/keypress anywhere in the chrome.
+  if (!_musicGestureHooked) {
+    const kick = () => { if (settings?.ntpWaveEnabled && settings?.ntpThemeMusic && settings.ntpThemeMusic !== 'none') ThemeAudio.start(settings.ntpThemeMusic, vol); };
+    document.addEventListener('pointerdown', kick, true);
+    document.addEventListener('keydown', kick, true);
+    _musicGestureHooked = true;
+  }
+}
 
 function onSettingsChanged(next) {
   settings = { ...(settings || {}), ...(next || {}) };
@@ -848,7 +1246,7 @@ function openSidebarPanel(link) {
   sidebarWv.src = link.url;
   sidebarPanel.hidden = false;
   sidebarOverlay?.classList.remove('hidden');
-  // Trigger Opera-style slide-in animation
+  // Trigger slide-in animation
   sidebarPanel.classList.remove('sp-enter');
   requestAnimationFrame(() => sidebarPanel.classList.add('sp-enter'));
   // Keep title current as the page navigates
@@ -1562,6 +1960,8 @@ function defaultNewTabUrl() {
 }
 
 function createTab(url = defaultNewTabUrl(), activate = true, opts = {}) {
+  // New-tab sound — skip the startup burst when restoring a session.
+  if (activate && performance.now() > 2500) ThemeUiSfx.play('open');
   const id = ++tabSeq;
 
   // Redirect HTTP URLs to the upgrading splash (or insecure warning) before the webview loads them
@@ -1589,12 +1989,11 @@ function createTab(url = defaultNewTabUrl(), activate = true, opts = {}) {
   viewsEl.appendChild(wv);
 
   const tabEl = document.createElement('div');
-  // tab-no-anim: the new tab snaps straight to its final width with no
-  // entrance animation. Cleared after two frames so later width changes
-  // (closing tabs, window resize) still glide.
-  tabEl.className = 'tab tab-no-anim';
+  // tab-in: the new tab starts collapsed + faded, then transitions to full
+  // size so it grows + fades in. Cleared after two frames so the transition runs.
+  tabEl.className = 'tab tab-in';
   requestAnimationFrame(() =>
-    requestAnimationFrame(() => tabEl.classList.remove('tab-no-anim')));
+    requestAnimationFrame(() => tabEl.classList.remove('tab-in')));
   tabEl.draggable = true;
   tabEl.innerHTML =
     `<span class="favicon tab-fav"></span>` +
@@ -1723,6 +2122,7 @@ function activateTab(id) {
 function closeTab(id) {
   const idx = tabs.findIndex((t) => t.id === id);
   if (idx === -1) return;
+  if (performance.now() > 2500) ThemeUiSfx.play('close');
   // Closing either Split View pane tears the split down cleanly.
   if (typeof splitExitOnClose === 'function') splitExitOnClose(id);
   const [tab] = tabs.splice(idx, 1);
@@ -2106,9 +2506,18 @@ function wireWebview(tab) {
   }, { signal });
 
   wv.addEventListener('media-started-playing', () => {
-    tab.isPlayingAudio = true;
-    updateTabAudioIndicator(tab);
-    updateAudioButton();
+    // 'media-started-playing' also fires for MUTED/inaudible media — e.g. the
+    // live-wallpaper video, or background gradients — so only show the speaker
+    // icon when the tab is actually producing sound.
+    setTimeout(() => {
+      try {
+        const audible = typeof wv.isCurrentlyAudible === 'function' ? wv.isCurrentlyAudible() : true;
+        const muted = typeof wv.isAudioMuted === 'function' ? wv.isAudioMuted() : false;
+        tab.isPlayingAudio = !!audible && !muted;
+      } catch { tab.isPlayingAudio = true; }
+      updateTabAudioIndicator(tab);
+      updateAudioButton();
+    }, 150);
   }, { signal });
   wv.addEventListener('media-paused', () => {
     tab.isPlayingAudio = false;
@@ -2135,6 +2544,10 @@ function wireWebview(tab) {
     }
     if (e.channel === 'open-customize-panel') {
       openCustomizePanel();
+      return;
+    }
+    if (e.channel === 'ui-sound') {
+      ThemeUiSfx.play(String(e.args?.[0] || 'type'));
       return;
     }
     // Route NTP searches / internal navigations back to THIS webview — vital
@@ -2619,14 +3032,16 @@ async function fillDlPopover() {
     actions.className = 'dl-pop-actions';
     const openB = document.createElement('button');
     openB.type = 'button';
-    openB.textContent = 'Open';
+    openB.className = 'dl-pop-action-btn';
+    openB.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg><span>Open</span>';
     openB.addEventListener('click', (ev) => {
       ev.stopPropagation();
       if (d.savePath) window.privoo.openDownload(d.savePath);
     });
     const folderB = document.createElement('button');
     folderB.type = 'button';
-    folderB.textContent = 'Folder';
+    folderB.className = 'dl-pop-action-btn';
+    folderB.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg><span>Folder</span>';
     folderB.addEventListener('click', (ev) => {
       ev.stopPropagation();
       if (d.savePath) window.privoo.showInFolder(d.savePath);
@@ -3744,17 +4159,249 @@ cpVerticalTabs?.addEventListener('change', async () => {
 cpShowNotes?.addEventListener('change',   () => saveBrowserSetting({ showNotesButton:   cpShowNotes.checked }));
 
 cpWpPickBtn?.addEventListener('click', async () => {
-  try { await window.privoo.chooseNtpWallpaper?.(); } catch {}
+  // Picking an image/video wins over the wave — turn the wave off so it shows.
+  try { const r = await window.privoo.chooseNtpWallpaper?.(); if (r) saveBrowserSetting({ ntpWaveEnabled: false }); } catch {}
 });
 cpWpLiveBtn?.addEventListener('click', async () => {
-  try { await window.privoo.chooseNtpLiveWallpaper?.(); } catch {}
+  try { const r = await window.privoo.chooseNtpLiveWallpaper?.(); if (r) saveBrowserSetting({ ntpWaveEnabled: false }); } catch {}
 });
 cpWpClearBtn?.addEventListener('click', async () => {
   try { await window.privoo.clearNtpWallpaper?.(); } catch {}
+  saveBrowserSetting({ ntpWaveEnabled: false });   // "Remove" clears any custom background
 });
 cpWpFull?.addEventListener('change', () => {
   saveBrowserSetting({ ntpWallpaperFullBrowser: cpWpFull.checked });
 });
+
+// ── Theme gallery + colour picker ──────────────────────────────────────────
+(function initThemePopup() {
+  const popup    = document.getElementById('wave-popup');
+  const preview  = document.getElementById('wave-preview');
+  const backdrop = document.getElementById('wave-backdrop');
+  const gridEl   = document.getElementById('theme-grid');
+  const pad      = document.getElementById('theme-pad');
+  const padThumb = document.getElementById('theme-pad-thumb');
+  const hueEl    = document.getElementById('theme-hue');
+  const dotsEl   = document.getElementById('theme-dots');
+  const hexEl    = document.getElementById('theme-hex');
+  const animChk  = document.getElementById('wave-animate');
+  const custToggle = document.getElementById('theme-cust-toggle');
+  const custPanel  = document.getElementById('theme-cust');
+  const stylesEl   = document.getElementById('theme-styles');
+  const soundRow   = document.getElementById('theme-sound');
+  const soundBtn   = document.getElementById('theme-sound-toggle');
+  const soundNameEl= document.getElementById('theme-sound-name');
+  const volEl    = document.getElementById('theme-vol');
+  const applyBtn = document.getElementById('wave-apply');
+  const offBtn   = document.getElementById('wave-off');
+  const closeBtn = document.getElementById('wave-close');
+  const openBtn  = document.getElementById('cp-wp-wave');
+  if (!popup || !openBtn || !pad || !hueEl || !dotsEl || !gridEl) return;
+
+  const SOUND_NAMES = {
+    none: 'No sound',
+    drift: 'Aurora drift',
+    pulse: 'Neon pulse',
+    warm: 'Warm glow',
+    solar: 'Solar rise',
+    rain: 'Soft rain',
+    mist: 'Quiet mist',
+    waves: 'Ocean waves',
+    deep: 'Deep space',
+    bloom: 'Orchid bloom',
+    noir: 'Noir keys',
+    chime: 'Crystal',
+  };
+
+  // ── colour maths ──
+  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+  function hexToRgb(hex) {
+    let x = String(hex || '').replace('#', '');
+    if (x.length === 3) x = x.split('').map(c => c + c).join('');
+    const n = parseInt(x, 16) || 0; return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  const rgbToHex = (r, g, b) => '#' + [r, g, b].map(x => clamp(Math.round(x), 0, 255).toString(16).padStart(2, '0')).join('');
+  function rgbToHsv(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+    let hh = 0;
+    if (d) { if (mx === r) hh = ((g - b) / d) % 6; else if (mx === g) hh = (b - r) / d + 2; else hh = (r - g) / d + 4; hh *= 60; if (hh < 0) hh += 360; }
+    return [hh, mx ? d / mx : 0, mx];
+  }
+  function hsvToRgb(hh, s, v) {
+    const c = v * s, x = c * (1 - Math.abs((hh / 60) % 2 - 1)), m = v - c;
+    let r = 0, g = 0, b = 0;
+    if (hh < 60) { r = c; g = x; } else if (hh < 120) { r = x; g = c; } else if (hh < 180) { g = c; b = x; }
+    else if (hh < 240) { g = x; b = c; } else if (hh < 300) { r = x; b = c; } else { r = c; b = x; }
+    return [(r + m) * 255, (g + m) * 255, (b + m) * 255];
+  }
+  const hexToHsv = (hex) => rgbToHsv(...hexToRgb(hex));
+  const hsvToHex = (hh, s, v) => rgbToHex(...hsvToRgb(hh, s, v));
+  function normHex(str) {
+    str = String(str || '').trim(); if (str[0] !== '#') str = '#' + str;
+    if (/^#[0-9a-f]{3}$/i.test(str)) str = '#' + str.slice(1).split('').map(c => c + c).join('');
+    return /^#[0-9a-f]{6}$/i.test(str) ? str.toLowerCase() : null;
+  }
+  function sameColors(a, b) { return Array.isArray(b) && b.length >= 4 && b.every((c, i) => String(a[i] || '').toLowerCase() === String(c).toLowerCase()); }
+
+  // ── state ──
+  let colors = WAVE_DEFAULT.slice();
+  let style = 'aurora', soundId = 'none', soundOn = false, vol = 0.4;
+  let sel = 0, h = 265, s = 1, v = 1;
+
+  function setPreviewClass() {
+    const matched = THEME_LIST.find(t => sameColors(colors, t.colors) && style === t.style);
+    if (matched) {
+      preview.className = 'wave-hero';
+      preview.style.background = "url('privoo://newtab/themes/" + matched.id + ".png') center/cover no-repeat, linear-gradient(135deg, " + colors.join(',') + ")";
+    } else {
+      preview.style.background = '';
+      preview.className = 'wave-hero wave-bg ts-' + style + ((animChk && !animChk.checked) ? ' wave-static' : '');
+      colors.forEach((c, i) => preview.style.setProperty('--wave-' + (i + 1), c));
+    }
+  }
+  function updateGridActive() {
+    gridEl.querySelectorAll('.theme-tile').forEach(t => {
+      const th = THEME_LIST.find(x => x.id === t.dataset.id);
+      t.classList.toggle('active', !!th && sameColors(colors, th.colors) && style === th.style);
+    });
+  }
+  function paintPreview() {
+    setPreviewClass();
+    dotsEl.querySelectorAll('.theme-dot').forEach((d, i) => { d.style.background = colors[i]; d.classList.toggle('active', i === sel); });
+    stylesEl?.querySelectorAll('.theme-style-chip').forEach(c => c.classList.toggle('active', c.dataset.style === style));
+    updateGridActive();
+  }
+  function placeThumb() {
+    padThumb.style.left = (s * 100) + '%';
+    padThumb.style.top = ((1 - v) * 100) + '%';
+    padThumb.style.background = colors[sel];
+  }
+  function setHueBg() { pad.style.setProperty('--theme-hue', String(Math.round(h))); }
+  function commit() { colors[sel] = hsvToHex(h, s, v); if (hexEl) hexEl.value = colors[sel].toUpperCase(); setHueBg(); placeThumb(); paintPreview(); }
+  function loadSel() {
+    [h, s, v] = hexToHsv(colors[sel]);
+    if (hueEl) hueEl.value = String(Math.round(h));
+    if (hexEl) hexEl.value = colors[sel].toUpperCase();
+    setHueBg(); placeThumb(); paintPreview();
+  }
+
+  function updateSoundUI() {
+    const on = soundOn && soundId !== 'none';
+    if (soundNameEl) soundNameEl.textContent = on ? (SOUND_NAMES[soundId] || 'Sound') : 'No sound';
+    soundRow?.classList.toggle('muted', !on);
+  }
+  function previewSound() { if (soundOn && soundId !== 'none') ThemeAudio.start(soundId, vol); else ThemeAudio.stop(); }
+
+  function selectTheme(t) {
+    colors = t.colors.slice();
+    style = t.style || 'aurora';
+    soundId = t.sound || 'none';
+    soundOn = soundId !== 'none';
+    sel = 0;
+    if (volEl) volEl.value = String(Math.round(vol * 100));
+    updateSoundUI(); previewSound();
+    loadSel();
+    applyCurrent();   // apply live so clicking a theme actually changes the browser
+  }
+
+  // Save the current selection to the browser. Called on every change so the
+  // popup is fully WYSIWYG; closeAfter=true also dismisses the popup.
+  function applyCurrent(closeAfter) {
+    let best = colors[0], bs = -1, maxSat = 0;
+    for (const c of colors) { const hsv = hexToHsv(c); const sc = hsv[1] * hsv[2]; if (sc > bs) { bs = sc; best = c; } if (hsv[1] > maxSat) maxSat = hsv[1]; }
+    const vibeHue = Math.round(hexToHsv(best)[0]);
+    const matched = THEME_LIST.find(t => sameColors(colors, t.colors) && style === t.style);
+    saveBrowserSetting({
+      ntpWaveEnabled: true,
+      ntpWaveColors: colors.slice(),
+      ntpThemeStyle: style,
+      ntpThemeId: matched ? matched.id : '',
+      ntpWaveAnimate: animChk ? animChk.checked : true,
+      // Greyscale palettes (Mono) leave Vibe off so the chrome stays neutral grey
+      // instead of picking up the saturated hue glow.
+      vibeEnabled: maxSat >= 0.12,
+      vibeHue,
+      ntpThemeMusic: soundOn ? soundId : 'none',
+      ntpThemeMusicVolume: vol,
+    });
+    if (closeAfter) popup.classList.add('hidden');
+  }
+
+  function buildGrid() {
+    if (gridEl.childElementCount) return;
+    THEME_LIST.forEach(t => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      // Cover = the theme's generated image, with the palette gradient as fallback.
+      b.className = 'theme-tile';
+      b.dataset.id = t.id; b.title = t.name;
+      b.style.background = "url('privoo://newtab/themes/" + t.id + ".png') center/cover no-repeat, linear-gradient(135deg, " + t.colors.join(',') + ")";
+      b.innerHTML = '<span class="tt-name"></span>';
+      b.querySelector('.tt-name').textContent = t.name;
+      b.addEventListener('click', () => selectTheme(t));
+      gridEl.appendChild(b);
+    });
+  }
+
+  // pad drag
+  function padFromEvent(e) {
+    const r = pad.getBoundingClientRect();
+    s = clamp((e.clientX - r.left) / r.width, 0, 1);
+    v = clamp(1 - (e.clientY - r.top) / r.height, 0, 1);
+    commit();
+  }
+  let padDrag = false;
+  pad.addEventListener('pointerdown', (e) => { padDrag = true; pad.setPointerCapture(e.pointerId); padFromEvent(e); });
+  pad.addEventListener('pointermove', (e) => { if (padDrag) padFromEvent(e); });
+  pad.addEventListener('pointerup', () => { if (padDrag) { padDrag = false; applyCurrent(); } });
+  pad.addEventListener('pointercancel', () => { padDrag = false; });
+  hueEl.addEventListener('input', () => { h = +hueEl.value; commit(); });
+  hueEl.addEventListener('change', () => applyCurrent());
+  hexEl?.addEventListener('change', () => { const n = normHex(hexEl.value); if (n) { colors[sel] = n; loadSel(); applyCurrent(); } else { hexEl.value = colors[sel].toUpperCase(); } });
+  dotsEl.querySelectorAll('.theme-dot').forEach(d => d.addEventListener('click', () => { sel = +d.dataset.i; loadSel(); }));
+  animChk?.addEventListener('change', () => { setPreviewClass(); applyCurrent(); });
+  soundBtn?.addEventListener('click', () => { if (soundId === 'none') soundId = 'drift'; soundOn = !soundOn; updateSoundUI(); previewSound(); applyCurrent(); });
+  volEl?.addEventListener('input', () => { vol = (+volEl.value) / 100; if (soundOn && soundId !== 'none') ThemeAudio.start(soundId, vol); });
+  volEl?.addEventListener('change', () => applyCurrent());
+  custToggle?.addEventListener('click', () => {
+    const opening = custPanel.hasAttribute('hidden');
+    if (opening) custPanel.removeAttribute('hidden'); else custPanel.setAttribute('hidden', '');
+    custToggle.setAttribute('aria-expanded', String(opening));
+  });
+  stylesEl?.querySelectorAll('.theme-style-chip').forEach(c => c.addEventListener('click', () => {
+    style = c.dataset.style; paintPreview(); applyCurrent();
+  }));
+
+  function open() {
+    buildGrid();
+    const c = (Array.isArray(settings?.ntpWaveColors) && settings.ntpWaveColors.length) ? settings.ntpWaveColors : WAVE_DEFAULT;
+    colors = [0, 1, 2, 3].map(i => normHex(c[i]) || WAVE_DEFAULT[i]);
+    style = settings?.ntpThemeStyle || 'aurora';
+    soundId = (settings?.ntpThemeMusic && settings.ntpThemeMusic !== 'none') ? settings.ntpThemeMusic
+      : ((THEME_LIST.find(t => t.id === settings?.ntpThemeId) || {}).sound || 'drift');
+    soundOn = !!settings?.ntpThemeMusic && settings.ntpThemeMusic !== 'none';
+    vol = typeof settings?.ntpThemeMusicVolume === 'number' ? settings.ntpThemeMusicVolume : 0.4;
+    sel = 0;
+    if (animChk) animChk.checked = settings?.ntpWaveAnimate !== false;
+    if (volEl) volEl.value = String(Math.round(vol * 100));
+    updateSoundUI();
+    loadSel();
+    popup.classList.remove('hidden');
+  }
+  function close() { popup.classList.add('hidden'); }
+
+  openBtn.addEventListener('click', open);
+  closeBtn?.addEventListener('click', close);
+  backdrop?.addEventListener('click', close);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !popup.classList.contains('hidden')) close(); });
+  applyBtn?.addEventListener('click', () => applyCurrent(true));   // "Use theme" = apply + close
+  offBtn?.addEventListener('click', () => {
+    ThemeAudio.stop();
+    saveBrowserSetting({ ntpWaveEnabled: false, vibeEnabled: false, ntpThemeMusic: 'none', ntpThemeId: '' });
+    popup.classList.add('hidden');
+  });
+})();
 
 // Link rows inside panel — Settings / Extensions
 cpPanel?.querySelectorAll('[data-action]').forEach(el => {
@@ -4218,7 +4865,13 @@ omnibox.addEventListener('contextmenu', async (e) => {
       break;
   }
 });
-omnibox.addEventListener('input', (e) => triggerSuggest(e.target.value));
+omnibox.addEventListener('input', (e) => {
+  triggerSuggest(e.target.value);
+  // Play typing sound if theme UI sounds are enabled
+  if (settings?.ntpWaveEnabled && settings?.ntpThemeId) {
+    ThemeUiSfx.play('type');
+  }
+});
 
 omnibox.addEventListener('blur', () => {
   // Hide suggestions when omnibox loses focus (e.g., when clicking on the page)
@@ -4228,8 +4881,18 @@ omnibox.addEventListener('blur', () => {
 omnibox.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowDown') { e.preventDefault(); highlightSug(Math.min(sugIndex + 1, sugItems.length - 1)); return; }
   if (e.key === 'ArrowUp')   { e.preventDefault(); highlightSug(Math.max(sugIndex - 1, -1)); if (sugIndex < 0) omnibox.value = displayUrl(activeTab()?.url) || ''; return; }
+  if (e.key === 'Backspace' || e.key === 'Delete') {
+    // Play delete sound
+    if (settings?.ntpWaveEnabled && settings?.ntpThemeId) {
+      ThemeUiSfx.play('delete');
+    }
+  }
   if (e.key === 'Escape')    { hideSuggestions(); omnibox.blur(); closePopovers(); return; }
   if (e.key === 'Enter') {
+    // Play confirmation sound for search/navigate
+    if (settings?.ntpWaveEnabled && settings?.ntpThemeId) {
+      ThemeUiSfx.play('confirm');
+    }
     const val = sugIndex >= 0 && sugItems[sugIndex] ? sugItems[sugIndex].text : omnibox.value;
     // Hide the dropdown synchronously so an in-flight suggestion fetch
     // can't render results over the new page after navigation starts.
@@ -6135,6 +6798,12 @@ function initAiPanel() {
 
   // Close button
   _aiEl('ai-panel-close')?.addEventListener('click', () => toggleAiPanel());
+
+  // Open the AI as a full page (tab) and close the side panel.
+  _aiEl('ai-expand')?.addEventListener('click', () => {
+    createTab('privoo://ai/');
+    if (aiPanel && !aiPanel.hidden) toggleAiPanel();
+  });
 
   // New chat (header + sidebar)
   _aiEl('ai-new-chat')?.addEventListener('click', _aiNewChat);

@@ -13,6 +13,7 @@
        appears to span the entire window, top included. -->
   <div id="chrome-wallpaper" aria-hidden="true"></div>
   <video id="chrome-wallpaper-video" aria-hidden="true" muted loop playsinline preload="auto" disablepictureinpicture></video>
+  <div id="chrome-wave" aria-hidden="true"></div>
 
   <!-- ── Setup wizard (first-run) ── -->
   <div id="setup-overlay" class="setup-overlay" hidden>
@@ -920,6 +921,9 @@
             <button type="button" id="ai-new-chat" class="ai-hdr-btn" title="New chat">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v15.5l3.5-3.5H20c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-7 9h-2v-2H9V9h2V7h2v2h2v2h-2v2z"/></svg>
             </button>
+            <button type="button" id="ai-expand" class="ai-hdr-btn" title="Open as full page">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M4 4h6v2H6v4H4V4zm10 0h6v6h-2V6h-4V4zM4 14h2v4h4v2H4v-6zm16 0v6h-6v-2h4v-4h2z"/></svg>
+            </button>
             <button type="button" id="ai-panel-close" class="ai-hdr-btn" title="Close AI panel">
               <svg viewBox="0 0 14 14" width="11" height="11"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
             </button>
@@ -1037,6 +1041,10 @@
               <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm0 2v12h16V6H4zm6 2.5 5 3.5-5 3.5v-7z"/></svg>
               <span>Live wallpaper…</span>
             </button>
+            <button type="button" id="cp-wp-wave" class="cp-card-btn">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 9c2.5-3 5-3 7.5 0S15 12 17.5 9 22 6 22 6M2 15c2.5-3 5-3 7.5 0s5 3 7.5 0 4.5-3 4.5-3"/></svg>
+              <span>Theme…</span>
+            </button>
             <button type="button" id="cp-wp-clear" class="cp-card-btn ghost">
               <span>Remove wallpaper</span>
             </button>
@@ -1088,6 +1096,77 @@
         <input id="search-popup-input" class="search-popup-input" type="text" spellcheck="false" autocomplete="off" placeholder="Search or enter address" />
       </div>
       <div id="search-popup-suggestions" class="search-popup-suggestions hidden"></div>
+    </div>
+  </div>
+
+  <!-- ── Theme colour picker ── -->
+  <div id="wave-popup" class="wave-popup hidden" role="dialog" aria-modal="true" aria-label="Theme">
+    <div class="wave-backdrop" id="wave-backdrop"></div>
+    <div class="wave-card">
+      <div class="wave-hero wave-bg" id="wave-preview">
+        <div class="wave-hero-top">
+          <span class="wave-hero-title">Theme</span>
+          <button type="button" id="wave-close" class="wave-x" aria-label="Close">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="wave-body">
+        <div class="wave-label">Choose a theme</div>
+        <div class="theme-grid" id="theme-grid"><!-- named theme cards injected by JS --></div>
+
+        <!-- Per-theme looped sound -->
+        <div class="theme-sound" id="theme-sound">
+          <button type="button" id="theme-sound-toggle" class="theme-sound-btn" aria-label="Toggle sound">
+            <svg id="theme-sound-icon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z"/></svg>
+          </button>
+          <div class="theme-sound-info">
+            <div class="theme-sound-name" id="theme-sound-name">No sound</div>
+            <div class="theme-sound-sub">Looped ambience</div>
+          </div>
+          <input type="range" id="theme-vol" class="theme-vol" min="0" max="100" value="40" aria-label="Sound volume">
+        </div>
+
+        <!-- Collapsible fine-tune -->
+        <button type="button" class="theme-cust-toggle" id="theme-cust-toggle" aria-expanded="false">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
+          <span>Customise</span>
+          <svg class="theme-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="theme-cust" id="theme-cust" hidden>
+          <div class="wave-label">Style</div>
+          <div class="theme-styles" id="theme-styles">
+            <button type="button" class="theme-style-chip" data-style="aurora">Aurora</button>
+            <button type="button" class="theme-style-chip" data-style="waves">Waves</button>
+            <button type="button" class="theme-style-chip" data-style="glow">Glow</button>
+            <button type="button" class="theme-style-chip" data-style="beams">Beams</button>
+            <button type="button" class="theme-style-chip" data-style="solid">Solid</button>
+          </div>
+          <div class="wave-label">Colours</div>
+          <div class="theme-pad" id="theme-pad"><div class="theme-pad-thumb" id="theme-pad-thumb"></div></div>
+          <input type="range" id="theme-hue" class="theme-hue" min="0" max="360" value="265" aria-label="Hue">
+          <div class="theme-row2">
+            <div class="theme-dots" id="theme-dots">
+              <button type="button" class="theme-dot active" data-i="0" aria-label="Colour 1"></button>
+              <button type="button" class="theme-dot" data-i="1" aria-label="Colour 2"></button>
+              <button type="button" class="theme-dot" data-i="2" aria-label="Colour 3"></button>
+              <button type="button" class="theme-dot" data-i="3" aria-label="Colour 4"></button>
+            </div>
+            <input type="text" id="theme-hex" class="theme-hex" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Hex colour">
+          </div>
+          <div class="wave-toggle-row" style="border:0;padding-top:2px;">
+            <div>
+              <div class="wave-toggle-label">Animate</div>
+              <div class="wave-toggle-sub">Slowly flow the colours</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="wave-animate" checked><span class="slider"></span></label>
+          </div>
+        </div>
+      </div>
+      <div class="wave-actions">
+        <button type="button" id="wave-off" class="wave-btn ghost">Turn off</button>
+        <button type="button" id="wave-apply" class="wave-btn primary">Done</button>
+      </div>
     </div>
   </div>
 

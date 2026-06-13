@@ -26,7 +26,10 @@ body.ntp-ready #ntp-root{
    applied (ntp-in keyframe) it becomes the backdrop-filter's stacking root,
    causing the blur to trail/drag as the element slides. Use a fade-only
    animation instead so no transform stacking context is created. */
-body.ntp-ready.ntp-wp.transparent-ui #ntp-root{
+body.ntp-ready.ntp-wp.transparent-ui #ntp-root,
+body.ntp-ready.ntp-wp #ntp-root,
+body.ntp-ready.ntp-live #ntp-root,
+body.ntp-ready.ntp-wave-on #ntp-root{
   animation:ntp-in-fade .4s cubic-bezier(.16,.84,.44,1) both;
 }
 @keyframes ntp-in-fade{
@@ -58,6 +61,71 @@ body.transparent-ui:not(.ntp-wp) #ntp-bg{background-color:transparent;}
 }
 body.ntp-live #ntp-bg-video{display:block;}
 body.ntp-live #ntp-bg{background-image:none !important;}
+/* Theme (animated gradient) background. */
+#ntp-wave{position:fixed;inset:0;z-index:0;display:none;pointer-events:none;}
+body.ntp-wave-on #ntp-wave{display:block;}
+body.ntp-wave-on #ntp-bg{background-image:none !important;}
+.wave-bg{
+  --wave-1:#7c5cff;--wave-2:#b14bff;--wave-3:#ff5c9e;--wave-4:#4bc5ff;
+  position:relative;overflow:hidden;
+  background-color:var(--wave-1);
+  background-image:
+    radial-gradient(38% 50% at 22% 28%, var(--wave-2) 0%, transparent 62%),
+    radial-gradient(36% 46% at 82% 22%, var(--wave-3) 0%, transparent 62%),
+    radial-gradient(42% 52% at 76% 84%, var(--wave-4) 0%, transparent 62%),
+    radial-gradient(40% 50% at 14% 88%, var(--wave-1) 0%, transparent 62%),
+    linear-gradient(130deg, var(--wave-1), var(--wave-2), var(--wave-3), var(--wave-4));
+  background-size:200% 200%,200% 200%,220% 220%,200% 200%,300% 300%;
+  animation:wave-flow 22s ease-in-out infinite alternate;
+}
+@keyframes wave-flow{
+  0%{background-position:0% 40%,100% 0%,40% 100%,0% 100%,0% 50%;}
+  50%{background-position:100% 60%,10% 50%,100% 10%,60% 10%,100% 50%;}
+  100%{background-position:40% 100%,60% 100%,0% 50%,100% 60%,0% 50%;}
+}
+@media (prefers-reduced-motion: reduce){.wave-bg{animation:none;}}
+.wave-bg.wave-static{animation:none;}
+.wave-bg::before,.wave-bg::after{content:"";position:absolute;inset:0;pointer-events:none;}
+/* Per-theme visual styles */
+.ts-waves{background-color:var(--wave-1);background-image:linear-gradient(60deg,var(--wave-1),var(--wave-2),var(--wave-3),var(--wave-4),var(--wave-1));background-size:300% 300%;animation:ts-waves-flow 20s ease-in-out infinite;}
+@keyframes ts-waves-flow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.ts-glow{background-color:var(--wave-1);background-image:radial-gradient(60% 70% at 50% 36%,var(--wave-3) 0%,transparent 60%),radial-gradient(72% 82% at 50% 64%,var(--wave-2) 0%,transparent 66%),linear-gradient(180deg,var(--wave-1),var(--wave-4));background-size:130% 130%,150% 150%,100% 100%;animation:ts-glow-breathe 15s ease-in-out infinite alternate;}
+@keyframes ts-glow-breathe{0%{background-position:50% 40%,50% 60%,0 0}100%{background-position:50% 56%,50% 44%,0 0}}
+.ts-beams{background-color:var(--wave-1);background-image:repeating-linear-gradient(60deg,var(--wave-1) 0 12%,var(--wave-2) 12% 24%,var(--wave-3) 24% 36%,var(--wave-4) 36% 48%);background-size:300% 300%;animation:ts-waves-flow 26s linear infinite;}
+.ts-solid{background-color:var(--wave-1);background-image:radial-gradient(85% 95% at 72% 18%,var(--wave-2) 0%,transparent 72%);animation:ts-glow-breathe 18s ease-in-out infinite alternate;}
+.wave-static.ts-waves,.wave-static.ts-glow,.wave-static.ts-beams,.wave-static.ts-solid{animation:none;}
+.tw-solar{background-color:#120800;background-image:radial-gradient(circle at 72% 28%,rgba(255,240,178,.95) 0 4%,rgba(255,142,36,.55) 8%,transparent 22%),radial-gradient(circle at 34% 72%,rgba(255,208,91,.3),transparent 26%),linear-gradient(155deg,var(--wave-1),var(--wave-2) 38%,var(--wave-3) 68%,var(--wave-4));}
+.tw-solar::before{background-image:radial-gradient(circle,rgba(255,255,255,.95) 0 1px,transparent 1.7px),radial-gradient(circle,rgba(255,244,201,.75) 0 1px,transparent 1.6px),radial-gradient(circle,rgba(255,255,255,.55) 0 1px,transparent 1.4px);background-size:72px 72px,118px 118px,172px 172px;background-position:8px 12px,38px 22px,90px 68px;animation:theme-stars 28s linear infinite;opacity:.9;}
+.tw-solar::after{background:conic-gradient(from 210deg at 72% 28%,transparent 0deg,rgba(255,236,169,.18) 18deg,transparent 36deg,rgba(255,190,82,.12) 58deg,transparent 78deg),radial-gradient(circle at 72% 28%,rgba(255,255,255,.34),transparent 18%);mix-blend-mode:screen;animation:solar-flare 10s ease-in-out infinite alternate;}
+@keyframes theme-stars{to{background-position:80px 84px,-80px 140px,260px 210px;}}
+@keyframes solar-flare{from{opacity:.55;transform:scale(1);}to{opacity:.95;transform:scale(1.08);}}
+.tw-forest{background-image:radial-gradient(70% 70% at 50% 20%,rgba(199,249,204,.5),transparent 58%),linear-gradient(115deg,rgba(255,255,255,.18) 0 8%,transparent 8% 22%,rgba(255,255,255,.12) 22% 27%,transparent 27%),radial-gradient(36% 48% at 22% 20%,var(--wave-4),transparent 70%),linear-gradient(180deg,var(--wave-4) 0%,var(--wave-2) 36%,var(--wave-1) 100%);background-size:120% 120%,220% 100%,150% 150%,100% 100%;}
+.tw-forest::before{background:radial-gradient(ellipse at 20% 14%,rgba(12,84,42,.45) 0 16%,transparent 36%),radial-gradient(ellipse at 64% 8%,rgba(20,120,60,.5) 0 18%,transparent 40%),radial-gradient(ellipse at 94% 24%,rgba(5,80,40,.38) 0 16%,transparent 38%);animation:forest-canopy 18s ease-in-out infinite alternate;}
+.tw-forest::after{background:repeating-linear-gradient(92deg,transparent 0 34px,rgba(255,255,255,.12) 35px 38px,transparent 39px 74px);mix-blend-mode:screen;opacity:.55;animation:forest-rays 16s ease-in-out infinite alternate;}
+@keyframes forest-canopy{to{transform:translate3d(-18px,10px,0) scale(1.04);}}
+@keyframes forest-rays{to{transform:translateX(34px);opacity:.72;}}
+.tw-ocean,.tw-lagoon{background-image:radial-gradient(70% 60% at 50% 115%,rgba(255,255,255,.28),transparent 58%),repeating-radial-gradient(ellipse at 50% 115%,rgba(255,255,255,.2) 0 2px,transparent 3px 18px),linear-gradient(160deg,var(--wave-1),var(--wave-2),var(--wave-3),var(--wave-4));background-size:120% 120%,160% 100%,240% 240%;}
+.tw-ocean::before,.tw-lagoon::before{background:linear-gradient(110deg,transparent 0 42%,rgba(255,255,255,.18) 44% 46%,transparent 49%),linear-gradient(70deg,transparent 0 48%,rgba(255,255,255,.14) 50% 52%,transparent 55%);background-size:96px 96px,128px 128px;animation:water-caustics 12s linear infinite;mix-blend-mode:screen;}
+@keyframes water-caustics{to{background-position:96px 48px,-128px 64px;}}
+.tw-neon{background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.08) 0 1px,transparent 1px 22px),repeating-linear-gradient(0deg,rgba(255,255,255,.07) 0 1px,transparent 1px 24px),radial-gradient(45% 70% at 20% 30%,var(--wave-2),transparent 70%),radial-gradient(55% 70% at 80% 72%,var(--wave-4),transparent 70%),linear-gradient(135deg,var(--wave-1),var(--wave-3));animation:neon-grid 18s linear infinite;}
+.tw-neon::after{background:linear-gradient(120deg,transparent 0 42%,rgba(255,255,255,.24) 48%,transparent 54%);animation:neon-scan 4.8s ease-in-out infinite;}
+@keyframes neon-grid{to{background-position:44px 0,0 48px,0 0,0 0,0 0;}}
+@keyframes neon-scan{0%,22%{transform:translateX(-120%);opacity:0;}42%,58%{opacity:.75;}78%,100%{transform:translateX(120%);opacity:0;}}
+.tw-midnight,.tw-noir{background-image:radial-gradient(circle at 26% 20%,rgba(255,255,255,.16),transparent 16%),radial-gradient(circle at 74% 62%,rgba(148,163,184,.16),transparent 22%),linear-gradient(180deg,var(--wave-1),var(--wave-2) 58%,#02030a);}
+.tw-noir{background-color:#000;background-image:radial-gradient(circle at 68% 32%,rgba(255,255,255,.025),transparent 20%),linear-gradient(180deg,#000 0%,#000 50%,#000 100%);}
+.tw-midnight::before,.tw-noir::before{background-image:radial-gradient(circle,rgba(255,255,255,.85) 0 1px,transparent 1.5px),radial-gradient(circle,rgba(255,255,255,.5) 0 1px,transparent 1.4px);background-size:88px 88px,142px 142px;animation:theme-stars 34s linear infinite;opacity:.7;}
+.tw-noir::before{opacity:.15;}
+.tw-noir::after{background:repeating-linear-gradient(100deg,transparent 0 36px,rgba(255,255,255,.04) 37px 39px,transparent 40px 80px);opacity:.12;}
+.tw-candy,.tw-orchid,.tw-aurora{background-image:radial-gradient(45% 55% at 20% 20%,rgba(255,255,255,.28),transparent 62%),radial-gradient(48% 54% at 80% 20%,var(--wave-4),transparent 64%),radial-gradient(56% 70% at 50% 90%,var(--wave-3),transparent 66%),linear-gradient(145deg,var(--wave-1),var(--wave-2));}
+.tw-candy::before,.tw-orchid::before,.tw-aurora::before{background:conic-gradient(from 0deg at 50% 50%,transparent,rgba(255,255,255,.18),transparent,rgba(255,255,255,.12),transparent);animation:aurora-ribbons 20s ease-in-out infinite alternate;filter:blur(12px);}
+@keyframes aurora-ribbons{to{transform:rotate(18deg) scale(1.14);}}
+.tw-ember{background-image:radial-gradient(circle at 24% 80%,rgba(255,209,102,.55),transparent 18%),radial-gradient(circle at 78% 18%,rgba(247,37,133,.42),transparent 26%),repeating-linear-gradient(58deg,rgba(255,255,255,.08) 0 2px,transparent 3px 20px),linear-gradient(140deg,var(--wave-1),var(--wave-2),var(--wave-3),var(--wave-4));}
+.tw-ember::before{background-image:radial-gradient(circle,rgba(255,216,129,.9) 0 1.4px,transparent 2px);background-size:54px 54px;animation:ember-rise 9s linear infinite;opacity:.55;}
+@keyframes ember-rise{to{background-position:24px -108px;}}
+.tw-mint,.tw-paper{background-image:radial-gradient(45% 55% at 28% 34%,rgba(255,255,255,.48),transparent 64%),linear-gradient(120deg,rgba(255,255,255,.22) 0 12%,transparent 12% 28%,rgba(255,255,255,.14) 28% 34%,transparent 34%),linear-gradient(145deg,var(--wave-1),var(--wave-2),var(--wave-3),var(--wave-4));}
+.tw-mint::before,.tw-paper::before{background:repeating-linear-gradient(135deg,rgba(255,255,255,.12) 0 1px,transparent 1px 18px);animation:paper-drift 16s linear infinite;opacity:.65;}
+@keyframes paper-drift{to{background-position:72px 72px;}}
+.wave-static::before,.wave-static::after{animation:none!important;}
 #ntp-bg-dim{
   position:fixed;inset:0;z-index:1;
   background:#000;pointer-events:none;opacity:0;
@@ -900,6 +968,7 @@ body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
 
 <div id="ntp-bg" aria-hidden="true"></div>
 <video id="ntp-bg-video" aria-hidden="true" muted loop playsinline preload="auto" disablepictureinpicture></video>
+<div id="ntp-wave" aria-hidden="true"></div>
 <div id="ntp-bg-dim" aria-hidden="true"></div>
 
 
@@ -934,14 +1003,19 @@ body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
       </div>
       <div class="pn-track">
       <div class="pn-slide active" id="pn-0">
-        <div class="pn-kicker">Privoo v3.0.3</div>
-        <div class="pn-title">Live wallpapers</div>
-        <p class="pn-body">Set a <b>video as your wallpaper</b> — it plays muted behind your new tab and pauses when you look away to save battery. Add one from Customize → <b>Live wallpaper…</b></p>
+        <div class="pn-kicker">Privoo v3.0.5</div>
+        <div class="pn-title">Themes</div>
+        <p class="pn-body">A gallery of rich scenic themes that recolour the <b>whole browser</b> — each with its own background art, ambient soundscape and sound effects. Open Customize → <b>Theme</b> or Settings → Themes.</p>
       </div>
       <div class="pn-slide" id="pn-custom">
         <div class="pn-kicker">Make it yours</div>
-        <div class="pn-title">Wallpaper everywhere, your way</div>
-        <p class="pn-body">Stretch your wallpaper behind the <b>whole browser</b> — toolbar and tabs included — from Customize. And in vertical-tabs mode you can now switch the search popup off for a classic new tab page.</p>
+        <div class="pn-title">Customise everything</div>
+        <p class="pn-body">New <b>tab styles</b>, <b>search-bar styles</b> and glass looks like <b>Liquid Glass</b> in Settings → Layout. Plus browser sounds, a circular “+” button, and a draggable colour picker for your own theme.</p>
+      </div>
+      <div class="pn-slide" id="pn-live">
+        <div class="pn-kicker">Live wallpaper</div>
+        <div class="pn-title">Set a video as your wallpaper</div>
+        <p class="pn-body">Pick any video in Customize → <b>Live wallpaper…</b> — it plays muted behind your new tab and pauses when you look away to save battery.</p>
       </div>
       <div class="pn-slide" id="pn-1">
         <div class="pn-kicker">Privacy</div>
@@ -977,6 +1051,7 @@ body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
         <button class="pn-dot" data-idx="4"></button>
         <button class="pn-dot" data-idx="5"></button>
         <button class="pn-dot" data-idx="6"></button>
+        <button class="pn-dot" data-idx="7"></button>
       </div>
     </div>
     <p class="pn-disclaimer">Shown locally from this version of Privoo — nothing here is tracked or fetched from the web.</p>
@@ -985,7 +1060,7 @@ body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
 
 <footer id="ntp-footer">
   <div id="ntp-weather" hidden></div>
-  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee. &nbsp;&middot;&nbsp; <span id="ntp-version" style="opacity:.55">v3.0.3</span></p>
+  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee. &nbsp;&middot;&nbsp; <span id="ntp-version" style="opacity:.55">v3.0.5</span></p>
 </footer>
 
 </div>
@@ -1073,29 +1148,6 @@ body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
 <script>
 const api = window.privooInternal;
 
-// Preload wallpaper immediately to prevent flash
-(function preloadWallpaper() {
-  const bg = document.getElementById('ntp-bg');
-  const dim = document.getElementById('ntp-bg-dim');
-  if (!bg || !dim) return;
-  
-  // Try to load wallpaper immediately
-  const img = new Image();
-  img.onload = function() {
-    // Wallpaper exists, show it immediately
-    bg.style.backgroundImage = "url('privoo://newtab/wallpaper')";
-    dim.style.opacity = '0.42';
-    document.body.classList.add('ntp-wp');
-  };
-  img.onerror = function() {
-    // No wallpaper, ensure clean state
-    bg.style.backgroundImage = '';
-    dim.style.opacity = '0';
-    document.body.classList.remove('ntp-wp');
-  };
-  img.src = 'privoo://newtab/wallpaper';
-})();
-
 function mountLogo() {
   const wrap = document.getElementById('ntp-logo-wrap');
   if (!wrap) return;
@@ -1110,15 +1162,23 @@ function mountLogo() {
 }
 mountLogo();
 
+function themeVisualClass(id) {
+  const clean = String(id || '').toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  return clean ? ' tw-' + clean : '';
+}
+
 
 function applyNtpLook(settings) {
   const bg = document.getElementById('ntp-bg');
   const dim = document.getElementById('ntp-bg-dim');
   const wpPath = settings?.ntpWallpaperPath;
-  const hasWp = wpPath !== '' && wpPath !== null && wpPath !== undefined;
+  const isWave = !!settings?.ntpWaveEnabled;
+  // The wave takes precedence over any wallpaper file.
+  const hasWp = !isWave && wpPath !== '' && wpPath !== null && wpPath !== undefined;
   const dark = !!(settings && settings.darkMode);
 
-  document.body.classList.toggle('ntp-wp', hasWp);
+  // Both a wallpaper and the wave count as a background, so the frosted-glass UI applies.
+  document.body.classList.toggle('ntp-wp', hasWp || isWave);
   document.body.classList.toggle('ntp-dark', dark);
   // Default ON — toggle in Settings → New tab.
   document.body.classList.toggle('ntp-focused-search-on', settings?.ntpFocusedSearch !== false);
@@ -1149,10 +1209,35 @@ function applyNtpLook(settings) {
   }
 
   const vid = document.getElementById('ntp-bg-video');
+  const waveEl = document.getElementById('ntp-wave');
   const isVideo = hasWp && settings?.ntpWallpaperType === 'video';
+  document.body.classList.toggle('ntp-wave-on', isWave);
   document.body.classList.toggle('ntp-live', !!isVideo);
 
-  if (isVideo) {
+  if (isWave) {
+    // Animated gradient — no file, no dim. Stop any video that was running.
+    if (vid) { vid.pause(); vid.removeAttribute('src'); vid.dataset.ver = ''; }
+    if (waveEl) {
+      const cols = Array.isArray(settings.ntpWaveColors) ? settings.ntpWaveColors : [];
+      const def = ['#7c5cff', '#b14bff', '#ff5c9e', '#4bc5ff'];
+      const id = settings.ntpThemeId;
+      if (id) {
+        // Preset theme → generated background image; the palette gradient shows
+        // through as a fallback until the image file is added.
+        waveEl.className = '';
+        waveEl.style.background = "url('privoo://newtab/themes/" + id + ".png') center/cover no-repeat, linear-gradient(135deg, " + (cols.length ? cols.join(',') : def.join(',')) + ")";
+      } else {
+        // Custom colours → animated gradient.
+        waveEl.style.background = '';
+        const st = settings.ntpThemeStyle || 'aurora';
+        waveEl.className = 'wave-bg ts-' + st + themeVisualClass(id) + (settings.ntpWaveAnimate === false ? ' wave-static' : '');
+        for (let i = 0; i < 4; i++) waveEl.style.setProperty('--wave-' + (i + 1), cols[i] || def[i]);
+      }
+    }
+    bg.style.backgroundImage = '';
+    dim.style.opacity = '0';
+  } else if (isVideo) {
+    if (waveEl) waveEl.className = '';
     // Load the video only when the wallpaper actually changed (version token),
     // so unrelated settings broadcasts (clock toggle, accent, …) don't restart
     // playback.
@@ -1167,11 +1252,13 @@ function applyNtpLook(settings) {
     const d = typeof settings.ntpWallpaperDim === 'number' ? settings.ntpWallpaperDim : 0.42;
     dim.style.opacity = String(Math.min(0.85, Math.max(0, d)));
   } else if (hasWp) {
+    if (waveEl) waveEl.className = '';
     if (vid) { vid.pause(); vid.removeAttribute('src'); vid.dataset.ver = ''; vid.load(); }
     bg.style.backgroundImage = "url('privoo://newtab/wallpaper?t=" + Date.now() + "')";
     const d = typeof settings.ntpWallpaperDim === 'number' ? settings.ntpWallpaperDim : 0.42;
     dim.style.opacity = String(Math.min(0.85, Math.max(0, d)));
   } else {
+    if (waveEl) waveEl.className = '';
     if (vid) { vid.pause(); vid.removeAttribute('src'); vid.dataset.ver = ''; }
     bg.style.backgroundImage = '';
     dim.style.opacity = '0';
@@ -1216,6 +1303,34 @@ document.addEventListener('visibilitychange', () => {
 
 function applyAccent(hex){const r=document.documentElement;if(!hex){r.style.removeProperty('--accent');r.style.removeProperty('--accent-hover');r.style.removeProperty('--accent-soft');return;}r.style.setProperty('--accent',hex);const m=hex.replace('#','').match(/.{2}/g);if(m){const[rv,g,b]=m.map(x=>parseInt(x,16));const h=`rgb(${Math.min(255,Math.round(rv+(255-rv)*.18))},${Math.min(255,Math.round(g+(255-g)*.18))},${Math.min(255,Math.round(b+(255-b)*.18))})`;r.style.setProperty('--accent-hover',h);r.style.setProperty('--accent-soft',`rgba(${rv},${g},${b},.18)`);} }
 
+let ntpSettings = null;
+const NtpUiSfx = (() => {
+  let ctx = null, out = null, lastAt = 0, lastKind = '';
+  const profiles = {
+    aurora:[330,'sine',1800], neon:[247,'square',2600], sunset:[220,'triangle',1600], solar:[196,'triangle',2100],
+    forest:[294,'sine',1200], mint:[349,'sine',1700], ocean:[175,'sine',1300], lagoon:[196,'sine',1500],
+    ember:[208,'triangle',1900], orchid:[330,'triangle',2000], midnight:[147,'sine',900], noir:[147,'sine',800],
+    candy:[523,'triangle',2800], paper:[392,'sine',1500], mono:[196,'sine',900],
+  };
+  const semi = (r,n) => r * Math.pow(2, n / 12);
+  function ensure(){ if(ctx) return ctx; const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return null; ctx=new AC(); out=ctx.createGain(); out.gain.value=.65; out.connect(ctx.destination); return ctx; }
+  function profile(){ if(!ntpSettings?.ntpWaveEnabled) return null; return profiles[String(ntpSettings.ntpThemeId||'').toLowerCase()] || profiles.aurora; }
+  function blip(freq,dur,gain,wave,cut){ if(!ensure()) return; if(ctx.state==='suspended') ctx.resume().catch(()=>{}); const t=ctx.currentTime,o=ctx.createOscillator(),f=ctx.createBiquadFilter(),g=ctx.createGain(); o.type=wave; o.frequency.setValueAtTime(freq,t); f.type='lowpass'; f.frequency.value=cut; g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(gain,t+.01); g.gain.exponentialRampToValueAtTime(.0001,t+dur); o.connect(f); f.connect(g); g.connect(out); o.start(t); o.stop(t+dur+.02); o.onended=()=>{try{o.disconnect();f.disconnect();g.disconnect();}catch{}}; }
+  function play(kind){ const p=profile(); if(!p) return; const now=performance.now(); if(kind===lastKind && now-lastAt<34) return; lastKind=kind; lastAt=now; const [root,wave,cut]=p; const vol=Math.max(.08,Math.min(.32,(ntpSettings?.ntpThemeMusicVolume??.4)*.4)); const gain=.045*vol; if(kind==='delete'){ blip(semi(root,-5),.065,gain*.9,wave,cut*.7); setTimeout(()=>blip(semi(root,0),.04,gain*.5,wave,cut*.6),26); } else if(kind==='confirm'){ blip(semi(root,0),.065,gain,wave,cut); setTimeout(()=>blip(semi(root,7),.075,gain*.8,wave,cut*1.15),36); } else if(kind==='click'){ blip(semi(root,7),.045,gain*.75,wave,cut); } else { const notes=[0,2,4,7,9]; blip(semi(root,notes[Math.floor(Math.random()*notes.length)]),.05,gain,wave,cut); } }
+  return { play };
+})();
+document.addEventListener('pointerdown', e => {
+  if (e.button !== 0) return;
+  if (e.target?.closest?.('button,.ql-item,.ql-add,.ss-item,.pn-dot,.pn-arrow')) NtpUiSfx.play('click');
+}, true);
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (!e.target?.matches?.('input,textarea') && !e.target?.isContentEditable) return;
+  if (e.key === 'Backspace' || e.key === 'Delete') NtpUiSfx.play('delete');
+  else if (e.key === 'Enter') NtpUiSfx.play('confirm');
+  else if (e.key.length === 1) NtpUiSfx.play('type');
+}, true);
+
 function syncThemeButtons(settings) {
   // Use main darkMode setting
   const dark = !!(settings && settings.darkMode);
@@ -1244,6 +1359,7 @@ async function loadNtp() {
     if (el && v) el.textContent = 'v' + v;
   } catch {}
   const { settings } = await api.getSettings();
+  ntpSettings = settings;
   searchEngine = settings.searchEngine || 'google';
   const links = settings.ntpQuickLinks;
   // Only fall back to defaults if the user has NEVER set this — an empty
@@ -1641,7 +1757,12 @@ function setSearchFocused(on) {
   if (!ntpRoot) return;
   ntpRoot.classList.toggle('search-focused', !!on);
 }
-qInput.addEventListener('focus', () => setSearchFocused(true));
+qInput.addEventListener('focus', () => {
+  setSearchFocused(true);
+  // When focused-search is on, clicking the bar expands it — play the themed
+  // open sound to match (forwarded to the host, which owns the audio).
+  if (ntpSettings?.ntpFocusedSearch !== false) { try { api?.uiSound?.('open'); } catch (_) {} }
+});
 qInput.addEventListener('blur',  () => setSearchFocused(false));
 // Clicking the form region itself also focuses the input (clicking the
 // icon / padding shouldn't fail to enter the focused state).
@@ -1776,6 +1897,7 @@ async function renderWeather(settings) {
 // settings-updated IPC never reaches webview guest processes directly.
 window.__privooApplySettings = (s) => {
   try {
+    ntpSettings = s;
     searchEngine = s.searchEngine || searchEngine;
     const links = s.ntpQuickLinks;
     const next = Array.isArray(links) ? links : DEFAULT_QUICK_LINKS;
@@ -1789,11 +1911,24 @@ window.__privooApplySettings = (s) => {
 };
 
 loadNtp();
+// Forward typing in the new-tab search box up to the host so it plays the
+// themed UI sounds (the host can't hear keystrokes inside this webview).
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const t = e.target;
+  if (!t || (t.tagName !== 'INPUT' && t.tagName !== 'TEXTAREA' && !t.isContentEditable)) return;
+  try {
+    if (e.key === 'Backspace' || e.key === 'Delete') api?.uiSound?.('delete');
+    else if (e.key === 'Enter') api?.uiSound?.('confirm');
+    else if (e.key && e.key.length === 1) api?.uiSound?.('type');
+  } catch (_) {}
+}, true);
 // Safety net — reveal even if settings never arrive, so the page can't
 // stay stuck invisible.
 setTimeout(() => document.body.classList.add('ntp-ready'), 800);
 api?.onSettingsChanged?.((settings) => {
   try {
+    ntpSettings = settings;
     searchEngine = settings.searchEngine || searchEngine;
     const links = settings.ntpQuickLinks;
     const next = Array.isArray(links) ? links : DEFAULT_QUICK_LINKS;

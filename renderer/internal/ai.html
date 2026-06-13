@@ -664,8 +664,17 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
   }
 
   // ── Window controls ──
-  $('win-min').addEventListener('click', () => api?.aiWindowMinimize?.());
-  $('win-close').addEventListener('click', () => api?.aiWindowClose?.());
+  // Only the frameless AI window (loaded with ?window=1) gets minimize/close.
+  // When the page is opened as a normal tab those don't apply, so hide them.
+  const _aiWindowMode = new URLSearchParams(location.search).get('window') === '1';
+  if (_aiWindowMode) {
+    $('win-min').addEventListener('click', () => api?.aiWindowMinimize?.());
+    $('win-close').addEventListener('click', () => api?.aiWindowClose?.());
+  } else {
+    $('win-min').style.display = 'none';
+    $('win-close').style.display = 'none';
+    document.querySelector('.titlebar')?.style.setProperty('-webkit-app-region', 'no-drag');
+  }
   $('new-chat').addEventListener('click', () => {
     if (busy) return;
     messages = [];
