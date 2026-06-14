@@ -142,6 +142,14 @@ contextBridge.exposeInMainWorld('privoo', {
   onPlatform: (fn) => ipcRenderer.on('platform', (_e, p) => fn(p)),
   onTransparencyState: (fn) => ipcRenderer.on('transparency-state', (_e, on) => fn(on)),
 
+  // Profiles
+  profilesList:    ()      => ipcRenderer.invoke('profiles:list'),
+  profileCreate:   (data)  => ipcRenderer.invoke('profiles:create', data),
+  profileUpdate:   (data)  => ipcRenderer.invoke('profiles:update', data),
+  profileDelete:   (id)    => ipcRenderer.invoke('profiles:delete', id),
+  profileSwitch:   (id)    => ipcRenderer.invoke('profiles:switch', id),
+  profileOpenPicker: ()    => ipcRenderer.invoke('profiles:open-picker'),
+
   // Auto-updater events
   onUpdateAvailable:  (fn) => ipcRenderer.on('update-available',  (_e, info) => fn(info)),
   onUpdateProgress:   (fn) => ipcRenderer.on('update-progress',   (_e, p)    => fn(p)),

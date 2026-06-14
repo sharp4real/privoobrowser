@@ -1,11 +1,11 @@
-const { app } = require('electron');
 const fs = require('fs');
 const path = require('path');
+const profileStore = require('./profile-store');
 
 const MAX_ENTRIES = 15000;
 
 function file() {
-  return path.join(app.getPath('userData'), 'history.json');
+  return path.join(profileStore.getDataDir(), 'history.json');
 }
 
 function load() {

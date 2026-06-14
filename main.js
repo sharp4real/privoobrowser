@@ -7,6 +7,7 @@ const fs = require('fs');
 const { spawn } = require('child_process');
 const { autoUpdater } = require('electron-updater');
 const { pathToFileURL } = require('url');
+const profileStore = require('./profile-store');
 const settingsStore = require('./settings-store');
 const { DOH_PROVIDERS } = settingsStore;
 
@@ -50,9 +51,31 @@ const { buildGooglePasswordPreferScript } = require('./password-autofill');
 const passwordStore = require('./password-store');
 const aiBrowser = require('./ai');
 
+// ---------------------------------------------------------------------------
+// Per-profile isolation — when Privoo is launched into a named profile via
+// `--privoo-profile=<id>`, redirect Chromium's ENTIRE userData directory to
+// that profile's folder. This isolates cookies, cache, logins, localStorage,
+// history and settings completely. Must run at module load, before app ready
+// (the userData path is locked once Chromium starts). profile-store captured
+// the real root above, so the shared profiles registry still resolves there.
+(function applyProfileUserData() {
+  try {
+    const arg = process.argv.find((a) => a.startsWith('--privoo-profile='));
+    if (!arg) return;
+    const id = arg.split('=')[1];
+    if (!id || id === 'default') return;
+    const dir = profileStore.getProfileDataDir(id);
+    fs.mkdirSync(dir, { recursive: true });
+    app.setPath('userData', dir);
+  } catch (e) {
+    console.warn('Privoo: profile userData redirect failed:', e.message);
+  }
+})();
+
 const loadedExtensionIds = new Map();
 let extensionPopupWin = null;
 let googleAuthWin = null;
+let profilePickerWin = null;
 
 function parentWinForGuest(contents) {
   const host = contents.hostWebContents;
@@ -1626,6 +1649,47 @@ function resolveIcon() {
   return undefined;
 }
 
+// Chrome-style "Who's using Privoo?" launcher. A lightweight frameless window
+// shown at startup (when 2+ profiles exist and none is pinned) and openable any
+// time from the toolbar avatar → Manage profiles.
+function createProfilePicker() {
+  if (profilePickerWin && !profilePickerWin.isDestroyed()) {
+    profilePickerWin.focus();
+    return profilePickerWin;
+  }
+  const isMac = process.platform === 'darwin';
+  const win = new BrowserWindow({
+    width: 760,
+    height: 640,
+    resizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    title: 'Privoo Profiles',
+    icon: resolveIcon(),
+    backgroundColor: '#16161c',
+    ...(isMac
+      ? { titleBarStyle: 'hidden', trafficLightPosition: { x: 14, y: 14 } }
+      : { frame: false }
+    ),
+    webPreferences: {
+      preload: path.join(__dirname, 'profile-picker-preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false,
+    },
+  });
+  win.loadFile(path.join(RENDERER_DIR, 'internal', 'profile-picker.html'));
+  win.once('ready-to-show', () => win.show());
+  win.on('closed', () => {
+    profilePickerWin = null;
+    // If the picker is closed without choosing a profile and no browser
+    // window is open, quit — the user dismissed the launcher.
+    if (BrowserWindow.getAllWindows().length === 0) app.quit();
+  });
+  profilePickerWin = win;
+  return win;
+}
+
 function createWindow(opts = {}) {
   const isMac = process.platform === 'darwin';
   const settings = settingsStore.load();
@@ -2102,6 +2166,54 @@ ipcMain.on('discord-rpc-set-activity', (_e, activity) => {
 // App lifecycle
 // ---------------------------------------------------------------------------
 app.whenReady().then(async () => {
+  const profileArg = process.argv.find((a) => a.startsWith('--privoo-profile='));
+  const skipPicker = process.argv.includes('--privoo-skip-picker');
+  const wantIncognito = process.argv.includes('--privoo-incognito');
+  const explicitId = profileArg ? profileArg.split('=')[1] : null;
+
+  // Relaunched directly into a profile (from the picker or a pinned default).
+  if (explicitId || skipPicker) {
+    profileStore.setActiveId(explicitId || 'default');
+    return startBrowser({ incognito: wantIncognito });
+  }
+
+  // Launcher mode — no profile chosen yet. Decide: show the picker, or
+  // auto-open a profile.
+  const prefs = profileStore.loadPrefs();
+  const totalProfiles = profileStore.listWithDefault().length;
+  const wantPicker = prefs.alwaysShowPicker || (totalProfiles >= 2 && !prefs.defaultProfileId);
+  if (wantPicker) {
+    return createProfilePicker();
+  }
+
+  const id = prefs.defaultProfileId || 'default';
+  if (id === 'default') {
+    profileStore.setActiveId('default');
+    return startBrowser();
+  }
+  return relaunchIntoProfile(id);
+});
+
+// Relaunch the whole app into a given profile. For non-default profiles the
+// `--privoo-profile=<id>` arg triggers the userData redirect at module load,
+// giving full session isolation. The single-instance lock is released by
+// app.exit(0) so the relaunched process acquires it cleanly.
+function relaunchIntoProfile(id) {
+  profileStore.setActiveId(id);
+  const args = process.argv.slice(1).filter(
+    (a) => !a.startsWith('--privoo-profile=') && a !== '--privoo-skip-picker'
+  );
+  if (id && id !== 'default') args.push(`--privoo-profile=${id}`);
+  else args.push('--privoo-skip-picker');
+  app.relaunch({ args });
+  app.exit(0);
+}
+
+// Full browser startup — only runs in the chosen-profile process, never in
+// the lightweight picker process. When `incognito` is set (Guest mode from the
+// picker), the profile session is initialised but only a private window opens.
+async function startBrowser(opts = {}) {
+  const _startIncognito = !!opts.incognito;
   const settings = settingsStore.load();
   defaultUserAgent = session.defaultSession.getUserAgent();
   if (settings.minimizeToTray) ensureTray();
@@ -2173,7 +2285,8 @@ app.whenReady().then(async () => {
     }
   }
 
-  createWindow();
+  if (_startIncognito) openIncognitoWindow();
+  else createWindow();
 
   // Check for updates in the background (only works in packaged builds).
   setTimeout(checkForUpdatesIfEnabled, 3000);
@@ -2194,10 +2307,10 @@ app.whenReady().then(async () => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
-});
+}
 
 app.on('web-contents-created', (_event, contents) => {
-  contents.setMaxListeners(50);
+  contents.setMaxListeners(200);
   if (contents.getType() !== 'webview') return;
 
   // Force clean Chrome UA on every webview
@@ -4041,27 +4154,32 @@ ipcMain.handle('cancel-download', (_e, id) => {
 // disappear when the window closes). The renderer flips body.incognito so
 // the chrome gets its purple tint + "Incognito" pill in the titlebar.
 let _incognitoSeq = 0;
+async function openIncognitoWindow() {
+  _incognitoSeq++;
+  const partition = `incognito-${Date.now()}-${_incognitoSeq}`;
+  const incognitoSession = session.fromPartition(partition, { cache: true });
+  // privoo:// must be registered on this session BEFORE the window loads,
+  // otherwise privoo://newtab etc. fail with "no app to open this link".
+  registerPrivooProtocolForSession(incognitoSession);
+  // Apply the same privacy hardening the default session gets so the
+  // private window doesn't behave worse than a regular one.
+  try { await hardenSession(incognitoSession); } catch (e) {
+    console.warn('Privoo: incognito hardenSession failed:', e.message);
+  }
+  const win = createWindow({ session: incognitoSession, incognito: true, partition });
+  if (win && !win.isDestroyed()) {
+    win.on('closed', () => {
+      // Drop everything held in the temp partition once the window is gone.
+      try { incognitoSession.clearStorageData(); } catch {}
+      try { incognitoSession.clearCache(); } catch {}
+    });
+  }
+  return win;
+}
+
 ipcMain.handle('open-incognito-window', async () => {
   try {
-    _incognitoSeq++;
-    const partition = `incognito-${Date.now()}-${_incognitoSeq}`;
-    const incognitoSession = session.fromPartition(partition, { cache: true });
-    // privoo:// must be registered on this session BEFORE the window loads,
-    // otherwise privoo://newtab etc. fail with "no app to open this link".
-    registerPrivooProtocolForSession(incognitoSession);
-    // Apply the same privacy hardening the default session gets so the
-    // private window doesn't behave worse than a regular one.
-    try { await hardenSession(incognitoSession); } catch (e) {
-      console.warn('Privoo: incognito hardenSession failed:', e.message);
-    }
-    const win = createWindow({ session: incognitoSession, incognito: true, partition });
-    if (win && !win.isDestroyed()) {
-      win.on('closed', () => {
-        // Drop everything held in the temp partition once the window is gone.
-        try { incognitoSession.clearStorageData(); } catch {}
-        try { incognitoSession.clearCache(); } catch {}
-      });
-    }
+    await openIncognitoWindow();
     return { ok: true };
   } catch (e) {
     console.error('Privoo: open-incognito-window:', e);
@@ -4086,6 +4204,111 @@ ipcMain.handle('save-tab-session', (_e, payload) => {
 ipcMain.on('save-tab-session-sync', (e, payload) => {
   try { sessionStore.save(payload && typeof payload === 'object' ? payload : {}); } catch {}
   e.returnValue = true;
+});
+
+// ---------------------------------------------------------------------------
+// IPC — Profiles (toolbar avatar popover, inside the running browser)
+// ---------------------------------------------------------------------------
+ipcMain.handle('profiles:list', () => ({
+  profiles: profileStore.listWithDefault(),
+  activeId: profileStore.getActiveId(),
+  prefs: profileStore.loadPrefs(),
+}));
+
+ipcMain.handle('profiles:create', (_e, { name, avatar }) => profileStore.create({ name, avatar }));
+ipcMain.handle('profiles:update', (_e, { id, name, avatar }) => profileStore.update(id, { name, avatar }));
+
+ipcMain.handle('profiles:delete', (_e, id) => {
+  const wasActive = profileStore.getActiveId() === id;
+  profileStore.remove(id);
+  if (wasActive) relaunchIntoProfile('default');
+});
+
+ipcMain.handle('profiles:switch', (_e, id) => {
+  if (id === profileStore.getActiveId()) return;
+  relaunchIntoProfile(id);
+});
+
+// Open the full picker/manager window from within the running browser.
+ipcMain.handle('profiles:open-picker', () => { createProfilePicker(); });
+
+// ---------------------------------------------------------------------------
+// IPC — Profile picker window (the standalone launcher process)
+// ---------------------------------------------------------------------------
+ipcMain.handle('picker:list', () => ({
+  profiles: profileStore.listWithDefault(),
+  prefs: profileStore.loadPrefs(),
+  activeId: profileStore.getActiveId(),
+  accent: (() => { try { return settingsStore.load().accentColor || '#8ab4f8'; } catch { return '#8ab4f8'; } })(),
+  uiFont: (() => { try { return settingsStore.load().uiFont || 'system'; } catch { return 'system'; } })(),
+  dark:   (() => { try { return !!settingsStore.load().darkMode; } catch { return true; } })(),
+  hasBrowserOpen: BrowserWindow.getAllWindows().some(
+    (w) => w !== profilePickerWin && !w.isDestroyed()
+  ),
+}));
+
+ipcMain.handle('picker:create', (_e, { name, avatar }) => profileStore.create({ name, avatar }));
+ipcMain.handle('picker:update', (_e, { id, name, avatar }) => profileStore.update(id, { name, avatar }));
+ipcMain.handle('picker:delete', (_e, id) => { profileStore.remove(id); });
+ipcMain.handle('picker:get-prefs', () => profileStore.loadPrefs());
+ipcMain.handle('picker:set-prefs', (_e, patch) => profileStore.savePrefs(patch || {}));
+
+ipcMain.handle('picker:choose', (_e, { id, makeDefault }) => {
+  if (makeDefault) profileStore.setDefaultProfileId(id);
+
+  // If a browser is already running (picker opened from the toolbar), just
+  // switch into the chosen profile (relaunch). Otherwise this is the startup
+  // launcher: open the profile fresh.
+  const browserOpen = BrowserWindow.getAllWindows().some(
+    (w) => w !== profilePickerWin && !w.isDestroyed()
+  );
+
+  if (profilePickerWin && !profilePickerWin.isDestroyed()) {
+    profilePickerWin.removeAllListeners('closed');
+    profilePickerWin.close();
+    profilePickerWin = null;
+  }
+
+  if (browserOpen) {
+    if (id !== profileStore.getActiveId()) relaunchIntoProfile(id);
+    return;
+  }
+
+  if (id === 'default') {
+    profileStore.setActiveId('default');
+    startBrowser();
+  } else {
+    relaunchIntoProfile(id);
+  }
+});
+
+ipcMain.on('picker:close-window', () => {
+  if (profilePickerWin && !profilePickerWin.isDestroyed()) profilePickerWin.close();
+});
+
+// "Browse as Guest" — open a private/incognito window from the picker.
+ipcMain.handle('picker:incognito', async () => {
+  const browserOpen = BrowserWindow.getAllWindows().some(
+    (w) => w !== profilePickerWin && !w.isDestroyed()
+  );
+  if (profilePickerWin && !profilePickerWin.isDestroyed()) {
+    profilePickerWin.removeAllListeners('closed');
+    profilePickerWin.close();
+    profilePickerWin = null;
+  }
+  if (browserOpen) {
+    // App already running — just open a private window in-process.
+    await openIncognitoWindow();
+  } else {
+    // Startup launcher — relaunch into the default profile in guest mode.
+    profileStore.setActiveId('default');
+    const args = process.argv.slice(1).filter(
+      (a) => !a.startsWith('--privoo-profile=') && a !== '--privoo-skip-picker' && a !== '--privoo-incognito'
+    );
+    args.push('--privoo-skip-picker', '--privoo-incognito');
+    app.relaunch({ args });
+    app.exit(0);
+  }
 });
 
 ipcMain.handle('weather-snippet', async (_e, location) => {

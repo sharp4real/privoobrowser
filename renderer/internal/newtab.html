@@ -1003,9 +1003,14 @@ body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
       </div>
       <div class="pn-track">
       <div class="pn-slide active" id="pn-0">
-        <div class="pn-kicker">Privoo v3.0.5</div>
-        <div class="pn-title">Themes</div>
-        <p class="pn-body">A gallery of rich scenic themes that recolour the <b>whole browser</b> — each with its own background art, ambient soundscape and sound effects. Open Customize → <b>Theme</b> or Settings → Themes.</p>
+        <div class="pn-kicker">Privoo v3.0.7</div>
+        <div class="pn-title">Profiles are here</div>
+        <p class="pn-body">Make separate <b>profiles</b> for work, home or family — each keeps its own history, logins, bookmarks and settings. Switch from the <b>avatar</b> in the toolbar or choose one at startup. Need a quick private session? Hit <b>Browse as Guest</b>.</p>
+      </div>
+      <div class="pn-slide" id="pn-style">
+        <div class="pn-kicker">Style &amp; Discord</div>
+        <div class="pn-title">Make Privoo yours</div>
+        <p class="pn-body">Pick your <b>interface font</b>, <b>corner style</b> and write custom CSS in Settings → Layout. Plus: Privoo's accent now <b>syncs with Discord</b> automatically.</p>
       </div>
       <div class="pn-slide" id="pn-custom">
         <div class="pn-kicker">Make it yours</div>
@@ -1052,6 +1057,7 @@ body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
         <button class="pn-dot" data-idx="5"></button>
         <button class="pn-dot" data-idx="6"></button>
         <button class="pn-dot" data-idx="7"></button>
+        <button class="pn-dot" data-idx="8"></button>
       </div>
     </div>
     <p class="pn-disclaimer">Shown locally from this version of Privoo — nothing here is tracked or fetched from the web.</p>
@@ -1199,13 +1205,22 @@ function applyNtpLook(settings) {
   const logoWrap = document.getElementById('ntp-logo-wrap');
   if (logoWrap) logoWrap.style.display = settings?.ntpShowLogo === false ? 'none' : '';
 
+  // News and clock start with [hidden] in HTML, so we must also strip that
+  // attribute when showing — style.display='' alone leaves [hidden] in place
+  // and the CSS rule #ntp-news[hidden]{display:none} keeps them invisible.
   const newsEl = document.getElementById('ntp-news');
-  if (newsEl) newsEl.style.display = settings?.ntpShowNews === false ? 'none' : '';
+  if (newsEl) {
+    const showNews = settings?.ntpShowNews !== false;
+    newsEl.style.display = showNews ? '' : 'none';
+    if (showNews) newsEl.removeAttribute('hidden');
+  }
 
   const clockEl = document.getElementById('ntp-clock');
   if (clockEl) {
-    clockEl.style.display = settings?.ntpShowClock ? '' : 'none';
-    if (settings?.ntpShowClock) startNtpClock(); else stopNtpClock();
+    const showClock = !!settings?.ntpShowClock;
+    clockEl.style.display = showClock ? '' : 'none';
+    if (showClock) clockEl.removeAttribute('hidden');
+    if (showClock) startNtpClock(); else stopNtpClock();
   }
 
   const vid = document.getElementById('ntp-bg-video');

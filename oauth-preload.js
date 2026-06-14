@@ -16,9 +16,8 @@ const fs = require('fs');
 const path = require('path');
 const { buildGoogleSpoofScript } = require('./google-spoof');
 
-// Embed logo.png as a data URI so the badge below renders without depending on
-// the page's CSP or the privoo:// scheme being reachable cross-origin. Falls
-// back to the privoo:// URL (CSP is stripped on Google auth pages anyway).
+// Embed logo.png as a data URI so the badge renders without depending on
+// the page's CSP or the privoo:// scheme being reachable cross-origin.
 function logoDataUri() {
   const candidates = [
     path.join(__dirname, 'logo.png'),
@@ -31,38 +30,103 @@ function logoDataUri() {
   return 'privoo://newtab/logo.png';
 }
 
-// A small Privoo logo badge in the top-right of the sign-in popup. Clicking it
-// reassures the user that the login is protected. Only shows on Google sign-in
-// hosts (the popup these windows actually land on).
+// Privacy protection badge shown in the top-right of Google sign-in popups.
+// Horizontal layout: logo on left, "Privoo / Protected" text on right.
+// Always visible; clicking shows a detail popover.
 function privacyBadgeScript(logoSrc) {
   return `(function(){
   if(window.__privooBadge)return; window.__privooBadge=1;
-  function isGoogle(){ try{ return /(^|\\.)(google|gstatic|googleusercontent)\\.[a-z.]+$/i.test(location.hostname) || /(^|\\.)accounts\\.youtube\\.com$/i.test(location.hostname); }catch(e){ return false; } }
+  var F='-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
+  function isGoogle(){ try{ return /(^|\\.)(google|gstatic|googleusercontent)\\.[a-z.]+$/i.test(location.hostname)||/(^|\\.)accounts\\.youtube\\.com$/i.test(location.hostname); }catch(e){ return false; } }
   function mount(){
     if(!isGoogle()) return;
     if(!document.body){ return setTimeout(mount,150); }
     if(document.getElementById('privoo-protect-badge')) return;
+
+    // ── Outer wrapper ──────────────────────────────────────────────────────────
     var wrap=document.createElement('div');
     wrap.id='privoo-protect-badge';
-    wrap.style.cssText='position:fixed;top:12px;right:14px;z-index:2147483647;display:flex;flex-direction:column;align-items:flex-end;gap:9px;font:13px system-ui,-apple-system,Segoe UI,sans-serif;';
-    var btn=document.createElement('button');
-    btn.type='button'; btn.setAttribute('aria-label','Privoo privacy');
-    btn.style.cssText='width:36px;height:36px;border-radius:50%;border:none;padding:0;cursor:pointer;background:rgba(20,20,24,.88);box-shadow:0 2px 12px rgba(0,0,0,.38);display:flex;align-items:center;justify-content:center;transition:transform .15s ease;';
-    btn.onmouseenter=function(){btn.style.transform='scale(1.09)';};
-    btn.onmouseleave=function(){btn.style.transform='scale(1)';};
+    wrap.style.cssText='position:fixed;top:16px;right:18px;z-index:2147483647;display:flex;flex-direction:column;align-items:flex-end;gap:10px;';
+
+    // ── Persistent card ────────────────────────────────────────────────────────
+    var card=document.createElement('div');
+    card.style.cssText=[
+      'display:flex;align-items:center;gap:10px;',
+      'padding:10px 14px 10px 10px;',
+      'background:rgba(15,15,18,0.93);',
+      'border:1px solid rgba(255,255,255,0.1);',
+      'border-radius:16px;',
+      'box-shadow:0 6px 24px rgba(0,0,0,0.5);',
+      'cursor:pointer;',
+      'transition:background .15s,transform .15s,box-shadow .15s;',
+      'backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);',
+      'user-select:none;',
+      'font-family:'+F+';',
+    ].join('');
+    card.onmouseenter=function(){ card.style.background='rgba(24,24,30,0.97)'; card.style.transform='scale(1.03)'; card.style.boxShadow='0 8px 30px rgba(0,0,0,0.6)'; };
+    card.onmouseleave=function(){ card.style.background='rgba(15,15,18,0.93)'; card.style.transform=''; card.style.boxShadow='0 6px 24px rgba(0,0,0,0.5)'; };
+
+    // Logo
+    var imgWrap=document.createElement('div');
+    imgWrap.style.cssText='width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:center;flex-shrink:0;';
     var img=document.createElement('img');
-    img.src=${JSON.stringify(logoSrc)}; img.alt='Privoo';
-    img.style.cssText='width:23px;height:23px;object-fit:contain;border-radius:50%;pointer-events:none;';
-    btn.appendChild(img);
+    img.src=${JSON.stringify(logoSrc)}; img.alt='';
+    img.style.cssText='width:26px;height:26px;object-fit:contain;pointer-events:none;display:block;';
+    imgWrap.appendChild(img);
+
+    // Text column
+    var col=document.createElement('div');
+    col.style.cssText='display:flex;flex-direction:column;gap:2px;';
+
+    var name=document.createElement('div');
+    name.textContent='Privoo';
+    name.style.cssText='font-size:14px;font-weight:700;color:#fff;line-height:1.2;letter-spacing:-.01em;';
+
+    var sub=document.createElement('div');
+    sub.style.cssText='display:flex;align-items:center;gap:4px;font-size:11px;color:rgba(255,255,255,0.55);line-height:1.2;font-weight:500;';
+    // Green shield SVG
+    var svg='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V6l-8-4z" fill="#34d399"/></svg>';
+    sub.innerHTML=svg+'<span>Protecting this sign-in</span>';
+
+    col.appendChild(name);
+    col.appendChild(sub);
+    card.appendChild(imgWrap);
+    card.appendChild(col);
+
+    // ── Detail popover ─────────────────────────────────────────────────────────
     var pop=document.createElement('div');
-    pop.style.cssText='max-width:236px;padding:11px 14px;border-radius:13px;background:rgba(20,20,24,.95);color:#fff;box-shadow:0 8px 28px rgba(0,0,0,.45);line-height:1.45;opacity:0;transform:translateY(-6px);pointer-events:none;transition:opacity .18s ease,transform .18s ease;';
-    pop.innerHTML='<b style="display:block;margin-bottom:3px">You\\u2019re protected \\uD83D\\uDEE1\\uFE0F</b>Privoo is blocking trackers and fingerprinting on this sign-in \\u2014 nothing here is shared with third parties.';
+    pop.style.cssText=[
+      'max-width:260px;padding:14px 16px;',
+      'border-radius:14px;',
+      'background:rgba(15,15,18,0.97);',
+      'border:1px solid rgba(255,255,255,0.1);',
+      'color:#fff;font-family:'+F+';',
+      'box-shadow:0 12px 36px rgba(0,0,0,0.6);',
+      'font-size:13px;line-height:1.55;',
+      'opacity:0;transform:translateY(-4px) scale(0.97);pointer-events:none;',
+      'transition:opacity .18s ease,transform .18s ease;',
+    ].join('');
+    pop.innerHTML=[
+      '<div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;">',
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V6l-8-4z" fill="#34d399"/></svg>',
+        '<span style="font-size:14px;font-weight:700;letter-spacing:-.01em;">You\'re protected</span>',
+      '</div>',
+      '<p style="margin:0 0 8px;color:rgba(255,255,255,0.78);font-size:12.5px;">',
+        'Privoo is blocking trackers and fingerprinting on this sign-in.',
+      '</p>',
+      '<p style="margin:0;color:rgba(255,255,255,0.45);font-size:11px;">',
+        'Nothing you enter here is shared with third parties.',
+      '</p>',
+    ].join('');
+
     var open=false,t;
-    function show(){open=true;pop.style.opacity='1';pop.style.transform='translateY(0)';clearTimeout(t);t=setTimeout(hide,4500);}
-    function hide(){open=false;pop.style.opacity='0';pop.style.transform='translateY(-6px)';}
-    btn.onclick=function(e){e.stopPropagation();open?hide():show();};
+    function show(){ open=true; pop.style.opacity='1'; pop.style.transform='translateY(0) scale(1)'; pop.style.pointerEvents='auto'; clearTimeout(t); t=setTimeout(hide,5500); }
+    function hide(){ open=false; pop.style.opacity='0'; pop.style.transform='translateY(-4px) scale(0.97)'; pop.style.pointerEvents='none'; }
+    card.addEventListener('click',function(e){ e.stopPropagation(); open?hide():show(); });
     document.addEventListener('click',function(){ if(open) hide(); });
-    wrap.appendChild(btn); wrap.appendChild(pop);
+
+    wrap.appendChild(pop);
+    wrap.appendChild(card);
     document.documentElement.appendChild(wrap);
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();

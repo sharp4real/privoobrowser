@@ -1360,7 +1360,15 @@ function serializeSession() {
   };
 }
 
+// Incognito / Guest windows must never persist their tabs — otherwise the
+// private tabs get written to the shared last-session file and reappear in the
+// normal browser on the next launch. (History is already gated the same way.)
+function _sessionPersistDisabled() {
+  return !!(window.__privooIncognitoPartition || window.privoo?.incognitoPartition);
+}
+
 function scheduleSaveSession() {
+  if (_sessionPersistDisabled()) return;
   clearTimeout(saveSessionTimer);
   saveSessionTimer = setTimeout(() => {
     window.privoo.saveTabSession(serializeSession()).catch?.(() => {});
@@ -1368,6 +1376,7 @@ function scheduleSaveSession() {
 }
 
 async function saveSessionNow() {
+  if (_sessionPersistDisabled()) return;
   await window.privoo.saveTabSession(serializeSession()).catch?.(() => {});
 }
 
@@ -1375,6 +1384,7 @@ async function saveSessionNow() {
 // so a debounced save can't be lost — otherwise tabs you just closed reappear
 // on next launch.
 function flushSessionSync() {
+  if (_sessionPersistDisabled()) return;
   try { window.privoo.saveTabSessionSync?.(serializeSession()); } catch { /* ignore */ }
 }
 window.addEventListener('pagehide', flushSessionSync);
@@ -2166,7 +2176,10 @@ function closeTab(id) {
   const [tab] = tabs.splice(idx, 1);
   // Immediately flush the session so that even if the app is quit before
   // the debounced scheduleSaveSession fires, the closed tab is not restored.
-  try { window.privoo.saveTabSessionSync?.(serializeSession()); } catch { /* ignore */ }
+  // (Skipped for incognito/guest windows — they never persist their tabs.)
+  if (!_sessionPersistDisabled()) {
+    try { window.privoo.saveTabSessionSync?.(serializeSession()); } catch { /* ignore */ }
+  }
   if (tab.url && !tab.url.startsWith('privoo://')) {
     closedStack.push(tab.url);
     if (closedStack.length > 30) closedStack.shift();
@@ -6484,6 +6497,501 @@ function _anyBlockingOverlayOpen() {
   };
   // Give the thank-you popup a head start so it's first in line.
   setTimeout(tryShow, 1400);
+})();
+
+// ─── Profile UI ──────────────────────────────────────────────────────────────
+
+(function initProfileUI() {
+  const profileBtn    = document.getElementById('profile-btn');
+  const profilePanel  = document.getElementById('profile-panel');
+  const avatarCircle  = document.getElementById('profile-avatar-btn');
+  const initialsEl    = document.getElementById('profile-initials-btn');
+  const imgEl         = document.getElementById('profile-img-btn');
+  if (!profileBtn || !profilePanel) return;
+
+  let _profiles = [];
+  let _activeId = 'default';
+
+  function cssVar(name, fallback) {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return v || fallback;
+  }
+
+  // Buttons/inputs don't inherit font-family, and our floating popups are
+  // appended to <html> (outside <body>'s font scope). Inject one rule that
+  // forces the active interface font onto every profile-UI element. `.pp-pop`
+  // is added to each floating overlay root below.
+  (function injectFontRule() {
+    const apply = () => {
+      const f = getComputedStyle(document.body).fontFamily
+        || '"Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif';
+      let s = document.getElementById('privoo-prof-font');
+      if (!s) { s = document.createElement('style'); s.id = 'privoo-prof-font'; document.head.appendChild(s); }
+      s.textContent = `#profile-panel, #profile-panel *, .pp-pop, .pp-pop * { font-family: ${f} !important; }`;
+    };
+    apply();
+    // Re-apply if the user changes the interface font while the app is open.
+    window.privoo?.onSettingsChanged?.(() => apply());
+  })();
+
+  // SOLID surface colours for our popups. We can't use --toolbar/--border here:
+  // in Increase-Transparency / Liquid-Glass mode those become translucent, which
+  // made the modal render as a faint see-through box. These are always opaque.
+  function themeColors() {
+    const dark = document.body.classList.contains('dark');
+    return dark
+      ? { surface: '#2a2b2f', text: '#e8eaed', muted: '#bdc1c6', border: 'rgba(255,255,255,0.14)', hover: 'rgba(255,255,255,0.08)', input: '#202124' }
+      : { surface: '#ffffff', text: '#1f1f1f', muted: '#5f6368', border: '#dadce0', hover: '#f1f3f4', input: '#f3f4f6' };
+  }
+  const ACCENT = () => cssVar('--accent', '#8ab4f8');
+
+  // Styled confirmation dialog — replaces the native confirm() so the
+  // "are you sure" matches the rest of the UI.
+  function showConfirm({ title, message, confirmLabel = 'Delete', danger = true }) {
+    return new Promise((resolve) => {
+      const C = themeColors();
+      const back = document.createElement('div');
+      back.className = 'pp-pop';
+      back.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;';
+      const m = document.createElement('div');
+      m.style.cssText = `width:300px;background:${C.surface};border:1px solid ${C.border};border-radius:16px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,0.5);`;
+      const t = document.createElement('div');
+      t.textContent = title;
+      t.style.cssText = `font-size:16px;font-weight:700;color:${C.text};margin-bottom:8px;`;
+      const msg = document.createElement('div');
+      msg.textContent = message;
+      msg.style.cssText = `font-size:13px;line-height:1.55;color:${C.muted};margin-bottom:20px;`;
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:10px;';
+      const cancel = document.createElement('button');
+      cancel.textContent = 'Cancel';
+      cancel.style.cssText = `flex:1;padding:10px;border-radius:9px;border:1.5px solid ${C.border};background:transparent;color:${C.muted};font-size:13px;font-weight:600;cursor:pointer;`;
+      cancel.onmouseenter = () => { cancel.style.background = C.hover; };
+      cancel.onmouseleave = () => { cancel.style.background = 'transparent'; };
+      const ok = document.createElement('button');
+      ok.textContent = confirmLabel;
+      ok.style.cssText = `flex:1;padding:10px;border-radius:9px;border:none;background:${danger ? '#d93025' : ACCENT()};color:#fff;font-size:13px;font-weight:600;cursor:pointer;`;
+      const done = (v) => { back.remove(); resolve(v); };
+      cancel.addEventListener('click', () => done(false));
+      ok.addEventListener('click', () => done(true));
+      back.addEventListener('mousedown', (e) => { if (e.target === back) done(false); });
+      row.appendChild(cancel); row.appendChild(ok);
+      m.appendChild(t); m.appendChild(msg); m.appendChild(row);
+      back.appendChild(m);
+      document.documentElement.appendChild(back);
+    });
+  }
+
+  // Stable colour palette for profile initials circles. The built-in "Default"
+  // profile follows the browser's accent colour; others get a distinct palette
+  // colour so they're easy to tell apart.
+  const PALETTE = ['#e05c8a','#28b67a','#e08c2c','#9b59b6','#e74c3c','#1abc9c','#f39c12','#5b7fff'];
+  function profileColor(id) {
+    if (id === 'default') return cssVar('--accent', '#8ab4f8');
+    let h = 0;
+    for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+    return PALETTE[h % PALETTE.length];
+  }
+
+  function initials(name) {
+    const parts = (name || 'P').trim().split(/\s+/);
+    return parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : (name[0] || 'P').toUpperCase();
+  }
+
+  // ── Photo cropper (drag to reposition, scroll / slider to zoom) ────────────
+  function openCropper(src) {
+    return new Promise((resolve) => {
+      const C = themeColors();
+      const back = document.createElement('div');
+      back.className = 'pp-pop';
+      back.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;';
+      const panel = document.createElement('div');
+      panel.style.cssText = `width:320px;background:${C.surface};border:1px solid ${C.border};border-radius:18px;padding:22px;box-shadow:0 24px 64px rgba(0,0,0,0.5);`;
+      panel.innerHTML =
+        `<div style="font-size:16px;font-weight:700;color:${C.text};text-align:center;margin-bottom:4px;">Adjust photo</div>` +
+        `<div style="font-size:12px;color:${C.muted};text-align:center;margin-bottom:16px;">Drag to reposition · scroll or use the slider to zoom</div>` +
+        '<div id="_cstage" style="width:240px;height:240px;margin:0 auto 16px;position:relative;overflow:hidden;border-radius:16px;background:#000;cursor:grab;touch-action:none;">' +
+          '<img id="_cimg" alt="" draggable="false" style="position:absolute;top:0;left:0;max-width:none;-webkit-user-drag:none;user-select:none;" />' +
+          '<div style="position:absolute;inset:0;border-radius:50%;pointer-events:none;box-shadow:0 0 0 240px rgba(0,0,0,0.55);border:2px solid rgba(255,255,255,0.85);"></div>' +
+        '</div>' +
+        `<input id="_czoom" type="range" min="1" max="3" step="0.01" value="1" style="width:100%;accent-color:${ACCENT()};margin-bottom:8px;" />` +
+        '<div style="display:flex;gap:10px;margin-top:12px;">' +
+          `<button id="_ccancel" style="flex:1;padding:11px;border-radius:10px;border:1px solid ${C.border};background:transparent;color:${C.muted};font-size:13px;font-weight:600;cursor:pointer;">Cancel</button>` +
+          `<button id="_capply" style="flex:1;padding:11px;border-radius:10px;border:none;background:${ACCENT()};color:${cssVar('--on-accent','#202124')};font-size:13px;font-weight:600;cursor:pointer;">Apply</button>` +
+        '</div>';
+      back.appendChild(panel);
+      document.documentElement.appendChild(back);
+
+      const stage = panel.querySelector('#_cstage');
+      const img   = panel.querySelector('#_cimg');
+      const zoom  = panel.querySelector('#_czoom');
+      const V = 240;
+      let iw = 0, ih = 0, base = 1, scale = 1, ox = 0, oy = 0, drag = null;
+
+      function clamp() {
+        const minx = V - iw * scale, miny = V - ih * scale;
+        ox = Math.min(0, Math.max(minx, ox));
+        oy = Math.min(0, Math.max(miny, oy));
+      }
+      function layout() {
+        clamp();
+        img.style.width = (iw * scale) + 'px';
+        img.style.height = (ih * scale) + 'px';
+        img.style.transform = `translate(${ox}px,${oy}px)`;
+      }
+      img.onload = () => {
+        iw = img.naturalWidth; ih = img.naturalHeight;
+        base = Math.max(V / iw, V / ih);
+        scale = base;
+        ox = (V - iw * scale) / 2; oy = (V - ih * scale) / 2;
+        layout();
+      };
+      img.src = src;
+
+      zoom.addEventListener('input', () => {
+        const cx = V / 2, cy = V / 2;
+        const px = (cx - ox) / scale, py = (cy - oy) / scale;
+        scale = base * parseFloat(zoom.value);
+        ox = cx - px * scale; oy = cy - py * scale;
+        layout();
+      });
+      stage.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        let z = parseFloat(zoom.value) + (e.deltaY < 0 ? 0.06 : -0.06);
+        z = Math.min(3, Math.max(1, z));
+        zoom.value = z; zoom.dispatchEvent(new Event('input'));
+      }, { passive: false });
+      stage.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY, ox, oy }; stage.setPointerCapture(e.pointerId); });
+      stage.addEventListener('pointermove', (e) => { if (!drag) return; ox = drag.ox + (e.clientX - drag.x); oy = drag.oy + (e.clientY - drag.y); layout(); });
+      stage.addEventListener('pointerup', () => { drag = null; });
+
+      const done = (val) => { back.remove(); resolve(val); };
+      panel.querySelector('#_ccancel').addEventListener('click', () => done(null));
+      back.addEventListener('mousedown', (e) => { if (e.target === back) done(null); });
+      panel.querySelector('#_capply').addEventListener('click', () => {
+        const OUT = 256, s = OUT / V;
+        const c = document.createElement('canvas'); c.width = OUT; c.height = OUT;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#000'; ctx.fillRect(0, 0, OUT, OUT);
+        ctx.drawImage(img, ox * s, oy * s, iw * scale * s, ih * scale * s);
+        done(c.toDataURL('image/jpeg', 0.9));
+      });
+    });
+  }
+
+  function renderAvatarInto(container, imgEl, initialsEl, profile) {
+    const color = profileColor(profile.id);
+    container.style.setProperty('--profile-color', color);
+    container.style.background = color;
+    if (profile.avatar) {
+      imgEl.src = profile.avatar;
+      imgEl.style.display = 'block';
+      initialsEl.style.display = 'none';
+    } else {
+      imgEl.style.display = 'none';
+      initialsEl.style.display = '';
+      initialsEl.textContent = initials(profile.name);
+    }
+  }
+
+  function activeProfile() {
+    return _profiles.find((p) => p.id === _activeId) || { id: 'default', name: 'Default', avatar: '' };
+  }
+
+  function loadProfiles() {
+    return window.privoo.profilesList().then(({ profiles, activeId }) => {
+      _profiles = profiles;
+      _activeId = activeId;
+      const active = activeProfile();
+      renderAvatarInto(avatarCircle, imgEl, initialsEl, active);
+      // Keep CSS var in sync
+      avatarCircle.style.background = profileColor(active.id);
+    }).catch(() => {});
+  }
+
+  // ── Panel render ──────────────────────────────────────────────────────────
+  function rowButton(svg, label) {
+    const btn = document.createElement('button');
+    btn.style.cssText = 'width:100%;padding:10px 14px;display:flex;align-items:center;gap:12px;background:transparent;border:none;cursor:pointer;color:var(--text);font-size:13px;border-radius:10px;transition:background .12s;text-align:left;';
+    btn.onmouseenter = () => { btn.style.background = 'var(--hover)'; };
+    btn.onmouseleave = () => { btn.style.background = ''; };
+    const icon = document.createElement('div');
+    icon.style.cssText = 'width:32px;height:32px;border-radius:50%;background:var(--hover);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--muted);';
+    icon.innerHTML = svg;
+    btn.appendChild(icon);
+    btn.appendChild(document.createTextNode(label));
+    return btn;
+  }
+
+  function buildPanel() {
+    profilePanel.innerHTML = '';
+
+    // ── Current profile hero ──
+    const hero = document.createElement('div');
+    hero.style.cssText = 'padding:16px 16px 14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);';
+
+    const cur = activeProfile();
+    const heroCircle = document.createElement('div');
+    heroCircle.style.cssText = `width:46px;height:46px;border-radius:50%;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff;background:${profileColor(cur.id)};`;
+    const heroImg = document.createElement('img'); heroImg.alt = ''; heroImg.style.cssText = 'display:none;width:100%;height:100%;object-fit:cover;';
+    const heroInit = document.createElement('span');
+    renderAvatarInto(heroCircle, heroImg, heroInit, cur);
+    heroCircle.appendChild(heroImg); heroCircle.appendChild(heroInit);
+
+    const heroText = document.createElement('div');
+    heroText.style.cssText = 'flex:1;min-width:0;';
+    const heroName = document.createElement('div');
+    heroName.textContent = cur.name;
+    heroName.style.cssText = 'font-size:15px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+    const heroSub = document.createElement('div');
+    heroSub.textContent = 'Active profile';
+    heroSub.style.cssText = 'font-size:11px;color:var(--muted);margin-top:2px;';
+    heroText.appendChild(heroName); heroText.appendChild(heroSub);
+
+    const editBtn = document.createElement('button');
+    editBtn.textContent = 'Edit';
+    editBtn.style.cssText = 'padding:5px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;white-space:nowrap;transition:background .12s;';
+    editBtn.onmouseenter = () => { editBtn.style.background = 'var(--hover)'; };
+    editBtn.onmouseleave = () => { editBtn.style.background = 'transparent'; };
+    editBtn.addEventListener('click', () => { closePanel(); showEditModal(cur); });
+
+    hero.appendChild(heroCircle); hero.appendChild(heroText); hero.appendChild(editBtn);
+
+    // ── Other profiles list ──
+    const others = _profiles.filter((p) => p.id !== _activeId);
+    let listEl = null;
+    if (others.length) {
+      listEl = document.createElement('div');
+      listEl.style.cssText = 'padding:6px;border-bottom:1px solid var(--border);';
+      const listLabel = document.createElement('div');
+      listLabel.textContent = 'Switch to';
+      listLabel.style.cssText = 'padding:4px 10px 4px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;';
+      listEl.appendChild(listLabel);
+
+      for (const p of others) {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:12px;padding:8px 10px;cursor:pointer;border-radius:10px;transition:background .12s;';
+        row.onmouseenter = () => { row.style.background = 'var(--hover)'; };
+        row.onmouseleave = () => { row.style.background = ''; };
+
+        const rc = document.createElement('div');
+        rc.style.cssText = `width:32px;height:32px;border-radius:50%;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;background:${profileColor(p.id)};`;
+        const ri = document.createElement('img'); ri.alt = ''; ri.style.cssText = 'display:none;width:100%;height:100%;object-fit:cover;';
+        const rn = document.createElement('span');
+        renderAvatarInto(rc, ri, rn, p);
+        rc.appendChild(ri); rc.appendChild(rn);
+
+        const rname = document.createElement('div');
+        rname.textContent = p.name;
+        rname.style.cssText = 'font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;';
+
+        row.appendChild(rc); row.appendChild(rname);
+        row.addEventListener('click', () => { closePanel(); switchProfile(p.id); });
+        listEl.appendChild(row);
+      }
+    }
+
+    // ── Actions ──
+    const actions = document.createElement('div');
+    actions.style.cssText = 'padding:6px;';
+
+    const guestBtn = rowButton('<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M12 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm0 10c3.31 0 8 1.34 8 4v2H4v-2c0-2.66 4.69-4 8-4z"/></svg>', 'Open Guest window');
+    guestBtn.addEventListener('click', () => { closePanel(); window.privoo.openIncognitoWindow?.(); });
+
+    const addBtn = rowButton('<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>', 'Add profile');
+    addBtn.addEventListener('click', () => { closePanel(); showCreateModal(); });
+
+    const manageBtn = rowButton('<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4.42 0-8 1.79-8 4v2h16v-2c0-2.21-3.58-4-8-4z"/></svg>', 'Manage profiles');
+    manageBtn.addEventListener('click', () => { closePanel(); window.privoo.profileOpenPicker?.(); });
+
+    actions.appendChild(guestBtn);
+    actions.appendChild(addBtn);
+    actions.appendChild(manageBtn);
+
+    profilePanel.appendChild(hero);
+    if (listEl) profilePanel.appendChild(listEl);
+    profilePanel.appendChild(actions);
+  }
+
+  // ── Open / close panel ────────────────────────────────────────────────────
+  function openPanel() {
+    buildPanel();
+    profilePanel.classList.remove('hidden');
+  }
+  function closePanel() {
+    profilePanel.classList.add('hidden');
+  }
+
+  profileBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (profilePanel.classList.contains('hidden')) openPanel(); else closePanel();
+  });
+  document.addEventListener('click', (e) => {
+    if (!profilePanel.classList.contains('hidden') && !profilePanel.contains(e.target) && e.target !== profileBtn) closePanel();
+  });
+
+  // ── Profile switch ────────────────────────────────────────────────────────
+  function switchProfile(id) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:2147483646;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#fff;font-size:14px;';
+    overlay.textContent = 'Switching profile…';
+    document.documentElement.appendChild(overlay);
+    window.privoo.profileSwitch(id).catch(() => overlay.remove());
+  }
+
+  // ── Create / Edit modal ───────────────────────────────────────────────────
+  function showProfileModal({ title, profile = null, onSave }) {
+    let pendingAvatar = profile?.avatar || '';
+    const C = themeColors();
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'pp-pop';
+    backdrop.style.cssText = 'position:fixed;inset:0;z-index:2147483646;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;';
+
+    const modal = document.createElement('div');
+    modal.style.cssText = `background:${C.surface};border:1px solid ${C.border};border-radius:18px;padding:26px 24px 22px;width:320px;box-shadow:0 24px 64px rgba(0,0,0,0.5);`;
+
+    const heading = document.createElement('div');
+    heading.textContent = title;
+    heading.style.cssText = `font-size:18px;font-weight:700;color:${C.text};margin-bottom:4px;text-align:center;`;
+
+    const sub = document.createElement('div');
+    sub.textContent = profile ? 'Update the name or photo for this profile.' : 'Give it a name and an optional photo.';
+    sub.style.cssText = `font-size:12.5px;color:${C.muted};margin-bottom:20px;text-align:center;`;
+
+    // Avatar picker
+    const avatarWrap = document.createElement('div');
+    avatarWrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:9px;margin-bottom:20px;';
+    const avatarCircleM = document.createElement('div');
+    const initColor = profile ? profileColor(profile.id) : PALETTE[Math.floor(Math.random() * PALETTE.length)];
+    avatarCircleM.style.cssText = `width:96px;height:96px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:700;color:#fff;background:${initColor};cursor:pointer;position:relative;box-shadow:0 0 0 4px ${cssVar('--accent-soft','rgba(138,180,248,.18)')};`;
+    const avatarImgM = document.createElement('img'); avatarImgM.alt = ''; avatarImgM.style.cssText = 'display:none;width:100%;height:100%;object-fit:cover;position:absolute;inset:0;';
+    const avatarInitM = document.createElement('span'); avatarInitM.textContent = profile ? initials(profile.name) : 'N';
+    const avatarHover = document.createElement('div');
+    avatarHover.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;flex-direction:column;gap:2px;align-items:center;justify-content:center;opacity:0;transition:opacity .15s;border-radius:50%;color:#fff;font-size:9px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;';
+    avatarHover.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M9 3l-1.83 2H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.17L15 3H9zm3 5a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg><span>Change</span>';
+    avatarCircleM.onmouseenter = () => { avatarHover.style.opacity = '1'; };
+    avatarCircleM.onmouseleave = () => { avatarHover.style.opacity = '0'; };
+    avatarCircleM.appendChild(avatarImgM); avatarCircleM.appendChild(avatarInitM); avatarCircleM.appendChild(avatarHover);
+
+    if (pendingAvatar) {
+      avatarImgM.src = pendingAvatar; avatarImgM.style.display = 'block'; avatarInitM.style.display = 'none';
+    }
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file'; fileInput.accept = 'image/*'; fileInput.style.display = 'none';
+    fileInput.addEventListener('change', () => {
+      const f = fileInput.files[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        const cropped = await openCropper(ev.target.result);
+        if (cropped) {
+          pendingAvatar = cropped;
+          avatarImgM.src = pendingAvatar; avatarImgM.style.display = 'block'; avatarInitM.style.display = 'none';
+        }
+      };
+      reader.readAsDataURL(f);
+      fileInput.value = '';
+    });
+    avatarCircleM.addEventListener('click', () => fileInput.click());
+
+    const avatarHint = document.createElement('div');
+    avatarHint.textContent = 'Click to choose a photo';
+    avatarHint.style.cssText = `font-size:11.5px;color:${C.muted};`;
+    avatarWrap.appendChild(avatarCircleM); avatarWrap.appendChild(avatarHint); avatarWrap.appendChild(fileInput);
+
+    // Name input
+    const nameLabel = document.createElement('label');
+    nameLabel.textContent = 'Profile name';
+    nameLabel.style.cssText = `display:block;font-size:11px;font-weight:600;color:${C.muted};text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px;`;
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.value = profile?.name || '';
+    nameInput.placeholder = 'e.g. Work, Personal, School';
+    nameInput.maxLength = 40;
+    nameInput.style.cssText = `width:100%;box-sizing:border-box;padding:11px 13px;border-radius:10px;border:1.5px solid ${C.border};background:${C.input};color:${C.text};font-size:14px;outline:none;transition:border-color .14s;`;
+    nameInput.onfocus = () => { nameInput.style.borderColor = ACCENT(); };
+    nameInput.onblur = () => { nameInput.style.borderColor = C.border; };
+    nameInput.addEventListener('input', () => {
+      if (!pendingAvatar) avatarInitM.textContent = nameInput.value ? initials(nameInput.value) : 'N';
+    });
+
+    // Buttons
+    const btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex;gap:10px;margin-top:24px;';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.style.cssText = `flex:1;padding:11px;border-radius:10px;border:1.5px solid ${C.border};background:transparent;color:${C.muted};font-size:13.5px;font-weight:600;cursor:pointer;transition:background .12s;`;
+    cancelBtn.onmouseenter = () => { cancelBtn.style.background = C.hover; };
+    cancelBtn.onmouseleave = () => { cancelBtn.style.background = 'transparent'; };
+    const saveBtn = document.createElement('button');
+    saveBtn.textContent = profile ? 'Save' : 'Create';
+    saveBtn.style.cssText = `flex:1;padding:11px;border-radius:10px;border:none;background:${ACCENT()};color:${cssVar('--on-accent','#202124')};font-size:13.5px;font-weight:600;cursor:pointer;`;
+
+    // Delete (edit only, non-default profiles)
+    let deleteBtn = null;
+    if (profile && profile.id !== 'default') {
+      deleteBtn = document.createElement('button');
+      deleteBtn.textContent = 'Delete this profile';
+      deleteBtn.style.cssText = 'width:100%;margin-top:12px;padding:10px;border-radius:10px;border:1.5px solid rgba(217,48,37,0.35);background:transparent;color:#e0556b;font-size:12.5px;cursor:pointer;transition:background .12s;';
+      deleteBtn.onmouseenter = () => { deleteBtn.style.background = 'rgba(217,48,37,0.1)'; };
+      deleteBtn.onmouseleave = () => { deleteBtn.style.background = 'transparent'; };
+      deleteBtn.addEventListener('click', async () => {
+        const yes = await showConfirm({
+          title: 'Delete profile?',
+          message: `"${profile.name}" and all its history, logins and settings will be permanently erased.`,
+          confirmLabel: 'Delete',
+        });
+        if (!yes) return;
+        backdrop.remove();
+        window.privoo.profileDelete(profile.id)
+          .then(() => loadProfiles())
+          .catch(() => {});
+      });
+    }
+
+    const close = () => backdrop.remove();
+    cancelBtn.addEventListener('click', close);
+    backdrop.addEventListener('mousedown', (e) => { if (e.target === backdrop) close(); });
+
+    saveBtn.addEventListener('click', () => {
+      const name = nameInput.value.trim();
+      if (!name) { nameInput.focus(); return; }
+      close();
+      onSave({ name, avatar: pendingAvatar }).then(() => loadProfiles()).catch(() => {});
+    });
+    nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveBtn.click(); });
+
+    btnRow.appendChild(cancelBtn); btnRow.appendChild(saveBtn);
+    modal.appendChild(heading);
+    modal.appendChild(sub);
+    modal.appendChild(avatarWrap);
+    modal.appendChild(nameLabel);
+    modal.appendChild(nameInput);
+    modal.appendChild(btnRow);
+    if (deleteBtn) modal.appendChild(deleteBtn);
+    backdrop.appendChild(modal);
+    document.documentElement.appendChild(backdrop);
+    setTimeout(() => nameInput.focus(), 50);
+  }
+
+  function showCreateModal() {
+    showProfileModal({
+      title: 'Create profile',
+      onSave: ({ name, avatar }) => window.privoo.profileCreate({ name, avatar }),
+    });
+  }
+
+  function showEditModal(profile) {
+    showProfileModal({
+      title: 'Edit profile',
+      profile,
+      onSave: ({ name, avatar }) => window.privoo.profileUpdate({ id: profile.id, name, avatar }),
+    });
+  }
+
+  loadProfiles();
 })();
 
 // ─── Inline AI Panel ─────────────────────────────────────────────────────────

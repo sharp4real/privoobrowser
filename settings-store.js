@@ -278,10 +278,12 @@ const DEFAULTS = {
   strongerTrackingProtection: false,
 };
 
+const profileStore = require('./profile-store');
+
 let cache = null;
 
 function filePath() {
-  return path.join(app.getPath('userData'), 'privoo-settings.json');
+  return path.join(profileStore.getDataDir(), 'privoo-settings.json');
 }
 
 function load() {

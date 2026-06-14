@@ -2,10 +2,10 @@
 
 const fs = require('fs');
 const path = require('path');
-const { app } = require('electron');
+const profileStore = require('./profile-store');
 
 function filePath() {
-  return path.join(app.getPath('userData'), 'privoo-last-session.json');
+  return path.join(profileStore.getDataDir(), 'privoo-last-session.json');
 }
 
 function load() {
