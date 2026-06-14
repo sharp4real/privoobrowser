@@ -1046,6 +1046,29 @@
             </select>
           </div>
           <div class="row">
+            <div><div class="label">Interface font</div><div class="desc">Font used across the whole browser UI — tabs, menus, toolbar.</div></div>
+            <select id="uiFont" class="inline-select">
+              <option value="system">System default</option>
+              <option value="rounded">Rounded</option>
+              <option value="grotesk">Grotesk</option>
+              <option value="classic">Serif</option>
+              <option value="mono">Monospace</option>
+              <option value="dyslexic">Easy-read</option>
+            </select>
+          </div>
+          <div class="row">
+            <div><div class="label">Corner style</div><div class="desc">How rounded the whole interface looks.</div></div>
+            <select id="uiRoundness" class="inline-select">
+              <option value="default">Default</option>
+              <option value="sharp">Sharp</option>
+              <option value="round">Rounded</option>
+            </select>
+          </div>
+          <div class="row stack">
+            <div><div class="label">Custom CSS</div><div class="desc">Advanced — inject your own CSS to restyle any part of the browser interface. Applies live as you type; leave blank to disable. Targets the chrome (toolbar, tabs, menus), not page content.</div></div>
+            <textarea id="customChromeCss" class="wide" spellcheck="false" rows="6" placeholder="/* e.g.  #toolbar{background:#101225}  .tab.active{font-weight:700} */" style="font-family:ui-monospace,Consolas,monospace;font-size:12.5px;line-height:1.5;resize:vertical;min-height:96px;"></textarea>
+          </div>
+          <div class="row">
             <div><div class="label">Show bookmarks bar</div><div class="desc">Display saved bookmarks under the address bar.</div></div>
             <label class="switch"><input type="checkbox" id="showBookmarksBar"><span class="slider"></span></label>
           </div>
@@ -1493,6 +1516,13 @@
             </div>
             <label class="switch"><input type="checkbox" id="discordRpc"><span class="slider"></span></label>
           </div>
+          <div class="row">
+            <div>
+              <div class="label">Sync theme with Discord</div>
+              <div class="desc">Recolor discord.com in the web app to match Privoo's accent and theme palette. Updates live when you change your theme.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="syncDiscordTheme"><span class="slider"></span></label>
+          </div>
         </div>
       </section>
 
@@ -1683,7 +1713,7 @@ const TOGGLES = [
   'showYtdlpToolbar', 'showGeoToolbar', 'showNotesButton', 'showSidebar', 'centerSidebarIcons', 'showAiButton', 'showTranslateButton', 'passwordManagerEnabled', 'preferPasswordLogin',
   'musicEnabled',
   'blockAdultSites', 'safeMode',
-  'hardwareAcceleration', 'lowEndDevice', 'discordRpc',
+  'hardwareAcceleration', 'lowEndDevice', 'discordRpc', 'syncDiscordTheme',
   'minimizeToTray', 'restoreTabsOnLaunch', 'autoUpdates',
 ];
 let currentSettings = {};
@@ -2095,6 +2125,22 @@ async function init() {
     $('searchBarStyle').value = currentSettings.searchBarStyle || (currentSettings.newSearchBarStyle ? 'soft' : 'classic');
     $('searchBarStyle').addEventListener('change', () => savePatch({ searchBarStyle: $('searchBarStyle').value }, 'Search bar style updated'));
   }
+  if ($('uiFont')) {
+    $('uiFont').value = currentSettings.uiFont || 'system';
+    $('uiFont').addEventListener('change', () => savePatch({ uiFont: $('uiFont').value }, 'Interface font updated'));
+  }
+  if ($('uiRoundness')) {
+    $('uiRoundness').value = currentSettings.uiRoundness || 'default';
+    $('uiRoundness').addEventListener('change', () => savePatch({ uiRoundness: $('uiRoundness').value }, 'Corner style updated'));
+  }
+  if ($('customChromeCss')) {
+    $('customChromeCss').value = currentSettings.customChromeCss || '';
+    let _ccTimer;
+    $('customChromeCss').addEventListener('input', () => {
+      clearTimeout(_ccTimer);
+      _ccTimer = setTimeout(() => savePatch({ customChromeCss: $('customChromeCss').value }), 450);
+    });
+  }
 
   const searchSelect = $('searchEngine');
   for (const [key, engine] of Object.entries(data.searchEngines || {})) {
@@ -2122,7 +2168,7 @@ async function init() {
   }
 
   // These settings default to ON when unset — treat undefined as true.
-  const DEFAULT_ON = new Set(['ntpShowQuickLinks', 'ntpShowLogo', 'ntpFocusedSearch', 'restoreTabsOnLaunch', 'autoUpdates', 'adBlocking', 'httpsUpgrade', 'passwordManagerEnabled']);
+  const DEFAULT_ON = new Set(['ntpShowQuickLinks', 'ntpShowLogo', 'ntpFocusedSearch', 'restoreTabsOnLaunch', 'autoUpdates', 'adBlocking', 'httpsUpgrade', 'passwordManagerEnabled', 'syncDiscordTheme']);
   for (const id of TOGGLES) {
     const input = $(id);
     if (!input) continue;

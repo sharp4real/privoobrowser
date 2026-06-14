@@ -512,8 +512,46 @@ function applyAppSettings() {
   document.body.classList.remove('tstyle-liquid', 'tstyle-acrylic', 'tstyle-clear');
   const _tst = settings.transparencyStyle || 'frosted';
   if (_tst !== 'frosted') document.body.classList.add('tstyle-' + _tst);
+  // Whole-UI style controls (corner roundness + density). Font + custom CSS are
+  // applied via an injected stylesheet in applyStyleCustomizations().
+  document.body.classList.remove('ui-sharp', 'ui-round');
+  const _round = settings.uiRoundness || 'default';
+  if (_round === 'sharp' || _round === 'round') document.body.classList.add('ui-' + _round);
+  applyStyleCustomizations();
   applyChromeWallpaper();
   applyThemeMusic();
+  // Keep any open Discord tabs in sync with the live accent / theme palette.
+  try { refreshDiscordThemeTabs(); } catch { /* ignore */ }
+}
+
+// Interface font choices. Each maps to a font stack applied to the whole chrome.
+const UI_FONT_STACKS = {
+  system:   '"Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif',
+  rounded:  '"Segoe UI Variable Display", "SF Pro Rounded", "Nunito", "Quicksand", system-ui, sans-serif',
+  classic:  'Georgia, "Times New Roman", "Iowan Old Style", serif',
+  grotesk:  '"Inter", "Helvetica Neue", "Arial Nova", Helvetica, Arial, sans-serif',
+  mono:     'ui-monospace, "Cascadia Code", "JetBrains Mono", Consolas, "Courier New", monospace',
+  dyslexic: '"Comic Sans MS", "Comic Neue", "Trebuchet MS", system-ui, sans-serif',
+};
+
+// Apply the font + raw custom CSS to a single injected <style>. The font rule
+// uses !important so it overrides the many hard-coded font-family declarations
+// in styles.css; the user's custom CSS is appended LAST so it wins over both.
+function applyStyleCustomizations() {
+  let el = document.getElementById('privoo-style-custom');
+  if (!el) {
+    el = document.createElement('style');
+    el.id = 'privoo-style-custom';
+    document.head.appendChild(el);
+  }
+  let css = '';
+  const font = settings?.uiFont && settings.uiFont !== 'system' ? UI_FONT_STACKS[settings.uiFont] : '';
+  if (font) {
+    css += 'body, button, input, select, textarea, #omnibox, .menu-item, '
+        +  '.tab, .tab-title, .label, .desc, .vtab-title { font-family: ' + font + ' !important; }\n';
+  }
+  if (settings?.customChromeCss) css += String(settings.customChromeCss) + '\n';
+  el.textContent = css;
 }
 
 // Full-browser wallpaper — stretch the new-tab wallpaper behind the whole
@@ -2126,6 +2164,9 @@ function closeTab(id) {
   // Closing either Split View pane tears the split down cleanly.
   if (typeof splitExitOnClose === 'function') splitExitOnClose(id);
   const [tab] = tabs.splice(idx, 1);
+  // Immediately flush the session so that even if the app is quit before
+  // the debounced scheduleSaveSession fires, the closed tab is not restored.
+  try { window.privoo.saveTabSessionSync?.(serializeSession()); } catch { /* ignore */ }
   if (tab.url && !tab.url.startsWith('privoo://')) {
     closedStack.push(tab.url);
     if (closedStack.length > 30) closedStack.shift();
@@ -2584,6 +2625,96 @@ function isSiteCompatibilityHost(host) {
   );
 }
 
+// ── Discord theme sync ──────────────────────────────────────────────────────
+// Map Privoo's current accent + theme palette onto Discord's CSS custom
+// properties so discord.com takes on the browser's look. Injected on Discord
+// pages from applyInjections and refreshed live when the theme changes.
+function isDiscordHost(host) {
+  return /(^|\.)discord\.com$/i.test(host) || /(^|\.)discordapp\.com$/i.test(host);
+}
+function privooThemePalette() {
+  if (Array.isArray(settings?.ntpWaveColors) && settings.ntpWaveColors.length) return settings.ntpWaveColors;
+  if (settings?.ntpThemeId) {
+    const t = THEME_LIST.find(x => x.id === settings.ntpThemeId);
+    if (t) return t.colors;
+  }
+  return WAVE_DEFAULT;
+}
+function privooThemeColors() {
+  const accent = String(settings?.accentColor || '#8ab4f8');
+  const pal = privooThemePalette();
+  // Darkest palette entry → background tint base (kept dark for text contrast).
+  let dark = pal[0], lum = Infinity;
+  for (const c of pal) {
+    const h = String(c).replace('#', '');
+    if (h.length < 6) continue;
+    const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+    const L = 0.299 * r + 0.587 * g + 0.114 * b;
+    if (L < lum) { lum = L; dark = c; }
+  }
+  return { accent, dark };
+}
+function discordThemeSyncScript(accent, dark) {
+  return `(function(){
+  try{
+    var ACCENT=${JSON.stringify(accent)};
+    var DARK=${JSON.stringify(dark || '')};
+    function rgbOf(h){h=String(h||'').replace('#','');if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];if(h.length<6)return null;return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+    function mix(a,b,t){return 'rgb('+Math.round(a[0]+(b[0]-a[0])*t)+','+Math.round(a[1]+(b[1]-a[1])*t)+','+Math.round(a[2]+(b[2]-a[2])*t)+')';}
+    var ac=rgbOf(ACCENT); if(!ac) return;
+    var BLACK=[0,0,0];
+    var css=':root{';
+    var brandVars=['--brand-experiment','--brand-experiment-100','--brand-experiment-200','--brand-experiment-300','--brand-experiment-360','--brand-experiment-400','--brand-experiment-460','--brand-experiment-500','--brand-experiment-560','--brand-experiment-600','--brand-experiment-700','--brand-260','--brand-300','--brand-345','--brand-360','--brand-400','--brand-430','--brand-460','--brand-500','--brand-530','--brand-560','--brand-600','--brand-630','--brand-660','--brand-700','--button-filled-brand-background','--button-filled-brand-background-hover','--button-filled-brand-background-active','--text-link','--text-link-low-saturation','--mention-foreground','--control-brand-foreground','--control-brand-foreground-new','--input-focused-border-color'];
+    for(var i=0;i<brandVars.length;i++){css+=brandVars[i]+':'+ACCENT+' !important;';}
+    css+='--brand-experiment-opacity-6:rgba('+ac[0]+','+ac[1]+','+ac[2]+',.06) !important;';
+    css+='--brand-experiment-opacity-12:rgba('+ac[0]+','+ac[1]+','+ac[2]+',.12) !important;';
+    css+='--background-modifier-selected:rgba('+ac[0]+','+ac[1]+','+ac[2]+',.16) !important;';
+    css+='--background-message-hover:rgba('+ac[0]+','+ac[1]+','+ac[2]+',.04) !important;';
+    var dk=rgbOf(DARK);
+    if(dk){
+      css+='--background-primary:'+mix(dk,BLACK,.55)+' !important;';
+      css+='--background-secondary:'+mix(dk,BLACK,.45)+' !important;';
+      css+='--background-secondary-alt:'+mix(dk,BLACK,.38)+' !important;';
+      css+='--background-tertiary:'+mix(dk,BLACK,.62)+' !important;';
+      css+='--background-floating:'+mix(dk,BLACK,.68)+' !important;';
+      css+='--background-nested-floating:'+mix(dk,BLACK,.6)+' !important;';
+      css+='--channeltextarea-background:'+mix(dk,BLACK,.42)+' !important;';
+      css+='--bg-base-primary:'+mix(dk,BLACK,.55)+' !important;';
+      css+='--bg-base-secondary:'+mix(dk,BLACK,.45)+' !important;';
+      css+='--bg-base-tertiary:'+mix(dk,BLACK,.62)+' !important;';
+      css+='--bg-base-lower:'+mix(dk,BLACK,.68)+' !important;';
+    }
+    css+='}';
+    var id='privoo-discord-theme';
+    var el=document.getElementById(id);
+    if(!el){el=document.createElement('style');el.id=id;(document.head||document.documentElement).appendChild(el);}
+    el.textContent=css;
+  }catch(e){}
+  })();`;
+}
+function injectDiscordTheme(wv) {
+  try {
+    const { accent, dark } = privooThemeColors();
+    wv.executeJavaScript(discordThemeSyncScript(accent, dark)).catch(() => {});
+  } catch {}
+}
+function clearDiscordTheme(wv) {
+  try {
+    wv.executeJavaScript("(function(){var e=document.getElementById('privoo-discord-theme');if(e)e.remove();})();").catch(() => {});
+  } catch {}
+}
+// Re-apply (or clear) the Discord theme on every open Discord tab — called when
+// the accent/theme changes or the setting is toggled, so it updates live.
+function refreshDiscordThemeTabs() {
+  for (const t of tabs) {
+    let host = '';
+    try { host = new URL(t.url).hostname; } catch { continue; }
+    if (!isDiscordHost(host)) continue;
+    if (settings?.syncDiscordTheme !== false) injectDiscordTheme(t.wv);
+    else clearDiscordTheme(t.wv);
+  }
+}
+
 function applyInjections(wv) {
   const url = wv.getURL();
   if (!url || url.startsWith('privoo://') || url.startsWith('about:')) return;
@@ -2619,6 +2750,10 @@ function applyInjections(wv) {
         wv.executeJavaScript(window.privoo.googlePasswordPreferScript).catch(() => {});
       }
     } catch { /* ignore */ }
+  }
+  // Discord theme sync — recolor discord.com to match Privoo's accent + theme.
+  if (settings?.syncDiscordTheme !== false) {
+    try { if (isDiscordHost(new URL(url).hostname)) injectDiscordTheme(wv); } catch { /* ignore */ }
   }
 }
 
@@ -3766,6 +3901,10 @@ const OB_LEAVING_DISMISSED = new Set();
 // True while the Chrome Web Store notice is up for the current visit — reset
 // when the user navigates away, so it shows again on the next visit.
 let obWebStoreActive = false;
+// True while the TikTok sign-in notice is up for the current visit. Unlike the
+// others this one is ALSO gated by a persisted localStorage flag so it only ever
+// shows once (it's advice, not a per-visit nudge).
+let obTikTokActive = false;
 // Hosts where we show a friendly "Are you leaving Privoo?" nudge. Entries
 // without a slash match the bare host (and any subdomain via endsWith).
 // Entries WITH a slash require pathLower to start with the needle — used for
@@ -3905,6 +4044,27 @@ function maybeShowOverlayBanner(url) {
     return;
   }
   obWebStoreActive = false;
+
+  // TikTok sign-in help — shown ONCE, ever (persisted). TikTok blocks logins
+  // from VPN/proxy IPs with "maximum number of attempts reached" because the IP
+  // region won't match the device timezone; the fix is user-side, so surface it
+  // the first time they land on TikTok rather than letting them hit the wall.
+  const isTikTok = bareHost === 'tiktok.com' || bareHost.endsWith('.tiktok.com');
+  if (isTikTok) {
+    let shown = false;
+    try { shown = localStorage.getItem('privoo_tiktok_login_notice_v1') === '1'; } catch {}
+    if (!shown && !obTikTokActive) {
+      obTikTokActive = true;
+      try { localStorage.setItem('privoo_tiktok_login_notice_v1', '1'); } catch {}
+      showOverlayBanner(
+        'Trouble signing in to TikTok?',
+        'TikTok sometimes blocks logins with “maximum number of attempts reached”. If that happens, open Settings → Site fixes → Reset TikTok, then wait a few minutes and try once.',
+        'Got it',
+      );
+    }
+    return; // stay put on TikTok's in-page navigations; don't hide/re-trigger
+  }
+  obTikTokActive = false;
 
   const isRival = !onSearch && RIVAL_BROWSER_HOSTS.some(needle => {
     if (needle.includes('/')) {
@@ -4047,6 +4207,7 @@ const cpWpPickBtn   = document.getElementById('cp-wp-pick');
 const cpWpLiveBtn   = document.getElementById('cp-wp-live');
 const cpWpClearBtn  = document.getElementById('cp-wp-clear');
 const cpWpFull      = document.getElementById('cp-wp-full');
+const cpWpSound     = document.getElementById('cp-wp-sound');
 
 function paintAccentSwatches() {
   if (!cpAccentRow) return;
@@ -4121,6 +4282,7 @@ function paintCustomizePanel() {
   if (cpVerticalTabs)   cpVerticalTabs.checked   = !!settings?.verticalTabs;
   if (cpShowNotes)      cpShowNotes.checked      = !!settings?.showNotesButton;
   if (cpWpFull)         cpWpFull.checked         = !!settings?.ntpWallpaperFullBrowser;
+  if (cpWpSound)        cpWpSound.checked        = !!settings?.ntpWallpaperSound;
 }
 
 function openCustomizePanel() {
@@ -4168,6 +4330,9 @@ cpWpLiveBtn?.addEventListener('click', async () => {
 cpWpClearBtn?.addEventListener('click', async () => {
   try { await window.privoo.clearNtpWallpaper?.(); } catch {}
   saveBrowserSetting({ ntpWaveEnabled: false });   // "Remove" clears any custom background
+});
+cpWpSound?.addEventListener('change', () => {
+  saveBrowserSetting({ ntpWallpaperSound: cpWpSound.checked });
 });
 cpWpFull?.addEventListener('change', () => {
   saveBrowserSetting({ ntpWallpaperFullBrowser: cpWpFull.checked });

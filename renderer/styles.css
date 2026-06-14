@@ -5970,3 +5970,43 @@ body.transparent-ui .ty-card {
   -webkit-backdrop-filter: blur(20px) saturate(180%);
 }
 body.transparent-ui.dark .ty-card { background: rgba(30, 32, 38, .9); }
+
+/* ─── UI roundness (Settings → Appearance → Corner style) ───────────────────
+   A single global control over how rounded the whole chrome looks. "sharp"
+   squares everything off; "round" exaggerates the radii. Targets the main
+   interactive surfaces; !important so it overrides each element's own radius. */
+body.ui-sharp #omnibox,
+body.ui-sharp .tb-btn,
+body.ui-sharp .nav-btn,
+body.ui-sharp .strip-btn,
+body.ui-sharp .menu,
+body.ui-sharp .menu-item,
+body.ui-sharp .tab,
+body.ui-sharp .suggestions,
+body.ui-sharp .sugg-item,
+body.ui-sharp .bookmark,
+body.ui-sharp .bm-item,
+body.ui-sharp .panel,
+body.ui-sharp .card,
+body.ui-sharp button,
+body.ui-sharp input,
+body.ui-sharp .vtab,
+body.ui-sharp .toast { border-radius: 3px !important; }
+
+body.ui-round #omnibox,
+body.ui-round .strip-btn,
+body.ui-round .menu,
+body.ui-round .suggestions,
+body.ui-round .bookmark,
+body.ui-round .bm-item,
+body.ui-round .panel,
+body.ui-round .card,
+body.ui-round .vtab,
+body.ui-round .toast { border-radius: 18px !important; }
+body.ui-round .tb-btn,
+body.ui-round .nav-btn,
+body.ui-round button,
+body.ui-round input { border-radius: 14px !important; }
+body.ui-round .menu-item,
+body.ui-round .sugg-item { border-radius: 11px !important; }
+body.ui-round .tab { border-radius: 14px 14px 6px 6px !important; }

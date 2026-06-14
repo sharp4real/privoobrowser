@@ -51,8 +51,21 @@ function buildGoogleSpoofScript(opts) {
   // *identity* spoof (webdriver, chrome object, UA, Electron-trace removal) but
   // skip the fingerprint *farbling* (canvas noise, WebGL renderer override,
   // performance.now jitter). Farbled values are inconsistent with the rest of
-  // the environment, which these sites flag — e.g. TikTok's "maximum number of
-  // attempts reached", Google's reCAPTCHA loops, Bedrock locking task controls.
+  // the environment, which these sites flag — e.g. Google's reCAPTCHA loops,
+  // Bedrock locking task controls.
+  //
+  // TikTok is stricter still. Its login security script (webmssdk) enumerates
+  // navigator's OWN properties and checks whether each accessor is native. The
+  // identity spoof below installs def() getters DIRECTLY on the navigator/screen
+  // instances (userAgent, userAgentData, hardwareConcurrency, plugins, the
+  // synthetic chrome object, the passkey overrides…). In real Chrome those live
+  // on the prototype as native getters, so our own-accessors read as tampering
+  // and TikTok rejects the login *instantly on submit* ("maximum number of
+  // attempts reached"). So on TikTok we go fully pristine: the only things we
+  // touch are the hard Electron leaks (window.process/require/Buffer…),
+  // navigator.webdriver, and automation artifacts. A clean Chrome UA and native
+  // client hints are supplied out-of-band by the main process via
+  // setUserAgent + CDP Network.setUserAgentOverride, so nothing here is needed.
   var _h = location.hostname;
   var _isGoogleAuth = /(^|\\.)accounts\\.google\\.com$/i.test(_h)
     || /(^|\\.)google\\.(com|[a-z]{2,3}|co\\.[a-z]{2})$/i.test(_h)
@@ -62,12 +75,27 @@ function buildGoogleSpoofScript(opts) {
   var _isTikTok = /(^|\\.)tiktok\\.com$/i.test(_h)
     || /(^|\\.)tiktokv\\.com$/i.test(_h)
     || /(^|\\.)tiktokcdn\\.com$/i.test(_h)
-    || /(^|\\.)byteoversea\\.com$/i.test(_h);
+    || /(^|\\.)tiktokcdn-us\\.com$/i.test(_h)
+    || /(^|\\.)byteoversea\\.com$/i.test(_h)
+    || /(^|\\.)bytedance\\.com$/i.test(_h)
+    || /(^|\\.)ttwstatic\\.com$/i.test(_h)
+    || /(^|\\.)ibytedtos\\.com$/i.test(_h)
+    || /(^|\\.)ibyteimg\\.com$/i.test(_h)
+    || /(^|\\.)bytescm\\.com$/i.test(_h);
   var _isSnap = /(^|\\.)snapchat\\.com$/i.test(_h)
     || /(^|\\.)snap\\.com$/i.test(_h);
   var _isEdu = /(^|\\.)bedrocklearning\\.(org|com|co\\.uk)$/i.test(_h)
     || /(^|\\.)sparxmaths\\.(com|uk)$/i.test(_h)
     || /(^|\\.)sparx-learning\\.com$/i.test(_h);
+  // forcePristine: set by the main process for popups opened by a TikTok/ByteDance
+  // page. Those verification windows can open on about:blank (same-origin with the
+  // opener) where location.hostname is empty, so the host check above misses them
+  // and they'd fall through to the tampering spoof — re-triggering "maximum number
+  // of attempts reached" INSIDE the popup. We treat such popups as TikTok so they
+  // get the same pristine environment as the main tab. Never overrides a real
+  // Google/Snap/Edu popup: those self-identify by host and keep their own spoof.
+  var _forcePristine = ${opts.forcePristine ? 'true' : 'false'} && !_isGoogleAuth && !_isSnap && !_isEdu;
+  if (_forcePristine) _isTikTok = true;
   var _isStrictFp = _isGoogleAuth || _isTikTok || _isSnap || _isEdu;
 
   function def(obj, prop, val) {
@@ -89,14 +117,20 @@ function buildGoogleSpoofScript(opts) {
     else if (plat.indexOf('Win') !== -1)   cleanUA = ${JSON.stringify(winUA)};
   } catch(e) {}
 
-  def(_nav, 'userAgent',  cleanUA);
-  def(_nav, 'appVersion', cleanUA.replace(/^Mozilla\\//, ''));
-  def(_nav, 'vendor',     'Google Inc.');
-  def(_nav, 'platform',   ${JSON.stringify(navPlatform)});
-  def(_nav, 'productSub', '20030107');
-  def(_nav, 'appName',    'Netscape');
-  def(_nav, 'appCodeName','Mozilla');
-  def(_nav, 'product',    'Gecko');
+  // The webview already gets a clean Chrome UA natively (webContents.setUserAgent),
+  // so these getters are belt-and-suspenders for detectors that read the property
+  // directly. Skipped on TikTok: an OWN-accessor navigator.userAgent (real Chrome
+  // keeps it on the prototype) is itself the tamper signal webmssdk flags.
+  if (!_isTikTok) {
+    def(_nav, 'userAgent',  cleanUA);
+    def(_nav, 'appVersion', cleanUA.replace(/^Mozilla\\//, ''));
+    def(_nav, 'vendor',     'Google Inc.');
+    def(_nav, 'platform',   ${JSON.stringify(navPlatform)});
+    def(_nav, 'productSub', '20030107');
+    def(_nav, 'appName',    'Netscape');
+    def(_nav, 'appCodeName','Mozilla');
+    def(_nav, 'product',    'Gecko');
+  }
 
   // ── webdriver — the #1 signal embedded-browser detection checks ────────────
   // Must appear as if the property doesn't exist at all (not just === undefined).
@@ -113,7 +147,10 @@ function buildGoogleSpoofScript(opts) {
       } catch(e) {}
     }
   } catch(e) {}
-  def(_nav, 'webdriver', false);
+  // Instance-level fallback. Skipped on TikTok: the prototype getter above already
+  // forces false at the location real Chrome uses, so an extra OWN accessor here
+  // would just be another enumeration tell for webmssdk.
+  if (!_isTikTok) def(_nav, 'webdriver', false);
   try { if (document.documentElement) document.documentElement.removeAttribute('webdriver'); } catch(e) {}
 
   // ── Remove Electron traces ────────────────────────────────────────────────
@@ -170,6 +207,9 @@ function buildGoogleSpoofScript(opts) {
   } catch(e) {}
 
   // ── window.chrome (Google checks for this object) ─────────────────────────
+  // Skipped on TikTok: a hand-built chrome.runtime whose methods aren't native
+  // is a tamper tell. Electron's real window.chrome is left untouched there.
+  if (_isTikTok) {} else
   try {
     var cr = _win.chrome || {};
     if (!cr.runtime) {
@@ -192,6 +232,9 @@ function buildGoogleSpoofScript(opts) {
   } catch(e) {}
 
   // ── Plugins (empty plugins list is a red flag) ────────────────────────────
+  // Skipped on TikTok: the synthetic PluginArray differs from a real one under
+  // close inspection. Electron ships the genuine Chromium PDF plugins anyway.
+  if (_isTikTok) {} else
   try {
     if (!_nav.plugins || _nav.plugins.length === 0) {
       var fakePlugins = [
@@ -221,6 +264,11 @@ function buildGoogleSpoofScript(opts) {
   } catch(e) {}
 
   // ── userAgentData / Client Hints ──────────────────────────────────────────
+  // Skipped on TikTok: the main process supplies native client hints via CDP
+  // (Network.setUserAgentOverride + UA_METADATA), so navigator.userAgentData and
+  // getHighEntropyValues() stay native there. A JS override would be a non-native
+  // function — exactly what webmssdk flags.
+  if (_isTikTok) {} else
   try {
     var brands = [
       { brand:'Not_A Brand',   version:'24' },
@@ -271,25 +319,30 @@ function buildGoogleSpoofScript(opts) {
   // navigator.language(s) are intentionally NOT overridden here — they reflect
   // the session's accept-languages (pinned to the device locale in main), so a
   // VPN exit-node region never changes the reported language.
-  try { def(_nav, 'hardwareConcurrency', 8); } catch(e) {}
-  try { def(_nav, 'deviceMemory',        8); } catch(e) {}
-  try { def(_nav, 'maxTouchPoints',      0); } catch(e) {}
-  try { def(_nav, 'cookieEnabled',    true); } catch(e) {}
-  try { def(_nav, 'onLine',           true); } catch(e) {}
-  try { def(_nav, 'doNotTrack',       null); } catch(e) {}
-  try { def(_nav, 'pdfViewerEnabled', true); } catch(e) {}
+  // Skipped on TikTok: forcing these as OWN accessors (real Chrome exposes them
+  // as native prototype getters) is the enumeration tell webmssdk rejects on.
+  // The native values are already plausible, so pristine is safer there.
+  if (!_isTikTok) {
+    try { def(_nav, 'hardwareConcurrency', 8); } catch(e) {}
+    try { def(_nav, 'deviceMemory',        8); } catch(e) {}
+    try { def(_nav, 'maxTouchPoints',      0); } catch(e) {}
+    try { def(_nav, 'cookieEnabled',    true); } catch(e) {}
+    try { def(_nav, 'onLine',           true); } catch(e) {}
+    try { def(_nav, 'doNotTrack',       null); } catch(e) {}
+    try { def(_nav, 'pdfViewerEnabled', true); } catch(e) {}
 
-  // ── Screen properties (TikTok checks these) ───────────────────────────────
-  try {
-    var _screen = window.screen;
-    if (_screen) {
-      // Make sure screen dimensions are realistic
-      def(_screen, 'availWidth',  _screen.width || 1920);
-      def(_screen, 'availHeight', _screen.height || 1080);
-      def(_screen, 'colorDepth',  24);
-      def(_screen, 'pixelDepth',  24);
-    }
-  } catch(e) {}
+    // Screen properties — same own-accessor concern, so skip on TikTok.
+    try {
+      var _screen = window.screen;
+      if (_screen) {
+        // Make sure screen dimensions are realistic
+        def(_screen, 'availWidth',  _screen.width || 1920);
+        def(_screen, 'availHeight', _screen.height || 1080);
+        def(_screen, 'colorDepth',  24);
+        def(_screen, 'pixelDepth',  24);
+      }
+    } catch(e) {}
+  }
 
   // ── Permissions API ───────────────────────────────────────────────────────
   // Skipped on strict-fingerprint hosts (TikTok, Google auth, Snapchat, edu):
@@ -504,8 +557,10 @@ function buildGoogleSpoofScript(opts) {
   // "verify it's you" flow chains passkey + recovery prompts and our
   // synthetic NotAllowedError makes the flow retry in a tight loop, which
   // user-side looks like the Cancel button being spammed.
+  // Also skipped on TikTok (pristine): wrapping navigator.credentials.* and
+  // PublicKeyCredential.* replaces native functions with JS ones, a tamper tell.
   try {
-    if (!_isGoogleAuth && window.PublicKeyCredential) {
+    if (!_isGoogleAuth && !_isTikTok && window.PublicKeyCredential) {
       try {
         Object.defineProperty(PublicKeyCredential, 'isUserVerifyingPlatformAuthenticatorAvailable', {
           value: function() { return Promise.resolve(false); }, configurable: true,
@@ -517,7 +572,7 @@ function buildGoogleSpoofScript(opts) {
         });
       } catch(e) {}
     }
-    if (!_isGoogleAuth && navigator.credentials) {
+    if (!_isGoogleAuth && !_isTikTok && navigator.credentials) {
       var _origCreate = navigator.credentials.create.bind(navigator.credentials);
       var _origGet    = navigator.credentials.get.bind(navigator.credentials);
       var wantsPlatform = function(opts) {

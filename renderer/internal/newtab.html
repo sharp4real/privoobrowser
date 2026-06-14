@@ -1194,17 +1194,17 @@ function applyNtpLook(settings) {
   }
 
   const ql = document.getElementById('quick-links');
-  if (ql) ql.hidden = settings?.ntpShowQuickLinks === false;
+  if (ql) ql.style.display = settings?.ntpShowQuickLinks === false ? 'none' : '';
 
   const logoWrap = document.getElementById('ntp-logo-wrap');
-  if (logoWrap) logoWrap.hidden = settings?.ntpShowLogo === false;
+  if (logoWrap) logoWrap.style.display = settings?.ntpShowLogo === false ? 'none' : '';
 
   const newsEl = document.getElementById('ntp-news');
-  if (newsEl) newsEl.hidden = settings?.ntpShowNews === false;
+  if (newsEl) newsEl.style.display = settings?.ntpShowNews === false ? 'none' : '';
 
   const clockEl = document.getElementById('ntp-clock');
   if (clockEl) {
-    clockEl.hidden = !settings?.ntpShowClock;
+    clockEl.style.display = settings?.ntpShowClock ? '' : 'none';
     if (settings?.ntpShowClock) startNtpClock(); else stopNtpClock();
   }
 
@@ -1247,7 +1247,11 @@ function applyNtpLook(settings) {
       vid.src = "privoo://newtab/wallpaper?v=" + ver;
       vid.load();
     }
-    if (vid) { vid.muted = true; maybePlayVideo(vid); }
+    if (vid) {
+      vid.muted = !(settings.ntpWallpaperSound && _wpSoundUnlocked);
+      maybePlayVideo(vid);
+      if (settings.ntpWallpaperSound && !_wpSoundUnlocked) armWallpaperSound();
+    }
     bg.style.backgroundImage = '';
     const d = typeof settings.ntpWallpaperDim === 'number' ? settings.ntpWallpaperDim : 0.42;
     dim.style.opacity = String(Math.min(0.85, Math.max(0, d)));
@@ -1289,6 +1293,25 @@ function maybePlayVideo(vid) {
     const p = vid.play();
     if (p && p.catch) p.catch(() => {});
   } catch (e) {}
+}
+
+// Browsers block audio until a user gesture, so a live wallpaper starts muted
+// and we unmute it on the first click/keypress (only when the sound option is on).
+let _wpSoundUnlocked = false;
+function armWallpaperSound() {
+  if (_wpSoundUnlocked) return;
+  const unlock = () => {
+    _wpSoundUnlocked = true;
+    document.removeEventListener('pointerdown', unlock, true);
+    document.removeEventListener('keydown', unlock, true);
+    const v = document.getElementById('ntp-bg-video');
+    if (v && document.body.classList.contains('ntp-live') && ntpSettings?.ntpWallpaperSound) {
+      v.muted = false;
+      const p = v.play(); if (p && p.catch) p.catch(() => {});
+    }
+  };
+  document.addEventListener('pointerdown', unlock, true);
+  document.addEventListener('keydown', unlock, true);
 }
 
 // Pause the live wallpaper whenever the new tab isn't visible (you switched

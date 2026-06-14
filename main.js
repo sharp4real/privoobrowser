@@ -408,6 +408,36 @@ function buildSecChUaPlatform() {
 
 const CHROME_UA = buildChromeUA();
 try { app.userAgentFallback = CHROME_UA; } catch { /* older Electron */ }
+
+// Native User-Agent Client Hints. Pushed via CDP (Network.setUserAgentOverride)
+// so navigator.userAgentData and its getHighEntropyValues() stay *native* —
+// no JS getter, no own-accessor on navigator. This is what lets us hand TikTok
+// a pristine environment: Electron's own userAgentData otherwise leaks the app
+// brand ("Privoo"), while a JS override leaks as a non-native function. The CDP
+// route is the only way to report clean Chrome client hints that survive
+// webmssdk's "is this property native?" checks.
+const UA_PLATFORM = process.platform === 'darwin' ? 'macOS' : process.platform === 'linux' ? 'Linux' : 'Windows';
+const UA_PLATFORM_VERSION = process.platform === 'darwin' ? '14.0.0' : process.platform === 'linux' ? '6.5.0' : '15.0.0';
+const UA_METADATA = {
+  brands: [
+    { brand: 'Not_A Brand', version: '24' },
+    { brand: 'Chromium', version: String(CHROME_MAJOR) },
+    { brand: 'Google Chrome', version: String(CHROME_MAJOR) },
+  ],
+  fullVersionList: [
+    { brand: 'Not_A Brand', version: '24.0.0.0' },
+    { brand: 'Chromium', version: CHROME_VERSION_FULL },
+    { brand: 'Google Chrome', version: CHROME_VERSION_FULL },
+  ],
+  fullVersion: CHROME_VERSION_FULL,
+  platform: UA_PLATFORM,
+  platformVersion: UA_PLATFORM_VERSION,
+  architecture: 'x86',
+  model: '',
+  mobile: false,
+  bitness: '64',
+  wow64: false,
+};
 // Built once — depends only on the runtime Chromium version + host platform.
 // Reused for webview guests and OAuth popups so both get spoofed identically.
 const SPOOF_SCRIPT = buildGoogleSpoofScript({
@@ -632,6 +662,22 @@ function hostnameOf(url) {
   try { return new URL(url).hostname; } catch { return ''; }
 }
 
+// ── URL scheme classification (for navigation / window.open routing) ─────────
+// Schemes a webview can actually render or that we handle internally. Anything
+// NOT matching this is some other app's custom protocol.
+const WEB_SCHEME_RE = /^(https?|privoo|about|data|blob|file|chrome|devtools|ws|wss):/i;
+// Mobile-app deep links. TikTok/ByteDance kick these off mid-flow (e.g. during
+// "verify it's really you") to try to hand off to their native app: snssdk1233://
+// is the TikTok app, plus aweme://, musically://, tiktok://, bytedance://, etc.
+// On desktop these can NEVER resolve (no such app), and real desktop Chrome just
+// no-ops them so the page falls back to its in-browser flow. If we instead let
+// the webview navigate to one — or spawn a tab for it — the user dead-ends on an
+// "open this URL in <app>" page and the email-code step then fails. So we swallow
+// them silently. Match is broad on purpose (any snssdk<digits>, any aweme*).
+const MOBILE_DEEPLINK_RE = /^(snssdk\d*|aweme[a-z]*|musical(?:ly)?|tiktok|bytedance|byteh|lark|feishu|helo|vigo|tikcast|trill):/i;
+function isWebScheme(url) { return typeof url === 'string' && WEB_SCHEME_RE.test(url); }
+function isMobileDeepLink(url) { return typeof url === 'string' && MOBILE_DEEPLINK_RE.test(url); }
+
 /**
  * Spotify web-player ad / telemetry endpoints.
  *
@@ -716,8 +762,48 @@ function isSiteCompatibilityHost(hostname) {
     // Google domains — canvas farbling and friends make Google's bot
     // detection bury the user in reCAPTCHAs. Treat Google as a compat host
     // so its pages get the minimal-interference path.
-    h === 'google.com'            || h.endsWith('.google.com')
+    h === 'google.com'            || h.endsWith('.google.com')              ||
+    // TikTok — its login captcha / device-verification calls a swarm of
+    // security + telemetry endpoints. When the ad/tracker engine blocks any of
+    // them the verification keeps failing → "maximum number of attempts
+    // reached". Give TikTok the minimal-interference path so login works.
+    h === 'tiktok.com'            || h.endsWith('.tiktok.com')              ||
+    h === 'tiktokv.com'           || h.endsWith('.tiktokv.com')            ||
+    h === 'tiktokcdn.com'         || h.endsWith('.tiktokcdn.com')          ||
+    h.endsWith('.tiktokcdn-us.com') ||
+    h === 'byteoversea.com'       || h.endsWith('.byteoversea.com')        ||
+    h === 'bytedance.com'         || h.endsWith('.bytedance.com')          ||
+    // ByteDance security-SDK + verification CDNs: ttwstatic.com serves
+    // webmssdk.js (the login signature engine) and ibytedtos.com / ibyteimg.com
+    // host the device-verification + captcha assets. Blocking any of them makes
+    // the email-code step fail with "something went wrong".
+    h.endsWith('.ttwstatic.com')  ||
+    h.endsWith('.ibytedtos.com')  ||
+    h.endsWith('.ibyteimg.com')   ||
+    h.endsWith('.bytescm.com')
   );
+}
+
+/** TikTok / ByteDance family hosts. Their login + verification requests are
+ *  signed (msToken / X-Bogus) and the server cross-checks the request's client
+ *  hints; if any request leaks Electron's UA-CH (e.g. a popup whose CDP override
+ *  hasn't applied yet) the server risk-rejects it with a delayed "maximum number
+ *  of attempts reached". So we force clean Chrome UA + client-hint headers for
+ *  these hosts at the SESSION layer — independent of the spoofUserAgent toggle
+ *  and of any per-webContents CDP timing. */
+function isByteDanceFamilyHost(hostname) {
+  if (!hostname) return false;
+  const h = String(hostname).toLowerCase();
+  return h === 'tiktok.com'        || h.endsWith('.tiktok.com')        ||
+         h === 'tiktokv.com'       || h.endsWith('.tiktokv.com')       ||
+         h === 'tiktokcdn.com'     || h.endsWith('.tiktokcdn.com')     ||
+         h.endsWith('.tiktokcdn-us.com')                               ||
+         h === 'byteoversea.com'   || h.endsWith('.byteoversea.com')   ||
+         h === 'bytedance.com'     || h.endsWith('.bytedance.com')     ||
+         h.endsWith('.ttwstatic.com')                                  ||
+         h.endsWith('.ibytedtos.com')                                  ||
+         h.endsWith('.ibyteimg.com')                                   ||
+         h.endsWith('.bytescm.com');
 }
 
 /** Always spoof UA for these hosts (Google sign-in blocks non-Chrome UAs). */
@@ -764,11 +850,17 @@ function isRelaxedThirdPartyCookieHost(hostname) {
   if (h.endsWith('.windows.net')) return true; // azure storage / sso
   if (h.endsWith('.azure.com')) return true;
   if (h.endsWith('.skype.com')) return true;
-  // TikTok
+  // TikTok / ByteDance (login passport + email/SMS verification bounce through
+  // byteoversea + the *static / *dtos CDNs, so relax those too).
   if (h === 'tiktok.com' || h.endsWith('.tiktok.com')) return true;
   if (h === 'tiktokv.com' || h.endsWith('.tiktokv.com')) return true;
   if (h === 'tiktokcdn.com' || h.endsWith('.tiktokcdn.com')) return true;
+  if (h.endsWith('.tiktokcdn-us.com')) return true;
+  if (h === 'byteoversea.com' || h.endsWith('.byteoversea.com')) return true;
   if (h === 'bytedance.com' || h.endsWith('.bytedance.com')) return true;
+  if (h.endsWith('.ttwstatic.com')) return true;
+  if (h.endsWith('.ibytedtos.com')) return true;
+  if (h.endsWith('.ibyteimg.com')) return true;
   // Meta
   if (h === 'facebook.com' || h.endsWith('.facebook.com')) return true;
   if (h.endsWith('.fbcdn.net')) return true;
@@ -1060,7 +1152,7 @@ function setupHeaderPrivacy(sess) {
     }
 
     const reqHostname = hostnameOf(details.url);
-    if (settings.spoofUserAgent || isGoogleAuthHost(reqHostname)) {
+    if (settings.spoofUserAgent || isGoogleAuthHost(reqHostname) || isByteDanceFamilyHost(reqHostname)) {
       const seenSpoofHeaders = new Set();
       for (const key of Object.keys(headers)) {
         const low = key.toLowerCase();
@@ -1078,10 +1170,12 @@ function setupHeaderPrivacy(sess) {
         else if (low === 'user-agent')                   headers[key] = CHROME_UA;
       }
       if (!seenSpoofHeaders.has('user-agent')) headers['User-Agent'] = CHROME_UA;
-      if (isGoogleAuthHost(reqHostname)) {
+      if (isGoogleAuthHost(reqHostname) || isByteDanceFamilyHost(reqHostname)) {
         if (!seenSpoofHeaders.has('sec-ch-ua')) headers['sec-ch-ua'] = SEC_CH_UA;
         if (!seenSpoofHeaders.has('sec-ch-ua-mobile')) headers['sec-ch-ua-mobile'] = '?0';
         if (!seenSpoofHeaders.has('sec-ch-ua-platform')) headers['sec-ch-ua-platform'] = SEC_CH_UA_PLATFORM;
+        if (!seenSpoofHeaders.has('sec-ch-ua-full-version-list')) headers['sec-ch-ua-full-version-list'] = SEC_CH_UA_FULL_VERSION_LIST;
+        if (!seenSpoofHeaders.has('sec-ch-ua-platform-version')) headers['sec-ch-ua-platform-version'] = SEC_CH_UA_PLATFORM_VERSION;
       }
     }
 
@@ -2116,6 +2210,17 @@ app.on('web-contents-created', (_event, contents) => {
   contents.setWindowOpenHandler(({ url, disposition, features, frameName }) => {
     const host = contents.hostWebContents;
 
+    // Custom (non-web) scheme via window.open() — never spawn a tab for it.
+    // A blank tab pointed at snssdk:// / bytedance:// just dead-ends on an
+    // "open this URL in <app>" screen (the exact thing that was breaking
+    // TikTok's email verification). Mobile-only app links are dropped silently
+    // so the opener page keeps its in-browser fallback; any other app protocol
+    // is handed to the OS.
+    if (!isWebScheme(url)) {
+      if (!isMobileDeepLink(url)) { try { shell.openExternal(url); } catch {} }
+      return { action: 'deny' };
+    }
+
     // Direct download URLs (Overwolf installer, GitHub release .exe, etc.):
     // a window.open() to a Content-Disposition: attachment endpoint, opened in
     // a fresh tab, dies with ERR_FAILED because the new webContents has no
@@ -2133,11 +2238,22 @@ app.on('web-contents-created', (_event, contents) => {
     // no opener and the flow hangs at accounts.google.com/gsi/transform.
     // Detect "real popup" requests and let Electron open them as a child window.
     const feat = String(features || '');
+    // TikTok/ByteDance "verify it's really you" can open its verification page in
+    // a NAMED window (window.open(url, 'someName')) WITHOUT width/height features
+    // and postMessage the result back through window.opener. Without an opener it
+    // reports "something went wrong". So when the opener page is on a ByteDance
+    // host and it targets a named (non-blank) window, treat it as a real popup.
+    // Scoped to those hosts so normal named-tab opens elsewhere are unaffected.
+    let openerHost = '';
+    try { openerHost = hostnameOf(contents.getURL()); } catch {}
+    const isByteHost = /(^|\.)(tiktok\.com|tiktokv\.com|tiktokcdn\.com|byteoversea\.com|bytedance\.com|ibyteimg\.com|ibytedtos\.com)$/i.test(openerHost);
+    const isNamedRef = !!frameName && frameName !== '_blank' && frameName !== '_self' && frameName !== '_top' && frameName !== '_parent';
     const isPopup =
       disposition === 'new-window' ||
       /\bpopup\s*=/i.test(feat) ||
       (/\bwidth\s*=/i.test(feat) && /\bheight\s*=/i.test(feat)) ||
-      frameName === 'oauthwindow' || frameName === 'oauth' || frameName === 'signin';
+      frameName === 'oauthwindow' || frameName === 'oauth' || frameName === 'signin' ||
+      (isByteHost && isNamedRef);
 
     if (isPopup) {
       return {
@@ -2159,7 +2275,11 @@ app.on('web-contents-created', (_event, contents) => {
             sandbox: false,
             session: session.defaultSession,
             preload: OAUTH_PRELOAD,
-            additionalArguments: ['--privoo-cv=' + CHROME_VERSION_FULL],
+            // Tell the preload to force the pristine (no-tampering) spoof when
+            // this popup was opened by a TikTok/ByteDance page — its verification
+            // window runs webmssdk and must look exactly like the main tab.
+            additionalArguments: ['--privoo-cv=' + CHROME_VERSION_FULL]
+              .concat(isByteHost ? ['--privoo-pristine=1'] : []),
           },
         },
       };
@@ -2182,12 +2302,33 @@ app.on('web-contents-created', (_event, contents) => {
       popupWindow.setIcon(resolveIcon());
     } catch {}
     
+    // If THIS popup was opened by a TikTok/ByteDance page, use a pristine-forced
+    // spoof for the CDP/dom-ready fallbacks too (the preload already gets the
+    // --privoo-pristine flag). Belt-and-suspenders: a verification popup must
+    // stay pristine on every injection path or webmssdk re-flags it.
+    let popupSpoof = spoofScript;
+    try {
+      const oh = hostnameOf(contents.getURL());
+      if (/(^|\.)(tiktok\.com|tiktokv\.com|tiktokcdn\.com|tiktokcdn-us\.com|byteoversea\.com|bytedance\.com|ibyteimg\.com|ibytedtos\.com|ttwstatic\.com|bytescm\.com)$/i.test(oh)) {
+        popupSpoof = buildGoogleSpoofScript({
+          chromeVersion: CHROME_VERSION_FULL,
+          platform: process.platform,
+          forcePristine: true,
+        });
+      }
+    } catch {}
+
     try { pc.setUserAgent(CHROME_UA); } catch {}
     try {
       if (!pc.debugger.isAttached()) pc.debugger.attach('1.3');
       pc.debugger.sendCommand('Page.addScriptToEvaluateOnNewDocument', {
-        source: spoofScript,
+        source: popupSpoof,
         runImmediately: true,
+      }).catch(() => {});
+      pc.debugger.sendCommand('Network.setUserAgentOverride', {
+        userAgent: CHROME_UA,
+        acceptLanguage: preferredLanguageList().join(','),
+        userAgentMetadata: UA_METADATA,
       }).catch(() => {});
     } catch { /* ignore — fallback below */ }
     // Fallback main-world injection at dom-ready in case CDP attach failed.
@@ -2198,7 +2339,7 @@ app.on('web-contents-created', (_event, contents) => {
       if (pc.isDestroyed()) return;
       const u = (() => { try { return pc.getURL(); } catch { return ''; } })();
       if (!u || u.startsWith('privoo://') || u.startsWith('about:')) return;
-      Promise.resolve(pc.executeJavaScript(spoofScript, true)).catch(() => {});
+      Promise.resolve(pc.executeJavaScript(popupSpoof, true)).catch(() => {});
     };
     pc.on('dom-ready', onDomReady);
 
@@ -2216,6 +2357,11 @@ app.on('web-contents-created', (_event, contents) => {
     // further popup from the auth window. Allow those as real windows too so
     // window.opener still works at every level of the chain.
     pc.setWindowOpenHandler(({ url, disposition, features, frameName }) => {
+      // Custom (non-web) scheme — drop mobile app links, hand the rest to the OS.
+      if (!isWebScheme(url)) {
+        if (!isMobileDeepLink(url)) { try { shell.openExternal(url); } catch {} }
+        return { action: 'deny' };
+      }
       const feat = String(features || '');
       const isPopup =
         disposition === 'new-window' ||
@@ -2397,6 +2543,12 @@ app.on('web-contents-created', (_event, contents) => {
         source: spoofScript,
         runImmediately: true,
       }).catch(() => { /* command may fail on internal pages */ });
+      // Native client hints — keeps navigator.userAgentData native (see UA_METADATA).
+      contents.debugger.sendCommand('Network.setUserAgentOverride', {
+        userAgent: CHROME_UA,
+        acceptLanguage: preferredLanguageList().join(','),
+        userAgentMetadata: UA_METADATA,
+      }).catch(() => {});
       contents.debugger.sendCommand('Page.addScriptToEvaluateOnNewDocument', {
         source: ytAdScript,
         runImmediately: true,
@@ -2536,6 +2688,18 @@ app.on('web-contents-created', (_event, contents) => {
     // Don't intercept internal pages
     if (url.startsWith('privoo://')) return;
 
+    // ── Custom (non-web) schemes ───────────────────────────────────────────
+    // A page driving the top frame to snssdk://, bytedance://, zoommtg://, etc.
+    // Cancel the navigation (a webview can't render these and would dead-end),
+    // then route it: mobile-only app links are dropped silently so flows like
+    // TikTok's email verification keep going in-page; any other app protocol is
+    // handed to the OS, mirroring Chrome's "open external app?" behaviour.
+    if (!isWebScheme(url)) {
+      event.preventDefault();
+      if (!isMobileDeepLink(url)) { try { shell.openExternal(url); } catch {} }
+      return;
+    }
+
     const s = settingsStore.load();
     const h = hostnameOf(url);
     const local = h === 'localhost' || h === '127.0.0.1' || h === '::1' || h.endsWith('.local');
@@ -2562,6 +2726,22 @@ app.on('web-contents-created', (_event, contents) => {
       : `privoo://insecure/?url=${encodeURIComponent(url)}`;
     contents.loadURL(target).catch(() => {});
   });
+
+  // will-navigate only fires for the TOP frame. TikTok's "verify it's really
+  // you" security widget runs inside an iframe and fires its app-handoff
+  // navigation (snssdk://, bytedance://…) from there, so guard subframes too.
+  // Wrapped defensively: the event shape differs slightly across Electron
+  // versions, and will-frame-navigate is absent on very old ones.
+  try {
+    contents.on('will-frame-navigate', (e) => {
+      try {
+        const u = e && e.url;
+        if (!u || isWebScheme(u)) return;
+        e.preventDefault();
+        if (!isMobileDeepLink(u)) { try { shell.openExternal(u); } catch {} }
+      } catch {}
+    });
+  } catch {}
 });
 
 // Hostnames the user has explicitly allowed plain-http navigation for in this

@@ -197,6 +197,7 @@ const DEFAULTS = {
   vtabsSearchPopup: true,   // show the Spotlight-style search overlay on New Tab in vtabs mode (off = open a normal new tab page)
   searchPopupGlass: true,   // apply the transparency/glass effect to the vtabs search popup
   ntpWallpaperFullBrowser: false, // stretch the new-tab wallpaper behind the whole browser chrome (toolbar + tab strip)
+  ntpWallpaperSound: false, // play the audio of a live (video) wallpaper (unmutes after first interaction)
   ntpWaveEnabled: false,  // animated colour-theme gradient as the new-tab background (takes precedence over wallpaper)
   ntpWaveColors: ['#7c5cff', '#b14bff', '#ff5c9e', '#4bc5ff'], // 4-colour palette for the wave background
   ntpWaveAnimate: true,   // whether the theme background slowly animates (off = static)
@@ -210,6 +211,10 @@ const DEFAULTS = {
   searchBarStyle: '',     // address-bar appearance: classic | soft | pill | square ('' = derive from newSearchBarStyle)
   tabStyle: 'classic',    // tab strip appearance: classic | pill | underline | chrome | modern
   newTabBtnCircle: false, // draw a circle around the new-tab "+" button
+  syncDiscordTheme: true,  // recolor discord.com to match Privoo's accent + theme palette
+  uiFont: 'system',       // interface font: system | rounded | classic | grotesk | mono | dyslexic
+  uiRoundness: 'default', // corner style of the whole UI: default | sharp | round
+  customChromeCss: '',    // power-user: raw CSS injected into the browser chrome
   sidebarLinks: [],
   ghostName: '',          // user-supplied name for the Privoo mascot
   accentColor: '',        // empty = use stylesheet default (light blue)
