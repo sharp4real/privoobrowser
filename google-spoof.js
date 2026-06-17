@@ -117,11 +117,14 @@ function buildGoogleSpoofScript(opts) {
     else if (plat.indexOf('Win') !== -1)   cleanUA = ${JSON.stringify(winUA)};
   } catch(e) {}
 
-  // The webview already gets a clean Chrome UA natively (webContents.setUserAgent),
-  // so these getters are belt-and-suspenders for detectors that read the property
-  // directly. Skipped on TikTok: an OWN-accessor navigator.userAgent (real Chrome
-  // keeps it on the prototype) is itself the tamper signal webmssdk flags.
-  if (!_isTikTok) {
+  // The webview already gets a clean Chrome UA natively (webContents.setUserAgent
+  // + CDP Network.setUserAgentOverride), so these getters are belt-and-suspenders
+  // for detectors that read the property directly. Skipped on TikTok AND Google
+  // auth: an OWN-accessor navigator.userAgent (real Chrome keeps it on the
+  // prototype) is itself a tamper signal — webmssdk flags it, and Google's
+  // current "this browser may not be secure" check flags it too. Both already
+  // receive a native clean UA out-of-band, so nothing is lost.
+  if (!_isTikTok && !_isGoogleAuth) {
     def(_nav, 'userAgent',  cleanUA);
     def(_nav, 'appVersion', cleanUA.replace(/^Mozilla\\//, ''));
     def(_nav, 'vendor',     'Google Inc.');
@@ -147,10 +150,10 @@ function buildGoogleSpoofScript(opts) {
       } catch(e) {}
     }
   } catch(e) {}
-  // Instance-level fallback. Skipped on TikTok: the prototype getter above already
-  // forces false at the location real Chrome uses, so an extra OWN accessor here
-  // would just be another enumeration tell for webmssdk.
-  if (!_isTikTok) def(_nav, 'webdriver', false);
+  // Instance-level fallback. Skipped on TikTok AND Google auth: the prototype
+  // getter above already forces false at the location real Chrome uses, so an
+  // extra OWN accessor here would just be another enumeration tell.
+  if (!_isTikTok && !_isGoogleAuth) def(_nav, 'webdriver', false);
   try { if (document.documentElement) document.documentElement.removeAttribute('webdriver'); } catch(e) {}
 
   // ── Remove Electron traces ────────────────────────────────────────────────
@@ -264,11 +267,13 @@ function buildGoogleSpoofScript(opts) {
   } catch(e) {}
 
   // ── userAgentData / Client Hints ──────────────────────────────────────────
-  // Skipped on TikTok: the main process supplies native client hints via CDP
-  // (Network.setUserAgentOverride + UA_METADATA), so navigator.userAgentData and
-  // getHighEntropyValues() stay native there. A JS override would be a non-native
-  // function — exactly what webmssdk flags.
-  if (_isTikTok) {} else
+  // Skipped on TikTok AND Google auth: the main process supplies native client
+  // hints via CDP (Network.setUserAgentOverride + UA_METADATA) for every webview
+  // and OAuth popup, so navigator.userAgentData and getHighEntropyValues() stay
+  // native. A JS override here replaces them with a non-native function whose
+  // .toString() isn't "[native code]" — exactly the tamper signal that webmssdk
+  // and Google's "this browser may not be secure" check look for.
+  if (_isTikTok || _isGoogleAuth) {} else
   try {
     var brands = [
       { brand:'Not_A Brand',   version:'24' },
@@ -319,10 +324,11 @@ function buildGoogleSpoofScript(opts) {
   // navigator.language(s) are intentionally NOT overridden here — they reflect
   // the session's accept-languages (pinned to the device locale in main), so a
   // VPN exit-node region never changes the reported language.
-  // Skipped on TikTok: forcing these as OWN accessors (real Chrome exposes them
-  // as native prototype getters) is the enumeration tell webmssdk rejects on.
-  // The native values are already plausible, so pristine is safer there.
-  if (!_isTikTok) {
+  // Skipped on TikTok AND Google auth: forcing these as OWN accessors (real
+  // Chrome exposes them as native prototype getters) is an enumeration tell that
+  // both webmssdk and Google's secure-browser check reject on. Electron's native
+  // values are already plausible, so pristine is safer there.
+  if (!_isTikTok && !_isGoogleAuth) {
     try { def(_nav, 'hardwareConcurrency', 8); } catch(e) {}
     try { def(_nav, 'deviceMemory',        8); } catch(e) {}
     try { def(_nav, 'maxTouchPoints',      0); } catch(e) {}
