@@ -812,6 +812,9 @@ body.has-vibe.vibe-edge::after {
   62%  { opacity: .86; }
   100% { opacity: .72; }
 }
+/* "Keep vibe off web pages" — drop the full-window ambient overlay (which is
+   what tints the page area) but keep all the chrome-surface tinting below. */
+body.has-vibe.vibe-chrome-only::after { content: none; }
 /* ── Vibe chrome tinting — applies the hue directly to the UI surfaces ───────
    background-image layers sit on top of the element's background-color so
    the solid toolbar fill stays intact while a coloured gradient washes over
@@ -5818,6 +5821,21 @@ body.transparent-ui .sp-sug-item:hover { background: rgba(0, 0, 0, .06); }
 body.transparent-ui.dark .sp-sug-item:hover { background: rgba(255, 255, 255, .08); }
 
 body.has-vibe .search-popup-card { background-image: none !important; }
+
+/* User turned ON "Transparent search popup" — give the popup a frosted-glass
+   look even when global Increase Transparency is OFF. (When global transparency
+   is on, the body.transparent-ui rules above already cover this.) */
+body.sp-glass .search-popup { background: rgba(8, 10, 15, .32); }
+body.sp-glass .search-popup-card {
+  background: rgba(250, 250, 252, .82);
+  backdrop-filter: blur(21px) saturate(180%);
+  -webkit-backdrop-filter: blur(21px) saturate(180%);
+}
+body.sp-glass.dark .search-popup-card { background: rgba(32, 34, 40, .84); }
+body.sp-glass .search-popup-suggestions { border-top-color: rgba(0, 0, 0, .1); }
+body.sp-glass.dark .search-popup-suggestions { border-top-color: rgba(255, 255, 255, .12); }
+body.sp-glass .sp-sug-item:hover { background: rgba(0, 0, 0, .06); }
+body.sp-glass.dark .sp-sug-item:hover { background: rgba(255, 255, 255, .08); }
 
 /* User opted out of glass on the search popup — keep it solid even when the
    rest of the UI is translucent. */

@@ -7,26 +7,33 @@ A privacy-first web browser built with Electron, featuring comprehensive ad bloc
 ## 🚀 Features
 
 ### Privacy & Security
-- **Ad & Tracker Blocking** - EasyList, EasyPrivacy, and uBlock Origin lists
+- **Ad & Tracker Blocking** - EasyList, EasyPrivacy, and uBlock Origin lists out of the box
+- **Custom Filter Lists** - Add your own filter list URLs, or toggle the built-in default lists on/off, right from Settings → Privacy
 - **Force HTTPS** - Automatic HTTP to HTTPS upgrades
 - **Third-Party Cookie Blocking** - Prevents cross-site tracking
-- **DNS-over-HTTPS** - Encrypted DNS lookups via Cloudflare
+- **DNS-over-HTTPS** - Strict encrypted DNS lookups (Cloudflare, AdGuard, Quad9, NextDNS, Google, or a custom resolver)
+- **Family / 18+ Filtering** - Optional adult-content blocking at the DNS and navigation layers
 - **User-Agent Spoofing** - Reduces browser fingerprinting
 - **Canvas Fingerprint Protection** - Adds noise to canvas data
 - **WebRTC IP Leak Protection** - Prevents local IP exposure
-- **Do Not Track** - Sends DNT header with requests
+- **Do Not Track & Global Privacy Control** - Sends privacy signals with requests
+- **Stronger Tracking Protection** - Strips tracking URL params (utm_*, fbclid, …) and minimises the Referer header
+- **Proxy / Tor** - Route all traffic through a manual proxy or a bundled Tor circuit
+- **Profiles & Guest Mode** - Separate, isolated browsing identities plus a no-history guest session
 
 ### Browsing Features
 - **Tabbed Browsing** - Full tab management with drag-to-reorder and tab groups
 - **Vertical Tabs** - Collapsible left side panel; resize it, collapse to an icon rail, integrate the toolbar icons into it, or open a Spotlight-style search popup on new tab
 - **Split View** - Two pages side by side with a draggable divider — **drag a tab onto the left or right half of the page** to split instantly
-- **Smart Address Bar** - Combined search and URL input, with an optional modern style
+- **Privoo AI** - Built-in AI assistant (inline side panel or full window) backed by your own key — Anthropic, OpenAI, DeepSeek, Gemini, or a local Ollama model. Includes a chat-history sidebar.
+- **Smart Address Bar** - Combined search and URL input, with optional modern styles (soft, pill, square)
 - **Search Suggestions** - Real-time suggestions from multiple engines
 - **Reader Mode, Focus Mode & Mobile View** - Strip the clutter, hide the chrome, or emulate a phone
 - **Picture-in-Picture & Media Controls** - Pop out video and control playback from the toolbar
 - **Media Download (yt-dlp)** - Save video/audio when available
 - **Download Manager** - Track and manage downloads
 - **History & Bookmarks** - Full browsing history with search, plus a bookmarks bar
+- **Password Manager** - Encrypted local vault with autofill
 - **Extensions** - Extension management system (foundation)
 - **Keyboard Shortcuts** - Comprehensive keyboard navigation
 
@@ -35,17 +42,20 @@ A privacy-first web browser built with Electron, featuring comprehensive ad bloc
 - **Quick Links** - Customizable shortcuts with favicons
 - **Search Bar** - Instant search with suggestions (with a focused-search animation)
 - **Privoo News** - What's new in each release, right on the new tab
-- **Weather & Wallpaper** - Optional weather widget and custom wallpaper
+- **Weather & Wallpaper** - Optional weather widget and custom wallpaper (image or live video)
+- **Scenic Themes** - Curated animated backgrounds with optional looped soundscapes
 - **Privacy Stats** - Real-time blocked content counter
 
 ### Customization
 - **Dark Mode** - System-wide dark filter
-- **Transparency / Glassmorphism** - Translucent, lightly-blurred chrome that shows your desktop through
-- **Vibe & Accent Color** - Color-washed UI and a custom accent
-- **New Search Bar Style** - A sleeker, modern address bar (toolbar + new tab)
+- **Transparency / Glassmorphism** - Translucent, lightly-blurred chrome (Mica/Acrylic on Windows, vibrancy on macOS), with Frosted, Liquid Glass, Acrylic and Clear styles
+- **Your Vibe** - Ambient hue gradient washed across the UI, with an option to keep it off web pages
+- **Accent Color & UI Theming** - Custom accent, interface font, corner roundness, and raw custom-CSS injection for power users
+- **Address Bar & Tab Styles** - Multiple address-bar and tab-strip appearances
 - **Font Scaling & Compact Mode** - Tune UI density
-- **Search Engine Choice** - Google, Bing, DuckDuckGo, Brave, and more
+- **Search Engine Choice** - Google, Bing, DuckDuckGo, Brave, Startpage, Ecosia, Qwant, Yandex, Kagi, or a custom engine
 - **Download Location** - Custom download folder
+- **Discord Rich Presence & Theme Sync** - Optional presence and matching Discord colors
 - **Appearance Options** - Home button, bookmarks bar, sidebar layout toggles
 
 ## 📦 Installation
@@ -63,7 +73,7 @@ npm install
 npm start
 
 # Build for production
-npm run build
+npm run dist
 ```
 
 ## 🎯 Usage
@@ -107,22 +117,32 @@ npm run build
 ### Project Structure
 ```
 privoo/
-├── main.js                 # Main process (Electron)
-├── preload.js             # Preload script (IPC bridge)
-├── webview-preload.js     # Webview preload
-├── settings-store.js      # Settings persistence
-├── history-store.js       # History database
-├── download-store.js      # Download tracking
-├── blocklist.js           # Ad/tracker blocklist
+├── main.js                 # Main process (Electron) — windows, IPC, ad blocking, protocol
+├── preload.js              # Preload script (IPC bridge → window.privoo)
+├── webview-preload.js      # Internal-page preload (window.privooInternal)
+├── settings-store.js       # Settings persistence + defaults
+├── profile-store.js        # Browser profiles
+├── session-store.js        # Tab session save/restore
+├── history-store.js        # History database
+├── download-store.js       # Download tracking
+├── password-store.js       # Encrypted password vault
+├── password-autofill.js    # Page autofill
+├── ai.js                   # Privoo AI backend (provider proxy + key encryption)
+├── ytdlp.js                # yt-dlp media download
+├── discord-rpc.js          # Discord Rich Presence
+├── google-auth.js          # Google sign-in helpers
+├── blocklist.js            # Built-in fallback host blocklist
 ├── renderer/
-│   ├── index.html         # Main browser UI
-│   ├── renderer.js        # Renderer process logic
-│   ├── styles.css         # Browser UI styles
+│   ├── index.html          # Main browser UI shell
+│   ├── renderer.js         # Renderer process logic (tabs, AI panel, UI events)
+│   ├── styles.css          # Browser UI styles
 │   └── internal/
-│       ├── newtab.html    # New tab page
-│       ├── settings.html  # Settings page
-│       ├── downloads.html # Downloads manager
-│       ├── history.html   # History viewer
+│       ├── newtab.html     # New tab page
+│       ├── settings.html   # Settings page
+│       ├── ai.html         # Privoo AI full page / window
+│       ├── downloads.html  # Downloads manager
+│       ├── history.html    # History viewer
+│       ├── bookmarks.html  # Bookmarks page
 │       └── extensions.html # Extensions manager
 └── package.json
 ```
@@ -140,25 +160,28 @@ Settings are stored in:
 - **macOS**: `~/Library/Application Support/privoo/privoo-settings.json`
 - **Linux**: `~/.config/privoo/privoo-settings.json`
 
-### Default Settings
+### Default Settings (selected)
 ```json
 {
-  "searchEngine": "google",
+  "searchEngine": "brave",
   "adBlocking": true,
   "httpsUpgrade": true,
   "blockThirdPartyCookies": true,
   "dnsOverHttps": true,
+  "dohProvider": "cloudflare",
   "spoofUserAgent": true,
   "canvasSpoofing": true,
   "webrtcProtection": true,
-  "darkMode": false
+  "doNotTrack": true,
+  "darkMode": false,
+  "autoUpdates": true
 }
 ```
 
 ## 🛡️ Privacy Features Explained
 
 ### Ad & Tracker Blocking
-Uses industry-standard filter lists to block ads, trackers, and malicious content before they load.
+Uses industry-standard filter lists (EasyList, EasyPrivacy, uBlock Origin) to block ads, trackers, and malicious content before they load. You can add your own filter list URLs or disable individual default lists in **Settings → Privacy → Filter lists** (changes apply on the next launch).
 
 ### HTTPS Upgrades
 Automatically attempts to upgrade insecure HTTP connections to HTTPS, protecting your data in transit.
@@ -182,6 +205,12 @@ Choose from:
 - Bing
 - DuckDuckGo
 - Brave Search
+- Startpage
+- Ecosia
+- Qwant
+- Yandex
+- Kagi
+- Custom (your own search URL)
 
 ### Quick Links
 Add custom shortcuts to your new tab page:
@@ -222,10 +251,10 @@ npm test
 ### Building
 ```bash
 # Build for current platform
-npm run build
+npm run dist
 
 # Build for all platforms
-npm run build:all
+npm run dist:all
 ```
 
 ### Debug Mode
@@ -261,10 +290,13 @@ MIT License - see LICENSE file for details
 
 ## 🗺️ Roadmap
 
-- [ ] Creating multiple browser profiles
+- [x] Multiple browser profiles + Guest mode
 - [x] Reader mode
 - [x] Vertical tabs
 - [x] Split view
+- [x] Built-in AI assistant
+- [x] Custom filter lists
+- [ ] Full extension (CRX) support
 
 ---
 

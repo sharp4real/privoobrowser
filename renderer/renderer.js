@@ -439,6 +439,9 @@ function applyAppSettings() {
   document.body.classList.toggle('aero-ui', !!settings.aeroGradient);
   document.body.classList.toggle('ui-compact', !!settings.compactMode);
   document.body.classList.toggle('has-vibe', !!settings.vibeEnabled);
+  // Confine the ambient vibe gradient to the chrome when the user doesn't want
+  // it bleeding over web pages (chrome surface tinting stays regardless).
+  document.body.classList.toggle('vibe-chrome-only', settings.vibeOverPages === false);
   // Themed mode (a colour Theme is active) — extends the Vibe chrome tint up to
   // the tab strip so the whole browser shifts with the theme.
   document.body.classList.toggle('themed', !!settings.ntpWaveEnabled);
@@ -502,6 +505,9 @@ function applyAppSettings() {
   document.body.classList.toggle('new-search-bar', _sbs === 'soft');
   document.body.classList.remove('search-pill', 'search-square');
   if (_sbs === 'pill' || _sbs === 'square') document.body.classList.add('search-' + _sbs);
+  // Search popup glass: `sp-glass` opts the popup INTO a translucent look even
+  // when the rest of the UI isn't transparent; `sp-no-glass` forces it solid.
+  document.body.classList.toggle('sp-glass', settings.searchPopupGlass !== false);
   document.body.classList.toggle('sp-no-glass', settings.searchPopupGlass === false);
   // Tab strip style (classic = default, no class).
   document.body.classList.remove('tabs-pill', 'tabs-underline', 'tabs-chrome', 'tabs-modern');
@@ -7023,9 +7029,10 @@ const AI_MODELS = {
     { id: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo — cheapest' },
   ],
   deepseek: [
-    { id: 'deepseek-chat',     label: 'DeepSeek V3 — general chat (recommended)' },
-    { id: 'deepseek-v4',       label: 'DeepSeek V4 — latest' },
-    { id: 'deepseek-reasoner', label: 'DeepSeek R1 — step-by-step reasoning' },
+    { id: 'deepseek-chat',       label: 'DeepSeek V3 — general chat (recommended)' },
+    { id: 'deepseek-v4-flash',   label: 'DeepSeek V4 Flash — fast & low cost' },
+    { id: 'deepseek-v4-pro',     label: 'DeepSeek V4 Pro — most capable' },
+    { id: 'deepseek-reasoner',   label: 'DeepSeek R1 — step-by-step reasoning' },
   ],
   gemini: [
     { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash — fast (recommended)' },

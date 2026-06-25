@@ -96,9 +96,15 @@ function getConfig() {
   for (const p of VALID_PROVIDERS) {
     hasKeyFor[p] = p === 'ollama' ? true : !!(keys[p] && decrypt(keys[p]));
   }
+  // Migrate retired model ids to their current replacement so saved configs
+  // don't keep sending an invalid name to the provider.
+  const RETIRED_MODELS = { 'deepseek-v4': 'deepseek-v4-flash' };
+  let model = models[provider] || DEFAULT_MODELS[provider] || DEFAULTS.model;
+  if (RETIRED_MODELS[model]) model = RETIRED_MODELS[model];
+
   return {
     provider,
-    model: models[provider] || DEFAULT_MODELS[provider] || DEFAULTS.model,
+    model,
     hasKey: !!hasKeyFor[provider],
     hasKeyFor,
     accepted: !!raw.accepted,        // disclaimer accepted

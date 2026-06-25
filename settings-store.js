@@ -76,6 +76,21 @@ const DOH_PROVIDERS = {
   },
 };
 
+/**
+ * Built-in ad/tracker filter lists. Each can be toggled on/off individually in
+ * Settings → Privacy. When ALL of these are enabled and the user hasn't added
+ * any custom lists, the ad blocker uses Ghostery's prebuilt (well-tuned)
+ * ads+tracking bundle. As soon as the user disables one or adds a custom list,
+ * the engine is rebuilt from the explicit set of enabled list URLs below.
+ */
+const FILTER_LISTS = [
+  { id: 'easylist',    name: 'EasyList',                    desc: 'The primary ad-blocking filter list.',            url: 'https://easylist.to/easylist/easylist.txt' },
+  { id: 'easyprivacy', name: 'EasyPrivacy',                 desc: 'Blocks tracking scripts and analytics.',          url: 'https://easylist.to/easylist/easyprivacy.txt' },
+  { id: 'ubo-filters', name: 'uBlock Origin filters',       desc: "uBO's own extra ad + privacy coverage.",          url: 'https://ublockorigin.github.io/uAssets/filters/filters.txt' },
+  { id: 'ubo-badware', name: 'uBlock Origin — badware risks', desc: 'Blocks sites known to host malware/scams.',     url: 'https://ublockorigin.github.io/uAssets/filters/badware.txt' },
+  { id: 'plowe',       name: "Peter Lowe's Ad/Tracking list", desc: 'Long-standing ad + tracking server blocklist.', url: 'https://pgl.yoyo.org/adservers/serverlist.php?hostformat=adblockplus&showintro=0&mimetype=plaintext' },
+];
+
 const DEFAULTS = {
   // System
   // When true (default), closing the main window hides it to the system
@@ -138,6 +153,9 @@ const DEFAULTS = {
   vibeEnabled: false,
   vibeHue: 210,    // 210 = Ocean blue default
   vibeStyle: 'glow',
+  // When false, the ambient vibe gradient is confined to the browser chrome
+  // and never bleeds over the web page area. The chrome tinting stays either way.
+  vibeOverPages: true,
   fontSizeScale: 1,        // 1 = default, 0.9 = small, 1.2 = large
   showBookmarksBar: false,
   showHomeButton: false,
@@ -226,6 +244,7 @@ const DEFAULTS = {
   updatesToastShown: false,
   discordPromptShown: false,
   thankYouShown: false,    // one-time "Thank you for using Privoo" popup
+  androidPromptShown: false, // one-time "Privoo for Android coming soon" popup (v3.0.9 only)
   britainShown: false,     // one-time "Made with care in Britain" popup
   siteVisitCount: 0,       // running count of real website visits — paces one-time popups
   popupVisitMark: 0,       // siteVisitCount when the last one-time popup was released
@@ -258,6 +277,13 @@ const DEFAULTS = {
 
   // Per-site ad-blocking exclusions — domains where the ad blocker is paused.
   adBlockExcludedDomains: [],
+
+  // Filter lists. `defaultFilterLists` maps each built-in list id (see
+  // FILTER_LISTS) to whether it's enabled — absent/undefined means enabled.
+  // `customFilterLists` holds user-added lists: { name, url, enabled }.
+  // Changes take effect on the next launch (the engine is built once).
+  defaultFilterLists: {},
+  customFilterLists: [],
 
   // Low-end device mode — disables heavy GPU rasterization paths and CSS
   // transitions/animations so the browser stays responsive on weaker hardware.
@@ -318,4 +344,4 @@ function save(patch) {
   return cache;
 }
 
-module.exports = { load, save, SEARCH_ENGINES, DOH_PROVIDERS, DEFAULTS };
+module.exports = { load, save, SEARCH_ENGINES, DOH_PROVIDERS, FILTER_LISTS, DEFAULTS };

@@ -975,12 +975,46 @@ const _YT_EXTRA_FILTERS = [
   'youtube.com##ytd-popup-container:has(ytd-mealbar-promo-renderer)',
 ];
 
+// Resolve the user's filter-list configuration into the set of list URLs the
+// engine should be built from. Returns { usePrebuilt, urls }:
+//   • usePrebuilt — true when every built-in list is enabled AND no custom
+//     lists exist, so we can use Ghostery's well-tuned prebuilt bundle.
+//   • urls — the explicit list of enabled list URLs (built-in + custom) used
+//     when the user has customised their lists.
+function resolveFilterLists() {
+  const settings = settingsStore.load();
+  const { FILTER_LISTS } = settingsStore;
+  const toggles = settings.defaultFilterLists || {};
+  const customs = Array.isArray(settings.customFilterLists) ? settings.customFilterLists : [];
+
+  const enabledDefaults = FILTER_LISTS.filter((l) => toggles[l.id] !== false);
+  const enabledCustoms = customs.filter((c) => c && c.enabled !== false && /^https?:\/\//i.test(c.url || ''));
+
+  const allDefaultsOn = enabledDefaults.length === FILTER_LISTS.length;
+  const usePrebuilt = allDefaultsOn && enabledCustoms.length === 0;
+
+  const urls = [
+    ...enabledDefaults.map((l) => l.url),
+    ...enabledCustoms.map((c) => c.url.trim()),
+  ];
+  return { usePrebuilt, urls };
+}
+
 async function getSharedBlocker() {
   if (_sharedBlocker) return _sharedBlocker;
   if (_sharedBlockerPromise) return _sharedBlockerPromise;
   _sharedBlockerPromise = (async () => {
     const { ElectronBlocker } = require('@ghostery/adblocker-electron');
-    const cachePath = path.join(app.getPath('userData'), 'adblock-engine-v2.bin');
+    const crypto = require('crypto');
+    const { usePrebuilt, urls } = resolveFilterLists();
+
+    // Cache file: the prebuilt bundle has a stable name; a custom list set is
+    // keyed by a hash of its URLs so changing the lists invalidates the cache
+    // automatically (and offline launches still work from the last good cache).
+    const cacheName = usePrebuilt
+      ? 'adblock-engine-v2.bin'
+      : 'adblock-lists-' + crypto.createHash('sha1').update(urls.join('|')).digest('hex').slice(0, 12) + '.bin';
+    const cachePath = path.join(app.getPath('userData'), cacheName);
 
     // Refresh filter lists every 7 days so YouTube anti-adblock bypass rules
     // stay current. Without this, a stale cache can miss rules that were
@@ -993,13 +1027,25 @@ async function getSharedBlocker() {
       }
     } catch { /* cache doesn't exist yet — that's fine */ }
 
-    const blocker = await ElectronBlocker.fromPrebuiltAdsAndTracking(fetch, {
+    const caching = {
       path: cachePath,
       read: fs.promises.readFile,
       write: fs.promises.writeFile,
-    });
+    };
+    let blocker;
+    if (usePrebuilt) {
+      blocker = await ElectronBlocker.fromPrebuiltAdsAndTracking(fetch, caching);
+    } else if (urls.length) {
+      // User customised their lists — build straight from the enabled URLs.
+      console.log('Privoo: building adblock engine from', urls.length, 'custom filter list(s)');
+      blocker = await ElectronBlocker.fromLists(fetch, urls, {}, caching);
+    } else {
+      // Everything disabled — an empty engine that blocks nothing, so the
+      // 18+/compat wrapper below still functions without the user's lists.
+      blocker = ElectronBlocker.empty();
+    }
 
-    // Apply YouTube-specific rules on top of the prebuilt lists every launch.
+    // Apply YouTube-specific rules on top of the lists every launch.
     try { blocker.updateFromDiff({ added: _YT_EXTRA_FILTERS }); } catch {}
 
     blocker.on('request-blocked',    () => { stats.blockedAds++; });

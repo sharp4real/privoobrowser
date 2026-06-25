@@ -68,7 +68,55 @@ body{
 .tb-btn.close:hover{background:#e0443b;color:#fff}
 .tb-btn svg{width:15px;height:15px;fill:currentColor}
 
-main{flex:1;display:flex;flex-direction:column;min-height:0}
+/* ── Two-pane workspace: chat-history sidebar | chat column ── */
+.workspace{flex:1;display:flex;min-height:0;min-width:0}
+main{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0}
+
+.side{
+  width:230px;flex-shrink:0;display:flex;flex-direction:column;min-height:0;
+  background:var(--surface);border-right:1px solid var(--border);
+  transition:width .16s ease;
+}
+.side.collapsed{width:0;border-right:none;overflow:hidden}
+.side-new{
+  margin:12px 12px 8px;height:38px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  border:1px solid var(--border);border-radius:10px;
+  background:var(--surface-2);color:var(--text);
+  font-size:12.5px;font-weight:600;font-family:inherit;cursor:default;white-space:nowrap;
+}
+.side-new:hover{background:var(--border);border-color:var(--accent)}
+.side-new svg{width:15px;height:15px;fill:currentColor;flex-shrink:0}
+.side-label{
+  padding:6px 16px 4px;font-size:10px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--muted);white-space:nowrap;
+}
+.hist{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 8px 12px;scrollbar-width:thin}
+.hist::-webkit-scrollbar{width:9px}
+.hist::-webkit-scrollbar-thumb{background:var(--border);border-radius:5px;border:3px solid transparent;background-clip:padding-box}
+.hist-empty{padding:12px 12px;font-size:12px;color:var(--muted);line-height:1.5}
+.hist-item{display:flex;align-items:center;border-radius:9px;margin-bottom:2px}
+.hist-item:hover{background:var(--surface-2)}
+.hist-item.active{background:var(--accent-soft)}
+.hist-open{
+  flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;
+  border:none;background:transparent;text-align:left;padding:8px 11px;
+  cursor:default;font-family:inherit;
+}
+.hist-title{font-size:12.5px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hist-item.active .hist-title{color:var(--accent);font-weight:600}
+.hist-time{font-size:10.5px;color:var(--muted)}
+.hist-del{
+  width:28px;height:28px;flex-shrink:0;border:none;background:transparent;color:var(--muted);
+  border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:default;
+  opacity:0;transition:opacity .1s;
+}
+.hist-item:hover .hist-del{opacity:1}
+.hist-del:hover{background:rgba(217,48,37,.14);color:var(--danger)}
+.hist-del svg{width:13px;height:13px;fill:currentColor}
+
+body.transparent-ui .side{background:rgba(255,255,255,.40);backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%)}
+body.transparent-ui.dark .side{background:rgba(40,41,45,.42)}
 
 /* ── Status strip ── */
 .bar{
@@ -370,6 +418,9 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
 </head>
 <body>
 <div class="titlebar">
+  <button class="tb-btn" id="side-toggle" type="button" title="Show / hide chats" aria-label="Show / hide chats">
+    <svg viewBox="0 0 24 24"><path d="M3 5h18v2H3V5zm0 6h18v2H3v-2zm0 6h18v2H3v-2z"/></svg>
+  </button>
   <img class="tb-logo" src="privoo://newtab/logo.png" alt="" onerror="this.style.display='none'"/>
   <span class="tb-title">Privoo AI</span>
   <span class="tb-beta">BETA</span>
@@ -385,7 +436,18 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
   </button>
 </div>
 
-<main>
+<div class="workspace">
+  <!-- Chat-history sidebar -->
+  <aside class="side" id="side" aria-label="Chat history">
+    <button type="button" id="side-new" class="side-new">
+      <svg viewBox="0 0 24 24"><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z"/></svg>
+      <span>New chat</span>
+    </button>
+    <div class="side-label">Recent chats</div>
+    <div class="hist" id="hist"></div>
+  </aside>
+
+  <main>
   <div class="bar">
     <div class="pill no" id="status">
       <span class="dot"></span>
@@ -407,6 +469,8 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
     </div>
     <div class="foot-note">AI can make mistakes. Messages go to your chosen provider — don't share sensitive info.</div>
   </div>
+  </main>
+</div>
 
   <!-- First-time disclaimer -->
   <div class="disclaimer hidden" id="disclaimer">
@@ -481,7 +545,6 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
       </div>
     </div>
   </div>
-</main>
 
 <script>
 (function(){
@@ -510,9 +573,10 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
       { id:'gpt-3.5-turbo', label:'GPT-3.5 Turbo — cheapest' },
     ],
     deepseek:[
-      { id:'deepseek-chat',     label:'DeepSeek V3 — general chat (recommended)' },
-      { id:'deepseek-v4',       label:'DeepSeek V4 — latest' },
-      { id:'deepseek-reasoner', label:'DeepSeek R1 — step-by-step reasoning' },
+      { id:'deepseek-chat',       label:'DeepSeek V3 — general chat (recommended)' },
+      { id:'deepseek-v4-flash',   label:'DeepSeek V4 Flash — fast & low cost' },
+      { id:'deepseek-v4-pro',     label:'DeepSeek V4 Pro — most capable' },
+      { id:'deepseek-reasoner',   label:'DeepSeek R1 — step-by-step reasoning' },
     ],
     gemini:[
       { id:'gemini-2.5-flash',  label:'Gemini 2.5 Flash — fast (recommended)' },
@@ -647,6 +711,98 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
   let busy = false;
   const $ = (id) => document.getElementById(id);
 
+  // ── Chat history (localStorage — shared by the AI window and the full-page
+  // tab since both are the privoo://ai/ origin) ──
+  const STORE_KEY = 'privoo-ai-chats-v1';
+  let convos = [];        // [{ id, title, messages:[{role,content}], updatedAt }]
+  let currentId = null;   // conversation on screen (null = unsaved new chat)
+
+  function loadConvos(){
+    try { const raw = JSON.parse(localStorage.getItem(STORE_KEY)); convos = Array.isArray(raw) ? raw : []; }
+    catch { convos = []; }
+  }
+  function saveConvos(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(convos.slice(0, 100))); } catch {} }
+  function newId(){ return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  // Sync on-screen messages into the current conversation, retitle from the
+  // first user line, and float it to the top of the list.
+  function persistCurrent(){
+    const msgs = messages.filter(m => m.role === 'user' || m.role === 'assistant')
+                         .map(m => ({ role: m.role, content: m.content }));
+    if (!msgs.length) return;
+    let convo = convos.find(c => c.id === currentId);
+    if (!convo){ convo = { id: currentId || newId(), title:'', messages:[], updatedAt:0 }; currentId = convo.id; }
+    convo.messages = msgs;
+    const firstUser = msgs.find(m => m.role === 'user');
+    convo.title = (firstUser ? firstUser.content : 'New chat').replace(/\s+/g, ' ').trim().slice(0, 60) || 'New chat';
+    convo.updatedAt = Date.now();
+    convos = [convo, ...convos.filter(c => c.id !== convo.id)];
+    saveConvos();
+    renderHistory();
+  }
+  function newChat(){
+    if (busy) return;
+    messages = [];
+    currentId = null;
+    renderChat();
+    renderHistory();
+    $('input').focus();
+  }
+  function openConvo(id){
+    const c = convos.find(x => x.id === id);
+    if (!c) return;
+    currentId = id;
+    messages = (c.messages || []).map(m => ({ role:m.role, content:m.content }));
+    renderChat();
+    renderHistory();
+    $('input').focus();
+  }
+  function deleteConvo(id){
+    convos = convos.filter(c => c.id !== id);
+    saveConvos();
+    if (currentId === id){ currentId = null; messages = []; renderChat(); }
+    renderHistory();
+  }
+  function relTime(ts){
+    const d = Date.now() - (ts || 0), m = 60000, h = 3600000, day = 86400000;
+    if (d < m) return 'just now';
+    if (d < h) return Math.floor(d / m) + 'm ago';
+    if (d < day) return Math.floor(d / h) + 'h ago';
+    if (d < day * 7) return Math.floor(d / day) + 'd ago';
+    return new Date(ts).toLocaleDateString();
+  }
+  function renderHistory(){
+    const list = $('hist');
+    if (!list) return;
+    list.innerHTML = '';
+    if (!convos.length){
+      const e = document.createElement('div');
+      e.className = 'hist-empty';
+      e.textContent = 'No conversations yet';
+      list.appendChild(e);
+      return;
+    }
+    for (const c of convos){
+      const item = document.createElement('div');
+      item.className = 'hist-item' + (c.id === currentId ? ' active' : '');
+      const open = document.createElement('button');
+      open.type = 'button'; open.className = 'hist-open';
+      const title = document.createElement('span'); title.className = 'hist-title';
+      title.textContent = c.title || 'New chat';
+      const time = document.createElement('span'); time.className = 'hist-time';
+      time.textContent = relTime(c.updatedAt);
+      open.appendChild(title); open.appendChild(time);
+      open.addEventListener('click', () => openConvo(c.id));
+      const del = document.createElement('button');
+      del.type = 'button'; del.className = 'hist-del'; del.title = 'Delete chat';
+      del.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
+      del.addEventListener('click', (e) => { e.stopPropagation(); deleteConvo(c.id); });
+      item.appendChild(open); item.appendChild(del);
+      list.appendChild(item);
+    }
+  }
+  function toggleSidebar(){ $('side')?.classList.toggle('collapsed'); }
+
   // ── Theme follows the rest of Privoo ──
   function applyTheme(s){
     document.body.classList.toggle('dark', !!s?.darkMode);
@@ -675,12 +831,9 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
     $('win-close').style.display = 'none';
     document.querySelector('.titlebar')?.style.setProperty('-webkit-app-region', 'no-drag');
   }
-  $('new-chat').addEventListener('click', () => {
-    if (busy) return;
-    messages = [];
-    renderChat();
-    $('input').focus();
-  });
+  $('new-chat').addEventListener('click', newChat);
+  $('side-new').addEventListener('click', newChat);
+  $('side-toggle').addEventListener('click', toggleSidebar);
 
   // Short, human label for a model id (falls back to the raw id).
   function modelLabel(provider, id){
@@ -853,6 +1006,7 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
     $('input').value = '';
     $('input').style.height = 'auto';
     renderChat();
+    persistCurrent();   // save immediately so the chat survives a mid-reply close
 
     busy = true;
     $('send').disabled = true;
@@ -881,6 +1035,7 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
     busy = false;
     $('send').disabled = false;
     renderChat();
+    persistCurrent();
   }
 
   $('send').addEventListener('click', send);
@@ -902,6 +1057,11 @@ body.transparent-ui.aero-ui > * { position: relative; z-index: 1; }
     } catch {}
     try { config = await api.aiGetConfig(); } catch {}
     refreshStatus();
+    loadConvos();
+    renderHistory();
+    // Start collapsed on very narrow windows so the chat keeps room; the user
+    // can reveal it with the sidebar toggle. Full-page / wide windows show it.
+    if (window.innerWidth < 560) $('side')?.classList.add('collapsed');
     renderChat();
     if (!config.accepted) { openDisclaimer(); }
     else if (!config.hasKey) { openGate(); }

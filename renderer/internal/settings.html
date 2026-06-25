@@ -264,6 +264,46 @@
   }
   .inline-select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 
+  /* ── Filter lists ── */
+  .filter-lists { display: flex; flex-direction: column; gap: 6px; padding: 6px 0 2px; }
+  .filter-list-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 9px 12px; border-radius: 10px;
+    border: 1px solid var(--border, #dadce0);
+    background: rgba(0,0,0,.015);
+  }
+  body.dark .filter-list-item { background: rgba(255,255,255,.03); border-color: #3c4043; }
+  .filter-list-item .fl-info { flex: 1; min-width: 0; }
+  .filter-list-item .fl-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .filter-list-item .fl-desc {
+    font-size: 11.5px; color: var(--muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .filter-list-item .fl-remove {
+    border: none; background: transparent; color: var(--muted);
+    cursor: default; border-radius: 7px; width: 28px; height: 28px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .filter-list-item .fl-remove:hover { background: rgba(217,48,37,.12); color: #d93025; }
+  .filter-lists-subhead {
+    font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--muted); margin: 12px 0 2px;
+  }
+  .filter-lists-empty { font-size: 12.5px; color: var(--muted); padding: 4px 2px; }
+  .filter-add-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .filter-add-row input { height: 36px; border-radius: 9px; border: 1px solid var(--border, #dadce0);
+    background: var(--surface, #fff); color: var(--text); padding: 0 11px; font-size: 13px; outline: none; }
+  body.dark .filter-add-row input { background: #303134; border-color: #5f6368; color: #e8eaed; }
+  .filter-add-row input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+  #filter-add-name { width: 170px; flex-shrink: 0; }
+  #filter-add-url { flex: 1; min-width: 200px; }
+  .filter-add-btn {
+    height: 36px; padding: 0 16px; border-radius: 9px; flex-shrink: 0;
+    border: none; background: var(--accent); color: #1a1a1a;
+    font-size: 13px; font-weight: 600; cursor: default;
+  }
+  .filter-add-btn:hover { filter: brightness(1.05); }
+
   /* ── Your Vibe controls ── */
   .vibe-row { display: flex; align-items: center; gap: 12px; }
   .vibe-preview {
@@ -967,6 +1007,11 @@
               <div class="vibe-preview" id="vibe-preview"></div>
               <input type="range" id="vibeHue" min="0" max="360" value="210" class="hue-slider"/>
             </div>
+            <div style="height:10px"></div>
+            <div class="row" style="padding:0">
+              <div><div class="label">Show vibe over web pages</div><div class="desc">When off, the ambient glow stays on the browser chrome and never tints the web page you're viewing.</div></div>
+              <label class="switch"><input type="checkbox" id="vibeOverPages"><span class="slider"></span></label>
+            </div>
           </div>
         </div>
 
@@ -1203,12 +1248,26 @@
         </div>
       </section>
 
-      <section id="privacy" data-keywords="privacy security cookies https dns fingerprint webrtc geolocation dnt">
+      <section id="privacy" data-keywords="privacy security cookies https dns fingerprint webrtc geolocation dnt filter lists adblock easylist custom">
         <h2>Privacy and security</h2>
         <div class="card">
           <div class="row">
             <div><div class="label">Ad and tracker blocking</div><div class="desc">Block common ads and trackers.</div></div>
             <label class="switch"><input type="checkbox" id="adBlocking"><span class="slider"></span></label>
+          </div>
+          <div class="row stack" id="filter-lists-row">
+            <div>
+              <div class="label">Filter lists</div>
+              <div class="desc">Choose which built-in lists to use, or add your own. Changes apply after you restart Privoo.</div>
+            </div>
+            <div id="filter-lists-default" class="filter-lists"></div>
+            <div class="filter-lists-subhead">Your lists</div>
+            <div id="filter-lists-custom" class="filter-lists"></div>
+            <div class="filter-add-row">
+              <input type="text" id="filter-add-name" placeholder="List name (optional)" autocomplete="off" spellcheck="false"/>
+              <input type="url" id="filter-add-url" placeholder="https://example.com/list.txt" autocomplete="off" spellcheck="false"/>
+              <button type="button" id="filter-add-btn" class="filter-add-btn">Add list</button>
+            </div>
           </div>
           <div class="row">
             <div><div class="label">Force HTTPS</div><div class="desc">Upgrade insecure pages when possible.</div></div>
@@ -1705,7 +1764,7 @@ const api = window.privooInternal;
 const TOGGLES = [
   'verticalTabs', 'vtabsIntegrated', 'vtabsSearchPopup', 'searchPopupGlass', 'uiSounds', 'newTabBtnCircle', 'darkMode', 'forceDarkMode', 'showHomeButton', 'showBookmarksBar',
   'ntpShowWeather', 'ntpShowClock', 'ntpFocusedSearch', 'ntpShowLogo', 'ntpShowQuickLinks', 'ntpShowNews',
-  'increaseTransparency', 'aeroGradient', 'vibeEnabled', 'compactMode', 'searchSuggestions',
+  'increaseTransparency', 'aeroGradient', 'vibeEnabled', 'vibeOverPages', 'compactMode', 'searchSuggestions',
   'askDownloadPath', 'adBlocking', 'httpsUpgrade', 'httpsUpgradeShowNotice', 'blockThirdPartyCookies',
   'dnsOverHttps', 'adultContentBlocking', 'spoofUserAgent', 'canvasSpoofing', 'webrtcProtection',
   'doNotTrack', 'allowGeolocation', 'videoPopOut', 'strongerTrackingProtection',
@@ -1875,6 +1934,7 @@ function updatePathDisplays(settings, downloadPath) {
     fss.value = fss.querySelector(`option[value="${v}"]`) ? v : '1';
   }
   syncVibeControls(settings);
+  renderFilterLists(settings);
   // yt-dlp executable picker removed — the installer auto-downloads + auto-updates.
   if ($('weatherLocation')) $('weatherLocation').value = settings.weatherLocation || '';
   if ($('music-path-display')) {
@@ -1890,6 +1950,116 @@ function updatePathDisplays(settings, downloadPath) {
     populateDohProviders(settings);
   }
   updateDohServerRow(settings);
+}
+
+// Built-in filter lists — ids/names mirror FILTER_LISTS in settings-store.js.
+// (Only metadata is needed here; the actual URLs live in the main process.)
+const FILTER_LISTS_META = [
+  { id: 'easylist',    name: 'EasyList',                      desc: 'The primary ad-blocking filter list.' },
+  { id: 'easyprivacy', name: 'EasyPrivacy',                   desc: 'Blocks tracking scripts and analytics.' },
+  { id: 'ubo-filters', name: 'uBlock Origin filters',         desc: "uBO's own extra ad + privacy coverage." },
+  { id: 'ubo-badware', name: 'uBlock Origin — badware risks', desc: 'Blocks sites known to host malware/scams.' },
+  { id: 'plowe',       name: "Peter Lowe's Ad/Tracking list", desc: 'Long-standing ad + tracking server blocklist.' },
+];
+
+function _iconTrash() {
+  return '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
+}
+
+function _toggleSwitch(checked, onChange) {
+  const lbl = document.createElement('label');
+  lbl.className = 'switch';
+  const inp = document.createElement('input');
+  inp.type = 'checkbox';
+  inp.checked = checked;
+  inp.addEventListener('change', () => onChange(inp.checked));
+  const span = document.createElement('span');
+  span.className = 'slider';
+  lbl.appendChild(inp); lbl.appendChild(span);
+  return lbl;
+}
+
+function renderFilterLists(settings) {
+  const defWrap = $('filter-lists-default');
+  const cusWrap = $('filter-lists-custom');
+  if (!defWrap || !cusWrap) return;
+
+  const toggles = { ...(settings.defaultFilterLists || {}) };
+  defWrap.innerHTML = '';
+  for (const l of FILTER_LISTS_META) {
+    const item = document.createElement('div');
+    item.className = 'filter-list-item';
+    const info = document.createElement('div');
+    info.className = 'fl-info';
+    info.innerHTML = '<div class="fl-name"></div><div class="fl-desc"></div>';
+    info.querySelector('.fl-name').textContent = l.name;
+    info.querySelector('.fl-desc').textContent = l.desc;
+    item.appendChild(info);
+    item.appendChild(_toggleSwitch(toggles[l.id] !== false, (on) => {
+      const next = { ...(currentSettings.defaultFilterLists || {}) };
+      next[l.id] = on;
+      savePatch({ defaultFilterLists: next }, 'Filter lists updated — restart to apply');
+    }));
+    defWrap.appendChild(item);
+  }
+
+  const customs = Array.isArray(settings.customFilterLists) ? settings.customFilterLists : [];
+  cusWrap.innerHTML = '';
+  if (!customs.length) {
+    const e = document.createElement('div');
+    e.className = 'filter-lists-empty';
+    e.textContent = 'No custom lists added yet.';
+    cusWrap.appendChild(e);
+  } else {
+    customs.forEach((c, idx) => {
+      const item = document.createElement('div');
+      item.className = 'filter-list-item';
+      const info = document.createElement('div');
+      info.className = 'fl-info';
+      info.innerHTML = '<div class="fl-name"></div><div class="fl-desc"></div>';
+      info.querySelector('.fl-name').textContent = c.name || c.url;
+      info.querySelector('.fl-desc').textContent = c.url;
+      item.appendChild(info);
+      item.appendChild(_toggleSwitch(c.enabled !== false, (on) => {
+        const next = (currentSettings.customFilterLists || []).slice();
+        if (next[idx]) { next[idx] = { ...next[idx], enabled: on }; savePatch({ customFilterLists: next }, 'Filter lists updated — restart to apply'); }
+      }));
+      const del = document.createElement('button');
+      del.type = 'button'; del.className = 'fl-remove'; del.title = 'Remove list';
+      del.innerHTML = _iconTrash();
+      del.addEventListener('click', () => {
+        const next = (currentSettings.customFilterLists || []).slice();
+        next.splice(idx, 1);
+        savePatch({ customFilterLists: next }, 'Filter list removed — restart to apply').then(() => renderFilterLists(currentSettings));
+      });
+      item.appendChild(del);
+      cusWrap.appendChild(item);
+    });
+  }
+}
+
+function addCustomFilterList() {
+  const nameEl = $('filter-add-name');
+  const urlEl = $('filter-add-url');
+  if (!urlEl) return;
+  const url = (urlEl.value || '').trim();
+  if (!/^https?:\/\/.+/i.test(url)) {
+    showToast('Enter a valid http(s) list URL');
+    urlEl.focus();
+    return;
+  }
+  const name = (nameEl?.value || '').trim();
+  const next = (currentSettings.customFilterLists || []).slice();
+  if (next.some((c) => (c.url || '').trim() === url)) {
+    showToast('That list is already added');
+    return;
+  }
+  next.push({ name, url, enabled: true });
+  savePatch({ customFilterLists: next }, 'Filter list added — restart to apply').then(() => {
+    if (nameEl) nameEl.value = '';
+    urlEl.value = '';
+    renderFilterLists(currentSettings);
+  });
 }
 
 let providersData = null; // cache of DOH_PROVIDERS from main
@@ -2103,6 +2273,12 @@ async function init() {
   applyTheme(currentSettings);
   updatePathDisplays(currentSettings, data.downloadPath);
 
+  // Custom filter lists — add button + Enter-to-add on the URL field.
+  $('filter-add-btn')?.addEventListener('click', addCustomFilterList);
+  $('filter-add-url')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); addCustomFilterList(); }
+  });
+
   // Themes gallery + ambient music
   renderThemeGallery(currentSettings);
   if ($('ntpThemeMusic')) {
@@ -2168,7 +2344,7 @@ async function init() {
   }
 
   // These settings default to ON when unset — treat undefined as true.
-  const DEFAULT_ON = new Set(['ntpShowQuickLinks', 'ntpShowLogo', 'ntpFocusedSearch', 'restoreTabsOnLaunch', 'autoUpdates', 'adBlocking', 'httpsUpgrade', 'passwordManagerEnabled', 'syncDiscordTheme']);
+  const DEFAULT_ON = new Set(['ntpShowQuickLinks', 'ntpShowLogo', 'ntpFocusedSearch', 'restoreTabsOnLaunch', 'autoUpdates', 'adBlocking', 'httpsUpgrade', 'passwordManagerEnabled', 'syncDiscordTheme', 'vibeOverPages']);
   for (const id of TOGGLES) {
     const input = $(id);
     if (!input) continue;
