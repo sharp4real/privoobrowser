@@ -854,54 +854,83 @@ body.ntp-dark .britain-close{background:#4f73d6;}
 @keyframes android-fade{from{opacity:0}to{opacity:1}}
 #android-card{
   position:relative;overflow:hidden;
-  width:100%;max-width:380px;
-  padding:30px 26px 22px;border-radius:22px;text-align:center;
+  width:100%;max-width:360px;
+  padding:0 0 22px;border-radius:26px;text-align:center;
   color:#fff;
   /* clean gradient behind the message */
-  background:linear-gradient(145deg,#3ddc84 0%,#2bb673 38%,#1f8fe0 100%);
-  box-shadow:0 24px 60px rgba(0,0,0,.4);
+  background:linear-gradient(160deg,#0f9d58 0%,#12b46a 34%,#1f8fe0 100%);
+  box-shadow:0 30px 70px rgba(0,0,0,.45);
   transform-origin:bottom center;
   /* flip up into view */
-  animation:android-flip-up .6s cubic-bezier(.2,.9,.25,1.05) both;
+  animation:android-flip-up .62s cubic-bezier(.2,.9,.25,1.05) both;
   animation-delay:.06s;
 }
 @keyframes android-flip-up{
-  from{opacity:0;transform:perspective(900px) rotateX(85deg) translateY(40px) scale(.94);}
-  60% {opacity:1;}
-  to  {opacity:1;transform:perspective(900px) rotateX(0deg) translateY(0) scale(1);}
+  from{opacity:0;transform:perspective(1000px) rotateX(82deg) translateY(46px) scale(.94);}
+  55% {opacity:1;}
+  to  {opacity:1;transform:perspective(1000px) rotateX(0deg) translateY(0) scale(1);}
 }
-/* soft moving sheen for a "clean" feel */
+/* soft ambient sheen for a "clean" feel */
 .android-glow{
   position:absolute;inset:-40% -20%;pointer-events:none;
-  background:radial-gradient(40% 50% at 25% 18%,rgba(255,255,255,.45),transparent 60%),
-            radial-gradient(45% 55% at 85% 90%,rgba(255,255,255,.22),transparent 62%);
+  background:radial-gradient(38% 46% at 22% 14%,rgba(255,255,255,.5),transparent 60%),
+            radial-gradient(46% 56% at 88% 96%,rgba(255,255,255,.22),transparent 62%);
   opacity:.9;
 }
-.android-bot{
+/* hero: a little phone mockup with the app icon + an Android badge */
+.android-hero{
   position:relative;
-  width:72px;height:72px;margin:0 auto 14px;border-radius:20px;
+  padding:30px 0 24px;margin-bottom:2px;
+  background:
+    radial-gradient(120% 90% at 50% -10%,rgba(255,255,255,.22),transparent 60%);
+}
+.android-phone{
+  position:relative;width:86px;height:118px;margin:0 auto;
+  border-radius:20px;
+  background:linear-gradient(160deg,#ffffff,#eef3f6);
+  box-shadow:0 14px 30px rgba(0,0,0,.32),inset 0 0 0 3px rgba(255,255,255,.85);
   display:flex;align-items:center;justify-content:center;
-  background:rgba(255,255,255,.16);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.25);
+}
+.android-notch{
+  position:absolute;top:9px;left:50%;transform:translateX(-50%);
+  width:26px;height:4px;border-radius:3px;background:rgba(0,0,0,.14);
+}
+.android-appicon{
+  width:56px;height:56px;object-fit:contain;border-radius:14px;
+}
+.android-robot{
+  position:absolute;left:50%;bottom:12px;transform:translateX(26px);
+  width:38px;height:38px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:#0f9d58;box-shadow:0 4px 12px rgba(0,0,0,.28),0 0 0 4px rgba(255,255,255,.9);
 }
 .android-kicker{
-  position:relative;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
-  opacity:.85;margin-bottom:6px;
+  position:relative;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  opacity:.9;margin-bottom:6px;
 }
 .android-title{
-  position:relative;font-size:20px;font-weight:800;line-height:1.25;margin-bottom:8px;
+  position:relative;font-size:21px;font-weight:800;line-height:1.22;margin:0 22px 8px;
 }
 .android-text{
-  position:relative;font-size:13.5px;line-height:1.55;opacity:.95;margin-bottom:20px;
+  position:relative;font-size:13.5px;line-height:1.55;opacity:.96;margin:0 24px 20px;
 }
 .android-text b{font-weight:700;}
-.android-close{
-  position:relative;width:100%;height:44px;border:none;border-radius:12px;
-  background:#fff;color:#1a7f4b;font-size:14px;font-weight:700;
-  cursor:pointer;font-family:inherit;transition:filter .12s ease,transform .1s ease;
+.android-get{
+  position:relative;width:calc(100% - 44px);height:46px;margin:0 22px;border:none;border-radius:13px;
+  background:#fff;color:#0d7a45;font-size:14.5px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  cursor:pointer;font-family:inherit;
+  box-shadow:0 6px 18px rgba(0,0,0,.18);
+  transition:filter .12s ease,transform .1s ease;
 }
-.android-close:hover{filter:brightness(.97);}
-.android-close:active{transform:translateY(1px);}
+.android-get:hover{filter:brightness(.97);}
+.android-get:active{transform:translateY(1px);}
+.android-close{
+  position:relative;width:calc(100% - 44px);height:38px;margin:8px 22px 0;border:none;border-radius:13px;
+  background:transparent;color:rgba(255,255,255,.92);font-size:13px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:background .12s ease;
+}
+.android-close:hover{background:rgba(255,255,255,.16);}
 @media (prefers-reduced-motion:reduce){
   #android-card{animation:android-fade .25s ease both;}
 }
@@ -1065,8 +1094,13 @@ body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
         </div>
       </div>
       <div class="pn-track">
-      <div class="pn-slide active" id="pn-ai">
-        <div class="pn-kicker">Privoo v3.0.9</div>
+      <div class="pn-slide active" id="pn-android">
+        <div class="pn-kicker">Privoo v4.0.0</div>
+        <div class="pn-title">Privoo for Android has released! 🎉</div>
+        <p class="pn-body">Privoo is now on your phone. Get <b>Privoo for Android</b> at <b>privooapps.pages.dev</b> — the same privacy-first browsing, in your pocket.</p>
+      </div>
+      <div class="pn-slide" id="pn-ai">
+        <div class="pn-kicker">Privoo AI</div>
         <div class="pn-title">Privoo AI, with chat history</div>
         <p class="pn-body">The AI window and full-page view now have a <b>chat-history sidebar</b> — every conversation is saved so you can jump back in, just like a proper AI app. Open it from the <b>AI</b> button in the toolbar.</p>
       </div>
@@ -1133,6 +1167,7 @@ body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
         <button class="pn-dot" data-idx="8"></button>
         <button class="pn-dot" data-idx="9"></button>
         <button class="pn-dot" data-idx="10"></button>
+        <button class="pn-dot" data-idx="11"></button>
       </div>
     </div>
     <p class="pn-disclaimer">Shown locally from this version of Privoo — nothing here is tracked or fetched from the web.</p>
@@ -1141,7 +1176,7 @@ body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
 
 <footer id="ntp-footer">
   <div id="ntp-weather" hidden></div>
-  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee. &nbsp;&middot;&nbsp; <span id="ntp-version" style="opacity:.55">v3.0.9</span></p>
+  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee. &nbsp;&middot;&nbsp; <span id="ntp-version" style="opacity:.55">v4.0.0</span></p>
 </footer>
 
 </div>
@@ -1180,19 +1215,29 @@ body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
   </div>
 </div>
 
-<!-- Android announcement — only on v3.0.9, shown once -->
+<!-- Android announcement — only on v4.0.0, shown once -->
 <div id="android-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="android-title">
   <div id="android-card">
     <div class="android-glow" aria-hidden="true"></div>
-    <div class="android-bot">
-      <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true" fill="#fff">
-        <path d="M6 18c0 .55.45 1 1 1h1v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h2v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h1c.55 0 1-.45 1-1V8H6v10zM3.5 8C2.67 8 2 8.67 2 9.5v7c0 .83.67 1.5 1.5 1.5S5 17.33 5 16.5v-7C5 8.67 4.33 8 3.5 8zm17 0c-.83 0-1.5.67-1.5 1.5v7c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-7c0-.83-.67-1.5-1.5-1.5zM15.53 2.16l1.3-1.3c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0l-1.48 1.48C13.85 1.23 12.95 1 12 1c-.96 0-1.86.23-2.66.63L7.85.15c-.2-.2-.51-.2-.71 0-.2.2-.2.51 0 .71l1.31 1.3C6.97 3.26 6 5.01 6 7h12c0-1.99-.97-3.75-2.47-4.84zM10 5H9V4h1v1zm5 0h-1V4h1v1z"/>
-      </svg>
+    <div class="android-hero" aria-hidden="true">
+      <div class="android-phone">
+        <span class="android-notch"></span>
+        <img class="android-appicon" src="privoo://newtab/logo.png" alt="" draggable="false" onerror="this.style.display='none'">
+      </div>
+      <div class="android-robot">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="#fff">
+          <path d="M6 18c0 .55.45 1 1 1h1v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h2v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h1c.55 0 1-.45 1-1V8H6v10zM3.5 8C2.67 8 2 8.67 2 9.5v7c0 .83.67 1.5 1.5 1.5S5 17.33 5 16.5v-7C5 8.67 4.33 8 3.5 8zm17 0c-.83 0-1.5.67-1.5 1.5v7c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-7c0-.83-.67-1.5-1.5-1.5zM15.53 2.16l1.3-1.3c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0l-1.48 1.48C13.85 1.23 12.95 1 12 1c-.96 0-1.86.23-2.66.63L7.85.15c-.2-.2-.51-.2-.71 0-.2.2-.2.51 0 .71l1.31 1.3C6.97 3.26 6 5.01 6 7h12c0-1.99-.97-3.75-2.47-4.84zM10 5H9V4h1v1zm5 0h-1V4h1v1z"/>
+        </svg>
+      </div>
     </div>
-    <div class="android-kicker">Coming soon</div>
-    <div class="android-title" id="android-title">Privoo Browser for Android is on the way!</div>
-    <p class="android-text">The privacy you love on desktop is coming to your phone. <b>Privoo for Android</b> will be out soon — stay tuned.</p>
-    <button class="android-close" id="android-close">Can't wait!</button>
+    <div class="android-kicker">Now on Android</div>
+    <div class="android-title" id="android-title">Privoo is on your phone!</div>
+    <p class="android-text">The privacy-first browsing you love, now in your pocket. <b>Privoo for Android</b> has released — grab it now.</p>
+    <button class="android-get" id="android-get">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M12 16l-6-6h4V3h4v7h4l-6 6zm-8 3h16v2H4v-2z"/></svg>
+      <span>Get the app</span>
+    </button>
+    <button class="android-close" id="android-close">Maybe later</button>
   </div>
 </div>
 
@@ -1870,19 +1915,20 @@ window.addEventListener('pagehide', () => _ntpClockTick(false));
   })();
 })();
 
-// ── Android "coming soon" announcement — only on v3.0.9, shown once ──────────
+// ── Android "has released" announcement — only on v4.0.0, shown once ─────────
 (function initAndroidAnnounce() {
   const overlay = document.getElementById('android-overlay');
   if (!overlay || !api) return;
   (async () => {
     let version = '';
     try { version = await api.getAppVersion?.(); } catch {}
-    if (version !== '3.0.9') return;            // version-gated
+    if (version !== '4.0.0') return;            // version-gated
     let s = {};
     try { ({ settings: s } = await api.getSettings()); } catch {}
     if (s.androidPromptShown) return;           // shown once already
 
     const closeBtn = document.getElementById('android-close');
+    const getBtn   = document.getElementById('android-get');
     function dismiss() { overlay.hidden = true; }
     setTimeout(() => {
       // Don't stack on top of another one-time popup.
@@ -1893,6 +1939,10 @@ window.addEventListener('pagehide', () => _ntpClockTick(false));
       try { api.setSettings({ androidPromptShown: true }); } catch {}
       overlay.hidden = false;
     }, 2800);
+    getBtn?.addEventListener('click', () => {
+      try { api.openTab('https://privooapps.pages.dev/'); } catch {}
+      dismiss();
+    });
     closeBtn?.addEventListener('click', dismiss);
     overlay.addEventListener('click', e => { if (e.target === overlay) dismiss(); });
   })();

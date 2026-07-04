@@ -5900,6 +5900,9 @@ function applyPlatformChrome(platform) {
     if (platform) applyPlatformChrome(platform);
   } catch { /* ignore */ }
   window.privoo.onPlatform?.(applyPlatformChrome);
+  // First launch = the setup wizard hasn't been completed yet. Capture it
+  // before ensureDisclaimer() runs the wizard (which flips disclaimerAccepted).
+  const isFirstRun = !settings?.disclaimerAccepted && !(window.privoo?.incognitoPartition);
   await ensureDisclaimer();
 
   let restored = false;
@@ -5923,6 +5926,11 @@ function applyPlatformChrome(platform) {
     }
   } else if (document.body.classList.contains('vertical-tabs')) {
     closeVtabsNewTabPages();
+  }
+  // On the very first launch, welcome the user with the Privoo apps page
+  // (where the new Android app lives), opened as the active tab.
+  if (isFirstRun) {
+    try { createTab('https://privooapps.pages.dev/'); } catch {}
   }
   refreshStats();
   setInterval(refreshStats, 1500);

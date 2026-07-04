@@ -938,38 +938,77 @@ let _sharedBlockerPromise = null;
 // These target YouTube's anti-adblock detection wall and the ad UI elements
 // the standard lists don't always catch between filter-list update cycles.
 const _YT_EXTRA_FILTERS = [
-  // ── Allowlist: video playback endpoints must never be blocked ─────────────
-  // These take priority over any blocking rule in the prebuilt filter lists.
-  '@@||youtube.com/youtubei/v1/player^',
-  '@@||youtube.com/youtubei/v1/next^',
-  '@@||youtube.com/youtubei/v1/browse^',
-  '@@||youtube.com/youtubei/v1/search^',
-  '@@||youtube.com/videoplayback^',
+  // ── Allowlist: everything the player needs must NEVER be blocked ──────────
+  // Exception (@@) rules win over any blocking rule in the prebuilt lists, so
+  // an over-eager EasyList/EasyPrivacy rule can't take out playback. This is
+  // the main guard against "video won't play / infinite spinner".
+  '@@||www.youtube.com/youtubei/v1/player^',
+  '@@||www.youtube.com/youtubei/v1/next^',
+  '@@||www.youtube.com/youtubei/v1/browse^',
+  '@@||www.youtube.com/youtubei/v1/search^',
+  '@@||www.youtube.com/youtubei/v1/guide^',
+  '@@||www.youtube.com/youtubei/v1/reel_watch_sequence^',
+  '@@||youtubei.googleapis.com^',
+  '@@||www.youtube.com/videoplayback',
+  '@@||youtube.com/videoplayback',
   '@@||googlevideo.com^',
+  '@@||*.googlevideo.com^',
+  '@@||i.ytimg.com^',
+  '@@||s.ytimg.com^',
   '@@||ytimg.com^',
   '@@||yt3.ggpht.com^',
-  '@@||youtube.com/api/stats/watchtime^',
-  '@@||youtube.com/s/^',
-  // ── Block: ad tracking / serving requests ─────────────────────────────────
+  '@@||yt4.ggpht.com^',
+  '@@||www.youtube.com/s/player/',
+  '@@||www.youtube.com/s/desktop/',
+  '@@||www.youtube.com/generate_204',
+  '@@||www.youtube.com/api/stats/watchtime^',
+  '@@||www.youtube.com/api/stats/playback^',
+  '@@||www.youtube.com/api/timedtext^',
+  '@@||jnn-pa.googleapis.com^',   // player attestation — blocking it breaks playback
+  // ── Block: ad serving + ad tracking requests ─────────────────────────────
+  '||www.youtube.com/api/stats/ads^',
   '||youtube.com/api/stats/ads^',
-  '||youtube.com/pagead/$domain=youtube.com',
+  '||www.youtube.com/pagead/',
+  '||youtube.com/pagead/',
+  '||www.youtube.com/ptracking^',
   '||youtube.com/ptracking^',
-  '||youtube.com/youtubei/v1/log_event?*adlogging*',
+  '||www.youtube.com/get_midroll_info^',
+  '||youtube.com/get_midroll_info^',
+  '||www.youtube.com/youtubei/v1/player/ad_break^',
+  '||googleads.g.doubleclick.net^$domain=youtube.com',
+  '||static.doubleclick.net^$domain=youtube.com',
   '||doubleclick.net^$domain=youtube.com',
-  // ── Cosmetic: remove in-stream ad UI elements ─────────────────────────────
+  '||googleadservices.com^$domain=youtube.com',
+  '||google.com/pagead/$domain=youtube.com',
+  // ── Cosmetic: remove in-stream + overlay ad UI ───────────────────────────
   'youtube.com##.video-ads.ytp-ad-module',
   'youtube.com##.ytp-ad-overlay-container',
+  'youtube.com##.ytp-ad-overlay-slot',
+  'youtube.com##.ytp-ad-player-overlay',
   'youtube.com##.ytp-ad-player-overlay-layout',
   'youtube.com##.ytp-ad-text-overlay',
   'youtube.com##.ytp-ad-simple-ad-badge',
   'youtube.com##.ytp-ad-preview-container',
+  'youtube.com##.ytp-ad-message-container',
+  // ── Cosmetic: remove feed / sidebar / masthead ad slots ──────────────────
+  'youtube.com###player-ads',
+  'youtube.com###masthead-ad',
   'youtube.com##ytd-action-companion-ad-renderer',
   'youtube.com##ytd-display-ad-renderer',
   'youtube.com##ytd-video-masthead-ad-v3-renderer',
   'youtube.com##ytd-ad-slot-renderer',
+  'youtube.com##ytd-in-feed-ad-layout-renderer',
+  'youtube.com##ytd-banner-promo-renderer',
+  'youtube.com##ytd-statement-banner-renderer',
   'youtube.com##ytd-compact-promoted-video-renderer',
-  // ── Cosmetic: anti-adblock enforcement wall ───────────────────────────────
+  'youtube.com##ytd-promoted-sparkles-web-renderer',
+  'youtube.com##ytd-promoted-video-renderer',
+  'youtube.com##ytd-rich-item-renderer:has(> #content ytd-ad-slot-renderer)',
+  'youtube.com##.ytd-ad-slot-renderer',
+  'youtube.com###related ytd-ad-slot-renderer',
+  // ── Cosmetic: anti-adblock enforcement wall + promo dialogs ──────────────
   'youtube.com##ytd-enforcement-message-view-model',
+  'youtube.com##tp-yt-paper-dialog:has(ytd-enforcement-message-view-model)',
   'youtube.com##tp-yt-paper-dialog:has(ytd-mealbar-promo-renderer)',
   'youtube.com##ytd-mealbar-promo-renderer',
   'youtube.com##ytd-popup-container:has(ytd-mealbar-promo-renderer)',
@@ -3645,11 +3684,25 @@ function stripCrxHeader(buf) {
 }
 
 async function unpackCrxToUserData(crxPath) {
-  const extract = require('extract-zip');
   const buf = fs.readFileSync(crxPath);
   const zipBuf = stripCrxHeader(buf);
+  return unpackZipBuffer(zipBuf, path.basename(crxPath, path.extname(crxPath)));
+}
 
-  const base = path.basename(crxPath, path.extname(crxPath)).replace(/[^\w.-]+/g, '_');
+// Unpack a plain packaged extension .zip (many devs distribute extensions this
+// way, or you can rename a .crx). Same destination + nested-folder handling as
+// the CRX path.
+async function unpackZipToUserData(zipPath) {
+  const buf = fs.readFileSync(zipPath);
+  return unpackZipBuffer(buf, path.basename(zipPath, path.extname(zipPath)));
+}
+
+// Shared: write the ZIP bytes to a temp file, extract into userData/extensions,
+// then resolve to the folder that actually holds manifest.json (some archives
+// wrap the extension in a single top-level directory).
+async function unpackZipBuffer(zipBuf, baseName) {
+  const extract = require('extract-zip');
+  const base = String(baseName).replace(/[^\w.-]+/g, '_');
   const destRoot = path.join(app.getPath('userData'), 'extensions');
   fs.mkdirSync(destRoot, { recursive: true });
   const dest = path.join(destRoot, `${base}_${Date.now()}`);
@@ -3660,7 +3713,21 @@ async function unpackCrxToUserData(crxPath) {
   } finally {
     try { fs.unlinkSync(tempZip); } catch {}
   }
-  return dest;
+  return findManifestRoot(dest);
+}
+
+// Return `dir` if it directly contains manifest.json; otherwise, if there's
+// exactly one subdirectory that does, return that (handles wrapped archives).
+function findManifestRoot(dir) {
+  try {
+    if (fs.existsSync(path.join(dir, 'manifest.json'))) return dir;
+    const subs = fs.readdirSync(dir, { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .map((d) => path.join(dir, d.name));
+    const withManifest = subs.filter((s) => fs.existsSync(path.join(s, 'manifest.json')));
+    if (withManifest.length === 1) return withManifest[0];
+  } catch { /* fall through */ }
+  return dir;
 }
 
 /**
@@ -3725,9 +3792,9 @@ function resolveManifestI18n(manifest, extDir) {
 ipcMain.handle('choose-crx-file', async (e) => {
   const win = winOf(e);
   const result = await dialog.showOpenDialog(win, {
-    title: 'Choose Chrome extension (.crx)',
+    title: 'Choose Chrome extension (.crx or .zip)',
     properties: ['openFile'],
-    filters: [{ name: 'Chrome Extension', extensions: ['crx'] }],
+    filters: [{ name: 'Chrome Extension', extensions: ['crx', 'zip'] }],
   });
   return result.canceled ? null : result.filePaths[0];
 });
@@ -3744,14 +3811,16 @@ ipcMain.handle('read-ext-manifest', async (_e, filePath) => {
       const iconFile = resolveExtIcon(manifest, filePath);
       return { ok: true, manifest, path: filePath, iconUrl: iconAsDataUrl(iconFile) };
     }
-    if (filePath.toLowerCase().endsWith('.crx')) {
-      // Unpack the .crx straight away — extract-zip handles all ZIP edge
-      // cases (data descriptors, ZIP64, etc.) that the previous hand-rolled
-      // parser missed and caused "Could not read manifest.json" on many CRX
-      // files from crx4chrome / the Chrome Web Store mirror.
-      const unpacked = await unpackCrxToUserData(filePath);
+    const lower = filePath.toLowerCase();
+    if (lower.endsWith('.crx') || lower.endsWith('.zip')) {
+      // Unpack straight away — extract-zip handles all ZIP edge cases (data
+      // descriptors, ZIP64, etc.). CRX files get their signed header stripped
+      // first; plain .zip packages extract directly.
+      const unpacked = lower.endsWith('.crx')
+        ? await unpackCrxToUserData(filePath)
+        : await unpackZipToUserData(filePath);
       const mp = path.join(unpacked, 'manifest.json');
-      if (!fs.existsSync(mp)) return { error: 'No manifest.json after unpack' };
+      if (!fs.existsSync(mp)) return { error: 'No manifest.json found inside the archive' };
       const raw = JSON.parse(fs.readFileSync(mp, 'utf8'));
       const manifest = resolveManifestI18n(raw, unpacked);
       const iconFile = resolveExtIcon(manifest, unpacked);
@@ -3760,7 +3829,7 @@ ipcMain.handle('read-ext-manifest', async (_e, filePath) => {
         iconUrl: iconAsDataUrl(iconFile),
       };
     }
-    return { error: 'Unsupported file — use .crx or an unpacked folder' };
+    return { error: 'Unsupported file — use a .crx, a .zip, or an unpacked folder' };
   } catch (e) {
     return { error: String(e.message || e) };
   }

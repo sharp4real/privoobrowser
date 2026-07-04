@@ -157,7 +157,9 @@ const DEFAULTS = {
   // and never bleeds over the web page area. The chrome tinting stays either way.
   vibeOverPages: true,
   fontSizeScale: 1,        // 1 = default, 0.9 = small, 1.2 = large
-  showBookmarksBar: false,
+  // Show the bookmarks bar by default so fresh installs see the starter
+  // bookmarks below. (Existing users keep whatever they had persisted.)
+  showBookmarksBar: true,
   showHomeButton: false,
   homePage: 'privoo://newtab/',
   bookmarks: [
@@ -186,8 +188,16 @@ const DEFAULTS = {
   ntpWallpaperPath: '',
   ntpWallpaperDim: 0.42,
   ntpDark: false,
-  // No shortcuts seeded by default — the user adds their own.
-  ntpQuickLinks: [],
+  // Starter shortcuts seeded for fresh installs. (Existing users keep their
+  // own — an empty array they've already saved is respected.)
+  ntpQuickLinks: [
+    { name: 'YouTube',   url: 'https://youtube.com' },
+    { name: 'GitHub',    url: 'https://github.com' },
+    { name: 'Reddit',    url: 'https://reddit.com' },
+    { name: 'Wikipedia', url: 'https://wikipedia.org' },
+    { name: 'Gmail',     url: 'https://mail.google.com' },
+    { name: 'Amazon',    url: 'https://www.amazon.com' },
+  ],
 
   // Downloads
   downloadPath: null,   // null = use system default (app.getPath('downloads'))
@@ -244,7 +254,7 @@ const DEFAULTS = {
   updatesToastShown: false,
   discordPromptShown: false,
   thankYouShown: false,    // one-time "Thank you for using Privoo" popup
-  androidPromptShown: false, // one-time "Privoo for Android coming soon" popup (v3.0.9 only)
+  androidPromptShown: false, // one-time "Android has released!" popup (v4.0.0 only)
   britainShown: false,     // one-time "Made with care in Britain" popup
   siteVisitCount: 0,       // running count of real website visits — paces one-time popups
   popupVisitMark: 0,       // siteVisitCount when the last one-time popup was released
