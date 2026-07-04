@@ -88,7 +88,20 @@ function parentWinForGuest(contents) {
 // ---------------------------------------------------------------------------
 // Widevine CDM — detect from local Chrome install and load before app ready
 // ---------------------------------------------------------------------------
-(function loadWidevine() {
+// IMPORTANT: this is a fallback for STOCK Electron only. Privoo ships on
+// castLabs' Electron fork (see package.json — the `+wvcus` build), which
+// already provides a proper, VMP-signable Widevine CDM via the `components`
+// API (see components.whenReady() further down + afterPack-vmp.js). Passing
+// --widevine-cdm-path/--widevine-cdm-version here would REPLACE that CDM with
+// whatever Chrome happens to be installed locally — one that was never VMP
+// signed by our build, and whose CDM Host API may not even match this
+// Chromium version. Widevine then reports as an unverified media path, so
+// DRM services (Spotify, Netflix, etc.) throttle robustness or refuse to
+// issue a license outright. That silently broke Spotify DRM despite the
+// castLabs + EVS signing pipeline being fully wired up. Only run this
+// borrow-from-Chrome path when `components` doesn't exist at all (i.e. we're
+// somehow running on stock Electron), so it can never shadow the real CDM.
+if (!components) (function loadWidevine() {
   try {
     const candidates = [];
     if (process.platform === 'win32') {
@@ -480,6 +493,26 @@ const OAUTH_PRELOAD = path.join(__dirname, 'oauth-preload.js');
 // firm Accept-Language the user gets German pages. We pin Accept-Language and
 // navigator.languages to the *device* locale so content follows the user, not
 // the VPN. Computed lazily — app locale APIs need the app to be ready.
+// Normalise a BCP-47 tag to the clean "language" or "language-REGION" form
+// that a real Chrome sends. Windows' getPreferredSystemLanguages() can return
+// tags with a SCRIPT subtag (e.g. "en-Latn-GB", "zh-Hans-CN") or other extras
+// that Chrome strips — leaving them in navigator.languages / Accept-Language
+// makes Google's sign-in flag the browser as "not secure". We keep only the
+// language + the first genuine region subtag (2 letters or a 3-digit UN M.49
+// code) and drop 4-letter script subtags and everything else.
+function normalizeLangTag(tag) {
+  const parts = String(tag || '').trim().replace(/_/g, '-').split('-').filter(Boolean);
+  if (!parts.length) return '';
+  const lang = parts[0].toLowerCase();
+  if (!/^[a-z]{2,3}$/.test(lang)) return '';
+  let region = '';
+  for (let i = 1; i < parts.length; i++) {
+    const p = parts[i];
+    if (/^[A-Za-z]{2}$/.test(p) || /^\d{3}$/.test(p)) { region = p.toUpperCase(); break; }
+  }
+  return region ? `${lang}-${region}` : lang;
+}
+
 let _langList = null;
 let _langKey = null;
 function preferredLanguageList() {
@@ -488,26 +521,33 @@ function preferredLanguageList() {
   })();
   if (_langList && _langKey === pref) return _langList;
   let langs = [];
+  let ready = true;
   if (pref && pref !== 'auto') {
     // Explicit user choice (e.g. 'en-GB', 'de', 'fr').
     langs = [pref];
   } else {
-    try { langs = app.getPreferredSystemLanguages() || []; } catch { /* not ready */ }
+    ready = false;
+    try { langs = app.getPreferredSystemLanguages() || []; ready = !!(app.isReady && app.isReady()); } catch { /* not ready */ }
     if (!langs.length) { try { const l = app.getLocale(); if (l) langs = [l]; } catch {} }
   }
   if (!langs.length) langs = ['en-GB', 'en'];
   const seen = new Set();
   const out = [];
   for (const raw of langs) {
-    const l = String(raw || '').trim();
+    const l = normalizeLangTag(raw);
     if (!l) continue;
     if (!seen.has(l)) { seen.add(l); out.push(l); }
     const base = l.split('-')[0];
     if (base && base !== l && !seen.has(base)) { seen.add(base); out.push(base); }
+    // Chrome sends a short list — cap it so an OS with many display languages
+    // doesn't produce an unusually long Accept-Language that also looks off.
+    if (out.length >= 4) break;
   }
   if (!out.length) out.push('en');
-  _langList = out;
-  _langKey = pref;
+  // Only cache once we have a definitive answer. For 'auto' before app-ready
+  // the system-language query can come back empty, and we don't want that
+  // temporary fallback pinned for the rest of the session.
+  if (pref !== 'auto' || ready) { _langList = out; _langKey = pref; }
   return out;
 }
 // HTTP Accept-Language header value with descending q-weights.
@@ -937,11 +977,12 @@ let _sharedBlockerPromise = null;
 // Extra YouTube-specific rules applied on top of the prebuilt filter lists.
 // These target YouTube's anti-adblock detection wall and the ad UI elements
 // the standard lists don't always catch between filter-list update cycles.
-const _YT_EXTRA_FILTERS = [
-  // ── Allowlist: everything the player needs must NEVER be blocked ──────────
-  // Exception (@@) rules win over any blocking rule in the prebuilt lists, so
-  // an over-eager EasyList/EasyPrivacy rule can't take out playback. This is
-  // the main guard against "video won't play / infinite spinner".
+// Playback allowlist — applied SEPARATELY (and first) so that even if a block
+// or cosmetic rule below ever fails to parse, this critical set still lands.
+// Exception (@@) rules win over any blocking rule in the prebuilt lists, so an
+// over-eager EasyList/EasyPrivacy rule can't starve the player. This is the
+// main guard against "video won't play / black screen / infinite spinner".
+const _YT_ALLOWLIST = [
   '@@||www.youtube.com/youtubei/v1/player^',
   '@@||www.youtube.com/youtubei/v1/next^',
   '@@||www.youtube.com/youtubei/v1/browse^',
@@ -965,6 +1006,11 @@ const _YT_EXTRA_FILTERS = [
   '@@||www.youtube.com/api/stats/playback^',
   '@@||www.youtube.com/api/timedtext^',
   '@@||jnn-pa.googleapis.com^',   // player attestation — blocking it breaks playback
+];
+
+// Ad-serving/tracking network blocks + cosmetic ad-UI removal. Kept separate
+// from the allowlist above so a parse hiccup here can never drop that.
+const _YT_EXTRA_FILTERS = [
   // ── Block: ad serving + ad tracking requests ─────────────────────────────
   '||www.youtube.com/api/stats/ads^',
   '||youtube.com/api/stats/ads^',
@@ -1013,6 +1059,49 @@ const _YT_EXTRA_FILTERS = [
   'youtube.com##ytd-mealbar-promo-renderer',
   'youtube.com##ytd-popup-container:has(ytd-mealbar-promo-renderer)',
 ];
+
+// Is this host part of the YouTube playback stack?
+function isYouTubeHost(host) {
+  if (!host) return false;
+  const h = String(host).toLowerCase();
+  return h === 'youtube.com' || h.endsWith('.youtube.com')
+      || h === 'youtu.be' || h.endsWith('.youtu.be')
+      || h === 'youtube-nocookie.com' || h.endsWith('.youtube-nocookie.com')
+      || h === 'googlevideo.com' || h.endsWith('.googlevideo.com')
+      || h === 'youtubei.googleapis.com';
+}
+
+// Known content-blocker extensions, by Chrome Web Store id and by name. When
+// the user runs one of these, Privoo should get out of its way on sites like
+// YouTube — two blockers racing over the same requests can black-screen the
+// player. "surely if you have uBlock you don't need your own YouTube blocking."
+const _BLOCKER_EXT_IDS = new Set([
+  'cjpalhdlnbpafiamejdnhcphjbkeiagm', // uBlock Origin
+  'ddkjiahejlhfcafbddmgiahcphecmpfh', // uBlock Origin Lite
+  'gighmmpiobklfepjocnamgkkbiglidom', // AdBlock
+  'cfhdojbkjhnklbpkdaibdccddilifddb', // Adblock Plus
+  'bgnkhhnnamicmpeenaelnjfhikgbkllg', // AdGuard
+  'mlomiejdfkolichcflejclcbmpeaniij', // Ghostery
+]);
+function isBlockerExtension(ext) {
+  if (!ext) return false;
+  const id = String(ext.chromeId || ext.id || '').toLowerCase();
+  if (_BLOCKER_EXT_IDS.has(id)) return true;
+  const name = String(ext.name || '').toLowerCase();
+  return /ublock|ublock origin|adguard|adblock|ad block|ad-block|ghostery|adnauseam|brave shield/.test(name);
+}
+// Cached (keyed off the settings.extensions array reference, which only changes
+// on a settings write) so the hot onBeforeRequest path stays cheap.
+let _blockerExtCache = { ref: null, val: false };
+function hasContentBlockerExtension() {
+  try {
+    const list = settingsStore.load().extensions || [];
+    if (_blockerExtCache.ref === list) return _blockerExtCache.val;
+    const val = list.some((e) => e && e.enabled && isBlockerExtension(e));
+    _blockerExtCache = { ref: list, val };
+    return val;
+  } catch { return false; }
+}
 
 // Resolve the user's filter-list configuration into the set of list URLs the
 // engine should be built from. Returns { usePrebuilt, urls }:
@@ -1084,7 +1173,9 @@ async function getSharedBlocker() {
       blocker = ElectronBlocker.empty();
     }
 
-    // Apply YouTube-specific rules on top of the lists every launch.
+    // Apply the YouTube playback allowlist FIRST and on its own, so it always
+    // lands even if a later ad/cosmetic rule fails to parse. Then the ad rules.
+    try { blocker.updateFromDiff({ added: _YT_ALLOWLIST }); } catch {}
     try { blocker.updateFromDiff({ added: _YT_EXTRA_FILTERS }); } catch {}
 
     blocker.on('request-blocked',    () => { stats.blockedAds++; });
@@ -1141,6 +1232,13 @@ async function setupAdBlocking(sess) {
       // everything through. Top-level navigation to that host counts too.
       const sourceHost = documentBaseDomain(details.webContentsId) || hostnameOf(details.url);
       if (isSiteCompatibilityHost(sourceHost)) return cb({ cancel: false });
+      // Hand YouTube entirely to a user-installed content blocker (uBlock,
+      // AdGuard, …) when one is present. Running Privoo's engine AND the
+      // extension over the same YouTube requests fights over the player and
+      // can leave it black until a refresh — so we fully step aside here.
+      if ((isYouTubeHost(sourceHost) || isYouTubeHost(reqHost)) && hasContentBlockerExtension()) {
+        return cb({ cancel: false });
+      }
       // Per-site ad-block exclusion — user toggled ads off for this host.
       const excl = s2.adBlockExcludedDomains;
       if (Array.isArray(excl) && excl.length && sourceHost) {

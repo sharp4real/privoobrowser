@@ -1095,7 +1095,7 @@ body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
       </div>
       <div class="pn-track">
       <div class="pn-slide active" id="pn-android">
-        <div class="pn-kicker">Privoo v4.0.0</div>
+        <div class="pn-kicker">Privoo v4.0.1</div>
         <div class="pn-title">Privoo for Android has released! 🎉</div>
         <p class="pn-body">Privoo is now on your phone. Get <b>Privoo for Android</b> at <b>privooapps.pages.dev</b> — the same privacy-first browsing, in your pocket.</p>
       </div>
@@ -1176,7 +1176,7 @@ body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
 
 <footer id="ntp-footer">
   <div id="ntp-weather" hidden></div>
-  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee. &nbsp;&middot;&nbsp; <span id="ntp-version" style="opacity:.55">v4.0.0</span></p>
+  <p id="ntp-disclaimer">Privoo reduces tracking, but it is not a security guarantee. &nbsp;&middot;&nbsp; <span id="ntp-version" style="opacity:.55">v4.0.1</span></p>
 </footer>
 
 </div>
@@ -1215,7 +1215,7 @@ body.ntp-wp .ntp-clock{text-shadow:0 1px 6px rgba(0,0,0,.45);}
   </div>
 </div>
 
-<!-- Android announcement — only on v4.0.0, shown once -->
+<!-- Android announcement — only on v4.0.1, shown once -->
 <div id="android-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="android-title">
   <div id="android-card">
     <div class="android-glow" aria-hidden="true"></div>
@@ -1915,14 +1915,14 @@ window.addEventListener('pagehide', () => _ntpClockTick(false));
   })();
 })();
 
-// ── Android "has released" announcement — only on v4.0.0, shown once ─────────
+// ── Android "has released" announcement — only on v4.0.1, shown once ─────────
 (function initAndroidAnnounce() {
   const overlay = document.getElementById('android-overlay');
   if (!overlay || !api) return;
   (async () => {
     let version = '';
     try { version = await api.getAppVersion?.(); } catch {}
-    if (version !== '4.0.0') return;            // version-gated
+    if (version !== '4.0.1') return;            // version-gated
     let s = {};
     try { ({ settings: s } = await api.getSettings()); } catch {}
     if (s.androidPromptShown) return;           // shown once already
