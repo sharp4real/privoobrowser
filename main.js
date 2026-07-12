@@ -208,11 +208,10 @@ try {
 if (!_earlySettings.lowEndDevice) {
   app.commandLine.appendSwitch('ignore-gpu-blocklist');
   app.commandLine.appendSwitch('enable-gpu-rasterization');
-  app.commandLine.appendSwitch('enable-zero-copy');
-  // Off-main-thread canvas rasterization + accelerated video decode improve
-  // rendering throughput on pages with heavy CSS/canvas/video.
-  app.commandLine.appendSwitch('enable-features',
-    'CanvasOopRasterization,AcceleratedVideoDecodeLinuxGL');
+  // NOTE: `enable-zero-copy` was removed — on many Windows GPUs it's a
+  // well-known cause of BLACK YouTube video frames on first load (the very
+  // symptom of "black screen until I refresh"). GPU rasterization stays.
+  app.commandLine.appendSwitch('enable-features', 'CanvasOopRasterization');
   app.commandLine.appendSwitch('num-raster-threads', '4');
 } else {
   app.commandLine.appendSwitch('num-raster-threads', '1');
@@ -418,6 +417,7 @@ const INTERNAL_PAGES = {
   blocked:    'blocked.html',
   incognito:  'incognito.html',
   ai:         'ai.html',
+  news:       'news.html',
 };
 
 // Pin Chrome identity centrally. It must match Electron's bundled Chromium
@@ -879,6 +879,20 @@ function isGoogleAuthHost(hostname) {
     || h.endsWith('.youtube.com') || h === 'youtube.com'
     || h.endsWith('.googlevideo.com') || h.endsWith('.ggpht.com')
     || h.endsWith('.googleadservices.com') || h.endsWith('.doubleclick.net');
+}
+
+/** Only the actual Google sign-in/account pages — used to scope CSP-stripping
+ *  narrowly. isGoogleAuthHost() above is intentionally broad (it just swaps
+ *  UA/sec-ch-ua headers, which is harmless), but stripping a page's
+ *  Content-Security-Policy is a real security downgrade and must NOT be
+ *  applied to the whole google.com/youtube.com/doubleclick.net family — that
+ *  would silently disable CSP protection on some of the most-visited sites
+ *  on the web, which is exactly the kind of regression a security scan
+ *  (e.g. browseraudit.com) flags. */
+function isGoogleSignInPage(hostname) {
+  if (!hostname) return false;
+  const h = String(hostname).toLowerCase();
+  return h === 'accounts.google.com' || h === 'myaccount.google.com';
 }
 
 /** Allow OAuth / SSO / CDN flows when third-party cookie blocking is on.
@@ -1445,9 +1459,12 @@ function setupHeaderPrivacy(sess) {
     const headers = details.responseHeaders || {};
     const hostname = hostnameOf(details.url);
 
-    // Remove CSP for Google sign-in pages so our preload script injection is not blocked.
-    // executeJavaScript at dom-ready also bypasses CSP, but stripping it here is a belt+suspenders.
-    if (isGoogleAuthHost(hostname)) {
+    // Remove CSP for the actual Google sign-in pages ONLY, so our preload
+    // script injection is not blocked there. executeJavaScript at dom-ready
+    // also bypasses CSP, but stripping it here is a belt+suspenders — scoped
+    // tightly to accounts.google.com / myaccount.google.com, NOT the whole
+    // Google/YouTube/doubleclick family (see isGoogleSignInPage() above).
+    if (isGoogleSignInPage(hostname)) {
       for (const key of Object.keys(headers)) {
         const low = key.toLowerCase();
         if (low === 'content-security-policy' || low === 'content-security-policy-report-only') {
@@ -1986,6 +2003,14 @@ function createWindow(opts = {}) {
     webPreferences.nodeIntegrationInSubFrames = false;
     webPreferences.contextIsolation = true;
     webPreferences.webSecurity = true;
+    // Keep hidden/background tabs fully alive. Inactive webviews are set to
+    // `visibility: hidden` in the renderer, which makes Chromium treat the
+    // guest page as occluded and throttle its timers + media/compositor
+    // pipeline. YouTube's player, initialised or resumed while throttled,
+    // frequently paints a black frame that only clears on a manual refresh.
+    // Disabling background throttling keeps the video pipeline warm so
+    // switching to a YouTube tab shows the frame immediately.
+    webPreferences.backgroundThrottling = false;
     // Enable the built-in Chromium PDF viewer so opening a .pdf actually
     // renders it in-tab instead of downloading it.
     webPreferences.plugins = true;
@@ -4594,10 +4619,8 @@ ipcMain.handle('ai-detect-ollama', () => aiBrowser.detectOllama());
 // so two tabs opening at once can never show the same — or two different —
 // popups together. Returns the popup key to show, or null.
 const POPUP_VISIT_GAP = 10; // websites to visit between popups
-const NTP_POPUP_ORDER = [
-  { key: 'britain', flag: 'britainShown' },
-  { key: 'mmhm',    flag: 'mmhmShown' },
-];
+// One-time promo popups removed (Britain / Men's Mental Health). Empty = none.
+const NTP_POPUP_ORDER = [];
 ipcMain.handle('claim-newtab-popup', () => {
   try {
     const s = settingsStore.load();

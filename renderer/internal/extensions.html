@@ -6,13 +6,14 @@
 <link rel="icon" href="/logo.png"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
-:root{
-  --accent:#8ab4f8; --accent-hover:#a0c2fa; --on-accent:#202124;
-  --accent-soft:rgba(138,180,248,.18);
-}
-body.dark{
-  --accent-soft:rgba(138,180,248,.14);
-}
+:root{ --on-accent:#202124; }
+/* ── Privoo "quiet & precise" — warm charcoal + pine ──
+   Accent vars live ONLY on :root (the <html> element). Redeclaring them on
+   body.dark would win over the inline --accent that applyAccent() sets on
+   <html>, freezing the accent to pine in dark mode. */
+:root{ --accent:#57a97e; --accent-hover:#6bbb90; --accent-soft:rgba(87,169,126,.16); }
+body:not(.dark){ background:#e8e5dc !important; color:#20201b; }
+body.dark{ background:#1a1917 !important; color:#ece9e0; }
 /* html is always transparent — body's solid fill covers it in normal mode,
    and in transparency mode the see-through html lets the OS material reach
    the corners. (A `body.transparent-ui html` selector can't work — html is
@@ -48,11 +49,11 @@ html::-webkit-scrollbar-thumb:hover{background:#bdc1c6;background-clip:padding-b
 body.dark html::-webkit-scrollbar-thumb,body.dark::-webkit-scrollbar-thumb{background:#5f6368;background-clip:padding-box;border:3px solid transparent}
 
 header{
-  background:#fff;border-bottom:1px solid #dadce0;
+  background:#f2efe8;border-bottom:1px solid #d7d3c7;
   padding:0 28px;height:60px;display:flex;align-items:center;gap:16px;
   position:sticky;top:0;z-index:10;
 }
-body.dark header{background:#303134;border-color:#4a4d51}
+body.dark header{background:#1a1917;border-color:#35332e}
 .logo-img{
   width:28px;height:28px;border-radius:6px;
   object-fit:contain;flex-shrink:0;
@@ -60,14 +61,13 @@ body.dark header{background:#303134;border-color:#4a4d51}
 }
 h1{font-size:18px;font-weight:600;flex:1;line-height:1}
 .header-btn{
-  padding:7px 16px;border-radius:18px;border:1px solid #dadce0;
-  font-size:13px;font-weight:500;color:var(--accent);cursor:default;background:#fff;
-  transition:background .12s,border-color .12s;
+  padding:7px 16px;border-radius:8px;border:1px solid var(--accent);
+  font-size:13px;font-weight:600;color:#10160f;cursor:pointer;background:var(--accent);
+  transition:filter .12s;
   display:flex;align-items:center;gap:6px;
 }
-.header-btn:hover{background:var(--accent-soft);border-color:var(--accent)}
-body.dark .header-btn{border-color:#5f6368;color:var(--accent);background:#303134}
-body.dark .header-btn:hover{background:#3c4043;border-color:var(--accent)}
+.header-btn:hover{filter:brightness(1.06)}
+body.dark .header-btn{color:#10160f;background:var(--accent);border-color:var(--accent)}
 
 main{max-width:960px;margin:24px auto;padding:0 20px 40px}
 
@@ -87,12 +87,37 @@ body.dark #empty h2,body.dark .ext-name{color:#e8eaed}
 
 .ext-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
 
+/* Section headers ("Built in" / "Your extensions") */
+.section-head{display:flex;align-items:center;gap:10px;margin:4px 0 2px}
+.section-head h2{font-size:15px;font-weight:650;letter-spacing:-.01em;margin:0}
+.section-head-user{margin-top:34px}
+.by-privoo{
+  font-size:11px;font-weight:700;letter-spacing:.04em;
+  color:var(--accent,#57a97e);background:var(--accent-soft,rgba(87,169,126,.16));
+  border-radius:5px;padding:3px 8px;
+}
+.section-note{font-size:12.5px;color:#6a685e;margin:0 0 16px}
+body.dark .section-note{color:#928f84}
+
+/* Built-in extension cards carry a small "By Privoo" tag + accent edge. */
+#builtin-list .ext-card,
+body.dark #builtin-list .ext-card{border-color:var(--accent,#57a97e)}
+#builtin-list .ext-version{
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:var(--accent,#57a97e);font-weight:600;
+}
+.ext-always{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:600;color:var(--accent,#57a97e);
+}
+.ext-always::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent,#57a97e)}
+
 .ext-card{
-  background:#fff;border-radius:12px;padding:18px;
-  border:1px solid #e8eaed;display:flex;flex-direction:column;gap:12px;
+  background:#f2efe8;border-radius:10px;padding:18px;
+  border:1px solid #d7d3c7;display:flex;flex-direction:column;gap:12px;
   transition:box-shadow .12s;position:relative;
 }
-body.dark .ext-card{background:#303134;border-color:#4a4d51}
+body.dark .ext-card{background:#232220;border-color:#35332e}
 .ext-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.08)}
 body.dark .ext-card:hover{box-shadow:none}
 
@@ -124,6 +149,8 @@ body.dark .ext-compat-warn code{background:rgba(255,255,255,.06)}
 }
 body.dark .ext-icon{background:#3c4043;color:#e8eaed}
 .ext-icon img{width:100%;height:100%;object-fit:cover}
+#builtin-list .ext-icon{background:var(--accent-soft,rgba(87,169,126,.16));color:var(--accent,#57a97e)}
+#builtin-list .ext-icon svg{width:26px;height:26px;fill:currentColor}
 
 .ext-info{flex:1;min-width:0}
 .ext-name{font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -309,6 +336,16 @@ body.dark #toast{background:#e8eaed;color:#202124}
 </header>
 
 <main>
+  <div class="section-head">
+    <h2>Built in</h2>
+    <span class="by-privoo">by Privoo Browser</span>
+  </div>
+  <p class="section-note">Privacy tools baked right into the browser — no install needed.</p>
+  <div id="builtin-list" class="ext-grid"></div>
+
+  <div class="section-head section-head-user">
+    <h2>Your extensions</h2>
+  </div>
   <div id="list" class="ext-grid"></div>
   <div id="empty">
     <svg viewBox="0 0 24 24"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11z"/></svg>
@@ -527,10 +564,83 @@ async function saveExtensions() {
   if (api) await api.setSettings({ extensions });
 }
 
+// ── Built-in extensions, provided by Privoo Browser ──────────────────────────
+// These aren't Chrome extensions — they're first-party privacy tools wired to
+// the browser's own settings, so their toggles actually take effect.
+const BUILTIN_EXTS = [
+  // Core — always on, provided by default. No toggle.
+  { core:true, name:'Privacy Shield', tag:'Default',
+    icon:'<svg viewBox="0 0 24 24"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1.4 14.4L7.4 12.2l1.3-1.3 1.9 1.9 4-4 1.3 1.3z"/></svg>',
+    desc:'Blocks ads, trackers and known malware on every site. Always on.' },
+  { core:true, name:'Downloads', tag:'Default',
+    icon:'<svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>',
+    desc:'Manage your downloads from the toolbar. Always available (Ctrl+J).' },
+  // Toggleable extensions — each maps to a real setting.
+  { key:'httpsUpgrade', name:'HTTPS-Only Mode', defaultOn:true,
+    icon:'<svg viewBox="0 0 24 24"><path d="M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2zm-3 0H9V6a3 3 0 0 1 6 0z"/></svg>',
+    desc:'Automatically upgrades insecure http:// connections to secure https://.' },
+  { key:'passwordManagerEnabled', name:'Password Vault', defaultOn:true,
+    icon:'<svg viewBox="0 0 24 24"><path d="M12 1a5 5 0 0 0-5 5v2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-2V6a5 5 0 0 0-5-5zm0 2a3 3 0 0 1 3 3v2H9V6a3 3 0 0 1 3-3zm0 10a2 2 0 0 1 1 3.7V19h-2v-2.3A2 2 0 0 1 12 13z"/></svg>',
+    desc:'Saves and autofills your logins — encrypted and stored only on this device.' },
+  { key:'showNotesButton', name:'Notes', defaultOn:false, adds:'a Notes button to the toolbar',
+    icon:'<svg viewBox="0 0 24 24"><path d="M3 5a2 2 0 0 1 2-2h10l4 4v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5zm2 1v13h12V10h-4V6H5zm2.5 4h7v1.5h-7V10zm0 3h7v1.5h-7V13zm0 3h5v1.5h-5V16z"/></svg>',
+    desc:'A quick scratchpad in your toolbar. Notes are stored locally on this device.' },
+  { key:'showCalculator', name:'Calculator', defaultOn:false, adds:'a Calculator to the toolbar',
+    icon:'<svg viewBox="0 0 24 24"><path d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2v3h10V4H7z"/></svg>',
+    desc:'A handy calculator right in your toolbar for quick sums.' },
+  { key:'showYtdlpToolbar', name:'Media Downloader', defaultOn:false, adds:'a download button to the toolbar',
+    icon:'<svg viewBox="0 0 24 24"><path d="M10 16.5l6-4.5-6-4.5v9zM8 2h8a2 2 0 0 1 2 2v16l-6-3-6 3V4a2 2 0 0 1 2-2z"/></svg>',
+    desc:'Save video or audio from pages to your download folder (uses yt-dlp).' },
+  { key:'showAiButton', name:'Privoo AI', defaultOn:true, adds:'the AI button to the toolbar',
+    icon:'<svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3zm6.5 11 .9 2.4L22 17.3l-2.6.9-.9 2.4-.9-2.4-2.6-.9 2.6-.9.9-2.4z"/></svg>',
+    desc:'Chat with a built-in AI assistant, with saved history — from your toolbar.' },
+  { key:'lucidMode', name:'Lucid Mode', defaultOn:false,
+    icon:'<svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.9L22 9.3l-5.5 4.8L18.2 21 12 17.3 5.8 21l1.7-6.9L2 9.3l7.1-.4z"/></svg>',
+    desc:'Hover any video for a star that sharpens and enriches its picture — adjust the strength with a slider.' },
+];
+
+function renderBuiltin(settings) {
+  const listEl = document.getElementById('builtin-list');
+  if (!listEl) return;
+  listEl.innerHTML = '';
+  for (const b of BUILTIN_EXTS) {
+    const on = b.core ? true : (settings[b.key] !== undefined ? !!settings[b.key] : b.defaultOn);
+    const card = document.createElement('div');
+    card.className = 'ext-card';
+    const footer = b.core
+      ? '<div class="ext-footer"><span class="ext-always">Always on</span></div>'
+      : '<div class="ext-footer"><div class="ext-toggle">' +
+          '<label class="switch"><input type="checkbox" ' + (on ? 'checked' : '') + '/><span class="slider"></span></label>' +
+          '<span class="ext-status">' + (on ? 'Enabled' : 'Disabled') + '</span>' +
+        '</div></div>';
+    const meta = b.core ? 'Default' : (b.adds ? 'Adds ' + escHtml(b.adds) : 'Built-in');
+    card.innerHTML =
+      '<div class="ext-header">' +
+        '<div class="ext-icon">' + b.icon + '</div>' +
+        '<div class="ext-info">' +
+          '<div class="ext-name">' + escHtml(b.name) + '</div>' +
+          '<div class="ext-version">' + meta + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="ext-desc">' + escHtml(b.desc) + '</div>' +
+      footer;
+    if (!b.core) {
+      card.querySelector('.switch input').addEventListener('change', async (e) => {
+        const v = e.target.checked;
+        if (api) await api.setSettings({ [b.key]: v });
+        card.querySelector('.ext-status').textContent = v ? 'Enabled' : 'Disabled';
+        showToast(b.name + (v ? ' enabled' : ' disabled'));
+      });
+    }
+    listEl.appendChild(card);
+  }
+}
+
 async function loadExtensions() {
   if (!api) return;
   const { settings } = await api.getSettings();
   extensions = settings.extensions || [];
+  renderBuiltin(settings);
   render();
 }
 

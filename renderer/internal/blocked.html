@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <title>Site blocked — Privoo</title>
-<link rel="icon" href="privoo://newtab/logo.png"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%2357a97e' d='M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z'/%3E%3Cpath fill='%23fff' d='M10.6 15.4 7.4 12.2l1.3-1.3 1.9 1.9 4-4 1.3 1.3z'/%3E%3C/svg%3E"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
 
@@ -33,6 +33,11 @@ body.dark{
   --red-border:rgba(242,139,130,.25);
   color-scheme:dark;
 }
+/* ── Privoo "quiet & precise" — warm charcoal + pine ── */
+:root{ --accent:#57a97e; --accent-hover:#6bbb90;
+  --bg:#e8e5dc; --surface:#f2efe8; --text:#20201b; --muted:#6a685e; --border:#d7d3c7; --hover:#e0ddd1; }
+body.dark{ --accent:#57a97e; --accent-hover:#6bbb90;
+  --bg:#1a1917; --surface:#232220; --text:#ece9e0; --muted:#928f84; --border:#35332e; --hover:#322f2b; }
 
 html,body{height:100%;background:var(--bg);color:var(--text);user-select:none;}
 
@@ -45,7 +50,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);user-select:none;}
   width:100%;max-width:520px;
   background:var(--surface);
   border:1px solid var(--border);
-  border-radius:16px;
+  border-radius:6px;
   padding:40px 44px 36px;
   box-shadow:0 2px 12px rgba(0,0,0,.08);
   text-align:center;
@@ -64,7 +69,7 @@ body.dark .card{box-shadow:0 2px 16px rgba(0,0,0,.35)}
 }
 .logo-wrap img{
   width:68px;height:68px;
-  border-radius:15px;
+  border-radius:6px;
   display:block;
   opacity:.92;
 }
@@ -102,7 +107,7 @@ h1{
   color:var(--muted);
   background:var(--bg);
   border:1px solid var(--border);
-  border-radius:20px;
+  border-radius:6px;
   padding:4px 14px;
   margin-bottom:28px;
   user-select:text;
@@ -112,7 +117,7 @@ h1{
   display:flex;align-items:center;gap:10px;
   background:var(--red-bg);
   border:1px solid var(--red-border);
-  border-radius:10px;
+  border-radius:6px;
   padding:12px 16px;
   margin-bottom:28px;
   text-align:left;
@@ -126,7 +131,7 @@ h1{
 button{
   font-family:inherit;font-size:13.5px;font-weight:500;
   height:36px;padding:0 22px;
-  border-radius:18px;border:1px solid var(--border);
+  border-radius:6px;border:1px solid var(--border);
   background:var(--surface);color:var(--text);
   cursor:pointer;transition:background .12s,border-color .12s;
 }

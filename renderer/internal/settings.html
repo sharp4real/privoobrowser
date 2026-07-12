@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <title>Settings - Privoo</title>
-<link rel="icon" href="privoo://newtab/logo.png"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%2357a97e' d='M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z'/%3E%3Cpath fill='%23fff' d='M10.6 15.4 7.4 12.2l1.3-1.3 1.9 1.9 4-4 1.3 1.3z'/%3E%3C/svg%3E"/>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { min-height: 100%; }
@@ -31,6 +31,7 @@
     color: #e8eaed;
     color-scheme: dark;
   }
+
 
   /* Increase Transparency — host signals via settings; we drop the body
      fill and tint cards so the OS material shows through. Inputs stay
@@ -194,7 +195,15 @@
   }
   .accent-swatch:hover { transform: scale(1.15); }
   .accent-swatch.active { border-color: #fff; box-shadow: 0 0 0 2px var(--accent); }
-  body.dark .accent-swatch.active { border-color: #303134; }
+  body.dark .accent-swatch.active { border-color: #232220; }
+  /* Custom-colour swatch — native picker styled as a round swatch with a
+     rainbow ring so it reads as "pick your own". */
+  .accent-custom {
+    padding: 0; -webkit-appearance: none; appearance: none;
+    background: conic-gradient(from 0deg, #f43f5e, #f59e0b, #22c55e, #06b6d4, #6366f1, #d946ef, #f43f5e);
+  }
+  .accent-custom::-webkit-color-swatch-wrapper { padding: 0; }
+  .accent-custom::-webkit-color-swatch { border: none; border-radius: 50%; }
   /* Themes gallery */
   .theme-gallery {
     display: grid;
@@ -554,35 +563,36 @@
   body.dark .btn:hover { background: #3c4043; }
   body.dark .btn.danger { color: #f28b82; }
 
-  .switch { position: relative; width: 38px; height: 20px; flex-shrink: 0; display: inline-block; }
+  /* Squared toggle — rounded-rectangle track + squared knob, green when on. */
+  .switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; display: inline-block; }
   .switch input { opacity: 0; width: 0; height: 0; position: absolute; }
   .slider {
     position: absolute;
     inset: 0;
-    border-radius: 999px;
-    background: #bdc1c6;
+    border-radius: 6px;
+    background: #cfccbf;
+    border: 1px solid rgba(0,0,0,.06);
     cursor: pointer;
-    transition: background .18s cubic-bezier(.4,0,.2,1);
+    transition: background .18s cubic-bezier(.4,0,.2,1), border-color .18s;
   }
   .slider::before {
     content: "";
     position: absolute;
-    width: 14px;
-    height: 14px;
-    left: 3px;
-    top: 3px;
-    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    left: 2px;
+    top: 2px;
+    border-radius: 4px;
     background: #fff;
-    box-shadow: 0 1px 3px rgba(0,0,0,.2);
-    transition: transform .18s cubic-bezier(.4,0,.2,1);
+    box-shadow: 0 1px 2px rgba(0,0,0,.25);
+    transition: transform .18s cubic-bezier(.4,0,.2,1), background .18s;
   }
-  /* Light blue accent for toggles (both modes). Thumb stays white. */
-  input:checked + .slider { background: var(--accent); }
+  /* Pine accent when on; squared knob slides right. */
+  input:checked + .slider { background: var(--accent); border-color: var(--accent); }
   input:checked + .slider::before { transform: translateX(18px); }
-  body.dark .slider { background: #5f6368; }
-  /* Dark-mode override needs higher specificity than the equal-specificity
-     unchecked-grey rule above, otherwise the grey wins via source order. */
-  body.dark input:checked + .slider { background: var(--accent); }
+  body.dark .slider { background: #3a3833; border-color: rgba(255,255,255,.06); }
+  body.dark input:checked + .slider { background: var(--accent); border-color: var(--accent); }
+  body.dark input:checked + .slider::before { background: #10160f; }
 
   input[type="range"] { color-scheme: light; }
   body.dark input[type="range"] { color-scheme: dark; }
@@ -910,6 +920,120 @@
     .pw-row { gap: 10px; padding: 10px 14px; }
     .pw-secret { display: none; }
   }
+/* ═══════════════════════════════════════════════════════════════════════════
+   Opera-style skin — navy surfaces, purple accent, rounded floating cards.
+   MUST stay at the end of this stylesheet: it re-skins earlier rules of equal
+   specificity, which only works because these come later in source order.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --accent: #8a63ff;
+  --accent-hover: #9b7bff;
+  --accent-soft: rgba(138, 99, 255, .22);
+  --on-accent: #ffffff;
+}
+body { background: #f2f3f8; }
+body.dark { background: #14161f; }
+
+/* Header — navy bar with the red brand dot + rounded search on the right */
+header { border-bottom: none; box-shadow: 0 1px 0 rgba(0,0,0,.06); }
+body.dark header { background: #171a24; border-color: transparent; box-shadow: 0 1px 0 rgba(255,255,255,.05); }
+.brand { display: flex; align-items: center; gap: 11px; }
+.brand::before {
+  content: ""; width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+  background: radial-gradient(circle at 32% 30%, #ff5b6a, #ff1b2d 60%, #d40f20);
+  box-shadow: 0 2px 8px rgba(255, 27, 45, .35);
+}
+/* ── "Quiet & precise" — warm charcoal shell, pine accent, mono labels ──
+   Matches the browser chrome so Settings feels like the same app. ── */
+:root { --pv-mono: ui-monospace,"Cascadia Code","SF Mono","JetBrains Mono",Consolas,monospace; }
+
+/* Light — warm stone. */
+body:not(.dark) { background: #e8e5dc; }
+body:not(.dark) header { background: #e8e5dc; border-bottom: 1px solid #d7d3c7; }
+
+/* Dark — warm charcoal. */
+body.dark { background: #1a1917; }
+body.dark header { background: #1a1917; border-bottom: 1px solid #35332e; }
+body.dark .brand span { color: #928f84; }
+body.dark nav#nav { background: transparent; }
+
+header input.settings-search { border-radius: 5px; font-size: 13px; }
+body.dark header input.settings-search { background: #232220; border-color: #35332e; color: #ece9e0; }
+body.dark header input.settings-search:hover { background: #2a2925; }
+body.dark header input.settings-search:focus { background: #232220; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+
+/* Nav — quiet items; active gets a warm fill + a pine left marker. */
+.nav-btn { height: 38px; border-radius: 5px; }
+.nav-btn.active { background: transparent; color: var(--accent); font-weight: 600; box-shadow: inset 2px 0 0 var(--accent); }
+body.dark .nav-btn { color: #928f84; }
+body.dark .nav-btn:hover { background: #322f2b; color: #ece9e0; }
+body.dark .nav-btn.active { background: #232220; color: var(--text); font-weight: 600; box-shadow: inset 2px 0 0 var(--accent); }
+body:not(.dark) .nav-btn.active { background: #f2efe8; color: #20201b; }
+
+/* Cards — flat, hairline border, squared. */
+.card { border-radius: 7px; }
+body:not(.dark) .card { background: #f2efe8; border: 1px solid #d7d3c7; }
+body.dark .card { background: #232220; border: 1px solid #35332e; box-shadow: none; }
+/* One-time "moved to Extensions" notice. */
+.ext-move-notice{
+  display:flex;align-items:center;gap:10px;margin-top:12px;padding:11px 14px;
+  border-radius:7px;font-size:12.5px;color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 12%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);
+}
+.ext-move-notice[hidden]{display:none}
+.ext-move-notice svg{fill:currentColor;flex-shrink:0}
+.ext-move-notice span{flex:1}
+.ext-move-notice a{color:var(--accent);font-weight:700;text-decoration:underline;cursor:pointer}
+.ext-move-notice button{
+  border:none;background:transparent;color:var(--accent);cursor:pointer;
+  font-size:14px;padding:2px 6px;border-radius:5px;flex-shrink:0;opacity:.7;
+}
+.ext-move-notice button:hover{opacity:1;background:color-mix(in srgb,var(--accent) 18%,transparent)}
+body:not(.dark) .row { border-color: #e0ddd1; }
+body.dark .row { border-color: #35332e; }
+/* Section headers — uppercase tracked labels. */
+h3.card-subhead { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+body.dark h3.card-subhead { color: #928f84; }
+
+/* Inputs / selects pick up the warm field tone. */
+body:not(.dark) .inline-select,
+body:not(.dark) select,
+body:not(.dark) input[type="text"],
+body:not(.dark) input[type="url"],
+body:not(.dark) input[type="number"] { background-color: #f2efe8; border-color: #d7d3c7; color: #20201b; }
+body.dark .inline-select,
+body.dark select,
+body.dark input[type="text"],
+body.dark input[type="url"],
+body.dark input[type="number"] { background-color: #232220; border-color: #35332e; color: #ece9e0; }
+body.dark .filter-add-row input { background: #232220; border-color: #35332e; }
+body.dark .filter-list-item { background: #201f1c; border-color: #35332e; }
+
+/* ── Opera-style icons beside each settings section ──
+   Rendered as CSS masks so they inherit the nav text colour (muted → purple
+   when active). A broken URI just hides the icon; it can't break layout. */
+#nav .nav-btn { gap: 11px; }
+#nav .nav-btn::before {
+  content: ""; width: 18px; height: 18px; flex-shrink: 0;
+  background-color: currentColor; opacity: .85;
+  -webkit-mask: var(--nav-i) center/contain no-repeat;
+          mask: var(--nav-i) center/contain no-repeat;
+}
+#nav .nav-btn.active::before { opacity: 1; }
+#nav .nav-btn[data-target="appearance"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 22C6.49 22 2 17.51 2 12S6.49 2 12 2s10 4.04 10 9c0 3.31-2.69 6-6 6h-1.77c-.28 0-.5.22-.5.5 0 .12.05.23.13.33.41.47.64 1.06.64 1.67 0 1.38-1.12 2.5-2.5 2.5zm-5.5-9c.83 0 1.5-.67 1.5-1.5S7.33 10 6.5 10 5 10.67 5 11.5 5.67 13 6.5 13zm3-4c.83 0 1.5-.67 1.5-1.5S10.33 6 9.5 6 8 6.67 8 7.5 8.67 9 9.5 9zm5 0c.83 0 1.5-.67 1.5-1.5S15.33 6 14.5 6 13 6.67 13 7.5 13.67 9 14.5 9zm3 4c.83 0 1.5-.67 1.5-1.5S18.33 10 17.5 10 16 10.67 16 11.5s.67 1.5 1.5 1.5z'/%3E%3C/svg%3E"); }
+#nav .nav-btn[data-target="features"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z'/%3E%3C/svg%3E"); }
+#nav .nav-btn[data-target="search"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5 1.49-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z'/%3E%3C/svg%3E"); }
+#nav .nav-btn[data-target="privacy"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/%3E%3C/svg%3E"); }
+#nav .nav-btn[data-target="safety"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z'/%3E%3C/svg%3E"); }
+#nav .nav-btn[data-target="sitefixes"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z'/%3E%3C/svg%3E"); }
+#nav .nav-btn[data-target="data"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3C7.58 3 4 4.79 4 7s3.58 4 8 4 8-1.79 8-4-3.58-4-8-4zM4 9v3c0 2.21 3.58 4 8 4s8-1.79 8-4V9c0 2.21-3.58 4-8 4s-8-1.79-8-4zm0 5v3c0 2.21 3.58 4 8 4s8-1.79 8-4v-3c0 2.21-3.58 4-8 4s-8-1.79-8-4z'/%3E%3C/svg%3E"); }
+#nav .nav-btn[data-target="downloads"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z'/%3E%3C/svg%3E"); }
+#nav .nav-btn[data-target="media"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z'/%3E%3C/svg%3E"); }
+#nav .nav-btn[data-target="performance"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 2v11h3v9l7-12h-4l4-8z'/%3E%3C/svg%3E"); }
+#nav .nav-btn[data-target="system"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z'/%3E%3C/svg%3E"); }
+#nav .nav-btn[data-target="passwords"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z'/%3E%3C/svg%3E"); }
+#nav .nav-btn[data-target="about"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z'/%3E%3C/svg%3E"); }
 </style>
 </head>
 <body>
@@ -1052,16 +1176,6 @@
         <div class="card">
           <h3 class="card-subhead">Layout</h3>
           <div class="row">
-            <div><div class="label">Tab style</div><div class="desc">The look of the tabs at the top of the window.</div></div>
-            <select id="tabStyle" class="inline-select">
-              <option value="classic">Classic</option>
-              <option value="modern">Modern</option>
-              <option value="pill">Pill</option>
-              <option value="underline">Underline</option>
-              <option value="chrome">Chrome</option>
-            </select>
-          </div>
-          <div class="row">
             <div><div class="label">Circle the “+” button</div><div class="desc">Show the new-tab button as a circle.</div></div>
             <label class="switch"><input type="checkbox" id="newTabBtnCircle"><span class="slider"></span></label>
           </div>
@@ -1145,12 +1259,31 @@
         <div class="card">
           <h3 class="card-subhead">New tab page</h3>
           <div class="row">
-            <div><div class="label">Show logo</div><div class="desc">Display the Privoo logo above the search bar.</div></div>
-            <label class="switch"><input type="checkbox" id="ntpShowLogo"><span class="slider"></span></label>
+            <div><div class="label">Brand mark</div><div class="desc">Show the “privoo.” text or the logo image above the search bar.</div></div>
+            <select id="ntpBrandStyle" class="inline-select">
+              <option value="text">Privoo text</option>
+              <option value="logo">Logo</option>
+            </select>
+          </div>
+          <div class="row">
+            <div><div class="label">Wordmark animation</div><div class="desc">A looping effect on the “privoo.” text — plays continuously, not just on load.</div></div>
+            <select id="ntpWordmarkAnim" class="inline-select">
+              <option value="none">None</option>
+              <option value="pulse">Pulse</option>
+              <option value="pop">Pop</option>
+              <option value="fizzle">Fizzle</option>
+              <option value="glow">Glow</option>
+              <option value="bounce">Bounce</option>
+              <option value="shimmer">Shimmer</option>
+            </select>
           </div>
           <div class="row">
             <div><div class="label">Show quick links</div><div class="desc">Display site shortcut tiles on the new tab page.</div></div>
             <label class="switch"><input type="checkbox" id="ntpShowQuickLinks"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Privoo News link</div><div class="desc">Show a link on the new tab page to open Privoo News.</div></div>
+            <label class="switch"><input type="checkbox" id="ntpNewsLink"><span class="slider"></span></label>
           </div>
           <div class="row">
             <div><div class="label">Focused search</div><div class="desc">Scale the search bar forward and fade shortcuts when you click it.</div></div>
@@ -1163,10 +1296,6 @@
           <div class="row">
             <div><div class="label">Weather widget</div><div class="desc">Show current weather on the new tab page.</div></div>
             <label class="switch"><input type="checkbox" id="ntpShowWeather"><span class="slider"></span></label>
-          </div>
-          <div class="row">
-            <div><div class="label">Privoo News</div><div class="desc">Show browser update cards below the search bar — version highlights and what's new.</div></div>
-            <label class="switch"><input type="checkbox" id="ntpShowNews"><span class="slider"></span></label>
           </div>
           <div class="row stack" id="weather-location-row">
             <div><div class="label">Weather location</div><div class="desc">City name to fetch weather for (e.g. London, New York).</div></div>
@@ -1182,18 +1311,6 @@
         <h2>Features</h2>
         <div class="card">
           <div class="row">
-            <div><div class="label">yt-dlp toolbar button</div><div class="desc">Always shown in the toolbar for quick media downloads.</div></div>
-            <label class="switch"><input type="checkbox" id="showYtdlpToolbar"><span class="slider"></span></label>
-          </div>
-          <div class="row">
-            <div><div class="label">Location toolbar</div><div class="desc">Spoof page geolocation (injected per tab).</div></div>
-            <label class="switch"><input type="checkbox" id="showGeoToolbar"><span class="slider"></span></label>
-          </div>
-          <div class="row">
-            <div><div class="label">Notes button</div><div class="desc">Adds a notes pad to the toolbar. Notes are stored locally in this browser.</div></div>
-            <label class="switch"><input type="checkbox" id="showNotesButton"><span class="slider"></span></label>
-          </div>
-          <div class="row">
             <div><div class="label">Shortcuts sidebar</div><div class="desc">Pin sites as favicons in a rail on the left side of the window.</div></div>
             <label class="switch"><input type="checkbox" id="showSidebar"><span class="slider"></span></label>
           </div>
@@ -1202,13 +1319,14 @@
             <label class="switch"><input type="checkbox" id="centerSidebarIcons"><span class="slider"></span></label>
           </div>
           <div class="row">
-            <div><div class="label">AI toolbar button</div><div class="desc">Show the Privoo AI button in the toolbar. Turn off to hide it.</div></div>
-            <label class="switch"><input type="checkbox" id="showAiButton"><span class="slider"></span></label>
-          </div>
-          <div class="row">
             <div><div class="label">Translate toolbar button</div><div class="desc">Adds a translate button that sends the current page to Google Translate.</div></div>
             <label class="switch"><input type="checkbox" id="showTranslateButton"><span class="slider"></span></label>
           </div>
+        </div>
+        <div id="ext-move-notice" class="ext-move-notice" hidden>
+          <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11z"/></svg>
+          <span>Notes, the Calculator, Media Downloads and AI now live in <a id="ext-move-link">Extensions</a>.</span>
+          <button type="button" id="ext-move-dismiss" aria-label="Dismiss">✕</button>
         </div>
       </section>
 
@@ -1763,13 +1881,13 @@
 const api = window.privooInternal;
 const TOGGLES = [
   'verticalTabs', 'vtabsIntegrated', 'vtabsSearchPopup', 'searchPopupGlass', 'uiSounds', 'newTabBtnCircle', 'darkMode', 'forceDarkMode', 'showHomeButton', 'showBookmarksBar',
-  'ntpShowWeather', 'ntpShowClock', 'ntpFocusedSearch', 'ntpShowLogo', 'ntpShowQuickLinks', 'ntpShowNews',
+  'ntpShowWeather', 'ntpShowClock', 'ntpFocusedSearch', 'ntpShowQuickLinks', 'ntpNewsLink',
   'increaseTransparency', 'aeroGradient', 'vibeEnabled', 'vibeOverPages', 'compactMode', 'searchSuggestions',
   'askDownloadPath', 'adBlocking', 'httpsUpgrade', 'httpsUpgradeShowNotice', 'blockThirdPartyCookies',
   'dnsOverHttps', 'adultContentBlocking', 'spoofUserAgent', 'canvasSpoofing', 'webrtcProtection',
   'doNotTrack', 'allowGeolocation', 'videoPopOut', 'strongerTrackingProtection',
   'wobblyWindows',
-  'showYtdlpToolbar', 'showGeoToolbar', 'showNotesButton', 'showSidebar', 'centerSidebarIcons', 'showAiButton', 'showTranslateButton', 'passwordManagerEnabled', 'preferPasswordLogin',
+  'showSidebar', 'centerSidebarIcons', 'showTranslateButton', 'passwordManagerEnabled', 'preferPasswordLogin',
   'musicEnabled',
   'blockAdultSites', 'safeMode',
   'hardwareAcceleration', 'lowEndDevice', 'discordRpc', 'syncDiscordTheme',
@@ -1837,13 +1955,13 @@ async function savePatch(patch, message = 'Settings saved') {
 }
 
 const ACCENT_SWATCHES = [
+  { name: 'Pine',    value: '#57a97e' },
   { name: 'Blue',    value: '#8ab4f8' },
   { name: 'Indigo',  value: '#a78bfa' },
   { name: 'Pink',    value: '#f48fb1' },
   { name: 'Red',     value: '#f28b82' },
   { name: 'Orange',  value: '#fcad70' },
   { name: 'Yellow',  value: '#fdd663' },
-  { name: 'Green',   value: '#81c995' },
   { name: 'Teal',    value: '#4dd0e1' },
 ];
 
@@ -1852,6 +1970,7 @@ function renderAccentSwatches(currentHex) {
   if (!row) return;
   row.innerHTML = '';
   const active = String(currentHex || ACCENT_SWATCHES[0].value).toLowerCase();
+  const isPreset = ACCENT_SWATCHES.some(a => a.value.toLowerCase() === active);
   for (const a of ACCENT_SWATCHES) {
     const btn = document.createElement('button');
     btn.className = 'accent-swatch' + (a.value.toLowerCase() === active ? ' active' : '');
@@ -1863,6 +1982,19 @@ function renderAccentSwatches(currentHex) {
     });
     row.appendChild(btn);
   }
+  // Custom colour — pick any accent with the OS colour picker.
+  const custom = document.createElement('input');
+  custom.type = 'color';
+  custom.className = 'accent-swatch accent-custom' + (isPreset ? '' : ' active');
+  custom.value = /^#[0-9a-fA-F]{6}$/.test(active) ? active : '#57a97e';
+  custom.title = 'Custom colour';
+  let _accTimer = null;
+  custom.addEventListener('input', () => {
+    applyAccent(custom.value);
+    clearTimeout(_accTimer);
+    _accTimer = setTimeout(() => savePatch({ accentColor: custom.value }, 'Accent color saved'), 250);
+  });
+  row.appendChild(custom);
 }
 
 const THEME_PRESETS = [
@@ -2273,6 +2405,17 @@ async function init() {
   applyTheme(currentSettings);
   updatePathDisplays(currentSettings, data.downloadPath);
 
+  // One-time notice: several features moved into the Extensions page.
+  const moveNotice = $('ext-move-notice');
+  if (moveNotice && !currentSettings.extMoveNoticeShown) {
+    moveNotice.hidden = false;
+    $('ext-move-link')?.addEventListener('click', () => api.navigate?.('privoo://extensions/'));
+    $('ext-move-dismiss')?.addEventListener('click', () => {
+      moveNotice.hidden = true;
+      api.setSettings({ extMoveNoticeShown: true });
+    });
+  }
+
   // Custom filter lists — add button + Enter-to-add on the URL field.
   $('filter-add-btn')?.addEventListener('click', addCustomFilterList);
   $('filter-add-url')?.addEventListener('keydown', (e) => {
@@ -2289,9 +2432,13 @@ async function init() {
     $('ntpThemeMusicVolume').value = Math.round((currentSettings.ntpThemeMusicVolume ?? 0.4) * 100);
     $('ntpThemeMusicVolume').addEventListener('change', () => savePatch({ ntpThemeMusicVolume: (+$('ntpThemeMusicVolume').value) / 100 }, 'Music volume saved'));
   }
-  if ($('tabStyle')) {
-    $('tabStyle').value = currentSettings.tabStyle || 'classic';
-    $('tabStyle').addEventListener('change', () => savePatch({ tabStyle: $('tabStyle').value }, 'Tab style updated'));
+  if ($('ntpWordmarkAnim')) {
+    $('ntpWordmarkAnim').value = currentSettings.ntpWordmarkAnim || 'none';
+    $('ntpWordmarkAnim').addEventListener('change', () => savePatch({ ntpWordmarkAnim: $('ntpWordmarkAnim').value }, 'Wordmark animation updated'));
+  }
+  if ($('ntpBrandStyle')) {
+    $('ntpBrandStyle').value = currentSettings.ntpBrandStyle || 'text';
+    $('ntpBrandStyle').addEventListener('change', () => savePatch({ ntpBrandStyle: $('ntpBrandStyle').value }, 'Brand mark updated'));
   }
   if ($('transparencyStyle')) {
     $('transparencyStyle').value = currentSettings.transparencyStyle || 'frosted';
@@ -2344,7 +2491,7 @@ async function init() {
   }
 
   // These settings default to ON when unset — treat undefined as true.
-  const DEFAULT_ON = new Set(['ntpShowQuickLinks', 'ntpShowLogo', 'ntpFocusedSearch', 'restoreTabsOnLaunch', 'autoUpdates', 'adBlocking', 'httpsUpgrade', 'passwordManagerEnabled', 'syncDiscordTheme', 'vibeOverPages']);
+  const DEFAULT_ON = new Set(['restoreTabsOnLaunch', 'autoUpdates', 'adBlocking', 'httpsUpgrade', 'passwordManagerEnabled', 'syncDiscordTheme', 'vibeOverPages', 'centerSidebarIcons']);
   for (const id of TOGGLES) {
     const input = $(id);
     if (!input) continue;

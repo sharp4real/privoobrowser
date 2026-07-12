@@ -6,9 +6,62 @@ const SETTINGS_URL   = 'privoo://settings/';
 const DOWNLOADS_URL  = 'privoo://downloads/';
 const HISTORY_URL    = 'privoo://history/';
 const EXTENSIONS_URL = 'privoo://extensions/';
+const BOOKMARKS_URL  = 'privoo://bookmarks/';
 
 // Default favicon shown for internal pages and when a real favicon fails to load
 const VTAB_DEFAULT_FAVICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='16' height='16'%3E%3Cpath fill='%235f6368' d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z'/%3E%3C/svg%3E";
+// Favicons for Privoo's own pages, each drawn in the CURRENT accent colour so
+// they update live when the user changes their accent (settings gets a gear,
+// history a clock, etc.). Only the SVG path is stored; the colour is baked in
+// at build time from _pvAccent.
+let _pvAccent = '#57a97e';
+let _lucidPrev = null; // tracks Lucid Mode on/off to inject/clean up live on toggle
+function _pvIcon(path) {
+  const col = encodeURIComponent(_pvAccent || '#57a97e');
+  return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='" + col + "' d='" + encodeURIComponent(path) + "'%3E%3C/path%3E%3C/svg%3E";
+}
+// The pine-shield fallback (shield body in the accent, white check on top).
+function _pvShield() {
+  const col = encodeURIComponent(_pvAccent || '#57a97e');
+  return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='" + col + "' d='M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z'/%3E%3Cpath fill='%23fff' d='M10.6 15.4 7.4 12.2l1.3-1.3 1.9 1.9 4-4 1.3 1.3z'/%3E%3C/svg%3E";
+}
+const PRIVOO_PAGE_PATHS = {
+  newtab:      'M4 5h7v7H4zM13 5h7v7h-7zM4 13h7v6H4zM13 13h7v6h-7z',
+  settings:    'M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z',
+  history:     'M13 3a9 9 0 1 0 8.94 10h-2.02A7 7 0 1 1 13 5c1.93 0 3.68.78 4.95 2.05L14 11h7V4l-2.64 2.64A8.98 8.98 0 0 0 13 3zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z',
+  downloads:   'M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z',
+  bookmarks:   'M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z',
+  extensions:  'M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11z',
+  ai:          'M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3zm6.5 11 .9 2.4L22 17.3l-2.6.9-.9 2.4-.9-2.4-2.6-.9 2.6-.9.9-2.4z',
+  blocked:     'M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z',
+  insecure:    'M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4a3 3 0 0 1 3 3v2h1a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h1V8a3 3 0 0 1 3-3z',
+  error:       'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z',
+  upgrading:   'M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2zm-8-2a2 2 0 0 1 4 0v2h-4V6z',
+};
+function faviconForPrivooUrl(url) {
+  try {
+    const host = new URL(url).hostname;
+    if (host === 'incognito') return _pvShield();
+    const p = PRIVOO_PAGE_PATHS[host];
+    return p ? _pvIcon(p) : _pvShield();
+  } catch { return _pvShield(); }
+}
+// When the accent changes, repaint the favicons of every open Privoo page.
+function refreshPrivooFavicons() {
+  for (const t of tabs) {
+    if (!t.url || !t.url.startsWith('privoo://')) continue;
+    const icon = faviconForPrivooUrl(t.url);
+    t.faviconUrl = icon;
+    const favEl = t.tabEl?.querySelector('.favicon');
+    if (favEl) favEl.style.backgroundImage = 'url("' + icon + '")';
+  }
+  if (typeof renderVtabs === 'function') renderVtabs();
+}
+// New-tab label — "New Incognito Tab" in a private window, "Speed Dial" otherwise
+// (the new-tab page's shortcut grid — same term Opera uses).
+function newTabLabel() {
+  return document.body.classList.contains('incognito') ? 'New Incognito Tab' : 'Speed Dial';
+}
 
 // ─── Fingerprint spoofing — injected into every real web page ────────────────
 // Brave-style "farbling": canvas noise is DETERMINISTIC per-origin instead of
@@ -153,6 +206,102 @@ function forceDarkScript(enabled) {
   })();`;
 }
 
+// ── Lucid Mode ──────────────────────────────────────────────────────────────
+// Hover the TOP of a video and a star fades in; click it for a slider that
+// enhances the picture — clarity (contrast), colour (saturation) and a touch
+// of brightness. IMPORTANT: it uses only colour filters, never an SVG
+// reference filter (url(#…)) — those render the video BLACK on hardware-
+// composited players like YouTube and darken it. Strength persists per-site.
+const LUCID_MODE_JS = String.raw`(function(){
+  if (window.__privooLucid) return; window.__privooLucid = 1;
+  var KEY='privoo_lucid_strength';
+  function get(){ var v=parseFloat(localStorage.getItem(KEY)); return isNaN(v)?0:Math.max(0,Math.min(1,v)); }
+  function set(v){ try{ localStorage.setItem(KEY,String(v)); }catch(e){} }
+  function css(s){ if(s<=0) return ''; return 'contrast('+(1+0.20*s).toFixed(3)+') saturate('+(1+0.35*s).toFixed(3)+') brightness('+(1+0.06*s).toFixed(3)+')'; }
+  function applyAll(){ var f=css(get()); document.querySelectorAll('video').forEach(function(v){ if(v.style.filter!==f) v.style.filter=f; }); }
+  var star=document.createElement('div'); star.id='__pl_star';
+  star.style.cssText='position:fixed;z-index:2147483000;width:34px;height:34px;border-radius:9px;display:none;align-items:center;justify-content:center;cursor:pointer;background:rgba(18,20,18,.72);color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.45);opacity:0;transition:opacity .16s';
+  star.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2l2.9 6.9L22 9.3l-5.5 4.8L18.2 21 12 17.3 5.8 21l1.7-6.9L2 9.3l7.1-.4z"/></svg>';
+  var panel=document.createElement('div'); panel.id='__pl_panel';
+  panel.style.cssText='position:fixed;z-index:2147483000;display:none;flex-direction:column;gap:7px;padding:10px 12px;border-radius:11px;background:rgba(18,20,18,.9);color:#fff;font:600 11px/1.2 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);width:186px';
+  panel.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><span>Lucid Mode</span><span id="__pl_v"></span></div><input id="__pl_r" type="range" min="0" max="100" step="1" style="width:100%;accent-color:#57a97e">';
+  (document.body||document.documentElement).appendChild(star);
+  (document.body||document.documentElement).appendChild(panel);
+  var range=panel.querySelector('#__pl_r'), valEl=panel.querySelector('#__pl_v');
+  function syncPanel(){ var s=get(); range.value=Math.round(s*100); valEl.textContent=s<=0?'Off':Math.round(s*100)+'%'; star.style.color=s>0?'#7fdca7':'#fff'; }
+  range.addEventListener('input',function(){ set(range.value/100); syncPanel(); applyAll(); });
+  var cur=null;
+  // Find the video whose box contains (x,y) — bounding-box hit-test works even
+  // when the site's controls sit on top of the <video> (YouTube, etc.).
+  function videoAt(x,y){
+    var best=null,bestA=0,vids=document.querySelectorAll('video'),i,v,r,a;
+    for(i=0;i<vids.length;i++){ v=vids[i]; r=v.getBoundingClientRect();
+      if(r.width<160||r.height<100) continue;
+      if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom){ a=r.width*r.height; if(a>bestA){bestA=a;best=v;} }
+    }
+    return best;
+  }
+  function show(){
+    if(!cur||!cur.isConnected){ hide(); return; }
+    var r=cur.getBoundingClientRect();
+    star.style.left=(r.left+r.width/2-17)+'px'; star.style.top=(r.top+12)+'px';
+    star.style.display='flex'; star.style.opacity='1'; star.style.color=get()>0?'#7fdca7':'#fff';
+    if(panel.style.display==='flex'){ panel.style.left=Math.max(6,Math.min(r.left+r.width/2-93,window.innerWidth-192))+'px'; panel.style.top=(r.top+52)+'px'; }
+  }
+  function hide(){ star.style.opacity='0'; star.style.display='none'; panel.style.display='none'; cur=null; }
+  // Show only while the cursor is over the TOP band of a video (or over our own
+  // star/panel). Move away from the top and it fades out.
+  document.addEventListener('mousemove',function(e){
+    var t=e.target;
+    if(t===star||star.contains(t)||t===panel||panel.contains(t)) return; // keep while on our UI
+    var v=videoAt(e.clientX,e.clientY);
+    if(v){ var r=v.getBoundingClientRect(); if(e.clientY<=r.top+Math.min(90,r.height*0.28)){ cur=v; show(); return; } }
+    if(panel.style.display!=='flex') hide();
+  },true);
+  // Keep the star glued to the video while it's shown (scroll / resize).
+  function follow(){ if(cur&&(star.style.display==='flex'||panel.style.display==='flex')){ if(!cur.isConnected) hide(); else show(); } requestAnimationFrame(follow); }
+  requestAnimationFrame(follow);
+  star.addEventListener('click',function(e){ e.stopPropagation(); e.preventDefault(); syncPanel(); panel.style.display=(panel.style.display==='flex')?'none':'flex'; show(); });
+  document.addEventListener('click',function(e){ if(panel.style.display==='flex'&&e.target!==star&&!star.contains(e.target)&&e.target!==panel&&!panel.contains(e.target)) panel.style.display='none'; },true);
+  applyAll();
+  var raf=0; new MutationObserver(function(){ if(raf) return; raf=requestAnimationFrame(function(){ raf=0; applyAll(); }); }).observe(document.documentElement,{childList:true,subtree:true});
+})();`;
+
+// Turn Lucid Mode off live (without a reload): remove its UI and clear filters.
+const LUCID_CLEANUP_JS = String.raw`(function(){ try{
+  window.__privooLucid=0;
+  document.querySelectorAll('video').forEach(function(v){ v.style.filter=''; });
+  ['__pl_star','__pl_panel','__pl_svg'].forEach(function(id){ var e=document.getElementById(id); if(e) e.remove(); });
+}catch(e){} })();`;
+
+// ── YouTube black-frame fix ──────────────────────────────────────────────────
+// The classic "black video until I refresh" is a GPU compositing cold-start on
+// the first video of a session: the player is decoding audio+video but the
+// video layer never gets a paint. Refreshing re-triggers the decode with a warm
+// GPU. This nudges the video's own compositing layer right after playback
+// starts (a couple of times, because the first frame is the flaky one), which
+// forces that missing paint — clearing the black frame WITHOUT a reload.
+const YOUTUBE_FIX_JS = String.raw`(function(){
+  if(window.__privooYtFix) return; window.__privooYtFix=1;
+  function poke(v){ if(!v||!v.isConnected) return; var t=v.style.transform||'';
+    v.style.transform='translateZ(0)';
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ v.style.transform=t; }); }); }
+  var handled=null;
+  function attach(){
+    var v=document.querySelector('.html5-main-video')||document.querySelector('video');
+    if(!v||v===handled) return;
+    handled=v;
+    function onPlay(){ poke(v); setTimeout(function(){poke(v);},150); setTimeout(function(){poke(v);},600); setTimeout(function(){poke(v);},1400); }
+    v.addEventListener('playing', onPlay);
+    v.addEventListener('loadeddata', function(){ setTimeout(function(){poke(v);},80); });
+    if(v.readyState>=2 && !v.paused) onPlay();
+  }
+  attach();
+  // YouTube is a single-page app — re-attach when the watched video changes.
+  document.addEventListener('yt-navigate-finish', function(){ handled=null; setTimeout(attach,400); }, true);
+  var n=0, iv=setInterval(function(){ attach(); if(++n>16) clearInterval(iv); }, 400);
+})();`;
+
 const VIDEO_POPOUT_JS = `(function(){
   if(window.__privooVpip)return;window.__privooVpip=1;
 
@@ -276,6 +425,16 @@ function geolocationOverrideScript(lat, lon) {
 
 // ─── DOM elements ────────────────────────────────────────────────────────────
 const tabsEl       = document.getElementById('tabs');
+// Re-spread tabs to fit the strip (Chrome-style shrink) whenever one is added
+// or removed — the single reliable trigger, independent of the create / close /
+// activate / drag code paths. Debounced to one call per frame.
+if (tabsEl) {
+  let _tabResizeRaf = 0;
+  new MutationObserver(() => {
+    if (_tabResizeRaf) return;
+    _tabResizeRaf = requestAnimationFrame(() => { _tabResizeRaf = 0; resizeTabs(); });
+  }).observe(tabsEl, { childList: true });
+}
 const viewsEl      = document.getElementById('views');
 const omnibox      = document.getElementById('omnibox');
 const siteIcon         = document.getElementById('site-icon');
@@ -332,7 +491,12 @@ const ytdlpStatusEl     = document.getElementById('ytdlp-status');
 const geoToolbarBtn     = document.getElementById('geo-toolbar-btn');
 const notesBtn          = document.getElementById('notes-btn');
 const geoPopover        = document.getElementById('geo-popover');
-const geoPresetSelect   = document.getElementById('geo-preset');
+const geoDd             = document.getElementById('geo-dd');
+const geoDdBtn          = document.getElementById('geo-dd-btn');
+const geoDdMenu         = document.getElementById('geo-dd-menu');
+const geoDdLabel        = document.getElementById('geo-dd-label');
+const geoDdFlag         = document.getElementById('geo-dd-flag');
+let   geoValue          = 'off';
 const geoCustomWrap     = document.getElementById('geo-custom-wrap');
 const geoLatInput       = document.getElementById('geo-lat');
 const geoLonInput       = document.getElementById('geo-lon');
@@ -437,6 +601,9 @@ function applyAppSettings() {
   // gates the CSS overlay either way so toggling transparency off cleanly
   // hides the gradient without needing a second toggle.
   document.body.classList.toggle('aero-ui', !!settings.aeroGradient);
+  // Privoo One skin — floating content island + navy chrome (default on).
+  // Privoo One is the browser's design language — always on (no legacy look).
+  document.body.classList.add('privoo-one');
   document.body.classList.toggle('ui-compact', !!settings.compactMode);
   document.body.classList.toggle('has-vibe', !!settings.vibeEnabled);
   // Confine the ambient vibe gradient to the chrome when the user doesn't want
@@ -491,6 +658,20 @@ function applyAppSettings() {
     document.documentElement.style.removeProperty('--accent');
     document.documentElement.style.removeProperty('--accent-hover');
     document.documentElement.style.removeProperty('--accent-soft');
+    // Back to the default pine — repaint Privoo favicons to match.
+    if (_pvAccent !== '#57a97e') { _pvAccent = '#57a97e'; refreshPrivooFavicons(); }
+  }
+  // Lucid Mode — apply or remove live on toggle so it takes effect without a
+  // page reload (the inject/cleanup scripts are idempotent).
+  {
+    const lucidOn = !!settings.lucidMode;
+    if (_lucidPrev !== null && _lucidPrev !== lucidOn) {
+      for (const t of tabs) {
+        if (!t.ready || !t.wv || !t.url || t.url.startsWith('privoo://')) continue;
+        t.wv.executeJavaScript(lucidOn ? LUCID_MODE_JS : LUCID_CLEANUP_JS).catch(() => {});
+      }
+    }
+    _lucidPrev = lucidOn;
   }
   renderBookmarksBar();
   updateBookmarkButton();
@@ -509,10 +690,8 @@ function applyAppSettings() {
   // when the rest of the UI isn't transparent; `sp-no-glass` forces it solid.
   document.body.classList.toggle('sp-glass', settings.searchPopupGlass !== false);
   document.body.classList.toggle('sp-no-glass', settings.searchPopupGlass === false);
-  // Tab strip style (classic = default, no class).
+  // Tab style customization removed — Privoo One's tab design is the only look.
   document.body.classList.remove('tabs-pill', 'tabs-underline', 'tabs-chrome', 'tabs-modern');
-  const _ts = settings.tabStyle || 'classic';
-  if (_ts !== 'classic') document.body.classList.add('tabs-' + _ts);
   document.body.classList.toggle('newtab-circle', !!settings.newTabBtnCircle);
   // Transparency glass style (only takes effect when transparency is on).
   document.body.classList.remove('tstyle-liquid', 'tstyle-acrylic', 'tstyle-clear');
@@ -1119,8 +1298,11 @@ function paintToolbarWidgets() {
   if (ytdlpToolbarBtn) ytdlpToolbarBtn.hidden = !settings.showYtdlpToolbar;
   // Show/hide geo toolbar button based on settings
   if (geoToolbarBtn) geoToolbarBtn.hidden = !settings.showGeoToolbar;
-  // Notes button — off by default, enable in Settings → Features
+  // Notes button — off by default, enable via the Notes extension
   if (notesBtn) notesBtn.hidden = !settings.showNotesButton;
+  // Calculator button — off by default, enable via the Calculator extension
+  const calcBtnEl = document.getElementById('calc-btn');
+  if (calcBtnEl) calcBtnEl.hidden = !settings.showCalculator;
   // Translate toolbar button — off by default, enable in Settings → Features
   const translateAnchor = document.getElementById('translate-anchor');
   if (translateAnchor) translateAnchor.hidden = !settings.showTranslateButton;
@@ -1158,10 +1340,38 @@ function faviconForSidebar(url) {
   } catch { return ''; }
 }
 
+// Fixed, non-removable quick-access shortcuts to Privoo's own pages — always
+// pinned at the top of the sidebar rail, above the user's own shortcuts.
+const SIDEBAR_QUICK_ACCESS = [
+  { url: DOWNLOADS_URL, title: 'Downloads', icon: 'M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z' },
+  { url: HISTORY_URL,   title: 'History',   icon: 'M13 3a9 9 0 1 0 8.94 10h-2.02A7 7 0 1 1 13 5c1.93 0 3.68.78 4.95 2.05L14 11h7V4l-2.64 2.64A8.98 8.98 0 0 0 13 3zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z' },
+  { url: BOOKMARKS_URL, title: 'Bookmarks', icon: 'M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z' },
+  { url: SETTINGS_URL,  title: 'Settings',  icon: 'M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z' },
+];
+
 function renderSidebarRail() {
   if (!sidebarRail) return;
   sidebarRail.innerHTML = '';
   hideSidebarFlyout();
+
+  // Pinned quick-access row — always opens as a real tab (these are full
+  // pages, not sites suited to the cramped preview panel).
+  for (const q of SIDEBAR_QUICK_ACCESS) {
+    const qbtn = document.createElement('button');
+    qbtn.type = 'button';
+    qbtn.className = 'sidebar-rail-btn sidebar-quick-btn';
+    qbtn.title = q.title;
+    qbtn.setAttribute('role', 'listitem');
+    qbtn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="${q.icon}"/></svg>`;
+    qbtn.addEventListener('click', (e) => { e.stopPropagation(); createTab(q.url); });
+    sidebarRail.appendChild(qbtn);
+  }
+  if (SIDEBAR_QUICK_ACCESS.length) {
+    const div = document.createElement('div');
+    div.className = 'sidebar-rail-divider';
+    sidebarRail.appendChild(div);
+  }
+
   const links = sidebarLinkList().slice(0, 24);
   for (const link of links) {
     const btn = document.createElement('button');
@@ -1397,25 +1607,45 @@ window.addEventListener('pagehide', flushSessionSync);
 window.addEventListener('beforeunload', flushSessionSync);
 
 function updateGeoStatusLine() {
-  if (!geoStatusLine || !settings) return;
+  if (!settings) return;
+  const badgeEl  = geoStatusLine;                              // titlebar "Off"/"On"
+  const stateEl  = document.getElementById('geo-connect-state'); // big "Not connected"/"Connected"
+  const regionEl = document.getElementById('geo-region-label');
   const c = geoCoordsFromSettings(settings);
-  if (!settings.geoSpoofEnabled || !c) {
-    geoStatusLine.textContent = 'Status: not masking — pages use default geolocation.';
-    return;
+  const labels = { nyc: 'New York, United States', london: 'London, United Kingdom', tokyo: 'Tokyo, Japan', paris: 'Paris, France', sydney: 'Sydney, Australia', custom: 'Custom coordinates' };
+  const connected = !!(settings.geoSpoofEnabled && c);
+  geoPopover?.classList.toggle('connected', connected);
+  if (badgeEl)  badgeEl.textContent  = connected ? 'On' : 'Off';
+  if (stateEl)  stateEl.textContent  = connected ? 'Connected' : 'Not connected';
+  if (regionEl) regionEl.textContent = connected ? (labels[settings.geoPreset] || settings.geoPreset) : 'Real location';
+  if (geoApplyBtn) geoApplyBtn.setAttribute('aria-label', connected ? 'Disconnect' : 'Connect');
+}
+
+// Reflect the selected region in the custom dropdown's button (flag + label),
+// toggle the custom-coordinates fields, and refresh the Connect/Disconnect label.
+function setGeoValue(val) {
+  geoValue = val || 'off';
+  const opt = geoDdMenu?.querySelector('.geo-dd-opt[data-value="' + geoValue + '"]');
+  if (opt) {
+    if (geoDdLabel) geoDdLabel.textContent = opt.textContent;
+    if (geoDdFlag)  geoDdFlag.textContent  = opt.dataset.flag || '🌐';
   }
-  const labels = { nyc: 'New York', london: 'London', tokyo: 'Tokyo', paris: 'Paris', sydney: 'Sydney', custom: 'Custom' };
-  const nm = labels[settings.geoPreset] || settings.geoPreset;
-  geoStatusLine.textContent = `Status: masking active — ${nm} (${c[0].toFixed(3)}, ${c[1].toFixed(3)})`;
+  if (geoCustomWrap) geoCustomWrap.classList.toggle('hidden', geoValue !== 'custom');
+  updateGeoConnectLabel();
+}
+function closeGeoDropdown() {
+  geoDdMenu?.classList.add('hidden');
+  geoDdBtn?.setAttribute('aria-expanded', 'false');
 }
 
 function syncGeoPopoverFromSettings() {
-  if (!geoPresetSelect || !settings) return;
+  if (!settings) return;
   const p = settings.geoSpoofEnabled ? (settings.geoPreset || 'off') : 'off';
   const valid = p === 'off' || p === 'custom' || (GEO_PRESETS[p] != null);
-  geoPresetSelect.value = valid ? p : 'off';
   if (geoLatInput) geoLatInput.value = String(settings.geoLatitude ?? '40.7128');
   if (geoLonInput) geoLonInput.value = String(settings.geoLongitude ?? '-74.0060');
-  if (geoCustomWrap) geoCustomWrap.classList.toggle('hidden', geoPresetSelect.value !== 'custom');
+  setGeoValue(valid ? p : 'off');
+  closeGeoDropdown();
   updateGeoStatusLine();
 }
 
@@ -1578,14 +1808,26 @@ function applyGroupStyle(tab) {
 }
 
 function resizeTabs() {
-  const scrollEl = document.getElementById('tabs-scroll');
+  const strip = document.getElementById('tabs-strip');
   const newTabBtn = document.getElementById('new-tab');
-  if (!scrollEl || !newTabBtn) return;
-  const available = scrollEl.clientWidth - newTabBtn.offsetWidth - 12;
-  if (available <= 0) return;
+  if (!strip) return;
+  const stripW = strip.clientWidth;
+  if (stripW <= 0) return; // not laid out yet — a later trigger will re-run us
+  // Measure the whole STRIP (a stable width) — NOT #tabs-scroll, which is now
+  // content-sized (reading it would be circular). Reserve room for the "+" and
+  // the trailing drag gap, generously, so the tabs are always a touch narrower
+  // than the space and NEVER overflow-clip before they truly need to scroll.
+  const btnW = (newTabBtn ? newTabBtn.offsetWidth : 30) + 12;
+  const pinnedW = tabs.filter(t => t.pinned).length * 42;
+  const reserve = btnW + pinnedW + 56;
+  const available = stripW - reserve;
   const unpinned = tabs.filter(t => !t.pinned);
   if (!unpinned.length) return;
-  const w = Math.min(240, Math.max(76, Math.floor(available / unpinned.length)));
+  // Chrome-style: each tab is (space / count), capped at 240 (a few tabs stay
+  // full width, "+" right beside the last) and floored at 76 (then it scrolls).
+  const w = available > 0
+    ? Math.min(240, Math.max(76, Math.floor(available / unpinned.length)))
+    : 76;
   for (const t of unpinned) {
     if (t.tabEl) t.tabEl.style.flexBasis = w + 'px';
   }
@@ -1708,6 +1950,27 @@ function ensureDisclaimer() {
       if (to.id === 'sw-step-setup') {
         runSetupProgress(() => goStep(n + 1));
       }
+      // Done step — build a real recap of what was just chosen, so it's not
+      // the same static blurb every time.
+      if (to.id === 'sw-step-6') renderSetupRecap();
+    }
+
+    const ENGINE_LABELS = { brave: 'Brave Search', duckduckgo: 'DuckDuckGo', google: 'Google', bing: 'Bing' };
+    function renderSetupRecap() {
+      const el = document.getElementById('sw-recap');
+      if (!el) return;
+      const items = [
+        { label: selectedTheme === 'dark' ? 'Dark theme' : 'Light theme' },
+        { label: ENGINE_LABELS[searchChoice] || searchChoice },
+        { label: hwaChoice === 'on' ? 'GPU accelerated' : 'Software rendering' },
+      ];
+      if (selectedProfile) items.push({ label: 'Imported from ' + (selectedProfile.browser || 'another browser') });
+      el.innerHTML = items.map((it) =>
+        '<span class="sw-recap-chip">' +
+          '<svg viewBox="0 0 24 24" width="12" height="12"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>' +
+          it.label +
+        '</span>'
+      ).join('');
     }
 
     // Simple "Getting Privoo ready" screen — the dots animate on their own
@@ -1733,27 +1996,38 @@ function ensureDisclaimer() {
       goStep(2);
     };
 
-    // ── Step 3: Theme ──
+    // ── Step 3: Theme — the wizard card itself IS the live preview; a
+    // segmented toggle switches body.dark and crossfades a sun/moon glyph. ──
+    function syncThemeToggleVisual() {
+      const isDark = selectedTheme === 'dark';
+      document.body.classList.toggle('dark', isDark);
+      document.getElementById('sw-theme-thumb')?.classList.toggle('is-dark', isDark);
+      document.getElementById('sw-live-sun')?.classList.toggle('hidden', isDark);
+      document.getElementById('sw-live-moon')?.classList.toggle('hidden', !isDark);
+    }
     document.querySelectorAll('.sw-theme-card').forEach(btn => {
+      btn.classList.toggle('selected', btn.dataset.theme === selectedTheme);
       btn.onclick = () => {
         document.querySelectorAll('.sw-theme-card').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
         selectedTheme = btn.dataset.theme;
-        document.body.classList.toggle('dark', selectedTheme === 'dark');
+        syncThemeToggleVisual();
       };
     });
+    syncThemeToggleVisual();
     document.getElementById('sw-3-back').onclick = () => goStep(1);
     document.getElementById('sw-3-next').onclick = async () => {
       await saveBrowserSetting({ darkMode: selectedTheme === 'dark' });
       goStep(3);
     };
 
-    // ── Step 4: Search engine ──
+    // ── Step 4: Search engine — a selectable list of engines with real
+    // favicons; the chosen row gets a pine tick. ──
     let searchChoice = settings?.searchEngine || 'google';
-    document.querySelectorAll('.sw-choice-card[data-engine]').forEach(btn => {
+    document.querySelectorAll('#sw-step-search [data-engine]').forEach(btn => {
       btn.classList.toggle('selected', btn.dataset.engine === searchChoice);
       btn.onclick = () => {
-        document.querySelectorAll('.sw-choice-card[data-engine]').forEach(b => b.classList.remove('selected'));
+        document.querySelectorAll('#sw-step-search [data-engine]').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
         searchChoice = btn.dataset.engine;
       };
@@ -1764,14 +2038,29 @@ function ensureDisclaimer() {
       goStep(4);
     };
 
-    // ── Step 5: Hardware acceleration ──
+    // ── Step 5: Hardware acceleration — a single segmented toggle + an
+    // animated speed-bar graphic that goes calm/static in software-only mode. ──
+    const HWA_DESC = {
+      on:  'Recommended — fast video and smooth scrolling using your GPU.',
+      off: 'Use this if videos flicker or pages render with artifacts.',
+    };
+    function syncHwaVisual() {
+      const isOn = hwaChoice === 'on';
+      document.getElementById('sw-hwa-thumb')?.classList.toggle('is-dark', !isOn);
+      document.getElementById('sw-speed-stage')?.classList.toggle('is-eco', !isOn);
+      const descEl = document.getElementById('sw-hwa-desc');
+      if (descEl) descEl.textContent = HWA_DESC[hwaChoice] || '';
+    }
     document.querySelectorAll('.sw-choice-card[data-hwa]').forEach(btn => {
+      btn.classList.toggle('selected', btn.dataset.hwa === hwaChoice);
       btn.onclick = () => {
         document.querySelectorAll('.sw-choice-card[data-hwa]').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
         hwaChoice = btn.dataset.hwa;
+        syncHwaVisual();
       };
     });
+    syncHwaVisual();
     document.getElementById('sw-4-back').onclick = () => goStep(3);
     document.getElementById('sw-4-next').onclick = async () => {
       await saveBrowserSetting({ hardwareAcceleration: hwaChoice === 'on' });
@@ -1854,7 +2143,9 @@ function ensureDisclaimer() {
       setTimeout(() => {
         setupOverlay.setAttribute('hidden', '');
         setupOverlay.classList.remove('sw-closing');
-      }, 300);
+        // Show Privoo News once, right after first-run setup completes.
+        try { createTab('privoo://news/'); } catch {}
+      }, 320);
       resolve();
     }
     if (discAccept) {
@@ -2043,25 +2334,34 @@ function createTab(url = defaultNewTabUrl(), activate = true, opts = {}) {
   viewsEl.appendChild(wv);
 
   const tabEl = document.createElement('div');
-  // tab-in: the new tab starts collapsed + faded, then transitions to full
-  // size so it grows + fades in. Cleared after two frames so the transition runs.
+  // tab-in: fade only. The tab is appended at its final width (resizeTabs runs
+  // synchronously below), so nothing reflows. Cleared after two frames so the
+  // opacity transition actually runs.
   tabEl.className = 'tab tab-in';
   requestAnimationFrame(() =>
     requestAnimationFrame(() => tabEl.classList.remove('tab-in')));
   tabEl.draggable = true;
   tabEl.innerHTML =
     `<span class="favicon tab-fav"></span>` +
-    `<span class="tab-title">New tab</span>` +
+    `<span class="tab-title">${newTabLabel()}</span>` +
     `<span class="tab-audio-ind" title="Audio playing — click to mute"><svg viewBox="0 0 24 24" width="12" height="12"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg></span>` +
     `<span class="tab-close" title="Close tab"><svg viewBox="0 0 14 14" width="10" height="10"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></span>`;
   tabsEl.appendChild(tabEl);
-  const tabsScrollEl = document.getElementById('tabs-scroll');
-  if (tabsScrollEl) requestAnimationFrame(() => { tabsScrollEl.scrollLeft = tabsScrollEl.scrollWidth; });
+  // Tab widths are un-animated now, so the strip's final layout exists this
+  // frame: re-spread immediately, then (next frame, and only if it genuinely
+  // overflows) reveal the new tab. No settling delay, no clipped edge.
+  resizeTabs();
+  requestAnimationFrame(() => {
+    const sc = document.getElementById('tabs-scroll');
+    if (sc && sc.scrollWidth > sc.clientWidth + 2) {
+      try { tabEl.scrollIntoView({ inline: 'end', block: 'nearest' }); } catch {}
+    }
+  });
 
   const tab = {
     id,
     url,
-    title: 'New tab',
+    title: newTabLabel(),
     wv,
     tabEl,
     pinned: !!opts.pinned,
@@ -2069,10 +2369,19 @@ function createTab(url = defaultNewTabUrl(), activate = true, opts = {}) {
     isPlayingAudio: false,
     isMuted: false,
     volume: 1,
-    faviconUrl: null,
+    // Privoo pages know their icon immediately — no need to wait for onNav
+    // to fire, which avoided a flash of the generic favicon.
+    faviconUrl: url.startsWith('privoo://') ? faviconForPrivooUrl(url) : null,
     abortController: new AbortController(),
   };
   tabs.push(tab);
+
+  // Paint the Privoo page icon immediately — don't wait for onNav to fire
+  // (avoids a flash of the generic favicon on internal pages).
+  if (tab.faviconUrl) {
+    const initialFaviconEl = tabEl.querySelector('.favicon');
+    if (initialFaviconEl) initialFaviconEl.style.backgroundImage = 'url("' + tab.faviconUrl + '")';
+  }
 
   if (tab.pinned) tabEl.classList.add('pinned');
   applyGroupStyle(tab);
@@ -2143,6 +2452,32 @@ function triggerWobble() {
   setTimeout(() => vw.classList.remove('wobbly-active'), 500);
 }
 
+// After a webview goes from hidden → visible, its HTML5 video can be stuck on
+// a black/stale frame (the decoder produced nothing while occluded). Firing a
+// window resize inside the guest makes the YouTube player re-measure and paint
+// a fresh frame — the same thing a manual reload would do, but seamless. Gated
+// to video hosts so ordinary pages are never touched.
+function nudgeMediaRepaint(tab) {
+  if (!tab || !tab.wv || !tab.ready) return;
+  const url = tab.url || '';
+  if (!/(?:^|\.)(youtube\.com|youtube-nocookie\.com|youtu\.be)\//.test(url) &&
+      !/(?:^|\/\/)(?:www\.)?(?:youtube\.com|youtu\.be)/.test(url)) return;
+  // Two frames after the visibility flip so the compositor has re-shown the
+  // guest, then force the player to re-lay-out AND poke the video's own
+  // compositing layer — a black-but-playing frame clears without a reload.
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    try {
+      tab.wv.executeJavaScript(
+        '(function(){try{window.dispatchEvent(new Event("resize"));' +
+        'var v=document.querySelector("video");' +
+        'if(v){var t=v.style.transform;v.style.transform="translateZ(0)";' +
+        'requestAnimationFrame(function(){v.style.transform=t||"";});}}catch(e){}})();',
+        true,
+      ).catch(() => {});
+    } catch { /* webview torn down mid-switch — ignore */ }
+  }));
+}
+
 function activateTab(id) {
   const tab = getTab(id);
   if (!tab) return;
@@ -2158,6 +2493,11 @@ function activateTab(id) {
   // The loop above hid every non-active webview — if a split is still up,
   // re-apply its layout so both panes stay visible and positioned.
   if (typeof isSplit === 'function' && isSplit()) layoutSplit();
+  // Nudge the newly-visible page to repaint its video. Coming back from
+  // `visibility: hidden`, the HTML5 player can be left showing a stale/black
+  // frame; a synthetic resize makes YouTube (and other players) re-lay-out
+  // and paint a fresh frame instead of needing a manual refresh.
+  nudgeMediaRepaint(tab);
   tab.tabEl.scrollIntoView({ inline: 'nearest', block: 'nearest' });
   syncToolbar();
   updateAudioButton();
@@ -2454,6 +2794,10 @@ function wireWebview(tab) {
   }, { signal });
 
   wv.addEventListener('page-favicon-updated', (e) => {
+    // Privoo's own pages keep their per-page icon (settings=gear, history=
+    // clock, …) set in onNav — don't let the page's own <link rel="icon">
+    // (same shield on every internal page) override it.
+    if (tab.url?.startsWith('privoo://')) { renderVtabs(); return; }
     const icon = e.favicons?.[0];
     if (icon) applyTabFavicon(tab, icon);
     renderVtabs();
@@ -2462,8 +2806,10 @@ function wireWebview(tab) {
   const onNav = () => {
     tab.url = wv.getURL();
     if (tab.url.startsWith('privoo://')) {
-      if (faviconEl) { faviconEl.style.backgroundImage = 'url("privoo://newtab/logo.png")'; faviconEl.classList.remove('spin'); }
-      if (tab.url === NEWTAB_URL && titleEl) titleEl.textContent = tab.title = 'New tab';
+      const icon = faviconForPrivooUrl(tab.url);
+      tab.faviconUrl = icon;
+      if (faviconEl) { faviconEl.style.backgroundImage = 'url("' + icon + '")'; faviconEl.classList.remove('spin'); }
+      if (tab.url === NEWTAB_URL && titleEl) titleEl.textContent = tab.title = newTabLabel();
     }
     if (tab.id === activeId) {
       syncToolbar();
@@ -2755,6 +3101,16 @@ function applyInjections(wv) {
   if (settings?.videoPopOut) {
     wv.executeJavaScript(VIDEO_POPOUT_JS).catch(() => {});
   }
+  if (settings?.lucidMode) {
+    wv.executeJavaScript(LUCID_MODE_JS).catch(() => {});
+  }
+  // YouTube black-frame auto-fix — poke the video's compositor when it starts
+  // playing so the first-video-of-session black screen clears without a reload.
+  try {
+    if (/(?:^|\.)(youtube\.com|youtube-nocookie\.com)$/.test(new URL(url).hostname)) {
+      wv.executeJavaScript(YOUTUBE_FIX_JS).catch(() => {});
+    }
+  } catch { /* invalid URL — skip */ }
   const geo = geoCoordsFromSettings(settings);
   if (geo) {
     wv.executeJavaScript(geolocationOverrideScript(geo[0], geo[1])).catch(() => {});
@@ -3556,6 +3912,7 @@ function closePopovers() {
   siteInfoPopover?.classList.add('hidden');
   pageShieldPopover?.classList.add('hidden');
   notesPopover?.classList.add('hidden');
+  document.getElementById('calc-popover')?.classList.add('hidden');
   document.getElementById('translate-popover')?.classList.add('hidden');
   emojiPickerEl?.classList.add('hidden');
   if (audioPopover && !audioPopover.classList.contains('hidden')) {
@@ -4205,13 +4562,13 @@ document.getElementById('extensions-btn')?.addEventListener('click', (e) => {
 
 // ─── Customize side panel (right-side, opens from menu) ─────────────────────
 const CP_ACCENTS = [
-  { name: 'blue',   value: '#8ab4f8' },  // default
+  { name: 'pine',   value: '#57a97e' },  // default
+  { name: 'blue',   value: '#8ab4f8' },
   { name: 'indigo', value: '#a78bfa' },
   { name: 'pink',   value: '#f48fb1' },
   { name: 'red',    value: '#f28b82' },
   { name: 'orange', value: '#fcad70' },
   { name: 'yellow', value: '#fdd663' },
-  { name: 'green',  value: '#81c995' },
 ];
 const cpPanel       = document.getElementById('customize-panel');
 const cpCloseBtn    = document.getElementById('cp-close');
@@ -4274,6 +4631,8 @@ function applyAccentTriad(hex) {
   );
   document.documentElement.style.setProperty('--accent-hover', hover);
   document.documentElement.style.setProperty('--accent-soft', `rgba(${r},${g},${b},.18)`);
+  // Repaint Privoo-page favicons in the new accent.
+  if (_pvAccent !== hex) { _pvAccent = hex; if (typeof refreshPrivooFavicons === 'function') refreshPrivooFavicons(); }
 }
 function hexToRgb(hex) {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex);
@@ -4600,10 +4959,26 @@ cpPanel?.querySelectorAll('[data-action]').forEach(el => {
 if (settings?.accentColor) applyAccentColor(settings.accentColor);
 
 // Populate the version chip in the main menu from package.json so the text
-// never drifts out of sync with the actual build.
+// never drifts out of sync with the actual build. Also: show Privoo News once
+// after an update — when the running version differs from the last version we
+// showed news for. Fresh installs (no stored version) are handled by the setup
+// wizard instead, so we only record the version there without opening a tab.
 window.privoo?.getAppVersion?.().then((v) => {
   const el = document.getElementById('menu-ver');
   if (el && v) el.textContent = 'Privoo v' + v;
+  if (!v) return;
+  try {
+    const seen = settings?.newsSeenVersion || '';
+    const isFreshInstall = !settings?.disclaimerAccepted;
+    if (seen !== v) {
+      // Only auto-open on a genuine update (we've seen a prior version and the
+      // user is past first-run setup). Otherwise just record the version.
+      if (seen && !isFreshInstall) {
+        setTimeout(() => { try { createTab('privoo://news/'); } catch {} }, 900);
+      }
+      saveBrowserSetting({ newsSeenVersion: v });
+    }
+  } catch {}
 }).catch(() => {});
 
 siteIcon?.addEventListener('click', (e) => {
@@ -4897,6 +5272,10 @@ window.addEventListener('mousedown', (e) => {
   if (geoPopover && !geoPopover.classList.contains('hidden') && !t.closest('#geo-anchor')) {
     geoPopover.classList.add('hidden');
   }
+  const calcPop = document.getElementById('calc-popover');
+  if (calcPop && !calcPop.classList.contains('hidden') && !t.closest('#calc-anchor')) {
+    calcPop.classList.add('hidden');
+  }
   if (tabContextMenu && !tabContextMenu.classList.contains('hidden') && !tabContextMenu.contains(t)) {
     hideTabContextMenu();
   }
@@ -4990,14 +5369,24 @@ omnibox.addEventListener('mousedown', (e) => {
     showSearchPopup(false);
   }
 });
+// Track whether focus arrived via a pointer click vs. the keyboard (Ctrl+L).
+let _omniFocusByPointer = false;
+omnibox.addEventListener('pointerdown', () => { _omniFocusByPointer = true; });
 omnibox.addEventListener('focus', () => {
   if (vtabsOmniboxShouldPopup()) {
     omnibox.blur();
     showSearchPopup(false);
     return;
   }
-  omnibox.select();
   const val = omnibox.value;
+  if (_omniFocusByPointer) {
+    // A click lands the caret exactly where you clicked — the native, expected
+    // behavior. We deliberately don't force it to the start or end.
+    _omniFocusByPointer = false;
+  } else {
+    // Keyboard focus (Ctrl+L / Alt+D) selects all for a quick replace.
+    omnibox.select();
+  }
   if (!val) return;
   triggerSuggest(val);
 });
@@ -5157,20 +5546,125 @@ geoToolbarBtn?.addEventListener('click', (e) => {
   }
 });
 
-geoPresetSelect?.addEventListener('change', () => {
-  if (geoCustomWrap) geoCustomWrap.classList.toggle('hidden', geoPresetSelect.value !== 'custom');
+// ── Calculator (Calculator extension) ────────────────────────────────────────
+(function initCalculator() {
+  const btn     = document.getElementById('calc-btn');
+  const popover = document.getElementById('calc-popover');
+  const display = document.getElementById('calc-display');
+  if (!btn || !popover || !display) return;
+
+  let acc = null;      // running total
+  let op = null;       // pending operator
+  let cur = '0';       // current entry (string)
+  let fresh = true;    // next digit starts a new entry
+
+  const fmt = (n) => {
+    if (!isFinite(n)) return 'Error';
+    let s = String(Math.round(n * 1e10) / 1e10);
+    if (s.length > 12) s = Number(n).toPrecision(10).replace(/\.?0+$/, '');
+    return s;
+  };
+  const show = () => { display.textContent = cur.length > 12 ? Number(cur).toPrecision(8) : cur; };
+
+  function apply(a, b, o) {
+    switch (o) { case '+': return a + b; case '-': return a - b; case '*': return a * b; case '/': return b === 0 ? NaN : a / b; }
+    return b;
+  }
+  function inputDigit(d) {
+    if (fresh) { cur = (d === '.') ? '0.' : d; fresh = false; }
+    else if (d === '.') { if (!cur.includes('.')) cur += '.'; }
+    else { cur = (cur === '0') ? d : cur + d; }
+    show();
+  }
+  function chooseOp(o) {
+    const v = parseFloat(cur);
+    if (op !== null && !fresh) { acc = apply(acc, v, op); cur = fmt(acc); show(); }
+    else { acc = v; }
+    op = o; fresh = true;
+  }
+  function equals() {
+    if (op === null) return;
+    const v = parseFloat(cur);
+    acc = apply(acc, v, op); cur = fmt(acc); show();
+    op = null; fresh = true;
+  }
+  function press(k) {
+    if (/^[0-9.]$/.test(k)) return inputDigit(k);
+    if (k === '+' || k === '-' || k === '*' || k === '/') return chooseOp(k);
+    if (k === '=') return equals();
+    if (k === 'clear') { acc = null; op = null; cur = '0'; fresh = true; return show(); }
+    if (k === 'sign') { cur = fmt(parseFloat(cur) * -1); return show(); }
+    if (k === 'percent') { cur = fmt(parseFloat(cur) / 100); fresh = true; return show(); }
+  }
+
+  popover.querySelectorAll('.calc-key').forEach((k) => {
+    k.addEventListener('click', (e) => { e.stopPropagation(); press(k.dataset.k); });
+  });
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const wasOpen = !popover.classList.contains('hidden');
+    closePopovers();
+    if (!wasOpen) popover.classList.remove('hidden');
+  });
+  // Keyboard input while the calculator is open.
+  document.addEventListener('keydown', (e) => {
+    if (popover.classList.contains('hidden')) return;
+    if (/^[0-9.]$/.test(e.key)) { press(e.key); e.preventDefault(); }
+    else if (['+','-','*','/'].includes(e.key)) { press(e.key); e.preventDefault(); }
+    else if (e.key === 'Enter' || e.key === '=') { press('='); e.preventDefault(); }
+    else if (e.key === 'Escape') { press('clear'); }
+    else if (e.key === 'Backspace') { cur = cur.length > 1 ? cur.slice(0, -1) : '0'; show(); }
+  });
+})();
+
+function updateGeoConnectLabel() {
+  // The connect control is now an icon power button — its text must not be
+  // overwritten. Aria-label is kept in sync inside updateGeoStatusLine().
+}
+
+// ── Custom region dropdown (replaces the native <select> — the OS-rendered
+// select forced a mismatched serif font and couldn't be themed). ──
+geoDdBtn?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const willOpen = geoDdMenu.classList.contains('hidden');
+  geoDdMenu.classList.toggle('hidden', !willOpen);
+  geoDdBtn.setAttribute('aria-expanded', String(willOpen));
 });
+geoDdMenu?.querySelectorAll('.geo-dd-opt').forEach((opt) => {
+  opt.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setGeoValue(opt.dataset.value);
+    closeGeoDropdown();
+  });
+});
+// Close the dropdown when clicking anywhere outside it (but keep the popover open).
+document.addEventListener('click', (e) => {
+  if (geoDdMenu && !geoDdMenu.classList.contains('hidden') && !e.target.closest('#geo-dd')) {
+    closeGeoDropdown();
+  }
+}, true);
 
 geoApplyBtn?.addEventListener('click', async () => {
-  const preset = geoPresetSelect?.value || 'off';
-  const spoof = preset !== 'off';
-  const patch = { geoSpoofEnabled: spoof, geoPreset: preset };
-  if (preset === 'custom') {
-    patch.geoLatitude = parseFloat(geoLatInput?.value || '') || 0;
-    patch.geoLongitude = parseFloat(geoLonInput?.value || '') || 0;
+  // Power button toggles the connection like a VPN app: if we're currently
+  // connected, tapping it disconnects; otherwise it connects to the selected
+  // region. The popover stays open and updates in place to show the new state.
+  const currentlyConnected = !!(settings?.geoSpoofEnabled && geoCoordsFromSettings(settings));
+  let patch;
+  if (currentlyConnected) {
+    patch = { geoSpoofEnabled: false, geoPreset: 'off' };
+    setGeoValue('off');
+  } else {
+    const preset = (geoValue && geoValue !== 'off') ? geoValue : 'off';
+    if (preset === 'off') return; // nothing selected to connect to
+    patch = { geoSpoofEnabled: true, geoPreset: preset };
+    if (preset === 'custom') {
+      patch.geoLatitude = parseFloat(geoLatInput?.value || '') || 0;
+      patch.geoLongitude = parseFloat(geoLonInput?.value || '') || 0;
+    }
   }
+  Object.assign(settings, patch);   // optimistic — reflect immediately
+  updateGeoStatusLine();
   await saveBrowserSetting(patch);
-  geoPopover?.classList.add('hidden');
 });
 
 const YTDLP_DISCLAIMER_KEY = 'privoo:ytdlp-rights-shown';
@@ -5231,6 +5725,8 @@ bookmarkBtn.addEventListener('click', async () => {
 // Window controls
 document.getElementById('win-min').addEventListener('click',   () => window.privoo.minimize());
 document.getElementById('win-max').addEventListener('click',   () => window.privoo.toggleMaximize());
+// Opera-style tab search magnifier at the right edge of the tab strip.
+document.getElementById('tab-search-btn')?.addEventListener('click', () => openTabSearch());
 document.getElementById('win-close').addEventListener('click', () => window.privoo.close());
 
 // ─── Keyboard shortcuts ──────────────────────────────────────────────────────
@@ -5455,7 +5951,7 @@ function renderTabSearch(q) {
     meta.className = 'ts-meta';
     const ti = document.createElement('div');
     ti.className = 'ts-title';
-    ti.textContent = t.title || 'New tab';
+    ti.textContent = t.title || newTabLabel();
     const u = document.createElement('div');
     u.className = 'ts-url';
     u.textContent = displayUrl(t.url) || '';
@@ -5900,9 +6396,6 @@ function applyPlatformChrome(platform) {
     if (platform) applyPlatformChrome(platform);
   } catch { /* ignore */ }
   window.privoo.onPlatform?.(applyPlatformChrome);
-  // First launch = the setup wizard hasn't been completed yet. Capture it
-  // before ensureDisclaimer() runs the wizard (which flips disclaimerAccepted).
-  const isFirstRun = !settings?.disclaimerAccepted && !(window.privoo?.incognitoPartition);
   await ensureDisclaimer();
 
   let restored = false;
@@ -5927,11 +6420,6 @@ function applyPlatformChrome(platform) {
   } else if (document.body.classList.contains('vertical-tabs')) {
     closeVtabsNewTabPages();
   }
-  // On the very first launch, welcome the user with the Privoo apps page
-  // (where the new Android app lives), opened as the active tab.
-  if (isFirstRun) {
-    try { createTab('https://privooapps.pages.dev/'); } catch {}
-  }
   refreshStats();
   setInterval(refreshStats, 1500);
   // Incognito windows never persist their tab list — that would leak the
@@ -5939,8 +6427,18 @@ function applyPlatformChrome(platform) {
   if (!isIncognitoWin) {
     setInterval(() => { window.privoo.saveTabSession(serializeSession()).catch?.(() => {}); }, 5000);
   }
-  const tabsScrollEl = document.getElementById('tabs-scroll');
-  if (tabsScrollEl) new ResizeObserver(() => resizeTabs()).observe(tabsScrollEl);
+  // Observe the STRIP (stable width — only changes on window resize), not the
+  // content-sized #tabs-scroll: observing the latter feedback-loops because
+  // resizeTabs() changes tab widths, which resizes #tabs-scroll, which fires
+  // the observer again — visibly janking the tabs when many are open.
+  const tabsStripEl = document.getElementById('tabs-strip');
+  if (tabsStripEl) {
+    let _rt = 0;
+    new ResizeObserver(() => {
+      if (_rt) return;
+      _rt = requestAnimationFrame(() => { _rt = 0; resizeTabs(); });
+    }).observe(tabsStripEl);
+  }
 })();
 
 // ─── Vertical Tabs ───────────────────────────────────────────────────────────
@@ -6119,7 +6617,7 @@ function _updateVtabEl(el, tab) {
   }
   el.className = cls;
   const titleEl = el.querySelector('.vtab-title');
-  if (titleEl) titleEl.textContent = tab.title || 'New Tab';
+  if (titleEl) titleEl.textContent = tab.title || newTabLabel();
   const favEl = el.querySelector('.vtab-favicon');
   if (favEl) {
     const newSrc = tab.faviconUrl || VTAB_DEFAULT_FAVICON;
@@ -6150,7 +6648,7 @@ function _makeVtabEl(tab) {
 
   const titleEl = document.createElement('span');
   titleEl.className = 'vtab-title';
-  titleEl.textContent = tab.title || 'New Tab';
+  titleEl.textContent = tab.title || newTabLabel();
   el.appendChild(titleEl);
 
   if (tab.pinned) {

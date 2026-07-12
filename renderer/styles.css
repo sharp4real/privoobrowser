@@ -1117,7 +1117,11 @@ svg { fill: currentColor; display: block; flex-shrink: 0; }
 
 /* Tabs fill the available strip width; trailing spacer is a fixed drag region. */
 #tabs-scroll {
-  flex: 1 1 0;
+  /* Sizes to its tabs (not the whole strip) so the "+" — which sits right after
+     this container — hugs the last tab instead of being flung to the far right.
+     When there are too many tabs to shrink further, it caps + scrolls. Its
+     width isn't a stable reference, so resizeTabs() measures the strip instead. */
+  flex: 0 1 auto;
   min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
@@ -1129,9 +1133,11 @@ svg { fill: currentColor; display: block; flex-shrink: 0; }
 }
 #tabs-scroll::-webkit-scrollbar { display: none; }
 
+/* Grows to absorb the empty space after the tabs and "+", keeping them left-
+   aligned while the rest of the bar stays a draggable region. */
 #titlebar-trailing-spacer {
-  flex: 0 0 48px;
-  min-width: 48px;
+  flex: 1 1 auto;
+  min-width: 40px;
   align-self: stretch;
   -webkit-app-region: drag;
 }
@@ -1162,24 +1168,19 @@ svg { fill: currentColor; display: block; flex-shrink: 0; }
   font-size: 12px;
   color: var(--muted);
   cursor: default;
-  /* flex-basis is transitioned so the whole strip glides when tabs close or
-     the window resizes — neighbours never snap to a new width. opacity +
-     transform are transitioned too so a new tab grows + fades in smoothly. */
-  transition: background .16s ease, color .16s ease,
-              opacity .2s ease, transform .2s ease,
-              flex-basis .24s cubic-bezier(.16,.84,.44,1),
-              min-width .24s cubic-bezier(.16,.84,.44,1),
-              padding .24s cubic-bezier(.16,.84,.44,1);
+  /* Width is NEVER transitioned. Animating flex-basis meant a new tab grew from
+     0 while the others re-spread, so for ~250ms the strip was mid-layout — that
+     is what clipped the last tab's edge and made the sizing visibly "settle" a
+     moment later. Tabs now land at their final width instantly; only colour and
+     opacity animate. */
+  transition: background .16s ease, color .16s ease, opacity .18s ease;
   overflow: hidden;
   margin-right: 0;
 }
-/* Entrance state: a new tab starts collapsed + faded, then transitions to its
-   full size so it grows in (and neighbours glide to make room). Removed after
-   two frames by JS. */
+/* Entrance: fade in only — the tab is already at its final width, so nothing
+   reflows. Class is removed after two frames by JS. */
 .tab.tab-in {
-  flex-basis: 0 !important; min-width: 0 !important;
-  padding-left: 0; padding-right: 0;
-  opacity: 0; transform: scale(.9);
+  opacity: 0;
 }
 /* Legacy no-anim class (kept harmless in case anything still references it). */
 .tab.tab-no-anim { transition: none; }
@@ -1212,14 +1213,14 @@ svg { fill: currentColor; display: block; flex-shrink: 0; }
 /* ── Tab group chip — sits before the first tab in each group ── */
 .tab-group-chip {
   -webkit-app-region: no-drag;
-  align-self: flex-end;
+  align-self: center;
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  height: 26px;
-  margin: 0 4px 3px 6px;
+  height: 28px;
+  margin: 0 4px 0 6px;
   padding: 0 10px;
-  border-radius: 7px;
+  border-radius: 4px;
   background: var(--group-tint);
   color: var(--text);
   font-size: 11.5px;
@@ -1323,24 +1324,6 @@ svg { fill: currentColor; display: block; flex-shrink: 0; }
 .tab.active .tab-close:hover { background: var(--hover); }
 .tab.dragging { opacity: .55; }
 
-/* ── Tab styles (Settings → Layout → Tab style) — "classic" is the default ── */
-/* Pill: separated, fully-rounded pills */
-body.tabs-pill #tabs { gap: 2px; }
-body.tabs-pill .tab { border-radius: 9px; height: 30px; margin: 2px 1px; }
-body.tabs-pill .tab.active { background: var(--tab-active); box-shadow: 0 1px 5px rgba(0,0,0,.14); }
-body.dark.tabs-pill .tab.active { box-shadow: 0 1px 6px rgba(0,0,0,.42); }
-/* Underline: minimal, active marked by an accent underline */
-body.tabs-underline .tab { border-radius: 0; background: transparent !important; }
-body.tabs-underline .tab:hover:not(.active) { background: var(--hover) !important; }
-body.tabs-underline .tab.active { background: transparent !important; color: var(--text); box-shadow: inset 0 -2.5px 0 var(--accent); }
-/* Chrome: taller rounded-top tabs that blend into the toolbar */
-body.tabs-chrome .tab { border-radius: 12px 12px 0 0; }
-body.tabs-chrome .tab.active { background: var(--tab-active); }
-/* Modern: floating, rounded tabs with a lifted active card */
-body.tabs-modern #tabs { gap: 3px; }
-body.tabs-modern .tab { border-radius: 10px; height: 30px; margin: 1px; }
-body.tabs-modern .tab.active { background: var(--tab-active); box-shadow: 0 2px 9px rgba(0,0,0,.16); }
-body.dark.tabs-modern .tab.active { box-shadow: 0 2px 11px rgba(0,0,0,.45); }
 
 /* New-tab "+" button — circular variant (Settings → Layout). */
 body.newtab-circle #new-tab {
@@ -1801,8 +1784,9 @@ body.dark .si-icon.insecure { background: rgba(242,139,130,.18); color: #f28b82;
 
 #omnibox {
   flex: 1;
+  height: 100%;
   border: none; outline: none; background: transparent;
-  font-size: 13.5px; color: var(--text);
+  font-size: 13.5px; line-height: normal; color: var(--text);
   user-select: text;
   min-width: 0;
 }
@@ -1920,20 +1904,23 @@ body.dark .si-icon.insecure { background: rgba(242,139,130,.18); color: #f28b82;
   color: var(--accent);
 }
 
-/* Incognito window — sleek charcoal chrome (Chrome-style) so a private
-   window is unmistakable without the heavy purple wash. */
-body.incognito #titlebar { background: #202124; color: #e8eaed; }
-body.incognito .tab { color: #bdc1c6; }
-body.incognito .tab.active { background: #35363a; color: #fff; }
-body.incognito .strip { background: #18191b; }
-body.incognito #toolbar { background: #2a2b2e; border-bottom-color: rgba(255,255,255,.07); color: #e8eaed; }
-body.incognito #bookmarks-bar { background: #2a2b2e; border-bottom-color: rgba(255,255,255,.07); }
-body.incognito .tb-btn { color: #e8eaed; }
-body.incognito #omnibox-wrap { background: #18191b; }
-body.incognito #omnibox-wrap:hover { background: #1f2022; }
-body.incognito #omnibox-wrap:focus-within { background: #141517; border-color: #5b5e63; }
-body.incognito #omnibox { color: #f1f3f4; }
-body.incognito #omnibox::placeholder { color: #8a8d92; }
+/* Incognito window — a deeper, cooler-warm charcoal than normal so a private
+   window is unmistakable, still in the "quiet & precise" language. */
+body.incognito { --strip: #131210; --toolbar: #131210; --tab-active: #232220; --tab-hover: #242320;
+  --omni-bg: #201f1c; --omni-hover: #26241f; --border: #2b2a27; --hover: #26241f;
+  --text: #e6e3da; --muted: #8a877c; --pv-rail: #100f0e; }
+body.incognito #titlebar { background: var(--strip); color: var(--text); }
+body.incognito .tab { color: var(--muted); }
+body.incognito .tab.active { background: var(--tab-active); color: var(--text); box-shadow: inset 0 2px 0 var(--accent); }
+body.incognito #toolbar,
+body.incognito #bookmarks-bar { background: var(--toolbar); border-bottom-color: var(--border); color: var(--text); }
+body.incognito .tb-btn { color: var(--text); }
+body.incognito #omnibox-wrap { background: var(--omni-bg); border-color: var(--border); }
+body.incognito #omnibox-wrap:hover { background: var(--omni-hover); }
+body.incognito #omnibox-wrap:focus-within { background: var(--omni-bg); border-color: var(--accent); }
+body.incognito #omnibox { color: var(--text); }
+body.incognito #omnibox::placeholder { color: var(--muted); }
+body.incognito .app-sidebar { background: var(--pv-rail); }
 
 /* ── Compact mode ───────────────────────────────────────────────────
    body.ui-compact tightens the titlebar, toolbar, tabs, and vtabs
@@ -2373,24 +2360,19 @@ body.dark .sw-card {
 
 /* Headlines & subtitles */
 .sw-headline {
-  font-size: 21px; font-weight: 600; line-height: 1.3; margin: 0 0 10px;
-  text-align: center; letter-spacing: -.3px;
+  font-size: 24px; font-weight: 650; line-height: 1.25; margin: 0 0 9px;
+  text-align: center; letter-spacing: -.02em; color: var(--text);
 }
 .sw-sub {
-  font-size: 13.5px; color: var(--muted); line-height: 1.55;
-  text-align: center; margin: 0 0 24px;
+  font-size: 14px; color: var(--muted); line-height: 1.55;
+  text-align: center; margin: 0 auto 26px; max-width: 40ch;
 }
 
 /* ── Step 1: branded EU intro — deep-blue card, spinning gold star ring ── */
 .sw-intro {
-  background: linear-gradient(160deg, #1b3380 0%, #0c1a4d 58%, #081237 100%) !important;
-  border-color: rgba(255, 255, 255, .12) !important;
-  color: #ffffff;
   align-items: center;
   text-align: center;
 }
-.sw-intro .sw-dot { background: rgba(255, 255, 255, .25); }
-.sw-intro .sw-dot.active { background: #ffcc00; box-shadow: 0 1px 7px rgba(255, 204, 0, .5); }
 
 /* The EU ring — 12 gold five-pointed stars orbiting the Privoo logo. The
    ring rotates; each star counter-rotates so it stays upright while it
@@ -2450,10 +2432,39 @@ body.dark .sw-card {
 }
 
 /* Search-engine picker — 2×2 grid of choice cards. */
-.sw-engine-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-  margin-bottom: 26px;
+/* ── Search step — a clean selectable list of engines with real favicons. ── */
+.sw-engine-list {
+  display: flex; flex-direction: column; gap: 8px; margin: 4px 0 26px;
 }
+.sw-engine-row {
+  display: flex; align-items: center; gap: 13px;
+  width: 100%; padding: 11px 14px;
+  background: var(--omni-bg); border: 1.5px solid var(--border);
+  border-radius: 8px; cursor: pointer; text-align: left; font-family: inherit;
+  color: var(--text);
+  transition: border-color .14s ease, background .14s ease;
+}
+.sw-engine-row:hover { border-color: var(--muted); }
+.sw-engine-row.selected { border-color: var(--accent); background: var(--accent-soft); }
+.sw-engine-fav {
+  position: relative; flex-shrink: 0;
+  width: 30px; height: 30px; border-radius: 7px; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 800; color: #fff;
+}
+.sw-engine-fav img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+}
+.sw-engine-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.sw-engine-info b { font-size: 13.5px; font-weight: 600; color: var(--text); }
+.sw-engine-info span { font-size: 11.5px; color: var(--muted); line-height: 1.35; }
+.sw-engine-tick {
+  flex-shrink: 0; width: 22px; height: 22px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent); color: #10160f;
+  opacity: 0; transform: scale(.6); transition: opacity .16s ease, transform .16s cubic-bezier(.2,1.4,.4,1);
+}
+.sw-engine-row.selected .sw-engine-tick { opacity: 1; transform: scale(1); }
 
 /* "Getting Privoo ready" — minimal loading screen: title + three bouncing
    dots on the regular frosted card. */
@@ -2804,6 +2815,61 @@ body.dark .cp-row input:checked + .slider { background: var(--accent); }
 .sw-terms-list li { margin-bottom: 10px; }
 .sw-terms-list li:last-child { margin-bottom: 0; }
 .sw-terms-list b { font-weight: 600; color: var(--text); }
+
+/* ── Terms step — a connected vertical timeline, staggered reveal.
+   Deliberately a different shape from the grids/toggles on other steps. ── */
+.sw-timeline {
+  position: relative;
+  margin: 4px 0 20px;
+  padding-left: 2px;
+}
+.sw-tl-row {
+  position: relative;
+  display: flex; gap: 13px; align-items: flex-start;
+  padding-bottom: 18px;
+  opacity: 0; animation: sw-tl-in .5s ease both;
+}
+.sw-tl-row:last-child { padding-bottom: 0; }
+.sw-tl-row:nth-child(1) { animation-delay: .05s; }
+.sw-tl-row:nth-child(2) { animation-delay: .18s; }
+.sw-tl-row:nth-child(3) { animation-delay: .31s; }
+.sw-tl-row:nth-child(4) { animation-delay: .44s; }
+@keyframes sw-tl-in { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+.sw-tl-node {
+  position: relative; z-index: 1; flex-shrink: 0;
+  width: 28px; height: 28px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-soft); color: var(--accent);
+}
+/* The connecting line runs behind the nodes, stopping short of the last one. */
+.sw-tl-row:not(:last-child) .sw-tl-node::after {
+  content: "";
+  position: absolute; top: 100%; left: 50%; width: 2px; height: 18px;
+  transform: translateX(-50%); background: var(--border);
+}
+.sw-tl-body { padding-top: 3px; }
+.sw-tl-body b { display: block; font-size: 12.5px; font-weight: 650; color: var(--text); line-height: 1.3; margin-bottom: 2px; }
+.sw-tl-body span { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+@media (prefers-reduced-motion: reduce) { .sw-tl-row { animation: none !important; opacity: 1; } }
+
+/* ── Done step — dynamic recap chips of what was actually chosen ── */
+.sw-recap {
+  display: flex; flex-wrap: wrap; gap: 7px; justify-content: center;
+  margin: 4px 0 22px;
+}
+.sw-recap-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 11px; border-radius: 20px; font-size: 11.5px; font-weight: 600;
+  background: var(--accent-soft); color: var(--accent);
+  opacity: 0; animation: sw-recap-in .4s ease both;
+}
+.sw-recap-chip:nth-child(1) { animation-delay: .1s; }
+.sw-recap-chip:nth-child(2) { animation-delay: .2s; }
+.sw-recap-chip:nth-child(3) { animation-delay: .3s; }
+.sw-recap-chip:nth-child(4) { animation-delay: .4s; }
+@keyframes sw-recap-in { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .sw-recap-chip { animation: none !important; opacity: 1; } }
+@media (max-width: 480px) { .sw-facts { grid-template-columns: 1fr; } }
 .sw-terms-agree {
   display: flex;
   align-items: center;
@@ -2826,6 +2892,7 @@ body.dark .cp-row input:checked + .slider { background: var(--accent); }
 .sw-choice-row {
   display: flex; gap: 12px; margin-bottom: 28px;
 }
+
 .sw-choice-card {
   position: relative;
   flex: 1;
@@ -3011,53 +3078,24 @@ body.dark .sw-disc-para { color: #e8eaed; border-color: rgba(255,255,255,.08); }
   margin-right: auto;
 }
 
-/* Buttons */
+/* Buttons — flat, squared, quiet. No gradients, sheen sweeps, or bounce. */
 .sw-btn {
-  position: relative;
-  height: 40px; padding: 0 24px; border-radius: 20px;
-  border: 1px solid var(--border); background: var(--omni-bg);
+  height: 42px; padding: 0 22px; border-radius: 8px;
+  border: 1px solid var(--border); background: transparent;
   color: var(--text); font-size: 13.5px; font-weight: 600;
   cursor: pointer; font-family: inherit;
-  overflow: hidden;
-  transition: background .16s ease, border-color .16s ease,
-              transform .14s cubic-bezier(.34,1.5,.64,1), box-shadow .18s ease;
+  transition: background .14s ease, border-color .14s ease, color .14s ease, filter .14s ease;
 }
-.sw-btn:hover { background: var(--hover); transform: translateY(-1px); }
-.sw-btn:active { transform: translateY(0) scale(.97); transition-duration: .05s; }
+.sw-btn:hover { background: var(--hover); }
 .sw-btn.primary {
-  background: linear-gradient(180deg, var(--accent-hover), var(--accent));
-  border-color: transparent;
-  color: var(--on-accent);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, .16);
+  background: var(--accent); border-color: var(--accent); color: #10160f;
 }
-.sw-btn.primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 9px 24px rgba(0, 0, 0, .22);
-  filter: brightness(1.05);
-}
-.sw-btn.primary:active { transform: translateY(0) scale(.97); }
-/* Light sheen that sweeps across the primary button on hover. */
-.sw-btn.primary::after {
-  content: "";
-  position: absolute; top: 0; left: -60%;
-  width: 45%; height: 100%;
-  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .45), transparent);
-  transform: skewX(-18deg);
-  transition: left .55s ease;
-}
-.sw-btn.primary:hover::after { left: 130%; }
+.sw-btn.primary:hover { background: var(--accent); filter: brightness(1.06); }
 .sw-btn.ghost {
   background: transparent; border-color: transparent; color: var(--muted);
-  box-shadow: none;
 }
-.sw-btn.ghost:hover {
-  background: var(--hover); color: var(--text); border-color: var(--border);
-  transform: none;
-}
-.sw-btn:disabled {
-  opacity: .4; pointer-events: none; transform: none;
-  box-shadow: none; filter: none;
-}
+.sw-btn.ghost:hover { background: var(--hover); color: var(--text); border-color: transparent; }
+.sw-btn:disabled { opacity: .4; pointer-events: none; filter: none; }
 /* Dark mode uses the same accent — keeps the wizard's primary button light blue */
 
 /* Honour reduced-motion: keep the wizard usable without the flourishes. */
@@ -3807,6 +3845,29 @@ body.dark .translate-select {
 
 /* ─── Toolbar anchored popovers ────────────────────────────────── */
 .toolbar-anchor { position: relative; flex-shrink: 0; }
+/* ── Calculator popover ── */
+.toolbar-popover.calc-pop { width: 232px; padding: 10px; }
+.calc-display {
+  height: 52px; margin-bottom: 8px; padding: 0 12px;
+  display: flex; align-items: center; justify-content: flex-end;
+  background: var(--omni-bg); border: 1px solid var(--border); border-radius: 8px;
+  font-size: 26px; font-weight: 600; color: var(--text);
+  font-variant-numeric: tabular-nums; overflow: hidden;
+}
+.calc-keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.calc-key {
+  height: 44px; border: none; border-radius: 8px; cursor: pointer;
+  font-family: inherit; font-size: 16px; font-weight: 600;
+  background: var(--omni-bg); color: var(--text);
+  transition: filter .1s ease, background .1s ease;
+}
+.calc-key:hover { background: var(--hover); }
+.calc-key:active { filter: brightness(.92); }
+.calc-key.calc-fn { background: var(--hover); color: var(--muted); }
+.calc-key.calc-op { background: var(--accent-soft); color: var(--accent); }
+.calc-key.calc-eq { background: var(--accent); color: #10160f; }
+.calc-key.calc-zero { grid-column: span 2; }
+
 .toolbar-popover {
   position: absolute;
   top: calc(100% + 8px);
@@ -3912,6 +3973,91 @@ body.dark .vpn-input { background: var(--omni-bg); color: var(--text); }
 }
 .vpn-btn.primary:hover { filter: brightness(0.92); }
 .vpn-btn:disabled { opacity: .4; pointer-events: none; }
+
+/* ── Location chip on the left of the address bar + VPN-style popover ── */
+.omni-loc-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  height: 22px; padding: 0 9px; margin-right: 2px;
+  border: none; border-radius: 5px;
+  background: var(--accent); color: #10160f;
+  font-family: inherit; font-size: 11px; font-weight: 700; letter-spacing: .02em;
+  cursor: pointer; flex-shrink: 0; -webkit-app-region: no-drag;
+  transition: filter .12s ease;
+}
+.omni-loc-chip:hover { filter: brightness(1.06); }
+.omni-loc-chip[hidden] { display: none; }
+/* Anchored to the left of the bar, so it drops straight down under the chip. */
+#geo-anchor .toolbar-popover { left: 0; right: auto; transform-origin: top left; }
+/* VPN-style primary action + the "not a VPN" disclaimer. */
+.vpn-pop .vpn-btn.primary {
+  background: var(--accent); color: #10160f; border-color: var(--accent);
+  width: 100%; font-weight: 600;
+}
+.vpn-pop .vpn-pop-actions { margin-top: 8px; }
+.vpn-disclaimer {
+  margin-top: 12px; padding-top: 11px;
+  border-top: 1px solid var(--border);
+  font-size: 11px; line-height: 1.5; color: var(--muted);
+}
+.vpn-disclaimer b { color: var(--text); font-weight: 700; }
+
+/* ── Location — a small, simple popup: power button + location picker ── */
+/* overflow visible so the region dropdown isn't clipped by the small popup. */
+#geo-popover.geo-mini { width: 300px; padding: 12px; overflow: visible; }
+.geo-mini-row { display: flex; align-items: center; gap: 10px; }
+.geo-mini-power {
+  flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  border: none; cursor: pointer;
+  background: var(--omni-bg); color: var(--muted);
+  box-shadow: inset 0 0 0 2px var(--border);
+  transition: color .2s ease, box-shadow .2s ease, transform .1s ease;
+}
+.geo-mini-power:hover { color: var(--text); }
+.geo-mini-power:active { transform: scale(.95); }
+.geo-mini.connected .geo-mini-power {
+  color: var(--accent);
+  box-shadow: inset 0 0 0 2px var(--accent), 0 0 16px -4px var(--accent);
+}
+.geo-mini .geo-dd { flex: 1; margin-bottom: 0; }
+.geo-mini-note {
+  margin-top: 10px; font-size: 11px; line-height: 1.4; color: var(--muted); text-align: center;
+}
+
+/* ── Custom region dropdown (VPN-style, themeable, correct font) ── */
+.geo-dd { position: relative; margin-bottom: 12px; }
+.geo-dd-btn {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  height: 44px; padding: 0 12px;
+  background: var(--omni-bg); border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text); font-family: inherit; font-size: 13.5px; font-weight: 500;
+  cursor: pointer; text-align: left;
+  transition: border-color .14s ease;
+}
+.geo-dd-btn:hover { border-color: var(--muted); }
+.geo-dd-flag { font-size: 17px; line-height: 1; flex-shrink: 0; }
+.geo-dd-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.geo-dd-caret { color: var(--muted); flex-shrink: 0; transition: transform .18s ease; }
+.geo-dd-btn[aria-expanded="true"] { border-color: var(--accent); }
+.geo-dd-btn[aria-expanded="true"] .geo-dd-caret { transform: rotate(180deg); }
+.geo-dd-menu {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 20;
+  background: var(--toolbar); border: 1px solid var(--border); border-radius: 8px;
+  box-shadow: 0 16px 40px -12px rgba(0,0,0,.55);
+  padding: 5px; max-height: 260px; overflow-y: auto;
+  animation: geo-dd-in .13s ease;
+}
+.geo-dd-menu.hidden { display: none; }
+@keyframes geo-dd-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.geo-dd-opt {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 9px 10px; border: none; background: transparent; border-radius: 5px;
+  color: var(--text); font-family: inherit; font-size: 13px; font-weight: 500;
+  cursor: pointer; text-align: left;
+  transition: background .1s ease;
+}
+.geo-dd-opt::before { content: attr(data-flag); font-size: 16px; line-height: 1; flex-shrink: 0; }
+.geo-dd-opt:hover { background: var(--accent-soft); }
 .vpn-folder-row {
   display: flex;
   gap: 6px;
@@ -3932,6 +4078,8 @@ body.dark .vpn-input { background: var(--omni-bg); color: var(--text); }
   border: 1px solid var(--border);
 }
 .geo-custom-wrap.hidden { display: none !important; }
+.geo-mini .geo-custom-wrap { display: flex; gap: 8px; margin-top: 10px; }
+.geo-mini .geo-custom-wrap .vpn-input { height: 34px; }
 
 .toolbar-popover-head {
   display: flex;
@@ -4537,61 +4685,53 @@ body.dark .tab-audio-ind:hover { background: rgba(255,255,255,.12); }
   position: fixed; inset: 0; z-index: 400;
   display: flex; align-items: flex-start; justify-content: center;
   padding-top: 88px;
-  background: rgba(0, 0, 0, .3);
+  background: rgba(14, 13, 11, .4);
 }
 .tab-search.hidden { display: none; }
 .ts-box {
   width: min(560px, calc(100vw - 48px));
-  background: #fff; border-radius: 14px; overflow: hidden;
-  border: 1px solid #e3e5e8;
-  box-shadow: 0 18px 52px rgba(0, 0, 0, .34);
+  background: var(--toolbar); border-radius: 8px; overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: 0 24px 60px -18px rgba(0, 0, 0, .55);
   animation: ts-pop .14s ease both;
 }
 @keyframes ts-pop { from { opacity: 0; transform: translateY(-8px) scale(.98); } }
-body.dark .ts-box { background: #2a2b2e; border-color: #3c4043; }
 .ts-search {
   display: flex; align-items: center; gap: 10px;
-  padding: 13px 16px; border-bottom: 1px solid #e8eaed;
+  padding: 13px 16px; border-bottom: 1px solid var(--border);
 }
-body.dark .ts-search { border-color: #3c4043; }
-.ts-search svg { color: #5f6368; flex-shrink: 0; }
-body.dark .ts-search svg { color: #9aa0a6; }
+.ts-search svg { color: var(--muted); flex-shrink: 0; }
 #ts-input {
   flex: 1; border: none; outline: none; background: transparent;
-  font-size: 15px; color: #1f1f1f;
+  font-size: 15px; color: var(--text);
 }
-body.dark #ts-input { color: #e8eaed; }
-#ts-input::placeholder { color: #9aa0a6; }
+#ts-input::placeholder { color: var(--muted); }
 .ts-list { max-height: 348px; overflow-y: auto; padding: 6px; }
 .ts-item {
   display: flex; align-items: center; gap: 11px;
-  padding: 9px 11px; border-radius: 9px; cursor: default;
+  padding: 9px 11px; border-radius: 5px; cursor: default;
 }
-.ts-item.sel { background: #e8f0fe; }
-body.dark .ts-item.sel { background: #3c4043; }
+.ts-item.sel { background: var(--accent-soft); }
 .ts-fav {
   width: 18px; height: 18px; flex-shrink: 0; border-radius: 4px;
   background-size: cover; background-position: center;
-  background-color: #f1f3f4;
+  background-color: var(--hover);
 }
-body.dark .ts-fav { background-color: #3c4043; }
 .ts-meta { flex: 1; min-width: 0; }
 .ts-title {
-  font-size: 13.5px; color: #1f1f1f;
+  font-size: 13.5px; color: var(--text);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-body.dark .ts-title { color: #e8eaed; }
 .ts-url {
-  font-size: 11.5px; color: #5f6368;
+  font-size: 11.5px; color: var(--muted);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-body.dark .ts-url { color: #9aa0a6; }
 .ts-badge {
   font-size: 10px; font-weight: 600; flex-shrink: 0;
-  color: var(--accent); background: var(--accent-soft, rgba(138,180,248,.18));
-  border-radius: 5px; padding: 2px 6px;
+  color: var(--accent); background: var(--accent-soft);
+  border-radius: 4px; padding: 2px 6px;
 }
-.ts-empty { padding: 26px; text-align: center; color: #9aa0a6; font-size: 13px; }
+.ts-empty { padding: 26px; text-align: center; color: var(--muted); font-size: 13px; }
 
 /* ─── Split view ─────────────────────────────────────────────────────── */
 #split-divider {
@@ -4734,7 +4874,7 @@ body.vtabs-collapsed .vtabs-header { padding: 0; justify-content: center; }
   gap: 8px;
   padding: 0 8px 0 10px;
   height: 34px;
-  border-radius: 10px;
+  border-radius: 4px;
   cursor: default;
   font-size: 13px;
   color: var(--text);
@@ -4745,16 +4885,16 @@ body.vtabs-collapsed .vtabs-header { padding: 0; justify-content: center; }
   transition: background .12s, opacity .12s;
 }
 .vtab:hover { background: var(--hover); opacity: 1; }
+/* Active vertical tab: warm fill + a thin pine left marker (matches the tabs). */
 .vtab.active {
   background: var(--accent-soft);
   font-weight: 500;
   opacity: 1;
-  /* No left bar — full-pill highlight like Zen */
-  box-shadow: none;
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 body.dark .vtab.active {
-  background: rgba(138,180,248,.18);
-  box-shadow: none;
+  background: var(--accent-soft);
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 /* Entrance animation */
 @keyframes vtab-enter {
@@ -4822,7 +4962,7 @@ body.dark .vtab.active {
   cursor: default;
   width: calc(100% - 8px);
   margin: 0 4px;
-  border-radius: 10px;
+  border-radius: 4px;
   opacity: .65;
   transition: background .12s, opacity .12s, color .12s;
 }
@@ -5339,104 +5479,93 @@ body.dark .ai-field select { color-scheme: dark; }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255,255,255,.88);
-  backdrop-filter: blur(15px) saturate(150%);
-  -webkit-backdrop-filter: blur(15px) saturate(150%);
+  background: #e6e3da;
   animation: upd-fadein .22s ease;
 }
+body.dark .updating-overlay { background: #171614; }
 .updating-overlay[hidden] { display: none !important; }
-body.dark .updating-overlay { background: rgba(22,23,26,.90); }
-body.transparent-ui .updating-overlay { background: rgba(255,255,255,.50); }
-body.transparent-ui.dark .updating-overlay { background: rgba(22,23,26,.55); }
 @keyframes upd-fadein { from { opacity: 0; } to { opacity: 1; } }
 .updating-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
-  padding: 44px 52px;
-  border-radius: 20px;
-  background: rgba(255,255,255,.82);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  box-shadow: 0 8px 48px rgba(0,0,0,.10), 0 2px 8px rgba(0,0,0,.06);
-  border: 1px solid rgba(255,255,255,.55);
+  gap: 15px;
+  padding: 44px 48px 40px;
+  border-radius: 14px;
+  background: var(--toolbar);
+  border: 1px solid var(--border);
+  box-shadow: 0 40px 100px -30px rgba(0,0,0,.55);
   min-width: 340px;
-  max-width: 440px;
-  width: min(440px, 90vw);
+  max-width: 420px;
+  width: min(420px, 90vw);
   text-align: center;
 }
-body.dark .updating-card {
-  background: rgba(38,39,43,.88);
-  border-color: rgba(255,255,255,.08);
-  box-shadow: 0 8px 48px rgba(0,0,0,.40);
-}
 .updating-icon-wrap {
-  width: 64px; height: 64px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  width: 66px; height: 66px;
+  border-radius: 14px;
+  background: var(--accent-soft);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
+.updating-icon-wrap img { border-radius: 10px; }
 .updating-spinner {
-  width: 38px; height: 38px;
-  border: 3px solid rgba(138,180,248,.22);
+  width: 34px; height: 34px;
+  border: 3px solid var(--accent-soft);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: upd-spin .8s linear infinite;
-  margin-bottom: 2px;
 }
 @keyframes upd-spin { to { transform: rotate(360deg); } }
 .updating-title {
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 650;
   color: var(--text);
-  letter-spacing: -.01em;
+  letter-spacing: -.02em;
 }
 .updating-sub {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--muted);
-  margin-top: -4px;
+  margin-top: -6px;
+  line-height: 1.5;
 }
 .upd-restart-btn {
-  margin-top: 6px;
+  margin-top: 8px;
   align-self: stretch;
   background: var(--accent);
-  color: var(--on-accent);
+  color: #10160f;
   border: none;
-  border-radius: 10px;
-  padding: 11px 20px;
+  border-radius: 8px;
+  padding: 12px 20px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
-  letter-spacing: 0;
   cursor: pointer;
-  transition: background .14s;
+  transition: filter .14s;
 }
-.upd-restart-btn:hover { background: var(--accent-hover); }
+.upd-restart-btn:hover { filter: brightness(1.06); }
 .upd-restart-btn:disabled { opacity: .5; cursor: default; }
 .updating-prog-outer { width: 100%; margin-top: 2px; }
 .updating-prog-track {
   width: 100%;
-  height: 7px;
-  background: rgba(138,180,248,.18);
-  border-radius: 99px;
+  height: 6px;
+  background: var(--omni-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
   overflow: hidden;
 }
-body.dark .updating-prog-track { background: rgba(255,255,255,.10); }
 .updating-prog-bar {
   height: 100%;
   width: 0%;
   background: var(--accent);
-  border-radius: 99px;
+  border-radius: 3px;
   transition: width .3s ease;
 }
 .updating-prog-label {
   font-size: 12px;
   color: var(--muted);
-  margin-top: 7px;
+  margin-top: 8px;
   text-align: center;
 }
 
@@ -6028,3 +6157,583 @@ body.ui-round input { border-radius: 14px !important; }
 body.ui-round .menu-item,
 body.ui-round .sugg-item { border-radius: 11px !important; }
 body.ui-round .tab { border-radius: 14px 14px 6px 6px !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Opera One-style skin
+   The webpage floats as a rounded card with a soft gap to a borderless,
+   unified chrome around it — the signature "modular" Opera One look, instead
+   of Chrome's flush, hard-edged toolbar. Toggle in Settings → Appearance.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Privoo — "quiet & precise" skin
+   Warm charcoal, flat surfaces, hairline rules, one deep-pine accent used only
+   as thin markers, monospace for URLs. No gradients, glass, or glow.
+   ═══════════════════════════════════════════════════════════════════════════ */
+/* Pine is only the DEFAULT accent (defined once, on :root). It must NOT be
+   redeclared on body.privoo-one below — a custom property specified directly
+   on an element always wins over a value the element merely inherited, even
+   when that inherited value came from an inline style set higher up (like
+   applyAccentTriad() setting --accent on <html> for the user's chosen
+   colour). Redeclaring --accent on body silently stomped every accent
+   change, which is why buttons/icons never updated. Settings.html's own
+   accent swatches already default to this same pine value. */
+:root {
+  --accent: #57a97e;
+  --accent-hover: #6bbb90;
+  --accent-soft: rgba(87, 169, 126, .15);
+}
+body.privoo-one {
+  --pv-mono: ui-monospace, "Cascadia Code", "SF Mono", "JetBrains Mono", Consolas, monospace;
+}
+/* Light — warm stone / paper. */
+body.privoo-one:not(.dark) {
+  --strip: #e8e5dc;
+  --strip-focus: #eceae1;
+  --tab-active: #f4f2ec;
+  --tab-hover: #e0ddd1;
+  --toolbar: #e8e5dc;
+  --omni-bg: #f2efe8;
+  --omni-hover: #eae7dd;
+  --text: #20201b;
+  --muted: #6a685e;
+  --border: #d7d3c7;
+  --hover: #e0ddd1;
+  --pv-rail: #e5e2d8;
+}
+/* Dark — warm charcoal (default). */
+body.privoo-one.dark {
+  --strip: #1a1917;
+  --strip-focus: #232220;
+  --tab-active: #2b2a27;
+  --tab-hover: #322f2b;
+  --toolbar: #1a1917;
+  --omni-bg: #2b2a27;
+  --omni-hover: #322f2b;
+  --text: #ece9e0;
+  --muted: #928f84;
+  --border: #35332e;
+  --hover: #322f2b;
+  --pv-rail: #161513;
+}
+
+/* Chrome surfaces — flat, separated by a single hairline (not shadow). */
+body.privoo-one #titlebar { background: var(--strip); border-bottom: 1px solid var(--border); }
+body.privoo-one #toolbar,
+body.privoo-one #bookmarks-bar { background: var(--toolbar); border-bottom: 1px solid var(--border); }
+body.privoo-one #toolbar { height: 44px; min-height: 44px; }
+body.privoo-one.themed:not(.wallpaper-chrome) #titlebar { background-image: none; background-color: var(--strip); }
+body.privoo-one.themed:not(.wallpaper-chrome) #toolbar,
+body.privoo-one.themed:not(.wallpaper-chrome) #bookmarks-bar { background-color: var(--toolbar); }
+
+/* Page fills edge-to-edge. */
+body.privoo-one #views-wrap { background: var(--strip); }
+body.privoo-one #views { margin: 0; border-radius: 0; box-shadow: none; }
+body.privoo-one #views webview { border-radius: 0; }
+
+/* ── Centered floating pill tabs; the "+" sits on the same centre line ── */
+body.privoo-one #titlebar { height: 42px; min-height: 42px; align-items: center; }
+body.privoo-one #tabs { padding-top: 0; align-items: center; height: 100%; }
+body.privoo-one #tabs-scroll { align-items: center; padding-left: 6px; }
+body.privoo-one .tab {
+  align-self: center;
+  height: 32px;
+  border-radius: 4px;
+  margin: 0 2px;
+  padding: 0 9px 0 12px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 12.5px;
+}
+/* Kill the Chrome "folder" corner curves. */
+body.privoo-one .tab.active::before,
+body.privoo-one .tab.active::after { display: none !important; }
+body.privoo-one .tab:hover:not(.active) { background: var(--tab-hover); color: var(--text); }
+/* Active tab: filled pill with a short pine underline as the indicator. */
+body.privoo-one .tab.active {
+  background: var(--tab-active);
+  color: var(--text);
+  position: relative;
+}
+body.privoo-one .tab.active::after {
+  display: block !important;
+  content: ""; position: absolute; left: 12px; right: 12px; bottom: 3px;
+  top: auto; width: auto; height: 2px;
+  background: var(--accent); border-radius: 2px;
+  -webkit-mask: none; mask: none;
+}
+/* Grouped + active: show the GROUP's colour, not pine — otherwise the pine
+   marker fully covers the group indicator and you can't tell which group an
+   active tab belongs to. */
+body.privoo-one .tab.grouped.active::after { background: var(--group-color, var(--accent)); }
+/* Close button only on hover / active. */
+body.privoo-one .tab .tab-close { opacity: 0; transition: opacity .12s ease; }
+body.privoo-one .tab:hover .tab-close,
+body.privoo-one .tab.active .tab-close { opacity: 1; }
+/* Flat rounded new-tab "+" (circle option still respected). */
+body.privoo-one #new-tab.strip-btn {
+  width: 28px; height: 28px; border-radius: 4px; align-self: center;
+  /* Full shorthand, NOT just margin-left: .strip-btn ships `margin: 0 6px 3px 6px`
+     for its default `align-self: flex-end`, where the 3px bottom margin lifts the
+     button off the baseline. Here the button is centre-aligned, so that same bottom
+     margin shifts it 3px UP instead. Reset all four sides. */
+  margin: 0 6px 0 3px;
+  display: grid; place-items: center; padding: 0;
+}
+body.privoo-one #new-tab.strip-btn:hover { background: var(--tab-hover); }
+body.privoo-one.newtab-circle #new-tab,
+body.privoo-one.newtab-circle #new-tab.strip-btn { border-radius: 50%; width: 28px; height: 28px; }
+
+/* Toolbar buttons — squared. */
+body.privoo-one .tb-btn.round,
+body.privoo-one .tb-btn { border-radius: 5px; }
+
+/* Menus / popovers / suggestions — flat panels, hairline border, small radius,
+   inset rounded items that light up pine on hover. */
+body.privoo-one #menu,
+body.privoo-one .toolbar-popover,
+body.privoo-one .popover,
+body.privoo-one .context-menu,
+body.privoo-one #suggestions {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  box-shadow: 0 16px 40px -14px rgba(0,0,0,.55);
+  overflow: hidden;
+}
+body.privoo-one .context-menu { padding: 5px; }
+body.privoo-one .menu-item,
+body.privoo-one .ctx-item,
+body.privoo-one .sug-item { border-radius: 4px; margin: 0; }
+body.privoo-one .ctx-item { padding: 7px 11px; }
+body.privoo-one .ctx-item:hover:not(.disabled) { background: var(--accent-soft); color: var(--text); }
+body.privoo-one .ctx-sep { margin: 5px 6px; background: var(--border); }
+body.privoo-one .menu-item:hover { background: var(--accent-soft); }
+
+/* ── Customize panel — a flat docked panel (not a floating popup), fully
+   squared and using the real warm palette instead of leftover Chrome-grey
+   theme swatches / round accent dots. ── */
+body.privoo-one .customize-panel {
+  background: var(--toolbar); border-left: 1px solid var(--border);
+  border-radius: 0 !important; box-shadow: none;
+}
+body.privoo-one .cp-header { border-bottom: 1px solid var(--border); background: var(--strip); }
+body.privoo-one .cp-section { border-bottom: 1px solid var(--border); }
+body.privoo-one .cp-section-title { letter-spacing: .04em; }
+body.privoo-one .cp-row .slider { border-radius: 6px; }
+body.privoo-one .cp-row .slider::before { border-radius: 4px; }
+body.privoo-one .cp-row select,
+body.privoo-one .cp-row input[type="text"] { border-radius: 5px; }
+/* Any mini-buttons/chips in the panel go squared. */
+body.privoo-one .customize-panel button { border-radius: 5px; }
+
+/* Theme cards — real warm swatches instead of Chrome grey/white. */
+body.privoo-one .cp-theme-btn { border-radius: 6px; }
+body.privoo-one .cp-theme-swatch { border-radius: 4px; border-color: var(--border); }
+body.privoo-one .cp-theme-light { background: linear-gradient(180deg, #e8e5dc 0 14px, #f4f2ec 14px); }
+body.privoo-one .cp-theme-dark  { background: linear-gradient(180deg, #1a1917 0 14px, #232220 14px); }
+
+/* Accent swatches — squared, matching the Settings page swatches. */
+body.privoo-one .cp-accent-swatch { border-radius: 6px; }
+body.privoo-one .cp-accent-swatch.active::after { border-radius: 4px; }
+
+/* Wallpaper action buttons + link rows — squared. */
+body.privoo-one .cp-card-btn { border-radius: 5px; }
+
+/* ── "Join our community" / "Thank you" popups — squared, warm, pine CTA.
+   (Real classes are .ty-popup/.ty-card/.ty-btn* — a previous pass targeted
+   .discord-* names that don't exist in the markup and never applied.) ── */
+body.privoo-one .ty-popup { background: rgba(14,13,11,.62); }
+body.privoo-one .ty-card {
+  background: var(--toolbar); border: 1px solid var(--border);
+  border-radius: 8px; box-shadow: 0 30px 74px -22px rgba(0,0,0,.65);
+}
+body.privoo-one .ty-logo { border-radius: 6px; }
+body.privoo-one .ty-btn,
+body.privoo-one .ty-btn-secondary { border-radius: 6px; }
+body.privoo-one .ty-btn-secondary { background: var(--hover); color: var(--text); }
+body.privoo-one .ty-btn { background: var(--accent); color: #10160f; }
+
+/* ── Hover flyout panels (sidebar shortcut / bookmark preview) — squared ── */
+body.privoo-one .sidebar-flyout {
+  border-radius: 6px; border: 1px solid var(--border); background: var(--toolbar);
+  box-shadow: 0 16px 40px -14px rgba(0,0,0,.55);
+}
+body.privoo-one .sf-link, body.privoo-one .sf-row { border-radius: 5px; }
+body.privoo-one .sf-link:hover, body.privoo-one .sf-row:hover { background: var(--accent-soft); }
+
+/* ── Add-shortcut popup — squared warm card, pine CTA ── */
+body.privoo-one .sb-modal { background: rgba(14,13,11,.6); }
+body.privoo-one .sb-modal-card {
+  border-radius: 8px; box-shadow: 0 30px 74px -22px rgba(0,0,0,.65);
+  animation: sw-zoom-in .28s cubic-bezier(.2,1.3,.4,1) both;
+}
+body.privoo-one .sb-field input { border-radius: 5px; }
+body.privoo-one .sb-modal-actions button { border-radius: 5px; }
+body.privoo-one .sb-modal-actions button.primary { color: #10160f; }
+
+/* ── Bookmark chips stay ROUNDED — the hover highlight reads soft, not boxy ── */
+body.privoo-one .bookmark-chip { border-radius: 13px; }
+body.privoo-one .bookmark-chip:hover { background: var(--hover); }
+
+/* ── Toolbar popovers (media player, downloads, shield, menu) — flat, squared,
+   warm, with a clean shadow and pine-hover rows ── */
+body.privoo-one .toolbar-popover {
+  border-radius: 8px; border: 1px solid var(--border);
+  box-shadow: 0 18px 44px -16px rgba(0,0,0,.6);
+}
+body.privoo-one #menu { border-radius: 8px; box-shadow: 0 18px 44px -16px rgba(0,0,0,.6); }
+/* Buttons inside popups. */
+body.privoo-one .toolbar-popover button,
+body.privoo-one .popover button,
+body.privoo-one #menu button,
+body.privoo-one .ty-card button,
+body.privoo-one .sb-modal button,
+body.privoo-one .customize-panel button { border-radius: 5px; }
+/* Squared inputs, selects and status chips inside the VPN-style popovers
+   (video downloader + location) so nothing reads as rounded. */
+body.privoo-one .vpn-input,
+body.privoo-one .vpn-select,
+body.privoo-one .vpn-status-line,
+body.privoo-one .vpn-btn { border-radius: 5px; }
+
+/* ── Address bar — flat inset field, mono URL, pine focus border ── */
+body.privoo-one #omnibox-outer { flex: 1; margin: 0 6px; }
+body.privoo-one #omnibox-wrap {
+  height: 33px;
+  border-radius: 5px;
+  background: var(--omni-bg);
+  border: 1px solid var(--border);
+  padding: 0 8px 0 11px;
+  box-shadow: none;
+  transition: border-color .14s ease;
+}
+body.privoo-one #omnibox-wrap:hover { border-color: var(--muted); }
+body.privoo-one #omnibox-wrap:focus-within {
+  border-color: var(--accent);
+  background: var(--omni-bg);
+  box-shadow: none;
+}
+body.privoo-one #omnibox {
+  font-size: 13px;
+  text-align: left;
+}
+body.privoo-one #omnibox::placeholder { color: var(--muted); }
+/* Secure lock takes the pine accent. */
+body.privoo-one #site-icon.secure { color: var(--accent); }
+/* Page-shield block-count reads in pine. */
+body.privoo-one #page-shield { color: var(--accent); }
+
+/* Tab-search magnifier at the strip's right edge. */
+#tab-search-btn {
+  -webkit-app-region: no-drag;
+  width: 32px; height: 28px;
+  align-self: center;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 5px;
+  color: var(--muted);
+}
+#tab-search-btn:hover { background: var(--hover); color: var(--text); }
+
+/* ── Clean left icon rail — quiet column of shortcuts, no random brand block ── */
+body.privoo-one .app-sidebar {
+  width: 54px;
+  background: var(--pv-rail);
+  border-right: 1px solid var(--border);
+  padding: 8px 0 12px;
+  gap: 3px;
+}
+body.privoo-one .app-sidebar::before { content: none !important; }   /* remove the pine square */
+body.privoo-one .sidebar-rail { gap: 3px; }
+body.privoo-one .sidebar-rail-btn {
+  width: 40px; height: 40px; border-radius: 6px; color: var(--muted);
+}
+body.privoo-one .sidebar-rail-btn:hover { background: var(--hover); color: var(--text); transform: none; }
+body.privoo-one .sidebar-rail-btn.active::before {
+  content: ""; position: absolute; left: -8px; top: 9px; bottom: 9px;
+  width: 2.5px; border-radius: 0 2px 2px 0; background: var(--accent);
+}
+body.privoo-one .sidebar-rail-btn img { border-radius: 5px; }
+body.privoo-one .sidebar-rail-btn .sb-letter { border-radius: 6px; }
+/* Add-shortcut "+" — squared, dashed-quiet until hover. */
+body.privoo-one #sidebar-add { border-radius: 6px; color: var(--muted); }
+body.privoo-one #sidebar-add:hover { background: var(--hover); color: var(--accent); }
+/* Flyout panel offset matches the wider rail. */
+body.privoo-one #sidebar-panel { left: 54px; }
+
+/* Pinned quick-access row (Downloads / History / Bookmarks / Settings) —
+   pine icons, distinct from the user's own favicon shortcuts below. */
+.sidebar-quick-btn { color: var(--muted); }
+.sidebar-quick-btn:hover { color: var(--accent); }
+.sidebar-rail-divider {
+  height: 1px; width: 26px; margin: 5px auto 6px;
+  background: var(--border); flex-shrink: 0;
+}
+
+/* Vertical-tabs panel matches the rail tone. */
+body.privoo-one #vtabs-panel { background: var(--strip); }
+
+/* ── Setup wizard in the Privoo One language — flat warm card, squared, pine ── */
+body.privoo-one .sw-card {
+  background: var(--toolbar);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 30px 74px -22px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.04);
+}
+body.privoo-one.dark .sw-card { background: #201f1c; border-color: var(--border); }
+body.privoo-one .sw-btn { border-radius: 6px; }
+body.privoo-one .sw-btn.primary { background: var(--accent); box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+body.privoo-one .sw-terms-box { border-radius: 6px; border-color: var(--border); }
+body.privoo-one .setup-overlay { background: rgba(16,15,13,.62); }
+body.privoo-one .setup-overlay::before { opacity: .5; }
+
+/* ── Step 1 intro — clean and simple: wordmark, heading, subtitle, button. ── */
+.sw-hero {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: 12px; padding: 8px 4px 4px;
+}
+.sw-hero-logo {
+  width: 66px; height: 66px; border-radius: 14px; margin-bottom: 10px;
+  object-fit: contain; display: block;
+  filter: drop-shadow(0 6px 16px rgba(0,0,0,.22));
+}
+.sw-hero .sw-headline { margin: 0; }
+.sw-hero .sw-sub { margin: 0 0 8px; max-width: 40ch; }
+.sw-hero .sw-btn.primary { min-width: 180px; height: 44px; font-size: 14px; }
+/* Single, calm fade+rise used by one-shot step content. */
+@keyframes sw-fade-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes sw-zoom-in {
+  from { opacity: 0; transform: scale(.9); }
+  to   { opacity: 1; transform: none; }
+}
+/* ── Every step's content settles in with a calm, single fade + rise. ── */
+.sw-step.active:not(.sw-exit) .sw-headline { animation: sw-fade-rise .5s cubic-bezier(.2,.85,.25,1) both; }
+.sw-step.active:not(.sw-exit) .sw-btn.primary { animation: sw-fade-rise .45s cubic-bezier(.2,.85,.25,1) .12s both; }
+.sw-step.active:not(.sw-exit) .sw-choice-card,
+.sw-step.active:not(.sw-exit) .sw-theme-card { animation: sw-card-pop .42s cubic-bezier(.2, 1.3, .4, 1) both; }
+.sw-step.active:not(.sw-exit) .sw-choice-card:nth-child(2),
+.sw-step.active:not(.sw-exit) .sw-theme-card:nth-child(2) { animation-delay: .07s; }
+.sw-step.active:not(.sw-exit) .sw-choice-card:nth-child(3) { animation-delay: .14s; }
+.sw-step.active:not(.sw-exit) .sw-choice-card:nth-child(4) { animation-delay: .21s; }
+@keyframes sw-card-pop { 0% { opacity: 0; transform: scale(.9) translateY(10px); } 100% { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .sw-step.active .sw-headline, .sw-step.active .sw-btn.primary,
+  .sw-step.active .sw-choice-card, .sw-step.active .sw-theme-card { animation: none !important; }
+}
+/* Squared inputs / selects everywhere in the chrome. */
+body.privoo-one input[type="text"],
+body.privoo-one input[type="url"],
+body.privoo-one select { border-radius: 5px; }
+
+/* ── Incognito palette — placed last (and 2-class specific) so it wins over the
+   always-on Privoo One dark palette. A deeper, cooler-warm charcoal marks the
+   private window without breaking the design language. ── */
+body.privoo-one.incognito {
+  --strip: #131210; --toolbar: #131210; --tab-active: #232220; --tab-hover: #242320;
+  --omni-bg: #201f1c; --omni-hover: #26241f; --border: #2b2a27; --hover: #26241f;
+  --text: #e6e3da; --muted: #8a877c; --pv-rail: #100f0e;
+}
+/* A slim pine "private" marker line under the toolbar. */
+body.privoo-one.incognito #toolbar { box-shadow: inset 0 -1px 0 var(--accent); }
+
+/* ═══ Setup wizard — completely solid, flat, squared, pine ═══════════════════
+   No glass/transparency; every step shares this language. ══════════════════ */
+/* Fully OPAQUE overlay, no backdrop blur — kills the "desktop shows through /
+   transparency delay" during setup. */
+.setup-overlay {
+  background: #171614 !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+}
+body:not(.dark) .setup-overlay { background: #e6e3da !important; }
+.setup-overlay::before { display: none !important; }
+/* Don't let the window itself go transparent during setup (that's what showed
+   the blurred desktop and read as a lag). Keep it solid warm charcoal. */
+body.setup-mode { background: #171614 !important; }
+html:has(body.setup-mode) { background: #171614 !important; }
+body:not(.dark).setup-mode { background: #e6e3da !important; }
+html:has(body:not(.dark).setup-mode) { background: #e6e3da !important; }
+/* ── Two-panel frame: a persistent pine brand rail + a content stage where the
+   step cards swap. Replaces the single floating card. ── */
+.sw-frame {
+  display: flex;
+  width: min(840px, calc(100vw - 40px));
+  height: min(576px, calc(100vh - 40px));
+  background: var(--toolbar);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.04) inset,
+    0 50px 120px -30px rgba(0,0,0,.75),
+    0 12px 40px -18px rgba(0,0,0,.5);
+  -webkit-app-region: no-drag;
+  animation: sw-frame-in .4s cubic-bezier(.16,.84,.44,1) both;
+}
+@keyframes sw-frame-in { from { opacity: 0; transform: translateY(10px) scale(.99); } to { opacity: 1; transform: none; } }
+.sw-side {
+  position: relative;
+  flex-shrink: 0; width: 264px;
+  display: flex; flex-direction: column;
+  padding: 44px 32px 30px;
+  color: #f4f2ec;
+  background:
+    radial-gradient(130% 70% at 0% 0%, rgba(255,255,255,.10), transparent 55%),
+    linear-gradient(158deg, #4a8a67 0%, #34745480 30%, #2b6349 70%, #234f3b 100%);
+  overflow: hidden;
+}
+/* Fine top highlight + soft bottom vignette for depth. */
+.sw-side::before {
+  content: ""; position: absolute; inset: 0 0 auto; height: 1px;
+  background: rgba(255,255,255,.22);
+}
+.sw-side::after {
+  content: ""; position: absolute; inset: auto 0 0; height: 45%;
+  background: linear-gradient(180deg, transparent, rgba(0,0,0,.22));
+  pointer-events: none;
+}
+.sw-side > * { position: relative; z-index: 1; }
+.sw-side-brand {
+  font-family: ui-sans-serif, "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  font-weight: 680; font-size: 32px; letter-spacing: -.045em; line-height: 1; color: #fff;
+}
+.sw-side-brand i { font-style: normal; color: #cbead8; }
+.sw-side-tag { margin-top: 14px; font-size: 14.5px; line-height: 1.5; color: rgba(255,255,255,.9); font-weight: 500; }
+.sw-side-points {
+  list-style: none; margin: auto 0 0; padding: 20px 0 0;
+  display: flex; flex-direction: column; gap: 13px;
+  border-top: 1px solid rgba(255,255,255,.16);
+}
+.sw-side-points li { display: flex; align-items: center; gap: 11px; font-size: 12.5px; font-weight: 500; color: rgba(255,255,255,.94); }
+.sw-side-points svg { flex-shrink: 0; color: #cbead8; }
+.sw-side-foot { margin-top: 20px; font-size: 10.5px; letter-spacing: .12em; text-transform: lowercase; color: rgba(255,255,255,.62); }
+@media (max-width: 620px) { .sw-side { display: none; } }
+.sw-stage {
+  position: relative; flex: 1; min-width: 0;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+/* Cards become flat content fillers inside the stage — the frame is the panel. */
+body.privoo-one .sw-card {
+  background: transparent !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  border: none !important; border-radius: 0 !important; box-shadow: none !important;
+  width: 100% !important; max-width: 100% !important;
+  max-height: 100% !important;
+  padding: 44px 46px !important;
+  justify-content: center;
+}
+
+/* ── Numbered, line-connected stepper — replaces the plain dot row.
+   Pure CSS: counts .sw-dot children, draws a connecting track behind them,
+   fills completed/active ones pine, upcoming ones stay outlined. No HTML
+   changes needed — the existing per-step `.active` marker still drives it. */
+/* Minimal segmented progress bar — thin bars, no numbers. The active bar and
+   every bar before it fill pine; upcoming bars stay a quiet track. */
+.sw-progress-dots {
+  position: relative;
+  display: flex; gap: 6px; justify-content: center;
+  margin: 0 auto 30px;
+  width: 200px; max-width: 200px;
+}
+.sw-progress-dots:empty { display: none; margin-bottom: 0; }
+.sw-dot {
+  height: 4px; flex: 1; border-radius: 2px;
+  background: var(--border);
+  transition: background .3s ease;
+}
+.sw-dot.active,
+.sw-dot:has(~ .sw-dot.active) { background: var(--accent); }
+.sw-dot.active ~ .sw-dot { background: var(--border); }
+.sw-headline { letter-spacing: -.02em; color: var(--text); }
+.sw-sub { color: var(--muted); }
+/* Choice + theme cards → flat, squared, pine-selected (like Settings). */
+.sw-choice-card, .sw-theme-card {
+  background: var(--omni-bg) !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  transition: border-color .14s, box-shadow .14s;
+}
+.sw-choice-card:hover, .sw-theme-card:hover { border-color: var(--muted) !important; transform: none !important; }
+.sw-choice-card.selected, .sw-theme-card.selected {
+  border-color: var(--accent) !important;
+  box-shadow: inset 0 0 0 1px var(--accent) !important;
+}
+.sw-choice-card .sw-choice-ico, .sw-theme-card .sw-choice-ico { color: var(--accent) !important; }
+.sw-choice-card span, .sw-choice-card b { color: inherit; }
+.sw-terms-box { background: var(--omni-bg) !important; border: 1px solid var(--border) !important; border-radius: 6px !important; }
+.sw-btn { border-radius: 6px !important; }
+.sw-btn.primary { background: var(--accent) !important; }
+/* Buttons + fineprint text warm. */
+.sw-fineprint { color: var(--muted); }
+/* The "I agree" checkbox becomes a squared green toggle — same as Settings. */
+.sw-terms-agree input[type="checkbox"] {
+  -webkit-appearance: none; appearance: none;
+  width: 40px; height: 22px; border-radius: 6px; flex-shrink: 0;
+  background: #3a3833; border: 1px solid var(--border); position: relative; cursor: pointer; margin: 0;
+  transition: background .18s, border-color .18s;
+}
+body:not(.dark) .sw-terms-agree input[type="checkbox"] { background: #cfccbf; }
+.sw-terms-agree input[type="checkbox"]::after {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px;
+  border-radius: 4px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .18s, background .18s;
+}
+.sw-terms-agree input[type="checkbox"]:checked { background: var(--accent); border-color: var(--accent); }
+.sw-terms-agree input[type="checkbox"]:checked::after { transform: translateX(18px); background: #10160f; }
+
+/* ── Terms step fact tiles — squared, warm, pine icon chip ── */
+.sw-fact-tile { background: var(--omni-bg); border-color: var(--border); border-radius: 6px; }
+.sw-fact-ico { border-radius: 5px; }
+
+/* ── Theme / performance step — a clean segmented pill toggle. ── */
+.sw-theme-toggle {
+  position: relative; display: flex; width: 100%; max-width: 340px; height: 50px; margin: 8px auto 28px;
+  border-radius: 8px; background: var(--omni-bg); border: 1px solid var(--border);
+  padding: 4px;
+}
+.sw-theme-toggle .sw-theme-card,
+.sw-theme-toggle .sw-choice-card {
+  flex: 1; position: relative; z-index: 1; border: none !important; background: transparent !important;
+  box-shadow: none !important; font-size: 14px; font-weight: 600; color: var(--muted) !important;
+  border-radius: 5px !important; transition: color .25s ease, transform 0s !important;
+  padding: 0 !important; gap: 0 !important; align-items: center !important; justify-content: center !important;
+}
+.sw-theme-toggle .sw-theme-card.selected,
+.sw-theme-toggle .sw-choice-card.selected { color: #10160f !important; }
+.sw-theme-toggle .sw-choice-card:hover { transform: none !important; }
+.sw-theme-toggle-thumb {
+  position: absolute; top: 4px; left: 4px; width: calc(50% - 4px); height: calc(100% - 8px);
+  border-radius: 5px; background: var(--accent); transition: transform .32s cubic-bezier(.2,1,.3,1);
+}
+.sw-theme-toggle-thumb.is-dark { transform: translateX(100%); }
+
+
+/* ── Done step — a single pine checkmark tile, no gradient ring ── */
+.sw-done-ring {
+  width: 60px; height: 60px; border-radius: 10px !important;
+  background: var(--accent) !important; color: #10160f !important;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px; box-shadow: none !important;
+  animation: sw-zoom-in .45s cubic-bezier(.2,.9,.3,1.05) both !important;
+}
+.sw-done-ring::before { display: none !important; }
+.sw-done-ring svg path { stroke: #10160f !important; }
+
+/* ── Disclaimer icon — squared, pine-tinted (was amber circle) ── */
+.sw-disc-icon {
+  width: 52px; height: 52px; border-radius: 10px;
+  background: var(--accent-soft); border: none; color: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px;
+}
+body.privoo-one .sw-disc-icon { background: var(--accent-soft); border-color: transparent; }
+.sw-disc-box { max-height: 260px; }
+
+/* Lowercase is reserved for genuinely decorative text only (the "privoo."
+   wordmark, the setup side-panel footer). Functional headings, section
+   titles, buttons and body copy all keep their normal casing. */

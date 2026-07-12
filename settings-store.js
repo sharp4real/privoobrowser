@@ -138,7 +138,7 @@ const DEFAULTS = {
   proxyTorPort: 9100,  // local SOCKS port Tor listens on / we route through
 
   // Appearance
-  darkMode: false,
+  darkMode: true,
   forceDarkMode: false,
   // Increase Transparency — uses Mica/Acrylic on Win11, vibrancy on macOS,
   // and a translucent toolbar fallback on Linux. Off by default; turn it on
@@ -157,9 +157,7 @@ const DEFAULTS = {
   // and never bleeds over the web page area. The chrome tinting stays either way.
   vibeOverPages: true,
   fontSizeScale: 1,        // 1 = default, 0.9 = small, 1.2 = large
-  // Show the bookmarks bar by default so fresh installs see the starter
-  // bookmarks below. (Existing users keep whatever they had persisted.)
-  showBookmarksBar: true,
+  showBookmarksBar: false,
   showHomeButton: false,
   homePage: 'privoo://newtab/',
   bookmarks: [
@@ -178,16 +176,27 @@ const DEFAULTS = {
   // New tab
   ntpShowClock: true,
   ntpShowStats: true,
-  ntpShowLogo: true,
-  ntpShowQuickLinks: true,
+  // Optional "Privoo News" link on the Speed Dial (off by default). The news
+  // itself lives at privoo://news and auto-opens after setup / an update.
+  ntpNewsLink: false,
+  // Last app version we auto-opened Privoo News for — drives "show news once
+  // after an update". Empty on a fresh install (setup records it instead).
+  newsSeenVersion: '',
+  // What shows above the search bar on the new tab page: the "privoo." text
+  // wordmark, or the logo.png mark. Settings → New tab.
+  ntpBrandStyle: 'text', // 'text' | 'logo'
+  ntpShowQuickLinks: false,
   // Brave-style focused search: when the user clicks/focuses the search bar
   // on the new tab page, it scales up and the shortcuts below fade out so
   // the attention is on the search input.
-  ntpFocusedSearch: true,
+  ntpFocusedSearch: false,
   ntpBackground: 'default',
   ntpWallpaperPath: '',
   ntpWallpaperDim: 0.42,
   ntpDark: false,
+  // Looping animation for the "privoo." wordmark on the new tab:
+  // none | pulse | pop | fizzle | glow | bounce | shimmer
+  ntpWordmarkAnim: 'none',
   // Starter shortcuts seeded for fresh installs. (Existing users keep their
   // own — an empty array they've already saved is respected.)
   ntpQuickLinks: [
@@ -213,12 +222,15 @@ const DEFAULTS = {
   ytdlpPath: null,
   showYtdlpToolbar: true,
   showGeoToolbar: true,
-  showNotesButton: false, // hidden by default — opt-in via Settings → Features
-  showSidebar: false,     // shortcuts rail on the left — opt-in via Settings → Features
+  showNotesButton: false, // hidden by default — enable via the Notes extension
+  showCalculator: false,  // Calculator toolbar button — enable via the Calculator extension
+  lucidMode: false,       // Lucid Mode — hover a video for a star that enhances its picture
+  extMoveNoticeShown: false, // one-time "features moved to Extensions" notice in Settings
+  showSidebar: false,     // shortcuts rail on the left (toggle in Settings → Features)
   sidebarPanelWidth: 320, // width of the embedded web panel in the sidebar
   showAiButton: true,     // AI toolbar button — can be hidden via Settings → Features
   showTranslateButton: false, // Translate toolbar button — off by default, enable in Settings → Features
-  centerSidebarIcons: false, // vertically center shortcut icons in the sidebar rail
+  centerSidebarIcons: true, // vertically center shortcut icons in the sidebar rail
   verticalTabs: false,    // show tabs in a vertical left panel instead of horizontal strip
   vtabsCollapsed: false,  // vertical tabs panel collapsed to icon-only rail
   vtabsIntegrated: false,   // move toolbar icon buttons into the vertical tabs panel
@@ -237,7 +249,6 @@ const DEFAULTS = {
   uiSoundVolume: 0.7,     // 0..1 volume for the UI blips
   newSearchBarStyle: false, // legacy boolean for the "soft" address bar (superseded by searchBarStyle)
   searchBarStyle: '',     // address-bar appearance: classic | soft | pill | square ('' = derive from newSearchBarStyle)
-  tabStyle: 'classic',    // tab strip appearance: classic | pill | underline | chrome | modern
   newTabBtnCircle: false, // draw a circle around the new-tab "+" button
   syncDiscordTheme: true,  // recolor discord.com to match Privoo's accent + theme palette
   uiFont: 'system',       // interface font: system | rounded | classic | grotesk | mono | dyslexic
@@ -245,7 +256,7 @@ const DEFAULTS = {
   customChromeCss: '',    // power-user: raw CSS injected into the browser chrome
   sidebarLinks: [],
   ghostName: '',          // user-supplied name for the Privoo mascot
-  accentColor: '',        // empty = use stylesheet default (light blue)
+  accentColor: '#57a97e', // Pine — the single "quiet & precise" accent, whole UI
   /** Last window bounds + maximized state — restored on next launch. */
   windowState: null,
   disclaimerAccepted: false,
@@ -264,7 +275,6 @@ const DEFAULTS = {
   musicEnabled: false,
   musicVolume: 0.5,
   ntpShowWeather: false,
-  ntpShowNews: false,
   ntpShowClock: false,    // show a clock on the new tab page
   weatherLocation: '',
   /** Spoof navigator.geolocation for pages (injected). */
@@ -334,10 +344,10 @@ function load() {
     if (parsed.ntpShowWeather === undefined && parsed.showWeatherWidget !== undefined) {
       cache.ntpShowWeather = !!parsed.showWeatherWidget;
     }
-    // Migrate ntpDark to darkMode for consistency
-    if (parsed.ntpDark !== undefined && parsed.darkMode === DEFAULTS.darkMode) {
-      cache.darkMode = !!parsed.ntpDark;
-    }
+    // NOTE: the old `ntpDark → darkMode` migration was removed — with darkMode
+    // now defaulting to true it fired against a stale ntpDark and silently
+    // reverted the user's darkMode choice on every launch. darkMode is the
+    // single source of truth; whatever the user saved wins.
   } catch {
     cache = { ...DEFAULTS };
   }
