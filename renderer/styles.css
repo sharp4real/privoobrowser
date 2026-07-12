@@ -1656,7 +1656,9 @@ body.search-square #omnibox-wrap:focus-within { border-color: var(--accent); box
   width: 280px;
   background: var(--toolbar);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  /* Square — these two omnibox popovers read as panels hanging off the address
+     bar, not floating pills. Was 14px, which also beat the Privoo One rule. */
+  border-radius: 0;
   box-shadow: var(--panel-shadow);
   z-index: 1000;
   padding: 18px 18px 14px;
@@ -1713,7 +1715,8 @@ body.search-square #omnibox-wrap:focus-within { border-color: var(--accent); box
   width: 320px;
   background: var(--toolbar);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  /* Square — see #page-shield-popover. */
+  border-radius: 0;
   box-shadow: var(--panel-shadow);
   z-index: 1000;
   padding: 16px 16px 14px;

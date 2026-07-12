@@ -290,18 +290,21 @@ try {
   if (_earlySettings.hardwareAcceleration === false) app.disableHardwareAcceleration();
 } catch { /* settings file may not exist yet on first run */ }
 
-// Prevent GPU command-buffer state errors that cause black video frames
-// (particularly visible on the first YouTube video played per session).
-// Skip the heavy rasterization paths on low-end device mode.
-if (!_earlySettings.lowEndDevice) {
-  app.commandLine.appendSwitch('ignore-gpu-blocklist');
-  app.commandLine.appendSwitch('enable-gpu-rasterization');
-  // NOTE: `enable-zero-copy` was removed — on many Windows GPUs it's a
-  // well-known cause of BLACK YouTube video frames on first load (the very
-  // symptom of "black screen until I refresh"). GPU rasterization stays.
-  app.commandLine.appendSwitch('enable-features', 'CanvasOopRasterization');
-  app.commandLine.appendSwitch('num-raster-threads', '4');
-} else {
+// GPU: use Chromium's own defaults. We deliberately force NOTHING here.
+//
+// This block used to set `ignore-gpu-blocklist`, `enable-gpu-rasterization`,
+// `enable-zero-copy` and `CanvasOopRasterization` in an attempt to FIX black
+// YouTube frames. They were causing them. `ignore-gpu-blocklist` in particular
+// overrides the blocklist Chromium maintains precisely because those GPU/driver
+// combinations have broken video decode — the result is the classic "player is
+// empty, then a black frame on refresh, then it finally plays ~30s later once
+// Chromium gives up and falls back to software decode".
+//
+// Chromium already enables GPU rasterization by default wherever it's safe, so
+// dropping these overrides costs nothing on healthy hardware and stops forcing
+// the broken paths on everyone else. Users who still hit driver bugs can turn
+// off hardware acceleration in Settings -> Performance (handled above).
+if (_earlySettings.lowEndDevice) {
   app.commandLine.appendSwitch('num-raster-threads', '1');
 }
 
@@ -1509,7 +1512,15 @@ function setupHeaderPrivacy(sess) {
       }
     }
 
-    if (settings.blockThirdPartyCookies) {
+    // A top-level document request IS the first party — whatever it sets or sends
+    // is by definition first-party, so it must never be treated as third-party.
+    // We can't decide that by comparing against documentBaseDomain(): during a
+    // navigation wc.getURL() still returns the PREVIOUS page, so a main-frame load
+    // was being compared against e.g. privoo://newtab ("newtab") and stripped as
+    // cross-site. Sites on isRelaxedThirdPartyCookieHost() were exempt and stayed
+    // signed in, which is why this only ever showed up on sites missing from that
+    // list (Spotify) — the allowlist was masking the bug, not fixing it.
+    if (settings.blockThirdPartyCookies && details.resourceType !== 'mainFrame') {
       const reqDomain  = baseDomain(reqHostname);
       const pageDomain = documentBaseDomain(details.webContentsId);
       if (pageDomain && reqDomain && reqDomain !== pageDomain && !isRelaxedThirdPartyCookieHost(reqHostname)) {
@@ -1561,7 +1572,11 @@ function setupHeaderPrivacy(sess) {
       }
     }
 
-    if (settings.blockThirdPartyCookies) {
+    // See the matching note in onBeforeSendHeaders: a main-frame document response
+    // is first-party by definition. Stripping its Set-Cookie was dropping sites'
+    // own login cookies on navigation (they survived in memory for the session,
+    // then vanished on restart — Spotify's sign-out-every-launch bug).
+    if (settings.blockThirdPartyCookies && details.resourceType !== 'mainFrame') {
       const reqDomain  = baseDomain(hostname);
       const pageDomain = documentBaseDomain(details.webContentsId);
       if (pageDomain && reqDomain && reqDomain !== pageDomain && !isRelaxedThirdPartyCookieHost(hostname)) {

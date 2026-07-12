@@ -258,8 +258,15 @@ const LUCID_MODE_JS = String.raw`(function(){
     if(v){ var r=v.getBoundingClientRect(); if(e.clientY<=r.top+Math.min(90,r.height*0.28)){ cur=v; show(); return; } }
     if(panel.style.display!=='flex') hide();
   },true);
-  // Keep the star glued to the video while it's shown (scroll / resize).
-  function follow(){ if(cur&&(star.style.display==='flex'||panel.style.display==='flex')){ if(!cur.isConnected) hide(); else show(); } requestAnimationFrame(follow); }
+  // Keep the star glued to the video while it's shown (scroll / resize). Also
+  // re-attach our nodes if the page tore them out — YouTube is an SPA and swaps
+  // large parts of the DOM on navigation, which was silently removing the star.
+  function follow(){
+    var root=document.body||document.documentElement;
+    if(root){ if(!star.isConnected) root.appendChild(star); if(!panel.isConnected) root.appendChild(panel); }
+    if(cur&&(star.style.display==='flex'||panel.style.display==='flex')){ if(!cur.isConnected) hide(); else show(); }
+    requestAnimationFrame(follow);
+  }
   requestAnimationFrame(follow);
   star.addEventListener('click',function(e){ e.stopPropagation(); e.preventDefault(); syncPanel(); panel.style.display=(panel.style.display==='flex')?'none':'flex'; show(); });
   document.addEventListener('click',function(e){ if(panel.style.display==='flex'&&e.target!==star&&!star.contains(e.target)&&e.target!==panel&&!panel.contains(e.target)) panel.style.display='none'; },true);
