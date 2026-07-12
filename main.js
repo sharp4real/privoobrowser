@@ -171,6 +171,94 @@ if (!components) (function loadWidevine() {
   }
 })();
 
+// Waits for the castLabs-managed Widevine CDM component to actually be ready,
+// with retries and a generous total budget instead of one short race. Runs
+// once at startup, before any window is created — see the call site for why.
+//
+// `whenReady()` resolving is not treated as sufficient on its own: we also
+// require `components.status()[WIDEVINE_CDM_ID].version` to be a non-null
+// string, since that's the one field the typings document as only being set
+// once a component is actually installed. Logs a diagnostic snapshot on every
+// attempt so a failure here is visible in the log rather than a silent
+// "DRM just doesn't work" report from a user.
+async function waitForWidevineReady() {
+  const id = components.WIDEVINE_CDM_ID;
+  const maxAttempts = 4;
+  const perAttemptTimeoutMs = 20000; // 4 x 20s = 80s worst case, vs. the old flat 15s
+  const startedAt = Date.now();
+
+  function snapshot() {
+    try {
+      const s = components.status ? components.status()[id] : null;
+      return s ? { status: s.status, version: s.version, title: s.title } : null;
+    } catch {
+      return null;
+    }
+  }
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const attemptStartedAt = Date.now();
+    let outcome = 'timeout';
+    let results = null;
+    let error = null;
+
+    try {
+      results = await Promise.race([
+        components.whenReady([id]).then((r) => { outcome = 'resolved'; return r; }),
+        new Promise((res) => setTimeout(res, perAttemptTimeoutMs)),
+      ]);
+    } catch (e) {
+      outcome = 'rejected';
+      error = e;
+    }
+
+    const elapsed = Date.now() - attemptStartedAt;
+    const total = Date.now() - startedAt;
+    const snap = snapshot();
+
+    if (outcome === 'rejected') {
+      // ComponentsError carries per-component detail in `.errors` — log each
+      // one instead of a single flattened message, since with more than one
+      // registered component it's otherwise unclear which one actually failed.
+      const details = Array.isArray(error && error.errors)
+        ? error.errors.map((e2) => `${e2.detail?.id ?? '?'}:${e2.detail?.status ?? e2.message}`).join(', ')
+        : (error && error.message) || String(error);
+      console.warn(
+        `Privoo: Widevine attempt ${attempt}/${maxAttempts} rejected after ${elapsed}ms ` +
+        `(total ${total}ms) — ${details}. status: ${JSON.stringify(snap)}`
+      );
+    } else if (outcome === 'timeout') {
+      console.warn(
+        `Privoo: Widevine attempt ${attempt}/${maxAttempts} timed out after ${elapsed}ms ` +
+        `(total ${total}ms). status: ${JSON.stringify(snap)}`
+      );
+    } else if (snap && snap.version) {
+      // whenReady() resolved AND status() confirms a version is actually installed.
+      console.log(
+        `Privoo: Widevine ready after ${total}ms (attempt ${attempt}/${maxAttempts}) — ` +
+        `version ${snap.version}, status "${snap.status}"`
+      );
+      return;
+    } else {
+      // whenReady() resolved but status() still shows no installed version —
+      // this is exactly the gap the old code didn't check for. Retry rather
+      // than trust the resolve.
+      console.warn(
+        `Privoo: Widevine attempt ${attempt}/${maxAttempts} resolved but reported no ` +
+        `installed version after ${elapsed}ms (total ${total}ms). status: ${JSON.stringify(snap)}. ` +
+        `Results: ${JSON.stringify(results)}`
+      );
+    }
+  }
+
+  console.warn(
+    `Privoo: Widevine CDM never confirmed ready after ${maxAttempts} attempts / ` +
+    `${Date.now() - startedAt}ms. Opening the window anyway — DRM playback ` +
+    `(Spotify, Netflix, etc.) may fail or cut out shortly after starting. ` +
+    `Last known status: ${JSON.stringify(snapshot())}`
+  );
+}
+
 // Remove the navigator.webdriver flag Chromium sets in automated contexts —
 // Google's sign-in page refuses login when it detects this flag.
 app.commandLine.appendSwitch('disable-blink-features', 'AutomationControlled');
@@ -2481,16 +2569,18 @@ async function startBrowser(opts = {}) {
   // so DRM playback (Spotify, Netflix, etc.) works immediately. `components`
   // only exists on the castLabs fork, so this is a harmless no-op on stock
   // Electron — and we never let a slow/failed CDM fetch block startup forever.
+  //
+  // A single 15s Promise.race against whenReady() was cutting this off too
+  // early on a first install or a slow network: whenReady() would still be
+  // mid-download when the timer won, we'd open the window anyway, and
+  // Spotify/Netflix would start a DRM session against a CDM that was only
+  // partially in place — playing for a few seconds off whatever was already
+  // buffered/negotiated before the license path failed. Retrying with a much
+  // larger total budget (and actually confirming a version string is present,
+  // not just that the promise settled) gives slow first-time installs enough
+  // time to finish before any page gets a chance to start a DRM session.
   if (components && typeof components.whenReady === 'function') {
-    try {
-      await Promise.race([
-        components.whenReady(),
-        new Promise((res) => setTimeout(res, 15000)),
-      ]);
-      console.log('Privoo: Widevine components:', components.status ? components.status() : 'ready');
-    } catch (e) {
-      console.warn('Privoo: Widevine components failed to load:', e.message);
-    }
+    await waitForWidevineReady();
   }
 
   if (_startIncognito) openIncognitoWindow();
