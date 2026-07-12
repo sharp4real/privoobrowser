@@ -1,6 +1,6 @@
 {
   "name": "privoo-browser",
-  "version": "4.0.4",
+  "version": "4.0.5",
   "description": "Privacy focused browser built on Chromium.",
   "main": "main.js",
   "scripts": {
@@ -24,7 +24,6 @@
     "appId": "com.privoo.browser",
     "productName": "Privoo",
     "electronDist": "node_modules/electron/dist",
-    "afterPack": "afterPack-vmp.js",
     "protocols": [
       {
         "name": "Web Protocol",
@@ -179,6 +178,7 @@
       "provider": "github",
       "owner": "sharp4real",
       "repo": "privoobrowser"
-    }
+    },
+    "afterSign": "afterSign-vmp.js"
   }
 }

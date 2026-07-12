@@ -1,24 +1,38 @@
 'use strict';
 
 /**
- * afterPack-vmp.js
+ * afterSign-vmp.js
  *
  * castLabs VMP (Verified Media Path) signing for the bundled Widevine CDM.
  *
- * Runs after electron-builder packs the app directory, before it's zipped into
- * the installer. Without a valid VMP signature the Widevine CDM only reaches a
- * low robustness level, and licensing servers for services like Spotify and
- * Netflix will refuse to issue a license — so DRM playback silently fails.
+ * Without a valid VMP signature the Widevine CDM only reaches a low robustness
+ * level, and licensing servers for services like Spotify and Netflix refuse to
+ * issue a license — playback fails, or dies a few seconds in.
  *
- * Windows note: VMP signing must run AFTER any Authenticode code-signing. We
- * don't Authenticode-sign (CSC_IDENTITY_AUTO_DISCOVERY=false), so signing in
- * afterPack is correct and reliable. If Authenticode signing is ever enabled,
- * move this to the `afterSign` hook instead.
+ * MUST run on `afterSign`, NOT `afterPack`.
+ *
+ *   electron-builder's order (see app-builder-lib/out/platformPackager.js):
+ *     emitAfterPack()  ->  doSignAfterPack() [signtool]  ->  emitAfterSign()
+ *
+ * Authenticode signing rewrites the PE's certificate table, which invalidates
+ * any VMP signature already applied to that binary. This hook originally ran on
+ * afterPack on the assumption that CSC_IDENTITY_AUTO_DISCOVERY=false meant
+ * electron-builder never invoked signtool — but it does anyway, so every build
+ * VMP-signed Privoo.exe and then immediately clobbered that signature by
+ * Authenticode-signing it. The result looked fine (build green, "[VMP] signing
+ * complete" in the log) while still shipping an unverifiable media path, and
+ * Spotify refused to play. Running on afterSign puts VMP last, so its signature
+ * is the one that survives into the installer.
  *
  * Skips cleanly (with a warning) when EVS credentials aren't configured, so a
  * local `npm run dist` or a fork without secrets still produces a working
  * (non-DRM) installer instead of failing the build. When credentials ARE
  * present, a signing failure is treated as a real release error and fails loud.
+ *
+ * NOTE: electron-builder only fires afterSign when signing actually occurred; if
+ * it ever stops signing, it logs `skipping "afterSign" hook as no signing
+ * occurred` and this never runs — leaving an unsigned CDM. The release workflow
+ * greps the build log for the completion line below to catch exactly that.
  *
  * NOTE: this file lives at the repo root (not build/) because build/ is
  * gitignored — keeping it here ensures it's actually committed and present in CI.
@@ -29,7 +43,7 @@
 
 const { execFileSync } = require('child_process');
 
-exports.default = async function afterPack(context) {
+exports.default = async function afterSign(context) {
   // Only Windows is shipped through the auto-updater today; sign that target.
   if (context.electronPlatformName !== 'win32') return;
 
