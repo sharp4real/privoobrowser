@@ -1,22 +1,64 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
 <defs>
-  <linearGradient id="bg" x1="0" y1="0" x2="0.4" y2="1">
-    <stop offset="0" stop-color="#241c15"/><stop offset="1" stop-color="#33261a"/>
+  <linearGradient id="bg" x1="0" y1="0" x2="0.35" y2="1">
+    <stop offset="0" stop-color="#211a13"/><stop offset="1" stop-color="#2e2418"/>
   </linearGradient>
-  <linearGradient id="w1" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0" stop-color="#5e4326" stop-opacity=".0"/><stop offset="1" stop-color="#5e4326" stop-opacity=".85"/>
+  <radialGradient id="key" cx="0.22" cy="0.1" r="0.9">
+    <stop offset="0" stop-color="#ffffff" stop-opacity="0.06"/><stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
+  </radialGradient>
+  <linearGradient id="rA" x1="0" y1="0" x2="0.12" y2="1">
+    <stop offset="0" stop-color="#453424"/><stop offset="0.45" stop-color="#5e4530"/><stop offset="1" stop-color="#96622f"/>
   </linearGradient>
-  <linearGradient id="w2" x1="0" y1="1" x2="1" y2="0">
-    <stop offset="0" stop-color="#8a5c2e" stop-opacity=".0"/><stop offset="1" stop-color="#8a5c2e" stop-opacity=".8"/>
+  <linearGradient id="rB" x1="0" y1="0" x2="0.1" y2="1">
+    <stop offset="0" stop-color="#5e4530"/><stop offset="0.5" stop-color="#96622f"/><stop offset="1" stop-color="#a8642f"/>
   </linearGradient>
-  <linearGradient id="w3" x1="0" y1="0" x2="1" y2="0">
-    <stop offset="0" stop-color="#f0954f" stop-opacity=".0"/><stop offset="1" stop-color="#f0954f" stop-opacity=".55"/>
+  <linearGradient id="rC" x1="0" y1="0" x2="0.08" y2="1">
+    <stop offset="0" stop-color="#96622f"/><stop offset="0.55" stop-color="#f0954f"/><stop offset="1" stop-color="#a8642f"/>
   </linearGradient>
-  <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="14"/></filter>
+  <linearGradient id="shadow" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#a8642f" stop-opacity="0.22"/><stop offset="1" stop-color="#a8642f" stop-opacity="0"/>
+  </linearGradient>
 </defs>
 <rect width="1920" height="1080" fill="url(#bg)"/>
-<path filter="url(#soft)" fill="url(#w1)" d="M900 1120 C 1150 900, 1230 700, 1420 520 C 1610 340, 1830 300, 2000 340 L 2000 1120 Z"/>
-<path filter="url(#soft)" fill="url(#w2)" d="M1150 1120 C 1330 950, 1380 760, 1560 620 C 1740 480, 1900 470, 2000 520 L 2000 1120 Z"/>
-<path filter="url(#soft)" fill="url(#w3)" d="M1380 1120 C 1520 1000, 1560 850, 1720 740 C 1860 645, 1960 640, 2000 660 L 2000 1120 Z"/>
-<path fill="#f0954f" fill-opacity=".16" d="M700 1120 C 1000 860, 1060 640, 1300 440 C 1540 240, 1820 200, 2000 250 L 2000 1120 Z"/>
+<rect width="1920" height="1080" fill="url(#key)"/>
+
+<!-- Ribbon A — broad back band, most translucent -->
+<path fill="url(#rA)" fill-opacity="0.75" d="M -60,712
+  C 430,556 758,864 1180,688
+  C 1522,546 1786,576 1980,656
+  L 1980,880
+  C 1760,792 1520,772 1180,884
+  C 800,1010 430,768 -60,918 Z"/>
+
+<!-- soft cast shadow under B where it crosses A -->
+<path fill="url(#shadow)" d="M 300,1080
+  C 706,912 1006,668 1384,548
+  C 1630,470 1830,476 1980,542
+  L 1980,608
+  C 1820,548 1636,545 1400,618
+  C 1040,730 796,962 528,1080 Z"/>
+
+<!-- Ribbon B — main glossy band -->
+<path fill="url(#rB)" fill-opacity="0.92" d="M 300,1080
+  C 700,900 1000,648 1380,524
+  C 1624,446 1824,452 1980,520
+  L 1980,700
+  C 1806,624 1642,614 1420,684
+  C 1064,796 820,1008 560,1080 Z"/>
+
+<!-- Ribbon C — vivid crest band -->
+<path fill="url(#rC)" fill-opacity="0.95" d="M 640,1080
+  C 952,928 1180,700 1470,588
+  C 1692,504 1862,512 1980,566
+  L 1980,646
+  C 1852,588 1702,584 1502,656
+  C 1232,758 1010,972 800,1080 Z"/>
+
+<!-- Specular crest lines — the gloss -->
+<path fill="none" stroke="#ffffff" stroke-opacity="0.28" stroke-width="2.5" stroke-linecap="round"
+  d="M 300,1080 C 700,900 1000,648 1380,524 C 1624,446 1824,452 1980,520"/>
+<path fill="none" stroke="#ffffff" stroke-opacity="0.22" stroke-width="2" stroke-linecap="round"
+  d="M 640,1080 C 952,928 1180,700 1470,588 C 1692,504 1862,512 1980,566"/>
+<path fill="none" stroke="#ffffff" stroke-opacity="0.14" stroke-width="1.5" stroke-linecap="round"
+  d="M -60,712 C 430,556 758,864 1180,688 C 1522,546 1786,576 1980,656"/>
 </svg>

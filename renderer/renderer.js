@@ -1979,7 +1979,7 @@ function ensureDisclaimer() {
       const items = [
         { label: selectedTheme === 'dark' ? 'Dark theme' : 'Light theme' },
         { label: ENGINE_LABELS[searchChoice] || searchChoice },
-        { label: hwaChoice === 'on' ? 'GPU accelerated' : 'Software rendering' },
+        { label: hwaChoice === 'on' ? 'GPU Power' : 'Software rendering' },
       ];
       if (selectedProfile) items.push({ label: 'Imported from ' + (selectedProfile.browser || 'another browser') });
       el.innerHTML = items.map((it) =>
