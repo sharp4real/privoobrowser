@@ -1349,6 +1349,12 @@ let openSidebarBtn = null;
 function faviconForSidebar(url) {
   try {
     const h = new URL(url).hostname;
+    return `https://www.google.com/s2/favicons?domain=${h}&sz=64`;
+  } catch { return ''; }
+}
+function faviconFallbackForSidebar(url) {
+  try {
+    const h = new URL(url).hostname;
     return `https://icons.duckduckgo.com/ip3/${h}.ico`;
   } catch { return ''; }
 }
@@ -1402,7 +1408,11 @@ function renderSidebarRail() {
     if (ico) {
       img.src = ico;
       img.onload  = () => btn.classList.add('loaded');
-      img.onerror = () => btn.classList.remove('loaded');
+      img.onerror = () => {
+        const fb = faviconFallbackForSidebar(link.url);
+        if (fb && img.src !== fb) { img.src = fb; return; }
+        btn.classList.remove('loaded');
+      };
     }
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -1558,20 +1568,30 @@ document.getElementById('sidebar-panel-newtab')?.addEventListener('click', () =>
 
 // Drag-to-resize handle
 const sidebarResizeHandle = document.getElementById('sidebar-resize');
-sidebarResizeHandle?.addEventListener('mousedown', (e) => {
+sidebarResizeHandle?.addEventListener('pointerdown', (e) => {
   e.preventDefault();
   _sidebarResizing = true;
   _sidebarResizeStart = e.clientX;
-  _sidebarResizeW = sidebarPanel ? parseInt(sidebarPanel.style.width) || 320 : 320;
+  _sidebarResizeW = sidebarPanel ? parseInt(sidebarPanel.style.width) || 480 : 480;
   document.body.classList.add('sidebar-resizing');
-  document.addEventListener('mousemove', _onSidebarResize);
-  document.addEventListener('mouseup', _onSidebarResizeEnd);
+  // Pointer capture: move/up are delivered to the handle even when the
+  // cursor crosses the <webview>, which never forwards mouse events to this
+  // document. Without this, a release over the page left the
+  // 'sidebar-resizing' class (pointer-events:none on everything) stuck on
+  // <body> — permanently dead header buttons.
+  try { sidebarResizeHandle.setPointerCapture(e.pointerId); } catch {}
+  sidebarResizeHandle.addEventListener('pointermove', _onSidebarResize);
+  sidebarResizeHandle.addEventListener('pointerup', _onSidebarResizeEnd);
+  sidebarResizeHandle.addEventListener('lostpointercapture', _onSidebarResizeEnd);
 });
+// Belt & braces: any focus loss or stray release ends the drag too.
+window.addEventListener('blur', _onSidebarResizeEnd);
+document.addEventListener('pointerup', _onSidebarResizeEnd);
 
 function _onSidebarResize(e) {
   if (!_sidebarResizing || !sidebarPanel) return;
   const delta = e.clientX - _sidebarResizeStart;
-  const newW = Math.max(180, Math.min(640, _sidebarResizeW + delta));
+  const newW = Math.max(180, Math.min(760, _sidebarResizeW + delta));
   sidebarPanel.style.width = `${newW}px`;
 }
 
@@ -1579,10 +1599,11 @@ async function _onSidebarResizeEnd() {
   if (!_sidebarResizing) return;
   _sidebarResizing = false;
   document.body.classList.remove('sidebar-resizing');
-  document.removeEventListener('mousemove', _onSidebarResize);
-  document.removeEventListener('mouseup', _onSidebarResizeEnd);
+  sidebarResizeHandle?.removeEventListener('pointermove', _onSidebarResize);
+  sidebarResizeHandle?.removeEventListener('pointerup', _onSidebarResizeEnd);
+  sidebarResizeHandle?.removeEventListener('lostpointercapture', _onSidebarResizeEnd);
   if (sidebarPanel) {
-    const w = parseInt(sidebarPanel.style.width) || 320;
+    const w = parseInt(sidebarPanel.style.width) || 480;
     await saveBrowserSetting({ sidebarPanelWidth: w });
   }
 }
