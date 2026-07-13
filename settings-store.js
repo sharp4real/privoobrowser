@@ -200,11 +200,13 @@ const DEFAULTS = {
   // Starter shortcuts seeded for fresh installs. (Existing users keep their
   // own — an empty array they've already saved is respected.)
   ntpQuickLinks: [
-    { name: 'YouTube',   url: 'https://youtube.com' },
-    { name: 'GitHub',    url: 'https://github.com' },
-    { name: 'Reddit',    url: 'https://reddit.com' },
-    { name: 'Wikipedia', url: 'https://wikipedia.org' },
+    { name: 'WhatsApp',  url: 'https://web.whatsapp.com' },
     { name: 'Gmail',     url: 'https://mail.google.com' },
+    { name: 'Snapchat',  url: 'https://web.snapchat.com' },
+    { name: 'Spotify',   url: 'https://open.spotify.com' },
+    { name: 'Discord',   url: 'https://discord.com/app' },
+    { name: 'YouTube',   url: 'https://youtube.com' },
+    { name: 'Reddit',    url: 'https://reddit.com' },
     { name: 'Amazon',    url: 'https://www.amazon.com' },
   ],
 
@@ -249,7 +251,8 @@ const DEFAULTS = {
   uiSoundVolume: 0.7,     // 0..1 volume for the UI blips
   newSearchBarStyle: false, // legacy boolean for the "soft" address bar (superseded by searchBarStyle)
   searchBarStyle: '',     // address-bar appearance: classic | soft | pill | square ('' = derive from newSearchBarStyle)
-  newTabBtnCircle: false, // draw a circle around the new-tab "+" button
+  vtabsCenterIcons: false, // vertically centre the vertical-tabs icon rail
+  newTabBtnCircle: true, // draw a circle around the new-tab "+" button
   syncDiscordTheme: true,  // recolor discord.com to match Privoo's accent + theme palette
   uiFont: 'system',       // interface font: system | rounded | classic | grotesk | mono | dyslexic
   uiRoundness: 'default', // corner style of the whole UI: default | sharp | round
@@ -359,6 +362,9 @@ function load() {
       // turns them on once. (false here was the old global default, not a choice.)
       if (parsed.ntpShowQuickLinks === false || parsed.ntpShowQuickLinks === undefined) {
         cache.ntpShowQuickLinks = true;
+      }
+      if (parsed.newTabBtnCircle === false || parsed.newTabBtnCircle === undefined) {
+        cache.newTabBtnCircle = true;
       }
       cache.uiRefresh2Applied = true;
       try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}

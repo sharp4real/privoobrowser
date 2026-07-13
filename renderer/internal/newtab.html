@@ -177,7 +177,8 @@ body.ntp-wp .ntp-brand-logo{filter:drop-shadow(0 2px 14px rgba(0,0,0,.5));}
   animation:pv-word-in .72s cubic-bezier(.2,.85,.25,1) both;
 }
 .ntp-brand i{
-  font-style:normal;color:var(--accent,#8b7cf7);display:inline-block;
+  /* The full-stop stays Privoo pine — it's the brand mark, not themed UI. */
+  font-style:normal;color:#57a97e;display:inline-block;
   /* Pine full-stop drops in with a small bounce, then breathes softly. */
   animation:pv-dot-in .5s cubic-bezier(.3,1.4,.5,1) .48s both, pv-dot-pulse 3s ease-in-out 1.1s infinite;
 }
@@ -243,7 +244,7 @@ body.ntp-wp .ntp-ghost-name{
   /* Light grey resting pill (Chrome-NTP style). White-on-white made the bar
      read as "transparent" against the page background; this gives the search
      bar a distinct shape even without backdrop blur. */
-  background:rgba(255,255,255,.92);border:1px solid rgba(38,36,58,.08);border-radius:28px;
+  background:rgba(255,255,255,.92);border:1px solid rgba(38,36,58,.08);border-radius:999px;
   padding:0 20px;height:56px;
   backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);
   box-shadow:0 8px 30px -8px rgba(38,36,58,.16), 0 2px 8px rgba(38,36,58,.06);

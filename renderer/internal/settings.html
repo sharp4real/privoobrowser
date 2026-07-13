@@ -1283,6 +1283,10 @@ body.dark .filter-list-item { background: #201f1c; border-color: #35332e; }
             <label class="switch"><input type="checkbox" id="ntpShowQuickLinks"><span class="slider"></span></label>
           </div>
           <div class="row">
+            <div><div class="label">Centre sidebar icons</div><div class="desc">Vertically centre the vertical-tabs icon rail, Opera-style.</div></div>
+            <label class="switch"><input type="checkbox" id="vtabsCenterIcons"><span class="slider"></span></label>
+          </div>
+          <div class="row">
             <div><div class="label">Privoo News link</div><div class="desc">Show a link on the new tab page to open Privoo News.</div></div>
             <label class="switch"><input type="checkbox" id="ntpNewsLink"><span class="slider"></span></label>
           </div>
@@ -1881,7 +1885,7 @@ body.dark .filter-list-item { background: #201f1c; border-color: #35332e; }
 <script>
 const api = window.privooInternal;
 const TOGGLES = [
-  'verticalTabs', 'vtabsIntegrated', 'vtabsSearchPopup', 'searchPopupGlass', 'uiSounds', 'newTabBtnCircle', 'darkMode', 'forceDarkMode', 'showHomeButton', 'showBookmarksBar',
+  'verticalTabs', 'vtabsIntegrated', 'vtabsSearchPopup', 'searchPopupGlass', 'uiSounds', 'newTabBtnCircle', 'vtabsCenterIcons', 'darkMode', 'forceDarkMode', 'showHomeButton', 'showBookmarksBar',
   'ntpShowWeather', 'ntpShowClock', 'ntpFocusedSearch', 'ntpShowQuickLinks', 'ntpNewsLink',
   'increaseTransparency', 'aeroGradient', 'vibeEnabled', 'vibeOverPages', 'compactMode', 'searchSuggestions',
   'askDownloadPath', 'adBlocking', 'httpsUpgrade', 'httpsUpgradeShowNotice', 'blockThirdPartyCookies',

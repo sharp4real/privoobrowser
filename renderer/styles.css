@@ -1555,9 +1555,9 @@ body.platform-mac #window-controls { display: none !important; }
 
 #omnibox-wrap {
   display: flex; align-items: center; gap: 6px;
-  height: 36px; padding: 0 6px 0 14px;
+  height: 38px; padding: 0 8px 0 16px;
   background: var(--omni-bg);
-  border-radius: 18px;
+  border-radius: 999px;
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
   transition: background var(--t-fast) ease, border-color var(--t-fast) ease,
@@ -4888,6 +4888,10 @@ body.vtabs-collapsed .vtabs-header { padding: 0; justify-content: center; }
   display: flex;
   flex-direction: column;
   gap: 1px;
+}
+/* Settings → Appearance: vertically centre the sidebar icon rail (Opera-style) */
+body.vtabs-centered .vtabs-list {
+  justify-content: center;
 }
 .vtabs-list::-webkit-scrollbar { width: 3px; }
 .vtabs-list::-webkit-scrollbar-thumb { background: transparent; border-radius: 2px; }

@@ -705,6 +705,7 @@ function applyAppSettings() {
   // Tab style customization removed — Privoo One's tab design is the only look.
   document.body.classList.remove('tabs-pill', 'tabs-underline', 'tabs-chrome', 'tabs-modern');
   document.body.classList.toggle('newtab-circle', !!settings.newTabBtnCircle);
+  document.body.classList.toggle('vtabs-centered', !!settings.vtabsCenterIcons);
   // Transparency glass style (only takes effect when transparency is on).
   document.body.classList.remove('tstyle-liquid', 'tstyle-acrylic', 'tstyle-clear');
   const _tst = settings.transparencyStyle || 'frosted';
@@ -4873,6 +4874,10 @@ cpWpFull?.addEventListener('change', () => {
       ntpThemeStyle: style,
       ntpThemeId: matched ? matched.id : '',
       ntpWaveAnimate: animChk ? animChk.checked : true,
+      // Picking a theme retunes the whole UI: the accent follows the theme's
+      // most saturated colour. Greyscale themes keep the existing accent so
+      // the UI never ends up with an unusable grey accent.
+      ...(maxSat >= 0.12 ? { accentColor: best } : {}),
       // Greyscale palettes (Mono) leave Vibe off so the chrome stays neutral grey
       // instead of picking up the saturated hue glow.
       vibeEnabled: maxSat >= 0.12,
