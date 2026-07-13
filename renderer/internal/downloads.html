@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <title>Downloads – Privoo</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%2357a97e' d='M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z'/%3E%3Cpath fill='%23fff' d='M10.6 15.4 7.4 12.2l1.3-1.3 1.9 1.9 4-4 1.3 1.3z'/%3E%3C/svg%3E"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%238b7cf7' d='M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z'/%3E%3Cpath fill='%23fff' d='M10.6 15.4 7.4 12.2l1.3-1.3 1.9 1.9 4-4 1.3 1.3z'/%3E%3C/svg%3E"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -17,9 +17,9 @@ body.dark{
   --border:#3c4043; --hover:#3c4043;
 }
 /* ── Privoo "quiet & precise" — warm charcoal + pine ── */
-:root{ --accent:#57a97e; --accent-hover:#6bbb90; --accent-soft:rgba(87,169,126,.14);
+:root{ --accent:#8b7cf7; --accent-hover:#6bbb90; --accent-soft:rgba(139,124,247,.14);
   --bg:#e8e5dc; --surface:#f2efe8; --text:#20201b; --muted:#6a685e; --border:#d7d3c7; --hover:#e0ddd1; }
-body.dark{ --accent:#57a97e; --accent-hover:#6bbb90; --accent-soft:rgba(87,169,126,.16);
+body.dark{ --accent:#8b7cf7; --accent-hover:#6bbb90; --accent-soft:rgba(139,124,247,.16);
   --bg:#1a1917; --surface:#232220; --text:#ece9e0; --muted:#928f84; --border:#35332e; --hover:#322f2b; }
 html{height:100%;background:transparent}
 body{height:100%;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);user-select:none;display:flex;flex-direction:column}
@@ -35,7 +35,7 @@ button,input{font:inherit;cursor:default;background:none;border:none;color:inher
 
 ::-webkit-scrollbar{width:12px;height:12px}
 ::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:#dadce0;border-radius:8px;border:3px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb{background:#dadce0;border-radius:12px;border:3px solid transparent;background-clip:padding-box}
 ::-webkit-scrollbar-thumb:hover{background:#bdc1c6;background-clip:padding-box;border:3px solid transparent}
 body.dark ::-webkit-scrollbar-thumb{background:#5f6368;background-clip:padding-box;border:3px solid transparent}
 
@@ -45,20 +45,20 @@ header{
   padding:0 24px;position:sticky;top:0;z-index:20;flex-shrink:0;
 }
 
-.logo{width:26px;height:26px;border-radius:6px;object-fit:contain}
+.logo{width:26px;height:26px;border-radius:10px;object-fit:contain}
 .page-title{font-size:18px;font-weight:500;margin-right:auto}
 
 .search-wrap{position:relative;display:flex;align-items:center}
 .search-wrap svg{position:absolute;left:12px;width:18px;height:18px;fill:var(--muted);pointer-events:none}
 #search{
-  width:280px;height:38px;border-radius:6px;border:1px solid transparent;
+  width:280px;height:38px;border-radius:10px;border:1px solid transparent;
   padding:0 16px 0 38px;font-size:13.5px;outline:none;background:var(--hover);
   color:var(--text);user-select:text;transition:background .15s,border-color .15s,box-shadow .15s;
 }
 #search:focus{background:var(--surface);border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
 
 .hdr-btn{
-  height:36px;padding:0 16px;border-radius:6px;border:1px solid var(--border);
+  height:36px;padding:0 16px;border-radius:10px;border:1px solid var(--border);
   font-size:13px;font-weight:500;background:var(--surface);color:var(--text);white-space:nowrap;
   transition:background .12s;
 }
@@ -79,13 +79,13 @@ main{flex:1;overflow-y:auto;background:var(--bg)}
 
 .dl-item{
   display:flex;align-items:center;gap:16px;
-  padding:14px 12px;border-radius:6px;
+  padding:14px 12px;border-radius:10px;
   transition:background .1s;
 }
 .dl-item:hover{background:var(--hover)}
 
 .file-icon{
-  width:42px;height:42px;border-radius:6px;flex-shrink:0;
+  width:42px;height:42px;border-radius:10px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
   color:#fff;
   box-shadow:0 1px 2px rgba(0,0,0,.12);
@@ -121,7 +121,7 @@ main{flex:1;overflow-y:auto;background:var(--bg)}
 }
 .status-chip{
   flex-shrink:0;font-size:11px;font-weight:600;
-  padding:2px 9px;border-radius:6px;
+  padding:2px 9px;border-radius:10px;
 }
 .chip-done{background:#e6f4ea;color:#1e8e3e}
 .chip-progress{background:var(--accent-soft);color:var(--accent)}
@@ -153,14 +153,14 @@ body.dark .dl-act.danger:hover{background:rgba(197,34,31,.15);color:#f28b82}
 .dl-act svg{width:16px;height:16px;fill:currentColor}
 
 .open-btn{
-  height:30px;padding:0 14px;border-radius:6px;
+  height:30px;padding:0 14px;border-radius:10px;
   border:1px solid var(--border);font-size:12.5px;font-weight:500;
   color:var(--text);background:var(--surface);white-space:nowrap;
   transition:background .12s;
 }
 .open-btn:hover{background:var(--hover)}
 
-#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#303134;color:#fff;border-radius:8px;padding:10px 18px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .18s;z-index:80;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#303134;color:#fff;border-radius:12px;padding:10px 18px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .18s;z-index:80;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.3)}
 #toast.show{opacity:1}
 body.dark #toast{background:#e8eaed;color:#202124}
 </style>

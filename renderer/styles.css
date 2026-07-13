@@ -1,43 +1,68 @@
-/* ─── Variables ─────────────────────────────────────────────────── */
+/* ─── Design tokens ─────────────────────────────────────────────────
+   Premium light glassmorphism. One system: soft lavender-tinted whites,
+   translucent floating surfaces, generous radii, layered soft shadows.
+   Every component keys off these — change them here, not per-component. */
 :root {
-  --strip:       #dee1e6;
-  --strip-focus: #d2d5db;
-  --tab-active:  #ffffff;
+  /* Typography */
+  --font:        "Inter", "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+
+  /* Surfaces */
+  --strip:       #e9e7f4;                    /* window / titlebar wash          */
+  --strip-focus: #dfdcef;
+  --tab-active:  rgba(255,255,255,.92);      /* active pill                     */
   --tab-width:   220px;
-  --tab-hover:   rgba(0,0,0,.08);
-  --toolbar:     #ffffff;
-  --omni-bg:     #f1f3f4;
-  --omni-hover:  #e8eaed;
-  --text:        #1f1f1f;
-  --muted:       #5f6368;
-  /* Light-blue accent (matches dark mode) — buttons, toggles, focus rings */
-  --accent:      #8ab4f8;
-  --accent-hover:#a0c2fa;
-  --on-accent:   #202124;
-  --accent-soft: rgba(138,180,248,.18);
-  --status-on:   #3c4043;
-  --green:       #3c4043;
+  --tab-hover:   rgba(255,255,255,.55);
+  --toolbar:     #fbfbfe;                    /* main bar + popover surface      */
+  --omni-bg:     rgba(255,255,255,.75);
+  --omni-hover:  rgba(255,255,255,.95);
+  --glass:       rgba(255,255,255,.72);      /* frosted panel fill              */
+  --glass-blur:  saturate(1.4) blur(18px);
+
+  /* Ink */
+  --text:        #26243a;
+  --muted:       #6d6a85;
+
+  /* Lavender accent — buttons, toggles, focus rings, active states */
+  --accent:      #8b7cf7;
+  --accent-hover:#9d90f8;
+  --on-accent:   #ffffff;
+  --accent-soft: rgba(139,124,247,.16);
+  --status-on:   #44415e;
+  --green:       #44415e;
   --red:         #d93025;
-  --border:      #dadce0;
-  --hover:       #e8eaed;
-  --shadow:      0 1px 3px rgba(0,0,0,.12), 0 1px 2px rgba(0,0,0,.08);
-  --panel-shadow:0 8px 28px rgba(0,0,0,.22), 0 2px 8px rgba(0,0,0,.12);
+
+  /* Lines & states */
+  --border:      rgba(38,36,58,.10);
+  --hover:       rgba(38,36,58,.06);
+
+  /* Geometry & elevation */
+  --r-sm:        9px;
+  --r-md:        13px;
+  --r-lg:        18px;
+  --shadow:      0 1px 2px rgba(38,36,58,.05), 0 2px 8px rgba(38,36,58,.06);
+  --panel-shadow:0 24px 60px -18px rgba(38,36,58,.28), 0 4px 16px rgba(38,36,58,.10);
+
+  /* Motion */
+  --ease:        cubic-bezier(.2,.8,.25,1);
+  --t-fast:      .14s;
+  --t-med:       .24s;
 }
 
 body.dark {
-  --strip:       #202124;
-  --strip-focus: #2b2c30;
-  --tab-active:  #303134;
-  --tab-hover:   rgba(255,255,255,.08);
-  --toolbar:     #303134;
-  --omni-bg:     #202124;
-  --omni-hover:  #3c4043;
-  --text:        #e8eaed;
-  --muted:       #bdc1c6;
-  --border:      #4a4d51;
-  --hover:       #3c4043;
+  --strip:       #1c1b26;
+  --strip-focus: #26242f;
+  --tab-active:  rgba(48,46,62,.95);
+  --tab-hover:   rgba(255,255,255,.07);
+  --toolbar:     #232230;
+  --omni-bg:     rgba(255,255,255,.06);
+  --omni-hover:  rgba(255,255,255,.10);
+  --glass:       rgba(35,34,48,.78);
+  --text:        #eceaf6;
+  --muted:       #a5a2bd;
+  --border:      rgba(255,255,255,.09);
+  --hover:       rgba(255,255,255,.07);
   --shadow:      0 1px 3px rgba(0,0,0,.38);
-  --panel-shadow:0 10px 32px rgba(0,0,0,.48), 0 2px 10px rgba(0,0,0,.38);
+  --panel-shadow:0 24px 60px -14px rgba(0,0,0,.6), 0 4px 14px rgba(0,0,0,.4);
   /* Accent values are declared once on :root above and shared between
      light/dark. Re-declaring them on body.dark would shadow the JS-set
      custom accent (which lives on documentElement), so we don't. */
@@ -239,7 +264,7 @@ body.wallpaper-chrome.wallpaper-chrome-wave #chrome-wave { display: block; }
   position: relative; width: min(640px, calc(100vw - 32px)); max-height: min(760px, calc(100vh - 32px));
   display: flex; flex-direction: column;
   background: var(--toolbar, #fff); color: var(--text, #202124);
-  font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  font-family: var(--font);
   border: 1px solid rgba(255,255,255,.14); border-radius: 16px;
   box-shadow: 0 30px 90px rgba(0,0,0,.5), 0 2px 8px rgba(0,0,0,.2); overflow: hidden;
   animation: wave-pop .22s cubic-bezier(.2,.8,.2,1);
@@ -305,7 +330,7 @@ body.dark .wave-card { background: #202124; color: #e8eaed; border-color: rgba(2
 /* Theme gallery grid (named cards) */
 .theme-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
 .theme-tile {
-  position: relative; height: 76px; border-radius: 8px; border: 0; cursor: pointer; padding: 0;
+  position: relative; height: 76px; border-radius: 12px; border: 0; cursor: pointer; padding: 0;
   overflow: hidden; outline: 2px solid transparent; outline-offset: 2px;
   font-family: inherit;
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.22), inset 0 -34px 34px rgba(0,0,0,.2);
@@ -342,7 +367,7 @@ body.dark .wave-card { background: #202124; color: #e8eaed; border-color: rgba(2
 .theme-tile.tt-off .tt-name { position: static; display: grid; place-items: center; height: 100%; color: inherit; text-shadow: none; opacity: .85; }
 
 /* Per-theme looped sound row */
-.theme-sound { display: flex; align-items: center; gap: 12px; padding: 10px 12px; margin-bottom: 12px; border-radius: 8px; background: rgba(128,128,128,.1); border: 1px solid rgba(128,128,128,.16); }
+.theme-sound { display: flex; align-items: center; gap: 12px; padding: 10px 12px; margin-bottom: 12px; border-radius: 12px; background: rgba(128,128,128,.1); border: 1px solid rgba(128,128,128,.16); }
 .theme-sound-btn { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; border: 0; cursor: pointer; background: var(--accent, #4285f4); color: #fff; flex: 0 0 auto; transition: filter .14s, transform .12s; }
 .theme-sound-btn:hover { filter: brightness(1.08); transform: scale(1.03); }
 .theme-sound-btn:active { transform: scale(.96); }
@@ -360,7 +385,7 @@ body.dark .wave-card { background: #202124; color: #e8eaed; border-color: rgba(2
 .theme-cust { padding-top: 8px; }
 .theme-cust[hidden] { display: none; }
 .theme-styles { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 12px; }
-.theme-style-chip { height: 30px; border-radius: 8px; border: 1px solid rgba(128,128,128,.28); background: transparent; color: inherit; font-size: 11px; font-weight: 600; cursor: pointer; transition: background .14s, border-color .14s; }
+.theme-style-chip { height: 30px; border-radius: 12px; border: 1px solid rgba(128,128,128,.28); background: transparent; color: inherit; font-size: 11px; font-weight: 600; cursor: pointer; transition: background .14s, border-color .14s; }
 .theme-style-chip:hover:not(.active) { background: rgba(128,128,128,.12); }
 .theme-style-chip.active { background: var(--accent, #4285f4); border-color: transparent; color: #fff; }
 
@@ -572,7 +597,7 @@ body.dark .wave-card { background: #202124; color: #e8eaed; border-color: rgba(2
 .wave-toggle-label { font-size: 13.5px; font-weight: 600; }
 .wave-toggle-sub { font-size: 11.5px; opacity: .55; margin-top: 1px; }
 .wave-actions { display: flex; gap: 10px; padding: 12px 16px 16px; flex: 0 0 auto; border-top: 1px solid rgba(128,128,128,.14); }
-.wave-btn { flex: 1; height: 40px; border-radius: 8px; border: 1px solid rgba(128,128,128,.28); background: transparent; color: inherit; font-family: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: background .14s, filter .14s, transform .1s; }
+.wave-btn { flex: 1; height: 40px; border-radius: 12px; border: 1px solid rgba(128,128,128,.28); background: transparent; color: inherit; font-family: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: background .14s, filter .14s, transform .1s; }
 .wave-btn:active { transform: translateY(1px); }
 .wave-btn.primary { flex: 1.6; background: var(--accent, #4285f4); border-color: transparent; color: #fff; box-shadow: 0 6px 18px color-mix(in srgb, var(--accent, #4285f4) 45%, transparent); }
 .wave-btn.primary:hover { filter: brightness(1.07); }
@@ -1069,7 +1094,7 @@ body {
   display: flex;
   flex-direction: column;
   background: var(--toolbar);
-  font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  font-family: var(--font);
   min-width: 600px;
 }
 
@@ -1095,9 +1120,9 @@ svg { fill: currentColor; display: block; flex-shrink: 0; }
 /* ─── Title bar / tab strip ─────────────────────────────────────── */
 #titlebar {
   display: flex;
-  align-items: flex-end;
-  height: 38px;
-  min-height: 38px;
+  align-items: center;
+  height: 42px;
+  min-height: 42px;
   background: var(--strip);
   padding: 0;
   -webkit-app-region: drag;
@@ -1126,9 +1151,9 @@ svg { fill: currentColor; display: block; flex-shrink: 0; }
   overflow-x: auto;
   overflow-y: hidden;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   height: 100%;
-  padding-left: 4px;
+  padding-left: 6px;
   scrollbar-width: none;
 }
 #tabs-scroll::-webkit-scrollbar { display: none; }
@@ -1144,9 +1169,9 @@ svg { fill: currentColor; display: block; flex-shrink: 0; }
 
 #tabs {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   height: 100%;
-  padding-top: 6px;
+  padding-top: 0;
   flex: 0 0 auto;
   min-width: 0;
 }
@@ -1163,8 +1188,11 @@ svg { fill: currentColor; display: block; flex-shrink: 0; }
   min-width: 76px;
   max-width: 240px;
   height: 32px;
+  align-self: center;
   padding: 0 8px 0 10px;
-  border-radius: 8px 8px 0 0;
+  /* Floating pill — fully rounded, no toolbar-merge trapezoid. */
+  border-radius: 10px;
+  margin: 0 2px;
   font-size: 12px;
   color: var(--muted);
   cursor: default;
@@ -1173,10 +1201,11 @@ svg { fill: currentColor; display: block; flex-shrink: 0; }
      is what clipped the last tab's edge and made the sizing visibly "settle" a
      moment later. Tabs now land at their final width instantly; only colour and
      opacity animate. */
-  transition: background .16s ease, color .16s ease, opacity .18s ease;
+  transition: background var(--t-fast) ease, color var(--t-fast) ease,
+              opacity .18s ease, box-shadow var(--t-fast) ease;
   overflow: hidden;
-  margin-right: 0;
 }
+.tab:hover:not(.active) { background: var(--tab-hover); color: var(--text); }
 /* Entrance: fade in only — the tab is already at its final width, so nothing
    reflows. Class is removed after two frames by JS. */
 .tab.tab-in {
@@ -1220,7 +1249,7 @@ svg { fill: currentColor; display: block; flex-shrink: 0; }
   height: 28px;
   margin: 0 4px 0 6px;
   padding: 0 10px;
-  border-radius: 4px;
+  border-radius: 8px;
   background: var(--group-tint);
   color: var(--text);
   font-size: 11.5px;
@@ -1258,29 +1287,10 @@ svg { fill: currentColor; display: block; flex-shrink: 0; }
 .tab.active {
   background: var(--tab-active);
   color: var(--text);
+  box-shadow: var(--shadow);
   z-index: 2;
 }
-/* Inward corner curves that merge the tab with the toolbar */
-.tab.active::before,
-.tab.active::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  width: 8px;
-  height: 8px;
-  background: var(--tab-active);
-  pointer-events: none;
-}
-.tab.active::before {
-  left: -8px;
-  -webkit-mask: radial-gradient(circle at 0 0, transparent 8px, #000 8px);
-          mask: radial-gradient(circle at 0 0, transparent 8px, #000 8px);
-}
-.tab.active::after {
-  right: -8px;
-  -webkit-mask: radial-gradient(circle at 100% 0, transparent 8px, #000 8px);
-          mask: radial-gradient(circle at 100% 0, transparent 8px, #000 8px);
-}
+/* The old trapezoid "merge with toolbar" corner curves are gone — pills float. */
 
 .tab .favicon {
   width: 16px; height: 16px; flex-shrink: 0;
@@ -1355,11 +1365,11 @@ body.newtab-circle #new-tab:hover { background: var(--strip-focus); }
 /* New tab button + window controls */
 .strip-btn {
   -webkit-app-region: no-drag;
-  align-self: flex-end;
+  align-self: center;
   width: 30px;
   height: 30px;
-  margin: 0 6px 3px 6px;
-  border-radius: 8px;
+  margin: 0 6px;
+  border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
   color: var(--muted);
   flex-shrink: 0;
@@ -1406,10 +1416,13 @@ body.platform-mac #window-controls { display: none !important; }
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 44px;
-  min-height: 44px;
-  padding: 0 8px;
-  background: var(--toolbar);
+  height: 48px;
+  min-height: 48px;
+  padding: 0 10px;
+  /* Frosted bar: translucent over the lavender window wash. */
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border-bottom: 1px solid var(--border);
   position: relative;
   z-index: 10;
@@ -1522,13 +1535,13 @@ body.platform-mac #window-controls { display: none !important; }
 
 /* Shield */
 #shield-btn {
-  font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  font-family: var(--font);
 }
 #shield-btn #shield-count {
   font-size: 12px; 
   font-weight: 600; 
   line-height: 1.2;
-  font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  font-family: var(--font);
   letter-spacing: 0;
 }
 
@@ -1542,19 +1555,21 @@ body.platform-mac #window-controls { display: none !important; }
 
 #omnibox-wrap {
   display: flex; align-items: center; gap: 6px;
-  height: 32px; padding: 0 6px 0 12px;
+  height: 36px; padding: 0 6px 0 14px;
   background: var(--omni-bg);
-  border-radius: 16px;
-  border: 2px solid transparent;
-  transition: background .16s ease, border-color .16s ease,
-              box-shadow .22s cubic-bezier(.16,.84,.44,1);
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  transition: background var(--t-fast) ease, border-color var(--t-fast) ease,
+              box-shadow var(--t-med) var(--ease), transform var(--t-med) var(--ease);
   position: relative;
 }
 #omnibox-wrap:hover { background: var(--omni-hover); }
 #omnibox-wrap:focus-within {
-  background: var(--toolbar);
-  border-color: transparent;
-  box-shadow: 0 2px 12px rgba(0,0,0,.13), 0 0 0 1px rgba(0,0,0,.05);
+  background: #fff;
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  box-shadow: 0 0 0 3px var(--accent-soft), 0 10px 30px -10px rgba(38,36,58,.22);
+  transform: translateY(-1px);
 }
 body.dark #omnibox-wrap:focus-within {
   border-color: transparent;
@@ -1606,7 +1621,7 @@ body.search-pill #omnibox-wrap {
 body.search-pill #omnibox-wrap:hover { background: var(--omni-hover); }
 body.search-pill #omnibox-wrap:focus-within { background: var(--toolbar); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 body.search-pill.dark #omnibox-wrap { border-color: rgba(255,255,255,.18); }
-body.search-square #omnibox-wrap { border-radius: 5px; }
+body.search-square #omnibox-wrap { border-radius: 10px; }
 body.search-square #omnibox-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .site-icon {
   display: flex;
@@ -1654,11 +1669,11 @@ body.search-square #omnibox-wrap:focus-within { border-color: var(--accent); box
   top: calc(100% + 8px);
   right: 0;
   width: 280px;
-  background: var(--toolbar);
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border);
-  /* Square — these two omnibox popovers read as panels hanging off the address
-     bar, not floating pills. Was 14px, which also beat the Privoo One rule. */
-  border-radius: 0;
+  border-radius: var(--r-lg);
   box-shadow: var(--panel-shadow);
   z-index: 1000;
   padding: 18px 18px 14px;
@@ -1713,10 +1728,11 @@ body.search-square #omnibox-wrap:focus-within { border-color: var(--accent); box
   top: calc(100% + 8px);
   left: 0;
   width: 320px;
-  background: var(--toolbar);
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border);
-  /* Square — see #page-shield-popover. */
-  border-radius: 0;
+  border-radius: var(--r-lg);
   box-shadow: var(--panel-shadow);
   z-index: 1000;
   padding: 16px 16px 14px;
@@ -1801,9 +1817,11 @@ body.dark .si-icon.insecure { background: rgba(242,139,130,.18); color: #f28b82;
   top: calc(100% + 6px);
   left: 0;
   right: 0;
-  background: var(--toolbar);
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--r-lg);
   box-shadow: var(--panel-shadow);
   z-index: 9999;
   overflow: hidden;
@@ -1823,7 +1841,7 @@ body.dark .si-icon.insecure { background: rgba(242,139,130,.18); color: #f28b82;
   padding: 9px 12px;
   cursor: default;
   font-size: 13px;
-  border-radius: 8px;
+  border-radius: 12px;
 }
 .sug-item:hover, .sug-item.active { background: var(--hover); }
 
@@ -1844,9 +1862,11 @@ body.dark .si-icon.insecure { background: rgba(242,139,130,.18); color: #f28b82;
   right: 0;
   min-width: 280px;
   max-width: calc(100vw - 16px);
-  background: var(--toolbar);
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--r-lg);
   box-shadow: var(--panel-shadow);
   z-index: 5000;
   font-size: 13px;
@@ -1902,7 +1922,7 @@ body.dark .si-icon.insecure { background: rgba(242,139,130,.18); color: #f28b82;
   text-transform: uppercase;
   line-height: 1;
   padding: 3px 6px;
-  border-radius: 5px;
+  border-radius: 10px;
   background: var(--accent-soft);
   color: var(--accent);
 }
@@ -2038,7 +2058,7 @@ body.dark .sp-hero-shield > svg { fill: #e8eaed; }
   padding: 8px 12px;
   font-size: 13px;
   color: var(--text);
-  border-radius: 8px;
+  border-radius: 12px;
 }
 .feature-row + .feature-row { margin-top: 1px; }
 .feature-row > svg {
@@ -2128,7 +2148,7 @@ body.dark .sp-hero-shield > svg { fill: #e8eaed; }
 .dl-item {
   display: flex; align-items: center; gap: 8px;
   background: var(--omni-bg); border: 1px solid var(--border);
-  border-radius: 8px; padding: 6px 10px;
+  border-radius: 12px; padding: 6px 10px;
   font-size: 12px; max-width: 260px;
 }
 .dl-item .dl-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -2350,7 +2370,7 @@ body.dark .sw-card {
 }
 .sw-dot {
   width: 7px; height: 7px;
-  border-radius: 4px;
+  border-radius: 8px;
   background: var(--border);
   transition: width .4s cubic-bezier(.16,.84,.44,1), background .3s ease;
 }
@@ -2443,7 +2463,7 @@ body.dark .sw-card {
   display: flex; align-items: center; gap: 13px;
   width: 100%; padding: 11px 14px;
   background: var(--omni-bg); border: 1.5px solid var(--border);
-  border-radius: 8px; cursor: pointer; text-align: left; font-family: inherit;
+  border-radius: 12px; cursor: pointer; text-align: left; font-family: inherit;
   color: var(--text);
   transition: border-color .14s ease, background .14s ease;
 }
@@ -2462,7 +2482,7 @@ body.dark .sw-card {
 .sw-engine-info b { font-size: 13.5px; font-weight: 600; color: var(--text); }
 .sw-engine-info span { font-size: 11.5px; color: var(--muted); line-height: 1.35; }
 .sw-engine-tick {
-  flex-shrink: 0; width: 22px; height: 22px; border-radius: 6px;
+  flex-shrink: 0; width: 22px; height: 22px; border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
   background: var(--accent); color: #10160f;
   opacity: 0; transform: scale(.6); transition: opacity .16s ease, transform .16s cubic-bezier(.2,1.4,.4,1);
@@ -2612,7 +2632,7 @@ body.dark .sw-card {
   border: none;
   background: transparent;
   color: var(--muted);
-  border-radius: 6px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2629,7 +2649,7 @@ body.dark .sw-card {
 .cp-body::-webkit-scrollbar { width: 8px; }
 .cp-body::-webkit-scrollbar-thumb {
   background: var(--border);
-  border-radius: 4px;
+  border-radius: 8px;
 }
 body.dark .cp-body::-webkit-scrollbar-thumb { background: #5f6368; }
 
@@ -2672,7 +2692,7 @@ body.dark .cp-body::-webkit-scrollbar-thumb { background: #5f6368; }
 .cp-theme-swatch {
   width: 100%;
   height: 50px;
-  border-radius: 6px;
+  border-radius: 10px;
   border: 1px solid var(--border);
 }
 .cp-theme-light { background: linear-gradient(180deg, #dee1e6 0 14px, #ffffff 14px); }
@@ -2720,7 +2740,7 @@ body.dark .cp-body::-webkit-scrollbar-thumb { background: #5f6368; }
   padding: 10px 14px;
   background: transparent;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 12px;
   color: var(--text);
   font-size: 13px;
   font-weight: 500;
@@ -2937,7 +2957,7 @@ body.dark .cp-row input:checked + .slider { background: var(--accent); }
 
 /* Browser mock */
 .sw-mock {
-  width: 100%; aspect-ratio: 16/10; border-radius: 8px;
+  width: 100%; aspect-ratio: 16/10; border-radius: 12px;
   overflow: hidden; display: flex; flex-direction: column;
   border: 1px solid rgba(0,0,0,.1);
 }
@@ -2951,7 +2971,7 @@ body.dark .cp-row input:checked + .slider { background: var(--accent); }
 .dark-mock  .sw-mock-strip { background: #202124; }
 
 .sw-mock-tab {
-  height: 17px; width: 52px; border-radius: 6px 6px 0 0;
+  height: 17px; width: 52px; border-radius: 10px 6px 0 0;
   background: rgba(0,0,0,.15);
 }
 .light-mock .sw-mock-tab.active { background: #ffffff; }
@@ -3083,7 +3103,7 @@ body.dark .sw-disc-para { color: #e8eaed; border-color: rgba(255,255,255,.08); }
 
 /* Buttons — flat, squared, quiet. No gradients, sheen sweeps, or bounce. */
 .sw-btn {
-  height: 42px; padding: 0 22px; border-radius: 8px;
+  height: 42px; padding: 0 22px; border-radius: 12px;
   border: 1px solid var(--border); background: transparent;
   color: var(--text); font-size: 13.5px; font-weight: 600;
   cursor: pointer; font-family: inherit;
@@ -3182,7 +3202,7 @@ body.transparent-ui.dark .app-sidebar {
 .sidebar-rail-btn img {
   width: 22px; height: 22px;
   object-fit: contain;
-  border-radius: 5px;
+  border-radius: 10px;
   display: none;
 }
 .sidebar-rail-btn.loaded img { display: block; }
@@ -3196,7 +3216,7 @@ body.transparent-ui.dark .app-sidebar {
   font-size: 14px;
   font-weight: 600;
   color: var(--text);
-  font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  font-family: var(--font);
 }
 
 /* '+' button pinned at the bottom of the sidebar rail */
@@ -3295,7 +3315,7 @@ body.transparent-ui.dark .sidebar-panel-header {
 }
 .sidebar-panel-nav {
   width: 28px; height: 28px;
-  border-radius: 6px;
+  border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   color: var(--muted);
@@ -3383,7 +3403,7 @@ body.sidebar-resizing #sidebar-panel { pointer-events: auto !important; }
   width: 100%;
   height: 36px;
   padding: 0 12px;
-  border-radius: 8px;
+  border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--omni-bg);
   color: var(--text);
@@ -3403,7 +3423,7 @@ body.sidebar-resizing #sidebar-panel { pointer-events: auto !important; }
 .sb-modal-actions button {
   height: 34px;
   padding: 0 16px;
-  border-radius: 8px;
+  border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--toolbar);
   color: var(--text);
@@ -3444,7 +3464,7 @@ body.sidebar-resizing #sidebar-panel { pointer-events: auto !important; }
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  font-family: var(--font);
   animation: ep-fadein .15s ease;
 }
 #emoji-picker.hidden { display: none !important; }
@@ -3484,7 +3504,7 @@ body.sidebar-resizing #sidebar-panel { pointer-events: auto !important; }
   border: none;
   background: transparent;
   color: var(--muted);
-  border-radius: 6px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3510,7 +3530,7 @@ body.sidebar-resizing #sidebar-panel { pointer-events: auto !important; }
   flex-shrink: 0;
   border: none;
   background: transparent;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
   opacity: .65;
   display: flex;
@@ -3545,14 +3565,14 @@ body.sidebar-resizing #sidebar-panel { pointer-events: auto !important; }
   contain: content;
 }
 #emoji-grid::-webkit-scrollbar { width: 8px; }
-#emoji-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+#emoji-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
 body.dark #emoji-grid::-webkit-scrollbar-thumb { background: #5f6368; }
 .ep-cell {
   width: 100%;
   aspect-ratio: 1;
   border: none;
   background: transparent;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -3639,7 +3659,7 @@ body.dark #emoji-grid::-webkit-scrollbar-thumb { background: #5f6368; }
 .notes-iconbtn {
   width: 28px; height: 28px;
   border: none; background: transparent;
-  border-radius: 6px;
+  border-radius: 10px;
   color: var(--muted);
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
@@ -3777,7 +3797,7 @@ body.dark #emoji-grid::-webkit-scrollbar-thumb { background: #5f6368; }
   width: 100%;
   height: 36px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 0 32px 0 12px;
   font-size: 13px;
   color: var(--text);
@@ -3809,7 +3829,7 @@ body.dark .translate-select {
   background: var(--text);
   color: var(--toolbar);
   border: 1px solid var(--text);
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 13px;
   font-weight: 500;
   cursor: default;
@@ -3838,7 +3858,7 @@ body.dark .translate-select {
 .sf-actions button {
   flex: 1;
   height: 30px;
-  border-radius: 8px;
+  border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--omni-bg);
   color: var(--text);
@@ -3853,13 +3873,13 @@ body.dark .translate-select {
 .calc-display {
   height: 52px; margin-bottom: 8px; padding: 0 12px;
   display: flex; align-items: center; justify-content: flex-end;
-  background: var(--omni-bg); border: 1px solid var(--border); border-radius: 8px;
+  background: var(--omni-bg); border: 1px solid var(--border); border-radius: 12px;
   font-size: 26px; font-weight: 600; color: var(--text);
   font-variant-numeric: tabular-nums; overflow: hidden;
 }
 .calc-keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .calc-key {
-  height: 44px; border: none; border-radius: 8px; cursor: pointer;
+  height: 44px; border: none; border-radius: 12px; cursor: pointer;
   font-family: inherit; font-size: 16px; font-weight: 600;
   background: var(--omni-bg); color: var(--text);
   transition: filter .1s ease, background .1s ease;
@@ -3877,9 +3897,11 @@ body.dark .translate-select {
   right: 0;
   width: 340px;
   max-width: min(340px, calc(100vw - 24px));
-  background: var(--toolbar);
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--r-lg);
   box-shadow: var(--panel-shadow);
   z-index: 12000;
   overflow: hidden;
@@ -3928,7 +3950,7 @@ body.dark .translate-select {
   width: 100%;
   height: 36px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 0 12px;
   font-size: 13px;
   background: var(--omni-bg);
@@ -3960,7 +3982,7 @@ body.dark .vpn-input { background: var(--omni-bg); color: var(--text); }
 .vpn-pop-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
 .vpn-btn {
   height: 34px; padding: 0 16px;
-  border-radius: 8px; font-size: 13px; font-weight: 500;
+  border-radius: 12px; font-size: 13px; font-weight: 500;
   border: 1px solid var(--border);
   cursor: default;
 }
@@ -3981,7 +4003,7 @@ body.dark .vpn-input { background: var(--omni-bg); color: var(--text); }
 .omni-loc-chip {
   display: inline-flex; align-items: center; gap: 5px;
   height: 22px; padding: 0 9px; margin-right: 2px;
-  border: none; border-radius: 5px;
+  border: none; border-radius: 10px;
   background: var(--accent); color: #10160f;
   font-family: inherit; font-size: 11px; font-weight: 700; letter-spacing: .02em;
   cursor: pointer; flex-shrink: 0; -webkit-app-region: no-drag;
@@ -4032,7 +4054,7 @@ body.dark .vpn-input { background: var(--omni-bg); color: var(--text); }
 .geo-dd-btn {
   display: flex; align-items: center; gap: 10px; width: 100%;
   height: 44px; padding: 0 12px;
-  background: var(--omni-bg); border: 1px solid var(--border); border-radius: 6px;
+  background: var(--omni-bg); border: 1px solid var(--border); border-radius: 10px;
   color: var(--text); font-family: inherit; font-size: 13.5px; font-weight: 500;
   cursor: pointer; text-align: left;
   transition: border-color .14s ease;
@@ -4045,7 +4067,7 @@ body.dark .vpn-input { background: var(--omni-bg); color: var(--text); }
 .geo-dd-btn[aria-expanded="true"] .geo-dd-caret { transform: rotate(180deg); }
 .geo-dd-menu {
   position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 20;
-  background: var(--toolbar); border: 1px solid var(--border); border-radius: 8px;
+  background: var(--toolbar); border: 1px solid var(--border); border-radius: 12px;
   box-shadow: 0 16px 40px -12px rgba(0,0,0,.55);
   padding: 5px; max-height: 260px; overflow-y: auto;
   animation: geo-dd-in .13s ease;
@@ -4054,7 +4076,7 @@ body.dark .vpn-input { background: var(--omni-bg); color: var(--text); }
 @keyframes geo-dd-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 .geo-dd-opt {
   display: flex; align-items: center; gap: 10px; width: 100%;
-  padding: 9px 10px; border: none; background: transparent; border-radius: 5px;
+  padding: 9px 10px; border: none; background: transparent; border-radius: 10px;
   color: var(--text); font-family: inherit; font-size: 13px; font-weight: 500;
   cursor: pointer; text-align: left;
   transition: background .1s ease;
@@ -4076,7 +4098,7 @@ body.dark .vpn-input { background: var(--omni-bg); color: var(--text); }
 }
 .vpn-status-line {
   font-size: 12px; color: var(--muted);
-  padding: 8px 10px; border-radius: 8px;
+  padding: 8px 10px; border-radius: 12px;
   background: var(--omni-bg);
   border: 1px solid var(--border);
 }
@@ -4101,7 +4123,7 @@ body.dark .vpn-input { background: var(--omni-bg); color: var(--text); }
   font-weight: 500;
   cursor: default;
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: 10px;
 }
 .toolbar-popover-head .linkish:hover { background: var(--hover); }
 .toolbar-popover-body {
@@ -4122,7 +4144,7 @@ body.dark .vpn-input { background: var(--omni-bg); color: var(--text); }
 .dl-pop-row:hover { background: var(--hover); }
 .dl-pop-icon {
   width: 32px; height: 32px;
-  border-radius: 8px;
+  border-radius: 12px;
   flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
   color: #fff;
@@ -4160,7 +4182,7 @@ body.dark .vpn-input { background: var(--omni-bg); color: var(--text); }
 .dl-pop-actions button {
   font-size: 11px;
   padding: 5px 10px;
-  border-radius: 6px;
+  border-radius: 10px;
   border: 1px solid transparent;
   background: var(--hover);
   color: var(--text);
@@ -4194,14 +4216,16 @@ body.dark .dl-pop-action-btn:hover svg {
   z-index: 15000;
   min-width: 230px;
   max-width: 320px;
-  background: var(--toolbar);
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--r-md);
   overflow: hidden;
   box-shadow: var(--panel-shadow);
   padding: 6px 0;
   font-size: 13px;
-  font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  font-family: var(--font);
 }
 .context-menu.hidden { display: none; }
 .ctx-item {
@@ -4251,7 +4275,7 @@ body.dark .dl-pop-action-btn:hover svg {
   height: 32px;
   border: none;
   background: transparent;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
   /* Native color emoji — same stack as the standalone picker. */
   font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", emoji, sans-serif;
@@ -4295,7 +4319,7 @@ body.dark .dl-pop-action-btn:hover svg {
   border-radius: 14px;
   padding: 14px 18px;
   box-shadow: 0 10px 30px rgba(0,0,0,.18), 0 4px 8px rgba(0,0,0,.10);
-  font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  font-family: var(--font);
   animation: ob-rise .22s cubic-bezier(.2,0,.2,1);
 }
 .overlay-banner.hidden { display: none !important; }
@@ -4324,7 +4348,7 @@ body.dark .dl-pop-action-btn:hover svg {
 .ob-primary {
   padding: 8px 16px;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   background: var(--accent);
   color: var(--on-accent);
   font-size: 13px;
@@ -4485,7 +4509,7 @@ body.dark .dl-pop-action-btn:hover svg {
   border: none;
   background: transparent;
   color: var(--muted);
-  border-radius: 4px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4524,7 +4548,7 @@ body.dark #devtools-view { background: #202124; }
 .password-save-actions { display: flex; gap: 8px; flex-shrink: 0; }
 .password-save-bar .btn-sm {
   padding: 6px 14px;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 12px;
   border: 1px solid var(--border);
   background: var(--omni-bg);
@@ -4573,7 +4597,7 @@ body.dark .tab-audio-ind:hover { background: rgba(255,255,255,.12); }
 .mp-artwork {
   width: 48px;
   height: 48px;
-  border-radius: 8px;
+  border-radius: 12px;
   background: var(--omni-bg);
   background-size: cover;
   background-position: center;
@@ -4693,7 +4717,7 @@ body.dark .tab-audio-ind:hover { background: rgba(255,255,255,.12); }
 .tab-search.hidden { display: none; }
 .ts-box {
   width: min(560px, calc(100vw - 48px));
-  background: var(--toolbar); border-radius: 8px; overflow: hidden;
+  background: var(--toolbar); border-radius: 12px; overflow: hidden;
   border: 1px solid var(--border);
   box-shadow: 0 24px 60px -18px rgba(0, 0, 0, .55);
   animation: ts-pop .14s ease both;
@@ -4712,11 +4736,11 @@ body.dark .tab-audio-ind:hover { background: rgba(255,255,255,.12); }
 .ts-list { max-height: 348px; overflow-y: auto; padding: 6px; }
 .ts-item {
   display: flex; align-items: center; gap: 11px;
-  padding: 9px 11px; border-radius: 5px; cursor: default;
+  padding: 9px 11px; border-radius: 10px; cursor: default;
 }
 .ts-item.sel { background: var(--accent-soft); }
 .ts-fav {
-  width: 18px; height: 18px; flex-shrink: 0; border-radius: 4px;
+  width: 18px; height: 18px; flex-shrink: 0; border-radius: 8px;
   background-size: cover; background-position: center;
   background-color: var(--hover);
 }
@@ -4732,7 +4756,7 @@ body.dark .tab-audio-ind:hover { background: rgba(255,255,255,.12); }
 .ts-badge {
   font-size: 10px; font-weight: 600; flex-shrink: 0;
   color: var(--accent); background: var(--accent-soft);
-  border-radius: 4px; padding: 2px 6px;
+  border-radius: 8px; padding: 2px 6px;
 }
 .ts-empty { padding: 26px; text-align: center; color: var(--muted); font-size: 13px; }
 
@@ -4769,7 +4793,7 @@ body.dark #split-divider::before { background: #3c4043; }
   letter-spacing: .5px;
   text-transform: uppercase;
   padding: 2px 6px;
-  border-radius: 5px;
+  border-radius: 10px;
   background: var(--accent);
   color: var(--on-accent);
   margin-left: auto;
@@ -4877,7 +4901,7 @@ body.vtabs-collapsed .vtabs-header { padding: 0; justify-content: center; }
   gap: 8px;
   padding: 0 8px 0 10px;
   height: 34px;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: default;
   font-size: 13px;
   color: var(--text);
@@ -4935,7 +4959,7 @@ body.dark .vtab.active {
 .vtab-close {
   width: 16px; height: 16px;
   border: none; background: transparent;
-  border-radius: 4px;
+  border-radius: 8px;
   color: var(--muted);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
@@ -4965,7 +4989,7 @@ body.dark .vtab.active {
   cursor: default;
   width: calc(100% - 8px);
   margin: 0 4px;
-  border-radius: 4px;
+  border-radius: 8px;
   opacity: .65;
   transition: background .12s, opacity .12s, color .12s;
 }
@@ -5201,7 +5225,7 @@ body.sidebar-centered .sidebar-rail {
 .ai-resize:hover, .ai-resize.dragging { background: var(--accent-soft); }
 
 /* Logo avatar + streaming caret */
-.ai-av-img { width: 100%; height: 100%; object-fit: contain; border-radius: 6px; }
+.ai-av-img { width: 100%; height: 100%; object-fit: contain; border-radius: 10px; }
 .ai-caret {
   display: inline-block; width: 6px; height: 13px; margin-left: 1px;
   background: var(--accent); border-radius: 1px; vertical-align: text-bottom;
@@ -5220,7 +5244,7 @@ body.sidebar-centered .sidebar-rail {
   border-bottom: 1px solid var(--border);
 }
 .ai-hdr-logo {
-  width: 22px; height: 22px; object-fit: contain; border-radius: 6px; flex-shrink: 0;
+  width: 22px; height: 22px; object-fit: contain; border-radius: 10px; flex-shrink: 0;
 }
 .ai-panel-title {
   font-size: 14px;
@@ -5231,7 +5255,7 @@ body.sidebar-centered .sidebar-rail {
 .ai-hdr-btn {
   width: 26px; height: 26px;
   border: none; background: transparent;
-  border-radius: 6px;
+  border-radius: 10px;
   color: var(--muted);
   display: flex; align-items: center; justify-content: center;
   cursor: default;
@@ -5260,7 +5284,7 @@ body.sidebar-centered .sidebar-rail {
 body.dark .ai-pill-ok .ai-dot { background: #81c995; }
 .ai-pill b { color: var(--text); font-weight: 600; }
 .ai-pill-model {
-  padding: 1px 6px; border-radius: 5px; font-size: 10px; flex-shrink: 0;
+  padding: 1px 6px; border-radius: 10px; font-size: 10px; flex-shrink: 0;
   background: var(--accent-soft); color: var(--accent); font-weight: 600;
 }
 #ai-status-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 6px; min-width: 0; }
@@ -5284,7 +5308,7 @@ body.dark .ai-pill-ok .ai-dot { background: #81c995; }
 .ai-msg { display: flex; gap: 9px; max-width: 100%; }
 .ai-msg.ai-user { flex-direction: row-reverse; }
 .ai-av {
-  width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0;
+  width: 26px; height: 26px; border-radius: 12px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
   font-size: 10px; font-weight: 700; overflow: hidden;
 }
@@ -5387,14 +5411,14 @@ body.dark .ai-pill-ok .ai-dot { background: #81c995; }
 .ai-warn {
   display: flex; gap: 7px; align-items: flex-start;
   background: #fef7e0; border: 1px solid #fce8b3; color: #5f4400;
-  border-radius: 8px; padding: 8px 10px;
+  border-radius: 12px; padding: 8px 10px;
   font-size: 11px; line-height: 1.5; margin-bottom: 12px;
 }
 body.dark .ai-warn { background: rgba(252,213,99,.10); border-color: rgba(252,213,99,.28); color: #fdd663; }
 .ai-field { margin-bottom: 10px; }
 .ai-field label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 4px; color: var(--text); }
 .ai-field select, .ai-field input {
-  width: 100%; height: 34px; border-radius: 8px;
+  width: 100%; height: 34px; border-radius: 12px;
   border: 1px solid var(--border); background: var(--omni-bg); color: var(--text);
   padding: 0 10px; font-size: 12px; outline: none; user-select: text;
   font-family: inherit;
@@ -5461,11 +5485,11 @@ body.dark .ai-field select { color-scheme: dark; }
 .ai-bubble .ai-ul { margin: 4px 0; padding-left: 18px; }
 .ai-bubble .ai-ul li { margin: 2px 0; }
 .ai-bubble .ai-ic {
-  background: var(--strip); border: 1px solid var(--border); border-radius: 4px;
+  background: var(--strip); border: 1px solid var(--border); border-radius: 8px;
   padding: 1px 4px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11px;
 }
 .ai-bubble .ai-code {
-  background: var(--strip); border: 1px solid var(--border); border-radius: 8px;
+  background: var(--strip); border: 1px solid var(--border); border-radius: 12px;
   padding: 8px 10px; margin: 6px 0; overflow-x: auto;
   font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11px; line-height: 1.5;
 }
@@ -5539,11 +5563,11 @@ body.dark .updating-overlay { background: #171614; }
   background: var(--accent);
   color: #10160f;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 12px 20px;
   font-size: 14px;
   font-weight: 600;
-  font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  font-family: var(--font);
   cursor: pointer;
   transition: filter .14s;
 }
@@ -5555,7 +5579,7 @@ body.dark .updating-overlay { background: #171614; }
   height: 6px;
   background: var(--omni-bg);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 8px;
   overflow: hidden;
 }
 .updating-prog-bar {
@@ -5638,7 +5662,7 @@ body.dark .cmdp-backdrop { background: rgba(0,0,0,.6); }
   font-family: inherit;
   padding: 2px 6px;
   border: 1px solid var(--border);
-  border-radius: 5px;
+  border-radius: 10px;
   color: var(--muted);
   background: var(--omni-bg);
   flex-shrink: 0;
@@ -5717,7 +5741,7 @@ body.dark .cmdp-backdrop { background: rgba(0,0,0,.6); }
   font-size: 10px;
   padding: 2px 6px;
   border: 1px solid var(--border);
-  border-radius: 5px;
+  border-radius: 10px;
   color: var(--muted);
   background: var(--omni-bg);
   flex-shrink: 0;
@@ -5757,7 +5781,7 @@ body.focus-mode #bookmarks-bar { display: none !important; }
   border: none;
   cursor: pointer;
   padding: 2px 6px;
-  border-radius: 6px;
+  border-radius: 10px;
   transition: background .1s, color .1s;
   white-space: nowrap;
   flex-shrink: 0;
@@ -5895,7 +5919,7 @@ body.low-end-device #toolbar {
 .search-popup-suggestions::-webkit-scrollbar { width: 10px; }
 .search-popup-suggestions::-webkit-scrollbar-thumb {
   background: var(--border);
-  border-radius: 5px;
+  border-radius: 10px;
   border: 3px solid transparent;
   background-clip: padding-box;
 }
@@ -5917,7 +5941,7 @@ body.low-end-device #toolbar {
 }
 .sp-sug-icon-wrap img {
   width: 18px; height: 18px;
-  border-radius: 4px;
+  border-radius: 8px;
   object-fit: contain;
 }
 .sp-sug-body { flex: 1; min-width: 0; }
@@ -6182,7 +6206,7 @@ body.ui-round .tab { border-radius: 14px 14px 6px 6px !important; }
    change, which is why buttons/icons never updated. Settings.html's own
    accent swatches already default to this same pine value. */
 :root {
-  --accent: #57a97e;
+  --accent: #8b7cf7;
   --accent-hover: #6bbb90;
   --accent-soft: rgba(87, 169, 126, .15);
 }
@@ -6241,7 +6265,7 @@ body.privoo-one #tabs-scroll { align-items: center; padding-left: 6px; }
 body.privoo-one .tab {
   align-self: center;
   height: 32px;
-  border-radius: 4px;
+  border-radius: 8px;
   margin: 0 2px;
   padding: 0 9px 0 12px;
   background: transparent;
@@ -6276,7 +6300,7 @@ body.privoo-one .tab:hover .tab-close,
 body.privoo-one .tab.active .tab-close { opacity: 1; }
 /* Flat rounded new-tab "+" (circle option still respected). */
 body.privoo-one #new-tab.strip-btn {
-  width: 28px; height: 28px; border-radius: 4px; align-self: center;
+  width: 28px; height: 28px; border-radius: 8px; align-self: center;
   /* Full shorthand, NOT just margin-left: .strip-btn ships `margin: 0 6px 3px 6px`
      for its default `align-self: flex-end`, where the 3px bottom margin lifts the
      button off the baseline. Here the button is centre-aligned, so that same bottom
@@ -6290,7 +6314,7 @@ body.privoo-one.newtab-circle #new-tab.strip-btn { border-radius: 50%; width: 28
 
 /* Toolbar buttons — squared. */
 body.privoo-one .tb-btn.round,
-body.privoo-one .tb-btn { border-radius: 5px; }
+body.privoo-one .tb-btn { border-radius: 10px; }
 
 /* Menus / popovers / suggestions — flat panels, hairline border, small radius,
    inset rounded items that light up pine on hover. */
@@ -6299,7 +6323,7 @@ body.privoo-one .toolbar-popover,
 body.privoo-one .popover,
 body.privoo-one .context-menu,
 body.privoo-one #suggestions {
-  border-radius: 8px;
+  border-radius: 12px;
   border: 1px solid var(--border);
   box-shadow: 0 16px 40px -14px rgba(0,0,0,.55);
   overflow: hidden;
@@ -6307,7 +6331,7 @@ body.privoo-one #suggestions {
 body.privoo-one .context-menu { padding: 5px; }
 body.privoo-one .menu-item,
 body.privoo-one .ctx-item,
-body.privoo-one .sug-item { border-radius: 4px; margin: 0; }
+body.privoo-one .sug-item { border-radius: 8px; margin: 0; }
 body.privoo-one .ctx-item { padding: 7px 11px; }
 body.privoo-one .ctx-item:hover:not(.disabled) { background: var(--accent-soft); color: var(--text); }
 body.privoo-one .ctx-sep { margin: 5px 6px; background: var(--border); }
@@ -6323,25 +6347,25 @@ body.privoo-one .customize-panel {
 body.privoo-one .cp-header { border-bottom: 1px solid var(--border); background: var(--strip); }
 body.privoo-one .cp-section { border-bottom: 1px solid var(--border); }
 body.privoo-one .cp-section-title { letter-spacing: .04em; }
-body.privoo-one .cp-row .slider { border-radius: 6px; }
-body.privoo-one .cp-row .slider::before { border-radius: 4px; }
+body.privoo-one .cp-row .slider { border-radius: 10px; }
+body.privoo-one .cp-row .slider::before { border-radius: 8px; }
 body.privoo-one .cp-row select,
-body.privoo-one .cp-row input[type="text"] { border-radius: 5px; }
+body.privoo-one .cp-row input[type="text"] { border-radius: 10px; }
 /* Any mini-buttons/chips in the panel go squared. */
-body.privoo-one .customize-panel button { border-radius: 5px; }
+body.privoo-one .customize-panel button { border-radius: 10px; }
 
 /* Theme cards — real warm swatches instead of Chrome grey/white. */
-body.privoo-one .cp-theme-btn { border-radius: 6px; }
-body.privoo-one .cp-theme-swatch { border-radius: 4px; border-color: var(--border); }
+body.privoo-one .cp-theme-btn { border-radius: 10px; }
+body.privoo-one .cp-theme-swatch { border-radius: 8px; border-color: var(--border); }
 body.privoo-one .cp-theme-light { background: linear-gradient(180deg, #e8e5dc 0 14px, #f4f2ec 14px); }
 body.privoo-one .cp-theme-dark  { background: linear-gradient(180deg, #1a1917 0 14px, #232220 14px); }
 
 /* Accent swatches — squared, matching the Settings page swatches. */
-body.privoo-one .cp-accent-swatch { border-radius: 6px; }
-body.privoo-one .cp-accent-swatch.active::after { border-radius: 4px; }
+body.privoo-one .cp-accent-swatch { border-radius: 10px; }
+body.privoo-one .cp-accent-swatch.active::after { border-radius: 8px; }
 
 /* Wallpaper action buttons + link rows — squared. */
-body.privoo-one .cp-card-btn { border-radius: 5px; }
+body.privoo-one .cp-card-btn { border-radius: 10px; }
 
 /* ── "Join our community" / "Thank you" popups — squared, warm, pine CTA.
    (Real classes are .ty-popup/.ty-card/.ty-btn* — a previous pass targeted
@@ -6349,30 +6373,30 @@ body.privoo-one .cp-card-btn { border-radius: 5px; }
 body.privoo-one .ty-popup { background: rgba(14,13,11,.62); }
 body.privoo-one .ty-card {
   background: var(--toolbar); border: 1px solid var(--border);
-  border-radius: 8px; box-shadow: 0 30px 74px -22px rgba(0,0,0,.65);
+  border-radius: 12px; box-shadow: 0 30px 74px -22px rgba(0,0,0,.65);
 }
-body.privoo-one .ty-logo { border-radius: 6px; }
+body.privoo-one .ty-logo { border-radius: 10px; }
 body.privoo-one .ty-btn,
-body.privoo-one .ty-btn-secondary { border-radius: 6px; }
+body.privoo-one .ty-btn-secondary { border-radius: 10px; }
 body.privoo-one .ty-btn-secondary { background: var(--hover); color: var(--text); }
 body.privoo-one .ty-btn { background: var(--accent); color: #10160f; }
 
 /* ── Hover flyout panels (sidebar shortcut / bookmark preview) — squared ── */
 body.privoo-one .sidebar-flyout {
-  border-radius: 6px; border: 1px solid var(--border); background: var(--toolbar);
+  border-radius: 10px; border: 1px solid var(--border); background: var(--toolbar);
   box-shadow: 0 16px 40px -14px rgba(0,0,0,.55);
 }
-body.privoo-one .sf-link, body.privoo-one .sf-row { border-radius: 5px; }
+body.privoo-one .sf-link, body.privoo-one .sf-row { border-radius: 10px; }
 body.privoo-one .sf-link:hover, body.privoo-one .sf-row:hover { background: var(--accent-soft); }
 
 /* ── Add-shortcut popup — squared warm card, pine CTA ── */
 body.privoo-one .sb-modal { background: rgba(14,13,11,.6); }
 body.privoo-one .sb-modal-card {
-  border-radius: 8px; box-shadow: 0 30px 74px -22px rgba(0,0,0,.65);
+  border-radius: 12px; box-shadow: 0 30px 74px -22px rgba(0,0,0,.65);
   animation: sw-zoom-in .28s cubic-bezier(.2,1.3,.4,1) both;
 }
-body.privoo-one .sb-field input { border-radius: 5px; }
-body.privoo-one .sb-modal-actions button { border-radius: 5px; }
+body.privoo-one .sb-field input { border-radius: 10px; }
+body.privoo-one .sb-modal-actions button { border-radius: 10px; }
 body.privoo-one .sb-modal-actions button.primary { color: #10160f; }
 
 /* ── Bookmark chips stay ROUNDED — the hover highlight reads soft, not boxy ── */
@@ -6382,29 +6406,29 @@ body.privoo-one .bookmark-chip:hover { background: var(--hover); }
 /* ── Toolbar popovers (media player, downloads, shield, menu) — flat, squared,
    warm, with a clean shadow and pine-hover rows ── */
 body.privoo-one .toolbar-popover {
-  border-radius: 8px; border: 1px solid var(--border);
+  border-radius: 12px; border: 1px solid var(--border);
   box-shadow: 0 18px 44px -16px rgba(0,0,0,.6);
 }
-body.privoo-one #menu { border-radius: 8px; box-shadow: 0 18px 44px -16px rgba(0,0,0,.6); }
+body.privoo-one #menu { border-radius: 12px; box-shadow: 0 18px 44px -16px rgba(0,0,0,.6); }
 /* Buttons inside popups. */
 body.privoo-one .toolbar-popover button,
 body.privoo-one .popover button,
 body.privoo-one #menu button,
 body.privoo-one .ty-card button,
 body.privoo-one .sb-modal button,
-body.privoo-one .customize-panel button { border-radius: 5px; }
+body.privoo-one .customize-panel button { border-radius: 10px; }
 /* Squared inputs, selects and status chips inside the VPN-style popovers
    (video downloader + location) so nothing reads as rounded. */
 body.privoo-one .vpn-input,
 body.privoo-one .vpn-select,
 body.privoo-one .vpn-status-line,
-body.privoo-one .vpn-btn { border-radius: 5px; }
+body.privoo-one .vpn-btn { border-radius: 10px; }
 
 /* ── Address bar — flat inset field, mono URL, pine focus border ── */
 body.privoo-one #omnibox-outer { flex: 1; margin: 0 6px; }
 body.privoo-one #omnibox-wrap {
   height: 33px;
-  border-radius: 5px;
+  border-radius: 10px;
   background: var(--omni-bg);
   border: 1px solid var(--border);
   padding: 0 8px 0 11px;
@@ -6433,7 +6457,7 @@ body.privoo-one #page-shield { color: var(--accent); }
   width: 32px; height: 28px;
   align-self: center;
   display: flex; align-items: center; justify-content: center;
-  border-radius: 5px;
+  border-radius: 10px;
   color: var(--muted);
 }
 #tab-search-btn:hover { background: var(--hover); color: var(--text); }
@@ -6449,17 +6473,17 @@ body.privoo-one .app-sidebar {
 body.privoo-one .app-sidebar::before { content: none !important; }   /* remove the pine square */
 body.privoo-one .sidebar-rail { gap: 3px; }
 body.privoo-one .sidebar-rail-btn {
-  width: 40px; height: 40px; border-radius: 6px; color: var(--muted);
+  width: 40px; height: 40px; border-radius: 10px; color: var(--muted);
 }
 body.privoo-one .sidebar-rail-btn:hover { background: var(--hover); color: var(--text); transform: none; }
 body.privoo-one .sidebar-rail-btn.active::before {
   content: ""; position: absolute; left: -8px; top: 9px; bottom: 9px;
   width: 2.5px; border-radius: 0 2px 2px 0; background: var(--accent);
 }
-body.privoo-one .sidebar-rail-btn img { border-radius: 5px; }
-body.privoo-one .sidebar-rail-btn .sb-letter { border-radius: 6px; }
+body.privoo-one .sidebar-rail-btn img { border-radius: 10px; }
+body.privoo-one .sidebar-rail-btn .sb-letter { border-radius: 10px; }
 /* Add-shortcut "+" — squared, dashed-quiet until hover. */
-body.privoo-one #sidebar-add { border-radius: 6px; color: var(--muted); }
+body.privoo-one #sidebar-add { border-radius: 10px; color: var(--muted); }
 body.privoo-one #sidebar-add:hover { background: var(--hover); color: var(--accent); }
 /* Flyout panel offset matches the wider rail. */
 body.privoo-one #sidebar-panel { left: 54px; }
@@ -6485,9 +6509,9 @@ body.privoo-one .sw-card {
   box-shadow: 0 30px 74px -22px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.04);
 }
 body.privoo-one.dark .sw-card { background: #201f1c; border-color: var(--border); }
-body.privoo-one .sw-btn { border-radius: 6px; }
+body.privoo-one .sw-btn { border-radius: 10px; }
 body.privoo-one .sw-btn.primary { background: var(--accent); box-shadow: 0 4px 14px rgba(0,0,0,.25); }
-body.privoo-one .sw-terms-box { border-radius: 6px; border-color: var(--border); }
+body.privoo-one .sw-terms-box { border-radius: 10px; border-color: var(--border); }
 body.privoo-one .setup-overlay { background: rgba(16,15,13,.62); }
 body.privoo-one .setup-overlay::before { opacity: .5; }
 
@@ -6530,7 +6554,7 @@ body.privoo-one .setup-overlay::before { opacity: .5; }
 /* Squared inputs / selects everywhere in the chrome. */
 body.privoo-one input[type="text"],
 body.privoo-one input[type="url"],
-body.privoo-one select { border-radius: 5px; }
+body.privoo-one select { border-radius: 10px; }
 
 /* ── Incognito palette — placed last (and 2-class specific) so it wins over the
    always-on Privoo One dark palette. A deeper, cooler-warm charcoal marks the
@@ -6677,26 +6701,26 @@ body.privoo-one .sw-card {
 /* The "I agree" checkbox becomes a squared green toggle — same as Settings. */
 .sw-terms-agree input[type="checkbox"] {
   -webkit-appearance: none; appearance: none;
-  width: 40px; height: 22px; border-radius: 6px; flex-shrink: 0;
+  width: 40px; height: 22px; border-radius: 10px; flex-shrink: 0;
   background: #3a3833; border: 1px solid var(--border); position: relative; cursor: pointer; margin: 0;
   transition: background .18s, border-color .18s;
 }
 body:not(.dark) .sw-terms-agree input[type="checkbox"] { background: #cfccbf; }
 .sw-terms-agree input[type="checkbox"]::after {
   content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px;
-  border-radius: 4px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .18s, background .18s;
+  border-radius: 8px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .18s, background .18s;
 }
 .sw-terms-agree input[type="checkbox"]:checked { background: var(--accent); border-color: var(--accent); }
 .sw-terms-agree input[type="checkbox"]:checked::after { transform: translateX(18px); background: #10160f; }
 
 /* ── Terms step fact tiles — squared, warm, pine icon chip ── */
-.sw-fact-tile { background: var(--omni-bg); border-color: var(--border); border-radius: 6px; }
-.sw-fact-ico { border-radius: 5px; }
+.sw-fact-tile { background: var(--omni-bg); border-color: var(--border); border-radius: 10px; }
+.sw-fact-ico { border-radius: 10px; }
 
 /* ── Theme / performance step — a clean segmented pill toggle. ── */
 .sw-theme-toggle {
   position: relative; display: flex; width: 100%; max-width: 340px; height: 50px; margin: 8px auto 28px;
-  border-radius: 8px; background: var(--omni-bg); border: 1px solid var(--border);
+  border-radius: 12px; background: var(--omni-bg); border: 1px solid var(--border);
   padding: 4px;
 }
 .sw-theme-toggle .sw-theme-card,
@@ -6711,7 +6735,7 @@ body:not(.dark) .sw-terms-agree input[type="checkbox"] { background: #cfccbf; }
 .sw-theme-toggle .sw-choice-card:hover { transform: none !important; }
 .sw-theme-toggle-thumb {
   position: absolute; top: 4px; left: 4px; width: calc(50% - 4px); height: calc(100% - 8px);
-  border-radius: 5px; background: var(--accent); transition: transform .32s cubic-bezier(.2,1,.3,1);
+  border-radius: 10px; background: var(--accent); transition: transform .32s cubic-bezier(.2,1,.3,1);
 }
 .sw-theme-toggle-thumb.is-dark { transform: translateX(100%); }
 

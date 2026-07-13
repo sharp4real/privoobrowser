@@ -15,9 +15,9 @@
     --faint: rgba(236,233,224,0.34);
     --line: rgba(255,255,255,0.09);
     /* Overridden at runtime with the user's accent colour (pine default). */
-    --accent: #57a97e;
+    --accent: #8b7cf7;
     --accent-hover: #6bbb90;
-    --accent-soft: rgba(87,169,126,0.16);
+    --accent-soft: rgba(139,124,247,0.16);
     --danger: #e0556b;
   }
   * { box-sizing: border-box; }
@@ -48,7 +48,7 @@
   }
   #close-btn {
     -webkit-app-region: no-drag;
-    width: 30px; height: 30px; border-radius: 8px; border: none;
+    width: 30px; height: 30px; border-radius: 12px; border: none;
     background: transparent; color: var(--muted); cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: background .12s, color .12s;
@@ -62,7 +62,7 @@
     overflow: hidden;
   }
   .logo {
-    width: 46px; height: 46px; border-radius: 8px; object-fit: contain;
+    width: 46px; height: 46px; border-radius: 12px; object-fit: contain;
     margin-bottom: 14px;
   }
   h1 {
@@ -81,7 +81,7 @@
     max-height: 320px;
   }
   .grid::-webkit-scrollbar { width: 8px; }
-  .grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
+  .grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 12px; }
 
   .card {
     position: relative;
@@ -127,7 +127,7 @@
   }
   .card-edit {
     position: absolute; top: 10px; right: 10px;
-    width: 28px; height: 28px; border-radius: 8px; border: none;
+    width: 28px; height: 28px; border-radius: 12px; border: none;
     background: rgba(0,0,0,0.32); color: rgba(255,255,255,0.7); cursor: pointer;
     display: none; align-items: center; justify-content: center;
     transition: background .12s;
@@ -155,7 +155,7 @@
   .guest-btn {
     -webkit-app-region: no-drag;
     display: inline-flex; align-items: center; gap: 8px;
-    padding: 9px 18px; border-radius: 8px;
+    padding: 9px 18px; border-radius: 12px;
     background: rgba(255,255,255,0.06);
     border: 1px solid rgba(255,255,255,0.12);
     color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer;
@@ -193,7 +193,7 @@
     width: 360px;
     background: linear-gradient(180deg, var(--bg2), var(--bg));
     border: 1px solid var(--line);
-    border-radius: 8px;
+    border-radius: 12px;
     padding: 30px 28px 24px;
     box-shadow: 0 30px 70px rgba(0,0,0,0.65);
     animation: modal-in .18s cubic-bezier(.2,.8,.25,1.05);
@@ -227,7 +227,7 @@
     text-transform: uppercase; letter-spacing: .06em; margin-bottom: 7px;
   }
   .field-input {
-    width: 100%; padding: 12px 14px; border-radius: 6px;
+    width: 100%; padding: 12px 14px; border-radius: 10px;
     border: 1.5px solid rgba(255,255,255,0.12);
     background: rgba(255,255,255,0.05); color: var(--text);
     font-size: 14px; outline: none; transition: border-color .14s, background .14s;
@@ -236,7 +236,7 @@
   .field-input:focus { border-color: var(--accent); background: rgba(255,255,255,0.07); }
   .modal-btns { display: flex; gap: 10px; margin-top: 26px; }
   .btn {
-    flex: 1; padding: 12px; border-radius: 6px; font-size: 13.5px; cursor: pointer;
+    flex: 1; padding: 12px; border-radius: 10px; font-size: 13.5px; cursor: pointer;
     border: 1.5px solid transparent; font-weight: 600; transition: background .12s, border-color .12s, transform .1s;
   }
   .btn:active { transform: scale(.98); }
@@ -255,7 +255,7 @@
   /* Photo cropper */
   .crop-stage {
     width: 250px; height: 250px; margin: 4px auto 18px;
-    position: relative; overflow: hidden; border-radius: 8px;
+    position: relative; overflow: hidden; border-radius: 12px;
     background: #000; cursor: grab; touch-action: none;
   }
   .crop-stage:active { cursor: grabbing; }

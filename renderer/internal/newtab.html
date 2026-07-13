@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <title>Speed Dial</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%2357a97e' d='M4 5h7v7H4zM13 5h7v7h-7zM4 13h7v6H4zM13 13h7v6h-7z'/%3E%3C/svg%3E"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%238b7cf7' d='M4 5h7v7H4zM13 5h7v7h-7zM4 13h7v6H4zM13 13h7v6h-7z'/%3E%3C/svg%3E"/>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Inter","Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
 html,body{height:100%;overflow:hidden}
 
 /* Hidden until applyNtpLook() has themed the page — kills any flash of an
@@ -164,7 +164,7 @@ body.ntp-wp .ntp-brand-logo{filter:drop-shadow(0 2px 14px rgba(0,0,0,.5));}
 @media(prefers-reduced-motion:reduce){.ntp-brand-logo{animation:none !important}}
 /* "privoo." wordmark — lowercase, heavy, tight tracking; pine full-stop. */
 .ntp-brand{
-  font-family:ui-sans-serif,"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  font-family:"Inter","Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
   font-weight:680;
   font-size:clamp(38px,5vw,56px);
   letter-spacing:-.045em;
@@ -177,7 +177,7 @@ body.ntp-wp .ntp-brand-logo{filter:drop-shadow(0 2px 14px rgba(0,0,0,.5));}
   animation:pv-word-in .72s cubic-bezier(.2,.85,.25,1) both;
 }
 .ntp-brand i{
-  font-style:normal;color:var(--accent,#57a97e);display:inline-block;
+  font-style:normal;color:var(--accent,#8b7cf7);display:inline-block;
   /* Pine full-stop drops in with a small bounce, then breathes softly. */
   animation:pv-dot-in .5s cubic-bezier(.3,1.4,.5,1) .48s both, pv-dot-pulse 3s ease-in-out 1.1s infinite;
 }
@@ -201,12 +201,12 @@ body.ntp-wm-pop .ntp-brand{animation:wm-pop 3.2s cubic-bezier(.3,1.5,.5,1) infin
 body.ntp-wm-fizzle .ntp-brand{animation:wm-fizzle 3.4s steps(1,end) infinite;}
 @keyframes wm-fizzle{0%,68%{opacity:1}70%{opacity:.3}71%{opacity:1}73%{opacity:.5}74%{opacity:1}84%{opacity:1}85%{opacity:.25}86%{opacity:1}100%{opacity:1}}
 body.ntp-wm-glow .ntp-brand{animation:wm-glow 2.6s ease-in-out infinite;}
-@keyframes wm-glow{0%,100%{text-shadow:0 0 0 transparent}50%{text-shadow:0 0 24px var(--accent,#57a97e)}}
+@keyframes wm-glow{0%,100%{text-shadow:0 0 0 transparent}50%{text-shadow:0 0 24px var(--accent,#8b7cf7)}}
 body.ntp-wm-bounce .ntp-brand{animation:wm-bounce 2.4s cubic-bezier(.3,.7,.4,1) infinite;}
 @keyframes wm-bounce{0%,100%{transform:translateY(0)}14%{transform:translateY(-11px)}28%{transform:translateY(0)}40%{transform:translateY(-5px)}52%{transform:translateY(0)}}
 body.ntp-wm-shimmer .ntp-brand{
   color:#20201b;
-  background:linear-gradient(100deg,currentColor 0 40%,var(--accent,#57a97e) 50%,currentColor 60% 100%);
+  background:linear-gradient(100deg,currentColor 0 40%,var(--accent,#8b7cf7) 50%,currentColor 60% 100%);
   background-size:230% 100%;
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
   animation:wm-shimmer 3.4s linear infinite;
@@ -243,9 +243,10 @@ body.ntp-wp .ntp-ghost-name{
   /* Light grey resting pill (Chrome-NTP style). White-on-white made the bar
      read as "transparent" against the page background; this gives the search
      bar a distinct shape even without backdrop blur. */
-  background:#f1f3f4;border:1.5px solid #dfe1e5;border-radius:8px;
-  padding:0 16px;height:54px;
-  box-shadow:0 1px 6px rgba(32,33,36,.08);
+  background:rgba(255,255,255,.92);border:1px solid rgba(38,36,58,.08);border-radius:28px;
+  padding:0 20px;height:56px;
+  backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);
+  box-shadow:0 8px 30px -8px rgba(38,36,58,.16), 0 2px 8px rgba(38,36,58,.06);
   position:relative;
   -webkit-app-region:no-drag;
   /* Brave-style focused search. Important: NO scale() transform — that
@@ -411,7 +412,7 @@ body.ntp-vibe.ntp-dark #search-suggestions{
 #search-form svg{fill:#9aa0a6;flex-shrink:0;}
 body.ntp-dark:not(.ntp-wp) #search-form svg{fill:#9aa0a6;}
 /* Search-engine favicon shown in place of the magnifying glass. */
-#search-icon-img{width:20px;height:20px;border-radius:5px;object-fit:contain;flex-shrink:0;display:none;}
+#search-icon-img{width:20px;height:20px;border-radius:10px;object-fit:contain;flex-shrink:0;display:none;}
 #search-form.has-engine-icon #search-icon{display:none;}
 #search-form.has-engine-icon #search-icon-img{display:block;}
 
@@ -419,7 +420,7 @@ body.ntp-dark:not(.ntp-wp) #search-form svg{fill:#9aa0a6;}
    A calm, bordered field — no glass, no gradient. Mono placeholder + input.
    !important on the fill/border so it wins over the per-theme search rules. */
 #search-form{
-  height:50px !important;border-radius:6px !important;
+  height:50px !important;border-radius:10px !important;
   background:#f2efe8 !important;
   border:1px solid #d7d3c7 !important;
   backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
@@ -430,8 +431,8 @@ body.ntp-dark:not(.ntp-wp) #search-form{ background:#232220 !important; border-c
 body.ntp-wp #search-form{ background:rgba(20,19,17,.55) !important; border-color:rgba(255,255,255,.16) !important;
   backdrop-filter:blur(18px) !important;-webkit-backdrop-filter:blur(18px) !important; }
 #search-form:hover{ border-color:#a8a498 !important; }
-#search-form:focus-within{ border-color:var(--accent,#57a97e) !important; }
-body.ntp-wp #search-form:focus-within{ border-color:var(--accent,#57a97e) !important; }
+#search-form:focus-within{ border-color:var(--accent,#8b7cf7) !important; }
+body.ntp-wp #search-form:focus-within{ border-color:var(--accent,#8b7cf7) !important; }
 #search-form svg{ fill:#928f84; }
 /* Leading search icon + trailing clear button (muted, never accent). */
 #search-icon{ flex-shrink:0; color:#8a887e; }
@@ -439,7 +440,7 @@ body.ntp-dark:not(.ntp-wp) #search-icon{ color:#928f84; }
 body.ntp-wp #search-icon{ color:rgba(255,255,255,.8); }
 #search-clear{
   flex-shrink:0;border:none;background:transparent;cursor:pointer;padding:4px;
-  display:flex;align-items:center;justify-content:center;border-radius:5px;
+  display:flex;align-items:center;justify-content:center;border-radius:10px;
   color:#8a887e;
 }
 #search-clear:hover{ background:rgba(0,0,0,.06); color:#20201b; }
@@ -460,8 +461,8 @@ body.ntp-wp #q{color:#fff;}
 #search-form{transition:transform .26s cubic-bezier(.2,.85,.25,1),border-color .18s ease,box-shadow .26s ease !important;}
 body.ntp-focused-search-on #ntp-root.search-focused #search-form{
   transform:translateY(-5px) !important;
-  border-color:var(--accent,#57a97e) !important;
-  box-shadow:0 0 0 3px color-mix(in srgb, var(--accent,#57a97e) 22%, transparent),
+  border-color:var(--accent,#8b7cf7) !important;
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--accent,#8b7cf7) 22%, transparent),
              0 24px 54px -20px rgba(0,0,0,.55) !important;
 }
 #ntp-logo-wrap,#ntp-news-link,#ntp-clock{
@@ -481,7 +482,7 @@ body.ntp-focused-search-on #ntp-root.search-focused #ntp-clock{
 
 #search-suggestions{
   position:absolute;top:calc(100% + 8px);left:0;right:0;
-  background:#f2efe8;border:1px solid #d7d3c7;border-radius:8px;
+  background:#f2efe8;border:1px solid #d7d3c7;border-radius:12px;
   box-shadow:0 16px 40px -12px rgba(0,0,0,.28), 0 3px 10px rgba(0,0,0,.08);
   overflow:hidden;z-index:100;color:#20201b;
   padding:5px;
@@ -502,20 +503,20 @@ body.ntp-dark:not(.ntp-wp) #search-suggestions{
 .ss-item{
   display:flex;align-items:center;gap:12px;
   padding:10px 12px;font-size:13.5px;cursor:default;
-  border-radius:5px;
+  border-radius:10px;
   line-height:1.3;position:relative;
   transition:background .1s ease;
 }
-.ss-item:hover,.ss-item.active{background:rgba(87,169,126,.12);}
+.ss-item:hover,.ss-item.active{background:rgba(139,124,247,.12);}
 body.ntp-dark:not(.ntp-wp) .ss-item:hover,
-body.ntp-dark:not(.ntp-wp) .ss-item.active{background:rgba(87,169,126,.16);}
+body.ntp-dark:not(.ntp-wp) .ss-item.active{background:rgba(139,124,247,.16);}
 /* Pine indicator on the keyboard-selected row. */
 .ss-item.active::before{
   content:"";position:absolute;left:0;top:7px;bottom:7px;width:2.5px;
-  border-radius:0 2px 2px 0;background:#57a97e;
+  border-radius:0 2px 2px 0;background:#8b7cf7;
 }
 .ss-icon{
-  width:22px;height:22px;flex-shrink:0;border-radius:5px;
+  width:22px;height:22px;flex-shrink:0;border-radius:10px;
   display:flex;align-items:center;justify-content:center;
   background:rgba(0,0,0,.05);color:#6a685e;
 }
@@ -533,7 +534,7 @@ body.ntp-dark:not(.ntp-wp) .ss-icon{background:rgba(255,255,255,.06);color:#928f
 
 #quick-links{
   display:flex;flex-wrap:wrap;justify-content:center;
-  gap:6px;margin-top:30px;max-width:640px;width:100%;
+  gap:16px;margin-top:38px;max-width:1020px;width:100%;
 }
 @keyframes ql-fade-in{
   from{opacity:0;transform:scale(.88);}
@@ -551,37 +552,50 @@ body.ntp-dark:not(.ntp-wp) .ss-icon{background:rgba(255,255,255,.06);color:#928f
 }
 /* Flat speed-dial tiles — hairline border, pine on hover. */
 .ql-item{
-  display:flex;flex-direction:column;align-items:center;gap:8px;
-  width:78px;padding:6px;border-radius:6px;
-  cursor:default;color:#6a685e;font-size:10.5px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  width:150px;height:112px;padding:12px;border-radius:18px;
+  cursor:default;color:#55526b;font-size:12px;font-weight:600;
   position:relative;
+  background:rgba(255,255,255,.88);
+  border:1px solid rgba(38,36,58,.06);
+  box-shadow:0 2px 10px rgba(38,36,58,.06);
+  transition:transform .22s cubic-bezier(.2,.8,.25,1), box-shadow .22s ease, background .18s ease;
 }
+.ql-item:hover{
+  transform:translateY(-4px);
+  background:#fff;
+  box-shadow:0 14px 34px -10px rgba(38,36,58,.22);
+}
+body.ntp-dark:not(.ntp-wp) .ql-item{background:rgba(40,38,54,.85);border-color:rgba(255,255,255,.07);}
+body.ntp-wp .ql-item{background:rgba(255,255,255,.82);}
+body.ntp-wp.ntp-dark .ql-item{background:rgba(35,34,48,.75);color:rgba(255,255,255,.85);}
 body.ntp-wp .ql-item{color:rgba(255,255,255,.85);}
 body.ntp-dark:not(.ntp-wp) .ql-item{color:#928f84;}
 .ql-ico{
-  width:52px;height:52px;border-radius:7px;
-  background:#f2efe8;
+  width:46px;height:46px;border-radius:12px;
+  background:transparent;
   display:flex;align-items:center;justify-content:center;
-  font-size:16px;font-weight:700;color:#6a685e;
+  font-size:18px;font-weight:700;color:#55526b;
   overflow:hidden;
-  border:1px solid #d7d3c7;
-  transition:border-color .14s,color .14s,background .14s;
+  border:none;
+  transition:color .14s,transform .22s cubic-bezier(.2,.8,.25,1);
 }
+.ql-item:hover .ql-ico{transform:scale(1.06);}
 body.ntp-wp .ql-ico{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.16);color:#fff;}
 body.ntp-dark:not(.ntp-wp) .ql-ico{background:#232220;border-color:#35332e;color:#928f84;}
-.ql-item:hover .ql-ico{border-color:var(--accent,#57a97e);color:var(--text,#20201b);}
+.ql-item:hover .ql-ico{border-color:var(--accent,#8b7cf7);color:var(--text,#20201b);}
 body.ntp-dark:not(.ntp-wp) .ql-item:hover .ql-ico{color:#ece9e0;}
 body.ntp-wp .ql-item:hover .ql-ico{color:#fff;}
 .ql-item:hover .ql-name{color:var(--text,#20201b);}
 body.ntp-dark:not(.ntp-wp) .ql-item:hover .ql-name{color:#ece9e0;}
-.ql-ico img{width:100%;height:100%;object-fit:cover;border-radius:7px;}
+.ql-ico img{width:100%;height:100%;object-fit:contain;border-radius:10px;}
 .ql-name{
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   width:100%;text-align:center;transition:color .14s;
 }
 .ql-remove{
   position:absolute;top:3px;right:9px;
-  width:18px;height:18px;border-radius:6px;
+  width:18px;height:18px;border-radius:10px;
   background:rgba(20,19,17,.7);display:none;
   align-items:center;justify-content:center;
   cursor:default;color:#fff;
@@ -592,14 +606,23 @@ body.ntp-dark:not(.ntp-wp) .ql-remove{background:rgba(210,208,200,.22);}
 body.ntp-dark:not(.ntp-wp) .ql-remove:hover{background:rgba(210,208,200,.4);}
 
 .ql-add{
-  display:flex;flex-direction:column;align-items:center;gap:8px;
-  width:78px;padding:6px;border-radius:10px;cursor:default;
-  color:#6a685e;font-size:10.5px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  width:150px;height:112px;padding:12px;border-radius:18px;cursor:default;
+  color:#6a628f;font-size:12px;font-weight:600;
+  background:rgba(139,124,247,.14);
+  border:1px solid rgba(139,124,247,.18);
+  transition:transform .22s cubic-bezier(.2,.8,.25,1), box-shadow .22s ease, background .18s ease;
 }
+.ql-add:hover{
+  transform:translateY(-4px);
+  background:rgba(139,124,247,.22);
+  box-shadow:0 14px 34px -10px rgba(139,124,247,.35);
+}
+body.ntp-dark:not(.ntp-wp) .ql-add{background:rgba(139,124,247,.16);}
 body.ntp-wp .ql-add{color:rgba(255,255,255,.85);}
 body.ntp-dark:not(.ntp-wp) .ql-add{color:#928f84;}
-.ql-add .ql-ico{color:var(--accent,#57a97e);border-style:dashed;background:transparent;}
-.ql-add:hover .ql-ico{border-color:var(--accent,#57a97e);color:var(--accent,#57a97e);}
+.ql-add .ql-ico{color:var(--accent,#8b7cf7);border-style:dashed;background:transparent;}
+.ql-add:hover .ql-ico{border-color:var(--accent,#8b7cf7);color:var(--accent,#8b7cf7);}
 body.ntp-wp .ql-add .ql-ico{background:transparent;}
 body.ntp-dark:not(.ntp-wp) .ql-add .ql-ico{background:transparent;}
 
@@ -670,7 +693,7 @@ body.transparent-ui.ntp-dark #custom-modal input[type="text"]{
 #ql-modal{width:340px;}
 #ql-modal h3,#custom-modal h3{font-size:16px;margin-bottom:16px;}
 #ql-modal input,#custom-modal input[type="text"]{
-  width:100%;border:1.5px solid #dfe1e5;border-radius:8px;
+  width:100%;border:1.5px solid #dfe1e5;border-radius:12px;
   padding:10px 12px;font-size:14px;outline:none;margin-bottom:10px;
   user-select:text;background:#fff;color:#1f1f1f;
 }
@@ -694,7 +717,7 @@ body.ntp-dark #custom-modal .mini-btn.primary:hover { background:#f1f3f4; }
 #custom-modal .row-label{font-size:12.5px;color:#5f6368;margin-bottom:8px;margin-top:4px;}
 #custom-modal .btn-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;}
 #custom-modal .mini-btn{
-  padding:7px 14px;border-radius:8px;font-size:13px;
+  padding:7px 14px;border-radius:12px;font-size:13px;
   border:1.5px solid #dadce0;color:#5f6368;cursor:default;background:#f8f9fa;
 }
 #custom-modal .mini-btn:hover{background:#f1f3f4;}
@@ -702,7 +725,7 @@ body.ntp-dark #custom-modal .mini-btn.primary:hover { background:#f1f3f4; }
 #custom-modal .mini-btn.primary:hover{background:#f1f3f4;}
 .modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;}
 .btn{
-  padding:8px 18px;border-radius:8px;font-size:13px;cursor:default;
+  padding:8px 18px;border-radius:12px;font-size:13px;cursor:default;
   border:1.5px solid transparent;
 }
 .btn-cancel{border-color:#dfe1e5;color:#5f6368;}
@@ -713,7 +736,7 @@ body.ntp-dark #custom-modal .mini-btn.primary:hover { background:#f1f3f4; }
 /* ── Add-shortcut modal — warm charcoal + pine, squared (overrides old grey) ── */
 #ql-modal,#custom-modal{
   background:#f4f2ec !important;color:#20201b;border:1px solid #d7d3c7 !important;
-  border-radius:8px !important;box-shadow:0 30px 74px -22px rgba(0,0,0,.4) !important;
+  border-radius:12px !important;box-shadow:0 30px 74px -22px rgba(0,0,0,.4) !important;
 }
 body.ntp-dark #ql-modal,body.ntp-dark #custom-modal,
 body.ntp-dark.ntp-wp #ql-modal,body.ntp-dark.ntp-wp #custom-modal{
@@ -722,25 +745,25 @@ body.ntp-dark.ntp-wp #ql-modal,body.ntp-dark.ntp-wp #custom-modal{
 }
 #ql-modal h3,#custom-modal h3{font-weight:640;}
 #ql-modal input,#custom-modal input[type="text"]{
-  border-radius:5px !important;border:1px solid #d7d3c7 !important;background:#f2efe8 !important;color:#20201b !important;
+  border-radius:10px !important;border:1px solid #d7d3c7 !important;background:#f2efe8 !important;color:#20201b !important;
 }
 body.ntp-dark #ql-modal input,body.ntp-dark #custom-modal input[type="text"]{
   background:#2b2a27 !important;border-color:#35332e !important;color:#ece9e0 !important;
 }
 #ql-modal input:focus,#custom-modal input[type="text"]:focus{
-  border-color:var(--accent,#57a97e) !important;box-shadow:0 0 0 2px rgba(87,169,126,.18) !important;
+  border-color:var(--accent,#8b7cf7) !important;box-shadow:0 0 0 2px rgba(139,124,247,.18) !important;
 }
-.btn{border-radius:5px !important;}
+.btn{border-radius:10px !important;}
 .btn-cancel,body.ntp-dark .btn-cancel{border-color:#d7d3c7 !important;color:#6a685e !important;background:transparent !important;}
 body.ntp-dark .btn-cancel{border-color:#35332e !important;color:#928f84 !important;}
 .btn-cancel:hover{background:#e0ddd1 !important;}
 body.ntp-dark .btn-cancel:hover{background:#322f2b !important;}
-.btn-save,body.ntp-dark .btn-save{background:var(--accent,#57a97e) !important;color:#10160f !important;border-color:transparent !important;}
+.btn-save,body.ntp-dark .btn-save{background:var(--accent,#8b7cf7) !important;color:#10160f !important;border-color:transparent !important;}
 .btn-save:hover,body.ntp-dark .btn-save:hover{filter:brightness(1.06);}
-#custom-modal .mini-btn{border-radius:5px !important;border-color:#d7d3c7 !important;color:#6a685e !important;background:#f2efe8 !important;}
+#custom-modal .mini-btn{border-radius:10px !important;border-color:#d7d3c7 !important;color:#6a685e !important;background:#f2efe8 !important;}
 body.ntp-dark #custom-modal .mini-btn{border-color:#35332e !important;color:#928f84 !important;background:#2b2a27 !important;}
 #custom-modal .mini-btn.primary,body.ntp-dark #custom-modal .mini-btn.primary{
-  border-color:var(--accent,#57a97e) !important;color:var(--accent,#57a97e) !important;background:transparent !important;
+  border-color:var(--accent,#8b7cf7) !important;color:var(--accent,#8b7cf7) !important;background:transparent !important;
 }
 #custom-modal .row-label,body.ntp-dark #custom-modal .row-label{color:#928f84 !important;}
 
@@ -759,7 +782,7 @@ footer{
 @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .wx-card{
   display:inline-flex;align-items:center;gap:13px;
-  padding:10px 16px;border-radius:6px;
+  padding:10px 16px;border-radius:10px;
   background:#f2efe8;
   border:1px solid #d7d3c7;
   box-shadow:none;
@@ -779,7 +802,7 @@ body.ntp-wp .wx-card{
   backdrop-filter:blur(14px);
   -webkit-backdrop-filter:blur(14px);
 }
-.wx-icon{line-height:1;flex-shrink:0;color:var(--accent,#57a97e);}
+.wx-icon{line-height:1;flex-shrink:0;color:var(--accent,#8b7cf7);}
 .wx-icon svg{display:block;width:30px;height:30px;}
 .wx-body{display:flex;flex-direction:column;gap:1px;}
 .wx-temp{font-size:22px;font-weight:700;line-height:1;}
@@ -806,8 +829,8 @@ body.ntp-wp .wx-card{
   transition:color .14s ease,border-color .14s ease;
 }
 #ntp-news-link:hover{
-  color:var(--accent,#57a97e);
-  border-bottom-color:color-mix(in srgb, var(--accent,#57a97e) 45%, transparent);
+  color:var(--accent,#8b7cf7);
+  border-bottom-color:color-mix(in srgb, var(--accent,#8b7cf7) 45%, transparent);
 }
 #ntp-news-link[hidden]{display:none;}
 main:has(#q:focus) #ntp-news-link{opacity:0;pointer-events:none;}
@@ -883,7 +906,7 @@ body.ntp-dark #britain-card::before{
 }
 .britain-flagwrap{
   width:84px;height:42px;margin:4px auto 16px;
-  border-radius:8px;overflow:hidden;
+  border-radius:12px;overflow:hidden;
   box-shadow:0 6px 16px rgba(1,33,105,.34),0 0 0 1px rgba(0,0,0,.06);
 }
 .britain-flag{display:block;width:100%;height:100%;}
@@ -1164,12 +1187,12 @@ body.ntp-grad:not(.ntp-dark) #ntp-bg{
 
 /* Over a real wallpaper the flat search stays legible: engine favicon inline
    (no white circle badge), magnifier hidden when the favicon is shown. */
-body.ntp-wp #search-icon-img{border-radius:5px;}
+body.ntp-wp #search-icon-img{border-radius:10px;}
 #search-form.has-engine-icon #search-icon{display:none;}
 
 /* Speed-dial grid — tighter, so the flat 52px tiles (defined above) sit as a
    neat block. The tile look itself is the flat one; only spacing here. */
-#quick-links{gap:12px;margin-top:34px;max-width:560px;justify-content:center;}
+#quick-links{gap:14px;margin-top:34px;max-width:860px;justify-content:center;}
 .ql-name{font-size:10.5px;font-weight:500;}
 body.ntp-wp .ql-name{color:rgba(255,255,255,.85);text-shadow:0 1px 4px rgba(0,0,0,.4);}
 </style>
@@ -1461,6 +1484,15 @@ function applyNtpLook(settings) {
     // so the OS material / desktop shows through. Otherwise clear any inline
     // fill so the CSS gradient (body.ntp-grad) paints the Opera-style default.
     bg.style.backgroundColor = settings?.increaseTransparency ? 'transparent' : '';
+    // Default wallpaper — the shipped lightbg/darkbg art (root assets, served
+    // by the privoo:// image handler). Only when the user hasn't picked a
+    // wallpaper, a theme, or transparency, so every explicit choice wins.
+    if (!settings?.increaseTransparency) {
+      const isDark = document.body.classList.contains('ntp-dark');
+      setWallpaperImage(bg, isDark ? 'privoo://newtab/darkbg.png' : 'privoo://newtab/lightbg.png');
+      // No dim over the shipped art — the user's dim slider belongs to THEIR
+      // wallpaper; the defaults are already tuned for legible foreground text.
+    }
   }
 
   // Apply custom accent color

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <title>History - Privoo</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%2357a97e' d='M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z'/%3E%3Cpath fill='%23fff' d='M10.6 15.4 7.4 12.2l1.3-1.3 1.9 1.9 4-4 1.3 1.3z'/%3E%3C/svg%3E"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%238b7cf7' d='M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z'/%3E%3Cpath fill='%23fff' d='M10.6 15.4 7.4 12.2l1.3-1.3 1.9 1.9 4-4 1.3 1.3z'/%3E%3C/svg%3E"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -17,9 +17,9 @@ body.dark{
   --border:#3c4043; --hover:#3c4043;
 }
 /* ── Privoo "quiet & precise" — warm charcoal + pine ── */
-:root{ --accent:#57a97e; --accent-hover:#6bbb90; --accent-soft:rgba(87,169,126,.14);
+:root{ --accent:#8b7cf7; --accent-hover:#6bbb90; --accent-soft:rgba(139,124,247,.14);
   --bg:#e8e5dc; --surface:#f2efe8; --text:#20201b; --muted:#6a685e; --border:#d7d3c7; --hover:#e0ddd1; }
-body.dark{ --accent:#57a97e; --accent-hover:#6bbb90; --accent-soft:rgba(87,169,126,.16);
+body.dark{ --accent:#8b7cf7; --accent-hover:#6bbb90; --accent-soft:rgba(139,124,247,.16);
   --bg:#1a1917; --surface:#232220; --text:#ece9e0; --muted:#928f84; --border:#35332e; --hover:#322f2b; }
 /* html stays transparent — the body's solid fill covers it normally, and
    in transparency mode the see-through html lets the OS material reach
@@ -42,7 +42,7 @@ body.transparent-ui .side-btn.active{background:rgba(138,180,248,.18)!important;
 body.transparent-ui .hist-item{
   background:rgba(255,255,255,.55);
   backdrop-filter:blur(10px) saturate(160%);-webkit-backdrop-filter:blur(10px) saturate(160%);
-  border-radius:6px;margin-bottom:2px;
+  border-radius:10px;margin-bottom:2px;
 }
 body.transparent-ui.dark .hist-item{background:rgba(41,42,45,.55);}
 button,input{font:inherit;cursor:default;background:none;border:none;color:inherit}
@@ -50,7 +50,7 @@ button,input{font:inherit;cursor:default;background:none;border:none;color:inher
 /* Custom scrollbar — matches the rest of the app */
 ::-webkit-scrollbar{width:12px;height:12px}
 ::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:#dadce0;border-radius:8px;border:3px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb{background:#dadce0;border-radius:12px;border:3px solid transparent;background-clip:padding-box}
 ::-webkit-scrollbar-thumb:hover{background:#bdc1c6;background-clip:padding-box;border:3px solid transparent}
 body.dark ::-webkit-scrollbar-thumb{background:#5f6368;background-clip:padding-box;border:3px solid transparent}
 
@@ -60,20 +60,20 @@ header{
   padding:0 24px;position:sticky;top:0;z-index:20;flex-shrink:0;
 }
 
-.logo{width:26px;height:26px;border-radius:6px;object-fit:contain}
+.logo{width:26px;height:26px;border-radius:10px;object-fit:contain}
 .page-title{font-size:18px;font-weight:500;margin-right:auto}
 
 .search-wrap{position:relative;display:flex;align-items:center}
 .search-wrap svg{position:absolute;left:12px;width:18px;height:18px;fill:var(--muted);pointer-events:none}
 #search{
-  width:280px;height:38px;border-radius:6px;border:1px solid transparent;
+  width:280px;height:38px;border-radius:10px;border:1px solid transparent;
   padding:0 16px 0 38px;font-size:13.5px;outline:none;background:var(--hover);
   color:var(--text);user-select:text;transition:background .15s,border-color .15s,box-shadow .15s;
 }
 #search:focus{background:var(--surface);border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
 
 .hdr-btn{
-  height:36px;padding:0 16px;border-radius:6px;border:1px solid var(--border);
+  height:36px;padding:0 16px;border-radius:10px;border:1px solid var(--border);
   font-size:13px;font-weight:500;background:var(--surface);color:var(--text);white-space:nowrap;
   transition:background .12s,border-color .12s;
 }
@@ -119,7 +119,7 @@ main{flex:1;overflow-y:auto;background:var(--bg);min-width:0}
 
 .hist-item{
   display:flex;align-items:center;gap:14px;
-  padding:10px 12px;border-radius:8px;
+  padding:10px 12px;border-radius:12px;
   cursor:default;position:relative;
   transition:background .1s;
 }
@@ -132,7 +132,7 @@ main{flex:1;overflow-y:auto;background:var(--bg);min-width:0}
 body.selecting .pick{display:block}
 
 .fav-wrap{
-  width:18px;height:18px;flex-shrink:0;border-radius:4px;
+  width:18px;height:18px;flex-shrink:0;border-radius:12px;
   background:var(--hover);overflow:hidden;
   display:flex;align-items:center;justify-content:center;
   font-size:10px;font-weight:700;color:var(--muted);
@@ -173,13 +173,13 @@ body.dark .act-btn:hover{color:#f28b82}
 /* Modal */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
 .modal-bg.open{display:flex}
-.modal{width:min(420px,100%);background:var(--surface);color:var(--text);border-radius:6px;box-shadow:0 12px 40px rgba(0,0,0,.22);padding:22px;border:1px solid var(--border)}
+.modal{width:min(420px,100%);background:var(--surface);color:var(--text);border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.22);padding:22px;border:1px solid var(--border)}
 body.transparent-ui .modal{background:rgba(255,255,255,.72) !important;backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);}
 body.transparent-ui.dark .modal{background:rgba(38,40,46,.72) !important;}
 .modal h3{font-size:17px;font-weight:500;margin-bottom:16px}
 .modal-field{margin-bottom:14px}
 .modal-field select{
-  width:100%;height:36px;border:1px solid var(--border);border-radius:8px;
+  width:100%;height:36px;border:1px solid var(--border);border-radius:12px;
   padding:0 12px;background:var(--surface);color:inherit;outline:none;
   appearance:none;-webkit-appearance:none;
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235f6368'><path d='M7 10l5 5 5-5z'/></svg>");
@@ -190,14 +190,14 @@ body.transparent-ui.dark .modal{background:rgba(38,40,46,.72) !important;}
 .check-grid label{display:flex;align-items:center;gap:10px;cursor:default}
 .check-grid input{accent-color:var(--accent);cursor:pointer;width:16px;height:16px}
 .modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
-.mbtn{height:36px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:0 18px;font-size:13px;font-weight:500;transition:background .12s}
+.mbtn{height:36px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:0 18px;font-size:13px;font-weight:500;transition:background .12s}
 .mbtn:hover{background:var(--hover)}
 .mbtn.danger{color:#c5221f;border-color:#f5c6c4}
 .mbtn.danger:hover{background:#fce8e6}
 body.dark .mbtn.danger{color:#f28b82;border-color:rgba(242,139,130,.4)}
 body.dark .mbtn.danger:hover{background:rgba(242,139,130,.12)}
 
-#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#303134;color:#fff;border-radius:8px;padding:10px 18px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .18s;z-index:80;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#303134;color:#fff;border-radius:12px;padding:10px 18px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .18s;z-index:80;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.3)}
 #toast.show{opacity:1}
 body.dark #toast{background:#e8eaed;color:#202124}
 </style>

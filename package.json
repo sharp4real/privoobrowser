@@ -80,6 +80,14 @@
       {
         "from": "logo.ico",
         "to": "logo.ico"
+      },
+      {
+        "from": "lightbg.png",
+        "to": "lightbg.png"
+      },
+      {
+        "from": "darkbg.png",
+        "to": "darkbg.png"
       }
     ],
     "files": [
@@ -107,7 +115,9 @@
       "bin/**/*",
       "renderer/**/*",
       "logo.png",
-      "logo.ico"
+      "logo.ico",
+      "lightbg.png",
+      "darkbg.png"
     ],
     "win": {
       "icon": "logo.ico",

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <title>Privoo AI</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%2357a97e' d='M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z'/%3E%3Cpath fill='%23fff' d='M10.6 15.4 7.4 12.2l1.3-1.3 1.9 1.9 4-4 1.3 1.3z'/%3E%3C/svg%3E"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%238b7cf7' d='M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z'/%3E%3Cpath fill='%23fff' d='M10.6 15.4 7.4 12.2l1.3-1.3 1.9 1.9 4-4 1.3 1.3z'/%3E%3C/svg%3E"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
 
@@ -50,11 +50,11 @@ body{
   border-bottom:1px solid var(--border);
   -webkit-app-region:drag;
 }
-.tb-logo{width:20px;height:20px;border-radius:5px;object-fit:contain}
+.tb-logo{width:20px;height:20px;border-radius:10px;object-fit:contain}
 .tb-title{font-size:13px;font-weight:600}
 .tb-beta{
   font-size:8.5px;font-weight:700;letter-spacing:.5px;
-  padding:2px 6px;border-radius:5px;
+  padding:2px 6px;border-radius:10px;
   background:var(--accent-soft);color:var(--accent);
 }
 .tb-spacer{flex:1}
@@ -93,7 +93,7 @@ main{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0}
 }
 .hist{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 8px 12px;scrollbar-width:thin}
 .hist::-webkit-scrollbar{width:9px}
-.hist::-webkit-scrollbar-thumb{background:var(--border);border-radius:5px;border:3px solid transparent;background-clip:padding-box}
+.hist::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px;border:3px solid transparent;background-clip:padding-box}
 .hist-empty{padding:12px 12px;font-size:12px;color:var(--muted);line-height:1.5}
 .hist-item{display:flex;align-items:center;border-radius:9px;margin-bottom:2px}
 .hist-item:hover{background:var(--surface-2)}
@@ -128,7 +128,7 @@ body.transparent-ui.dark .side{background:rgba(40,41,45,.42)}
 .pill{
   flex:1;min-width:0;
   display:flex;align-items:center;gap:8px;
-  height:32px;padding:0 11px;border-radius:8px;
+  height:32px;padding:0 11px;border-radius:12px;
   background:var(--surface-2);
   font-size:12px;color:var(--muted);
 }
@@ -139,11 +139,11 @@ body.dark .pill.ok .dot{background:#81c995}
 .pill b{color:var(--text);font-weight:600}
 .pill #status-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:7px;min-width:0}
 .status-model{
-  padding:2px 7px;border-radius:6px;font-size:10.5px;flex-shrink:0;
+  padding:2px 7px;border-radius:10px;font-size:10.5px;flex-shrink:0;
   background:var(--accent-soft);color:var(--accent);font-weight:600;
 }
 .bar-btn{
-  height:32px;padding:0 13px;border-radius:8px;flex-shrink:0;
+  height:32px;padding:0 13px;border-radius:12px;flex-shrink:0;
   border:1px solid var(--border);background:var(--surface);
   color:var(--text);font-size:12px;font-weight:500;cursor:default;
 }
@@ -156,7 +156,7 @@ body.dark .pill.ok .dot{background:#81c995}
 .msg{display:flex;gap:9px;max-width:100%}
 .msg.user{flex-direction:row-reverse}
 .avatar{
-  width:28px;height:28px;border-radius:8px;flex-shrink:0;
+  width:28px;height:28px;border-radius:12px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
   font-size:11px;font-weight:700;overflow:hidden;
 }
@@ -325,7 +325,7 @@ body.dark .warn{background:rgba(252,213,99,.10);border-color:rgba(252,213,99,.28
   font-size:12px;color:var(--text);line-height:1.5;
 }
 .disc-list li .disc-li-icon{
-  width:20px;height:20px;border-radius:6px;flex-shrink:0;margin-top:1px;
+  width:20px;height:20px;border-radius:10px;flex-shrink:0;margin-top:1px;
   background:var(--accent-soft);display:flex;align-items:center;justify-content:center;
 }
 .disc-list li .disc-li-icon svg{width:12px;height:12px;fill:var(--accent)}
@@ -339,7 +339,7 @@ body.dark .warn{background:rgba(252,213,99,.10);border-color:rgba(252,213,99,.28
 .msg.ai .bubble em{font-style:italic}
 .msg.ai .bubble code{
   font-family:ui-monospace,Consolas,"Cascadia Code",monospace;font-size:11.5px;
-  background:var(--surface-2);padding:1px 5px;border-radius:4px;border:1px solid var(--border);
+  background:var(--surface-2);padding:1px 5px;border-radius:12px;border:1px solid var(--border);
 }
 .msg.ai .bubble pre{
   background:var(--surface-2);border:1px solid var(--border);
@@ -354,9 +354,9 @@ body.dark .warn{background:rgba(252,213,99,.10);border-color:rgba(252,213,99,.28
 .msg.ai .bubble a:hover{text-decoration:underline}
 
 /* ── Privoo "quiet & precise" palette — warm charcoal + pine ── */
-:root{ --accent:#57a97e; --accent-hover:#6bbb90; --accent-soft:rgba(87,169,126,.14); }
+:root{ --accent:#8b7cf7; --accent-hover:#6bbb90; --accent-soft:rgba(139,124,247,.14); }
 body:not(.dark){ --bg:#e8e5dc; --surface:#f2efe8; --surface-2:#eae7dd; --border:#d7d3c7; --text:#20201b; --muted:#6a685e; }
-body.dark{ --accent:#57a97e; --accent-hover:#6bbb90; --accent-soft:rgba(87,169,126,.16); --bg:#1a1917; --surface:#232220; --surface-2:#2b2a27; --border:#35332e; --text:#ece9e0; --muted:#928f84; }
+body.dark{ --accent:#8b7cf7; --accent-hover:#6bbb90; --accent-soft:rgba(139,124,247,.16); --bg:#1a1917; --surface:#232220; --surface-2:#2b2a27; --border:#35332e; --text:#ece9e0; --muted:#928f84; }
 
 /* ── Increase Transparency — body goes see-through so the OS acrylic
    material shows; chrome surfaces become translucent frosted layers. ── */

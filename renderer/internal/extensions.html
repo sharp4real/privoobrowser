@@ -11,7 +11,7 @@
    Accent vars live ONLY on :root (the <html> element). Redeclaring them on
    body.dark would win over the inline --accent that applyAccent() sets on
    <html>, freezing the accent to pine in dark mode. */
-:root{ --accent:#57a97e; --accent-hover:#6bbb90; --accent-soft:rgba(87,169,126,.16); }
+:root{ --accent:#8b7cf7; --accent-hover:#6bbb90; --accent-soft:rgba(139,124,247,.16); }
 body:not(.dark){ background:#e8e5dc !important; color:#20201b; }
 body.dark{ background:#1a1917 !important; color:#ece9e0; }
 /* html is always transparent — body's solid fill covers it in normal mode,
@@ -44,7 +44,7 @@ body.transparent-ui #empty{background:transparent !important;}
 /* Custom scrollbar — matches the rest of the app */
 html::-webkit-scrollbar{width:12px;height:12px}
 html::-webkit-scrollbar-track{background:transparent}
-html::-webkit-scrollbar-thumb{background:#dadce0;border-radius:8px;border:3px solid transparent;background-clip:padding-box}
+html::-webkit-scrollbar-thumb{background:#dadce0;border-radius:12px;border:3px solid transparent;background-clip:padding-box}
 html::-webkit-scrollbar-thumb:hover{background:#bdc1c6;background-clip:padding-box;border:3px solid transparent}
 body.dark html::-webkit-scrollbar-thumb,body.dark::-webkit-scrollbar-thumb{background:#5f6368;background-clip:padding-box;border:3px solid transparent}
 
@@ -55,13 +55,13 @@ header{
 }
 body.dark header{background:#1a1917;border-color:#35332e}
 .logo-img{
-  width:28px;height:28px;border-radius:6px;
+  width:28px;height:28px;border-radius:10px;
   object-fit:contain;flex-shrink:0;
   background:transparent;
 }
 h1{font-size:18px;font-weight:600;flex:1;line-height:1}
 .header-btn{
-  padding:7px 16px;border-radius:8px;border:1px solid var(--accent);
+  padding:7px 16px;border-radius:12px;border:1px solid var(--accent);
   font-size:13px;font-weight:600;color:#10160f;cursor:pointer;background:var(--accent);
   transition:filter .12s;
   display:flex;align-items:center;gap:6px;
@@ -78,7 +78,7 @@ body.dark #empty,body.dark .ext-desc,body.dark .ext-version{color:#bdc1c6}
 body.dark #empty h2,body.dark .ext-name{color:#e8eaed}
 #empty p{margin-bottom:20px}
 #empty .btn{
-  display:inline-block;padding:10px 24px;border-radius:8px;
+  display:inline-block;padding:10px 24px;border-radius:12px;
   background:var(--accent);color:var(--on-accent);font-size:14px;font-weight:500;cursor:default;
   transition:background .12s,box-shadow .12s;
   box-shadow:0 1px 2px rgba(60,64,67,.15);
@@ -93,24 +93,24 @@ body.dark #empty h2,body.dark .ext-name{color:#e8eaed}
 .section-head-user{margin-top:34px}
 .by-privoo{
   font-size:11px;font-weight:700;letter-spacing:.04em;
-  color:var(--accent,#57a97e);background:var(--accent-soft,rgba(87,169,126,.16));
-  border-radius:5px;padding:3px 8px;
+  color:var(--accent,#8b7cf7);background:var(--accent-soft,rgba(139,124,247,.16));
+  border-radius:10px;padding:3px 8px;
 }
 .section-note{font-size:12.5px;color:#6a685e;margin:0 0 16px}
 body.dark .section-note{color:#928f84}
 
 /* Built-in extension cards carry a small "By Privoo" tag + accent edge. */
 #builtin-list .ext-card,
-body.dark #builtin-list .ext-card{border-color:var(--accent,#57a97e)}
+body.dark #builtin-list .ext-card{border-color:var(--accent,#8b7cf7)}
 #builtin-list .ext-version{
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  color:var(--accent,#57a97e);font-weight:600;
+  color:var(--accent,#8b7cf7);font-weight:600;
 }
 .ext-always{
   display:inline-flex;align-items:center;gap:6px;
-  font-size:12px;font-weight:600;color:var(--accent,#57a97e);
+  font-size:12px;font-weight:600;color:var(--accent,#8b7cf7);
 }
-.ext-always::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent,#57a97e)}
+.ext-always::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent,#8b7cf7)}
 
 .ext-card{
   background:#f2efe8;border-radius:10px;padding:18px;
@@ -131,7 +131,7 @@ body.dark .ext-card:hover{box-shadow:none}
 }
 .ext-compat-warn svg{flex-shrink:0;margin-top:1px;fill:#a26a00}
 .ext-compat-warn code{
-  background:rgba(0,0,0,.06);padding:1px 5px;border-radius:4px;
+  background:rgba(0,0,0,.06);padding:1px 5px;border-radius:12px;
   font-family:ui-monospace,Consolas,monospace;font-size:11px;
 }
 body.dark .ext-compat-warn{
@@ -149,7 +149,7 @@ body.dark .ext-compat-warn code{background:rgba(255,255,255,.06)}
 }
 body.dark .ext-icon{background:#3c4043;color:#e8eaed}
 .ext-icon img{width:100%;height:100%;object-fit:cover}
-#builtin-list .ext-icon{background:var(--accent-soft,rgba(87,169,126,.16));color:var(--accent,#57a97e)}
+#builtin-list .ext-icon{background:var(--accent-soft,rgba(139,124,247,.16));color:var(--accent,#8b7cf7)}
 #builtin-list .ext-icon svg{width:26px;height:26px;fill:currentColor}
 
 .ext-info{flex:1;min-width:0}
@@ -239,14 +239,14 @@ body.dark .choose-btn svg{color:#bdc1c6}
 body.dark .choose-btn span{color:#9aa0a6}
 
 #chosen-path-display{
-  font-size:11.5px;color:#5f6368;background:#f1f3f4;border-radius:6px;
+  font-size:11.5px;color:#5f6368;background:#f1f3f4;border-radius:10px;
   padding:7px 10px;margin-bottom:14px;word-break:break-all;display:none;
 }
 body.dark #chosen-path-display{background:#3c4043;color:#bdc1c6}
 
 .crx-tip{
   font-size:11.5px;line-height:1.55;color:#5f6368;
-  background:#f1f3f4;border-radius:8px;padding:10px 12px;margin-bottom:16px;
+  background:#f1f3f4;border-radius:12px;padding:10px 12px;margin-bottom:16px;
 }
 .crx-tip b{color:#3c4043;font-weight:600}
 .crx-tip .crx-tip-note{display:block;margin-top:4px;color:#9aa0a6;font-size:11px}
@@ -255,7 +255,7 @@ body.dark .crx-tip b{color:#e8eaed}
 body.dark .crx-tip .crx-tip-note{color:#9aa0a6}
 
 .modal-fields input,.modal-fields textarea{
-  width:100%;border:1.5px solid #dfe1e5;border-radius:8px;
+  width:100%;border:1.5px solid #dfe1e5;border-radius:12px;
   padding:9px 12px;font-size:13.5px;outline:none;margin-bottom:10px;
   background:#fff;color:#1f1f1f;font-family:inherit;user-select:text;
 }
@@ -292,7 +292,7 @@ body.dark .pin-slider{background:#5f6368}
 body.dark .pin-switch input:checked+.pin-slider{background:var(--accent)}
 
 .modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
-.btn{padding:8px 18px;border-radius:8px;font-size:13px;cursor:default;border:1.5px solid transparent}
+.btn{padding:8px 18px;border-radius:12px;font-size:13px;cursor:default;border:1.5px solid transparent}
 .btn-cancel{border-color:#dfe1e5;color:#5f6368}
 .btn-cancel:hover{background:#f1f3f4}
 .btn-save{background:var(--accent);color:var(--on-accent);font-weight:500}
@@ -317,7 +317,7 @@ body.dark #confirm-modal p{color:#bdc1c6}
 
 #toast{
   position:fixed;left:50%;bottom:22px;transform:translateX(-50%);
-  background:#202124;color:#fff;border-radius:8px;padding:10px 16px;
+  background:#202124;color:#fff;border-radius:12px;padding:10px 16px;
   font-size:13px;opacity:0;pointer-events:none;transition:opacity .18s;z-index:260;
 }
 #toast.show{opacity:1}

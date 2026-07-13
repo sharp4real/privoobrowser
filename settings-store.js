@@ -138,7 +138,7 @@ const DEFAULTS = {
   proxyTorPort: 9100,  // local SOCKS port Tor listens on / we route through
 
   // Appearance
-  darkMode: true,
+  darkMode: false,   // light is the default look; dark stays one toggle away
   forceDarkMode: false,
   // Increase Transparency — uses Mica/Acrylic on Win11, vibrancy on macOS,
   // and a translucent toolbar fallback on Linux. Off by default; turn it on
@@ -185,7 +185,7 @@ const DEFAULTS = {
   // What shows above the search bar on the new tab page: the "privoo." text
   // wordmark, or the logo.png mark. Settings → New tab.
   ntpBrandStyle: 'text', // 'text' | 'logo'
-  ntpShowQuickLinks: false,
+  ntpShowQuickLinks: true,   // shortcut cards under the search bar — on by default
   // Brave-style focused search: when the user clicks/focuses the search bar
   // on the new tab page, it scales up and the shortcuts below fade out so
   // the attention is on the search input.
@@ -256,7 +256,7 @@ const DEFAULTS = {
   customChromeCss: '',    // power-user: raw CSS injected into the browser chrome
   sidebarLinks: [],
   ghostName: '',          // user-supplied name for the Privoo mascot
-  accentColor: '#57a97e', // Pine — the single "quiet & precise" accent, whole UI
+  accentColor: '#8b7cf7', // Lavender — the single "quiet & precise" accent, whole UI
   /** Last window bounds + maximized state — restored on next launch. */
   windowState: null,
   disclaimerAccepted: false,
@@ -344,10 +344,25 @@ function load() {
     if (parsed.ntpShowWeather === undefined && parsed.showWeatherWidget !== undefined) {
       cache.ntpShowWeather = !!parsed.showWeatherWidget;
     }
-    // NOTE: the old `ntpDark → darkMode` migration was removed — with darkMode
-    // now defaulting to true it fired against a stale ntpDark and silently
-    // reverted the user's darkMode choice on every launch. darkMode is the
-    // single source of truth; whatever the user saved wins.
+    // NOTE: the old `ntpDark → darkMode` migration was removed — it fired
+    // against a stale ntpDark and silently reverted the user's darkMode choice
+    // on every launch. darkMode is the single source of truth; whatever the
+    // user saved wins.
+    // One-time design-refresh migration (v4.1 light/lavender look). Only
+    // touches values still on their OLD defaults — an explicitly chosen
+    // custom accent or theme is left exactly as the user set it.
+    if (!parsed.uiRefresh2Applied) {
+      if (parsed.accentColor === '#57a97e' || parsed.accentColor === undefined) {
+        cache.accentColor = '#8b7cf7';
+      }
+      // Shortcut cards under the search bar used to default off; the refresh
+      // turns them on once. (false here was the old global default, not a choice.)
+      if (parsed.ntpShowQuickLinks === false || parsed.ntpShowQuickLinks === undefined) {
+        cache.ntpShowQuickLinks = true;
+      }
+      cache.uiRefresh2Applied = true;
+      try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
+    }
   } catch {
     cache = { ...DEFAULTS };
   }

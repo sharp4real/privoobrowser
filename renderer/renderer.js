@@ -14,15 +14,15 @@ const VTAB_DEFAULT_FAVICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org
 // they update live when the user changes their accent (settings gets a gear,
 // history a clock, etc.). Only the SVG path is stored; the colour is baked in
 // at build time from _pvAccent.
-let _pvAccent = '#57a97e';
+let _pvAccent = '#8b7cf7';
 let _lucidPrev = null; // tracks Lucid Mode on/off to inject/clean up live on toggle
 function _pvIcon(path) {
-  const col = encodeURIComponent(_pvAccent || '#57a97e');
+  const col = encodeURIComponent(_pvAccent || '#8b7cf7');
   return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='" + col + "' d='" + encodeURIComponent(path) + "'%3E%3C/path%3E%3C/svg%3E";
 }
 // The pine-shield fallback (shield body in the accent, white check on top).
 function _pvShield() {
-  const col = encodeURIComponent(_pvAccent || '#57a97e');
+  const col = encodeURIComponent(_pvAccent || '#8b7cf7');
   return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='" + col + "' d='M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z'/%3E%3Cpath fill='%23fff' d='M10.6 15.4 7.4 12.2l1.3-1.3 1.9 1.9 4-4 1.3 1.3z'/%3E%3C/svg%3E";
 }
 const PRIVOO_PAGE_PATHS = {
@@ -229,11 +229,11 @@ const LUCID_MODE_JS = String.raw`(function(){
   star.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2l2.9 6.9L22 9.3l-5.5 4.8L18.2 21 12 17.3 5.8 21l1.7-6.9L2 9.3l7.1-.4z"/></svg>';
   var panel=document.createElement('div'); panel.id='__pl_panel';
   panel.style.cssText='position:fixed;z-index:2147483000;display:none;flex-direction:column;gap:7px;padding:10px 12px;border-radius:11px;background:rgba(18,20,18,.9);color:#fff;font:600 11px/1.2 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);width:186px';
-  panel.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><span>Lucid Mode</span><span id="__pl_v"></span></div><input id="__pl_r" type="range" min="0" max="100" step="1" style="width:100%;accent-color:#57a97e">';
+  panel.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><span>Lucid Mode</span><span id="__pl_v"></span></div><input id="__pl_r" type="range" min="0" max="100" step="1" style="width:100%;accent-color:#8b7cf7">';
   (document.body||document.documentElement).appendChild(star);
   (document.body||document.documentElement).appendChild(panel);
   var range=panel.querySelector('#__pl_r'), valEl=panel.querySelector('#__pl_v');
-  function syncPanel(){ var s=get(); range.value=Math.round(s*100); valEl.textContent=s<=0?'Off':Math.round(s*100)+'%'; star.style.color=s>0?'#7fdca7':'#fff'; }
+  function syncPanel(){ var s=get(); range.value=Math.round(s*100); valEl.textContent=s<=0?'Off':Math.round(s*100)+'%'; star.style.color=s>0?'#beb3ff':'#fff'; }
   range.addEventListener('input',function(){ set(range.value/100); syncPanel(); applyAll(); });
   var cur=null;
   // Find the video whose box contains (x,y) — bounding-box hit-test works even
@@ -250,7 +250,7 @@ const LUCID_MODE_JS = String.raw`(function(){
     if(!cur||!cur.isConnected){ hide(); return; }
     var r=cur.getBoundingClientRect();
     star.style.left=(r.left+r.width/2-17)+'px'; star.style.top=(r.top+12)+'px';
-    star.style.display='flex'; star.style.opacity='1'; star.style.color=get()>0?'#7fdca7':'#fff';
+    star.style.display='flex'; star.style.opacity='1'; star.style.color=get()>0?'#beb3ff':'#fff';
     if(panel.style.display==='flex'){ panel.style.left=Math.max(6,Math.min(r.left+r.width/2-93,window.innerWidth-192))+'px'; panel.style.top=(r.top+52)+'px'; }
   }
   function hide(){ star.style.opacity='0'; star.style.display='none'; panel.style.display='none'; cur=null; }
@@ -671,7 +671,7 @@ function applyAppSettings() {
     document.documentElement.style.removeProperty('--accent-hover');
     document.documentElement.style.removeProperty('--accent-soft');
     // Back to the default pine — repaint Privoo favicons to match.
-    if (_pvAccent !== '#57a97e') { _pvAccent = '#57a97e'; refreshPrivooFavicons(); }
+    if (_pvAccent !== '#8b7cf7') { _pvAccent = '#8b7cf7'; refreshPrivooFavicons(); }
   }
   // Lucid Mode — apply or remove live on toggle so it takes effect without a
   // page reload (the inject/cleanup scripts are idempotent).
@@ -4574,7 +4574,7 @@ document.getElementById('extensions-btn')?.addEventListener('click', (e) => {
 
 // ─── Customize side panel (right-side, opens from menu) ─────────────────────
 const CP_ACCENTS = [
-  { name: 'pine',   value: '#57a97e' },  // default
+  { name: 'pine',   value: '#8b7cf7' },  // default
   { name: 'blue',   value: '#8ab4f8' },
   { name: 'indigo', value: '#a78bfa' },
   { name: 'pink',   value: '#f48fb1' },
