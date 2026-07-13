@@ -1907,12 +1907,46 @@ function applyProxyAll(settings) {
   for (const sess of _proxiedSessions) applyProxyToSession(sess, settings);
 }
 
+// ── Cookie durability ────────────────────────────────────────────────────────
+// Chromium commits cookie writes to disk on a ~30s timer, and with
+// minimizeToTray on (the default) Privoo's process usually dies by being
+// KILLED — OS shutdown, Task Manager — never by a graceful quit, because
+// "closing" the browser only hides it. Any cookie written in the last commit
+// window dies with the process. Sites with long-lived static cookies (Google,
+// GitHub) never notice; sites that continuously ROTATE their auth cookies
+// (Spotify's sp_dc, TikTok's device tokens) come back presenting a stale,
+// server-side-superseded token and treat the user as signed out / a brand-new
+// suspicious device. Reproduced deterministically: a cookie rewritten every 2s
+// lost its last ~10s of writes on a tray-hide + kill.
+//
+// Fix: flush the cookie store shortly after any cookie change. Schedule-once
+// (not a resetting debounce) so a steady stream of rotations can't starve the
+// flush — worst case a write sits unflushed for FLUSH_DELAY_MS instead of 30s.
+const FLUSH_DELAY_MS = 3000;
+const _cookieFlushTimers = new WeakMap();
+function scheduleCookieFlush(sess) {
+  if (_cookieFlushTimers.has(sess)) return;
+  _cookieFlushTimers.set(sess, setTimeout(() => {
+    _cookieFlushTimers.delete(sess);
+    try { sess.cookies.flushStore().catch(() => {}); } catch { /* session gone */ }
+  }, FLUSH_DELAY_MS));
+}
+// Belt-and-braces for "user closes the window, OS kills the hidden process
+// later": force everything to disk the moment the browser goes to the tray.
+function flushAllCookieStores() {
+  try { session.defaultSession.cookies.flushStore().catch(() => {}); } catch {}
+  for (const sess of _proxiedSessions) {
+    try { sess.cookies.flushStore().catch(() => {}); } catch {}
+  }
+}
+
 async function hardenSession(sess) {
   await setupAdBlocking(sess);
   setupHeaderPrivacy(sess);
   setupDownloads(sess);
   _proxiedSessions.add(sess);
   applyProxyToSession(sess, settingsStore.load());
+  sess.cookies.on('changed', () => scheduleCookieFlush(sess));
 
   sess.setPermissionRequestHandler((wc, permission, cb) => {
     const settings = settingsStore.load();
@@ -2196,6 +2230,10 @@ function createWindow(opts = {}) {
     if (s.minimizeToTray && !global.privooQuittingForReal) {
       e.preventDefault();
       win.hide();
+      // From the user's point of view the browser is now "closed" — but the
+      // process only dies later, by being killed. Make sure every cookie
+      // (Spotify/TikTok rotate theirs constantly) is on disk before that.
+      flushAllCookieStores();
     }
   });
 

@@ -90,7 +90,12 @@ const FINGERPRINT_JS = `(function(){
     var _isGoogle = /google\\.(com|[a-z]{2,3}|co\\.[a-z]{2})$/i.test(_host);
     var _isYouTube = /(^|\\.)(youtube\\.com|youtu\\.be|ytimg\\.com|googlevideo\\.com)$/i.test(_host);
     if (_isYouTube) return;
-    var _farblingIntensity = _isGoogle ? 2 : 16; // Much lighter on Google
+    // TikTok's risk engine treats heavy canvas noise as an automation signal
+    // and locks the login verification step ("maximum number of attempts
+    // reached") — the same wall Brave users hit with shields up. Same
+    // compromise as Google: keep farbling ON but below the alarm threshold.
+    var _isTikTok = /(^|\\.)(tiktok\\.com|tiktokv\\.com|tiktokcdn\\.com)$/i.test(_host);
+    var _farblingIntensity = (_isGoogle || _isTikTok) ? 2 : 16; // Much lighter on Google/TikTok
 
     var _toDU = HTMLCanvasElement.prototype.toDataURL;
     var _toB  = HTMLCanvasElement.prototype.toBlob;
