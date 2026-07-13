@@ -3168,7 +3168,9 @@ body.transparent-ui.dark .app-sidebar {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  /* Icons sit vertically centred in the rail, Opera-style. */
+  justify-content: center;
+  gap: 6px;
   flex: 1;
   width: 100%;
   min-height: 0;
@@ -3253,8 +3255,8 @@ body.transparent-ui.dark .app-sidebar {
   z-index: 100;
   display: flex;
   flex-direction: column;
-  width: 320px;
-  min-width: 180px;
+  width: 420px;
+  min-width: 220px;
   max-width: calc(100% - 64px);
   background: var(--toolbar);
   box-shadow: 4px 0 28px rgba(0,0,0,.16), 1px 0 0 var(--border);
@@ -6770,3 +6772,62 @@ body.privoo-one .sw-disc-icon { background: var(--accent-soft); border-color: tr
 /* Lowercase is reserved for genuinely decorative text only (the "privoo."
    wordmark, the setup side-panel footer). Functional headings, section
    titles, buttons and body copy all keep their normal casing. */
+
+
+/* ── Sidebar micro-interactions + customize popover + now-playing flyout ── */
+.sidebar-rail-btn { transition: transform .18s cubic-bezier(.34,1.6,.64,1), background var(--t-fast) ease; }
+.sidebar-rail-btn:hover { transform: scale(1.12); }
+.sidebar-rail-btn:active { transform: scale(.94); }
+
+.sb-customize-pop {
+  position: fixed; left: 62px; bottom: 12px; z-index: 14000;
+  width: 250px; padding: 12px;
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border); border-radius: var(--r-lg);
+  box-shadow: var(--panel-shadow);
+  animation: pop-in .2s cubic-bezier(.16,.84,.44,1);
+  transform-origin: bottom left;
+  font-size: 13px; color: var(--text);
+}
+.sb-customize-pop h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 2px 4px 8px; }
+.sb-cz-row { display: flex; align-items: center; gap: 9px; padding: 7px 8px; border-radius: 10px; cursor: default; }
+.sb-cz-row:hover { background: var(--hover); }
+.sb-cz-row input { accent-color: var(--accent); }
+.sb-cz-add {
+  display: block; width: 100%; margin-top: 8px; padding: 8px 0;
+  border: 1px dashed color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 10px; background: var(--accent-soft); color: var(--accent);
+  font: inherit; font-weight: 600; cursor: pointer;
+  transition: background var(--t-fast) ease;
+}
+.sb-cz-add:hover { background: color-mix(in srgb, var(--accent) 24%, transparent); }
+
+.sb-nowplaying {
+  position: fixed; z-index: 14000; left: 62px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; max-width: 260px;
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border); border-radius: 999px;
+  box-shadow: var(--panel-shadow);
+  animation: pop-in .18s cubic-bezier(.16,.84,.44,1);
+  transform-origin: center left;
+  font-size: 12.5px; color: var(--text);
+}
+.sb-np-badge {
+  flex-shrink: 0; padding: 3px 9px; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent);
+  font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  animation: np-pulse 2.2s ease-in-out infinite;
+}
+@keyframes np-pulse { 0%,100% { opacity: 1; } 50% { opacity: .55; } }
+.sb-np-title { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+.sb-np-btn {
+  flex-shrink: 0; width: 26px; height: 26px; border: none; border-radius: 50%;
+  background: var(--accent); color: var(--on-accent);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  transition: transform .15s cubic-bezier(.34,1.6,.64,1), background var(--t-fast) ease;
+}
+.sb-np-btn:hover { transform: scale(1.1); background: var(--accent-hover); }
+.sb-np-btn svg { width: 13px; height: 13px; fill: currentColor; }

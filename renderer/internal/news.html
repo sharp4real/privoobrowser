@@ -5,15 +5,15 @@
 <title>Privoo News</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%238b7cf7' d='M12 2l1.9 5.5L19.5 9l-4.6 3.4L16.5 18 12 14.7 7.5 18l1.6-5.6L4.5 9l5.6-1.5z'/%3E%3C/svg%3E"/>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Inter","Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
 /* Accent vars live ONLY on :root so the inline accent set by JS propagates. */
 :root{
   --accent:#8b7cf7; --accent-soft:rgba(139,124,247,.14);
-  --bg:#e8e5dc; --surface:#f2efe8; --text:#20201b; --muted:#6a685e; --border:#d7d3c7;
+  --bg:#f2f1f9; --surface:rgba(255,255,255,.9); --text:#26243a; --muted:#6d6a85; --border:rgba(38,36,58,.09);
 }
 :root.dark{
   --accent-soft:rgba(139,124,247,.18);
-  --bg:#161513; --surface:#201f1c; --text:#ece9e0; --muted:#928f84; --border:#33312c;
+  --bg:#1c1b26; --surface:rgba(42,41,56,.92); --text:#eceaf6; --muted:#a5a2bd; --border:rgba(255,255,255,.09);
   color-scheme:dark;
 }
 html,body{min-height:100%;background:var(--bg);color:var(--text);user-select:none;}
@@ -21,12 +21,17 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);user-select:non
 /* ── Hero ─────────────────────────────────────────────────────────────── */
 .hero{
   position:relative;overflow:hidden;
-  border-bottom:1px solid var(--border);
-  padding:72px 24px 46px;
+  margin:28px auto 6px;max-width:820px;
+  border:1px solid var(--border);border-radius:22px;
+  padding:56px 32px 42px;
   background:
     radial-gradient(120% 150% at 12% -30%, var(--accent-soft), transparent 62%),
     var(--surface);
+  backdrop-filter:saturate(1.4) blur(16px);-webkit-backdrop-filter:saturate(1.4) blur(16px);
+  box-shadow:0 24px 60px -24px rgba(38,36,58,.22), 0 4px 14px rgba(38,36,58,.06);
+  animation:hero-in .5s cubic-bezier(.2,.8,.25,1) both;
 }
+@keyframes hero-in{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
 .hero-inner{max-width:760px;margin:0 auto;}
 .eyebrow{
   display:inline-flex;align-items:center;gap:8px;margin-bottom:20px;
@@ -84,7 +89,9 @@ h1 .dot{color:var(--accent);}
 .foot{
   display:flex;align-items:center;gap:9px;
   margin-top:36px;padding:14px 16px;
-  border:1px solid var(--border);border-radius:10px;background:var(--surface);
+  border:1px solid var(--border);border-radius:16px;background:var(--surface);
+  box-shadow:0 2px 10px rgba(38,36,58,.05);
+  transition:transform .2s cubic-bezier(.2,.8,.25,1), box-shadow .2s ease;
   font-size:12.5px;color:var(--muted);
 }
 .foot svg{width:15px;height:15px;fill:var(--accent);flex-shrink:0;}

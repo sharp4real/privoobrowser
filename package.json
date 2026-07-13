@@ -88,6 +88,26 @@
       {
         "from": "darkbg.png",
         "to": "darkbg.png"
+      },
+      {
+        "from": "lightbglightblue.png",
+        "to": "lightbglightblue.png"
+      },
+      {
+        "from": "lightbglightindigo.png",
+        "to": "lightbglightindigo.png"
+      },
+      {
+        "from": "lightbgorange.png",
+        "to": "lightbgorange.png"
+      },
+      {
+        "from": "lightbgpink.png",
+        "to": "lightbgpink.png"
+      },
+      {
+        "from": "lightbgred.png",
+        "to": "lightbgred.png"
       }
     ],
     "files": [
@@ -117,7 +137,12 @@
       "logo.png",
       "logo.ico",
       "lightbg.png",
-      "darkbg.png"
+      "darkbg.png",
+      "lightbglightblue.png",
+      "lightbglightindigo.png",
+      "lightbgorange.png",
+      "lightbgpink.png",
+      "lightbgred.png"
     ],
     "win": {
       "icon": "logo.ico",

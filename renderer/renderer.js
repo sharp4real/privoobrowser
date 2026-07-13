@@ -1367,9 +1367,9 @@ function renderSidebarRail() {
   sidebarRail.innerHTML = '';
   hideSidebarFlyout();
 
-  // Pinned quick-access row — always opens as a real tab (these are full
-  // pages, not sites suited to the cramped preview panel).
-  for (const q of SIDEBAR_QUICK_ACCESS) {
+  // Pinned quick-access row — opens as a real tab (these are full pages, not
+  // sites suited to the cramped preview panel). Optional via Customize sidebar.
+  for (const q of (settings?.sidebarQuickAccess === false ? [] : SIDEBAR_QUICK_ACCESS)) {
     const qbtn = document.createElement('button');
     qbtn.type = 'button';
     qbtn.className = 'sidebar-rail-btn sidebar-quick-btn';
@@ -1408,6 +1408,10 @@ function renderSidebarRail() {
       e.stopPropagation();
       openSidebarPanel(link);
     });
+    // Hover: if a tab from this site is playing audio, show a tiny rounded
+    // "Playing" pill with the track title and a pause/resume button.
+    btn.addEventListener('mouseenter', () => showSidebarNowPlaying(btn, link));
+    btn.addEventListener('mouseleave', () => hideSidebarNowPlaying(false));
     btn.addEventListener('contextmenu', async (e) => {
       e.preventDefault();
       const idx = links.indexOf(link);
@@ -5170,10 +5174,104 @@ notesBtn?.addEventListener('click', (e) => {
   });
 }
 
+// ── Sidebar now-playing flyout ───────────────────────────────────────────────
+let _sbNp = null, _sbNpHide = 0;
+function hideSidebarNowPlaying(force) {
+  clearTimeout(_sbNpHide);
+  if (force) { _sbNp?.remove(); _sbNp = null; return; }
+  // grace period so the cursor can travel from the icon into the pill
+  _sbNpHide = setTimeout(() => { if (_sbNp && !_sbNp.matches(':hover')) { _sbNp.remove(); _sbNp = null; } }, 250);
+}
+async function showSidebarNowPlaying(btn, link) {
+  let host; try { host = new URL(link.url).hostname.replace(/^(www|web|open)\./, ''); } catch { return; }
+  const tab = tabs.find(t => {
+    if (!t.isPlayingAudio || !t.wv) return false;
+    try { return new URL(t.wv.getURL()).hostname.includes(host); } catch { return false; }
+  });
+  if (!tab) return;
+  let title = tab.title || host;
+  try {
+    const meta = await tab.wv.executeJavaScript(
+      '(function(){try{var m=navigator.mediaSession&&navigator.mediaSession.metadata;return m?(m.title||"")+(m.artist?" — "+m.artist:""):null}catch(e){return null}})()');
+    if (meta) title = meta;
+  } catch {}
+  hideSidebarNowPlaying(true);
+  const pill = document.createElement('div');
+  pill.className = 'sb-nowplaying';
+  pill.innerHTML =
+    '<span class="sb-np-badge">Playing</span>' +
+    `<span class="sb-np-title">${esc(title)}</span>` +
+    '<button type="button" class="sb-np-btn" title="Pause / resume"><svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg></button>';
+  const r = btn.getBoundingClientRect();
+  pill.style.top = Math.max(8, r.top + r.height / 2 - 22) + 'px';
+  document.body.appendChild(pill);
+  _sbNp = pill;
+  pill.addEventListener('mouseleave', () => hideSidebarNowPlaying(false));
+  pill.querySelector('.sb-np-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const svg = pill.querySelector('.sb-np-btn svg');
+    tab.wv.executeJavaScript(`(function(){
+      try{var m=Array.from(document.querySelectorAll('video,audio'));
+      var a=m.find(x=>!x.paused)||m[0];
+      if(a){if(a.paused){a.play();return 'playing';}a.pause();return 'paused';}}catch(e){} return null;
+    })()`).then((st) => {
+      if (st === 'paused') svg.innerHTML = '<path d="M8 5v14l11-7z"/>';
+      else if (st === 'playing') svg.innerHTML = '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>';
+    }).catch(() => {});
+  });
+}
+
 // ─── Sidebar wiring ──────────────────────────────────────────────────────────
+// Known web apps offered as one-click sidebar toggles in Customize.
+const SIDEBAR_APP_CATALOG = [
+  { title: 'WhatsApp',  url: 'https://www.whatsapp.com' },
+  { title: 'Gmail',     url: 'https://mail.google.com' },
+  { title: 'Snapchat',  url: 'https://web.snapchat.com' },
+  { title: 'Spotify',   url: 'https://open.spotify.com' },
+  { title: 'Discord',   url: 'https://discord.com/app' },
+  { title: 'Instagram', url: 'https://www.instagram.com' },
+  { title: 'Messenger', url: 'https://www.messenger.com' },
+  { title: 'Telegram',  url: 'https://web.telegram.org' },
+  { title: 'X',         url: 'https://x.com' },
+];
+let _sbCustomizePop = null;
+function closeSidebarCustomize() { _sbCustomizePop?.remove(); _sbCustomizePop = null; }
+function openSidebarCustomize() {
+  closeSidebarCustomize();
+  const pop = document.createElement('div');
+  pop.className = 'sb-customize-pop';
+  const links = sidebarLinkList();
+  const has = (url) => links.some(l => l.url === url);
+  pop.innerHTML = '<h4>Customize sidebar</h4>' +
+    `<label class="sb-cz-row"><input type="checkbox" id="sb-cz-qa" ${settings?.sidebarQuickAccess === false ? '' : 'checked'}/> Quick access (Downloads, History…)</label>` +
+    '<h4 style="margin-top:10px">Apps</h4>' +
+    SIDEBAR_APP_CATALOG.map((a, i) =>
+      `<label class="sb-cz-row"><input type="checkbox" data-app="${i}" ${has(a.url) ? 'checked' : ''}/> ${esc(a.title)}</label>`).join('') +
+    '<button type="button" class="sb-cz-add" id="sb-cz-add">Add a custom site…</button>';
+  document.body.appendChild(pop);
+  _sbCustomizePop = pop;
+
+  pop.querySelector('#sb-cz-qa').addEventListener('change', (ev) => {
+    void saveBrowserSetting({ sidebarQuickAccess: ev.target.checked }).then(renderSidebarRail);
+  });
+  pop.querySelectorAll('input[data-app]').forEach((cb) => {
+    cb.addEventListener('change', () => {
+      const app = SIDEBAR_APP_CATALOG[Number(cb.dataset.app)];
+      const cur = sidebarLinkList();
+      const next = cb.checked
+        ? [...cur, { title: app.title, url: app.url }]
+        : cur.filter(l => l.url !== app.url);
+      void saveBrowserSetting({ sidebarLinks: next }).then(renderSidebarRail);
+    });
+  });
+  pop.querySelector('#sb-cz-add').addEventListener('click', () => { closeSidebarCustomize(); openSidebarAddModal(); });
+  setTimeout(() => document.addEventListener('click', function onDoc(ev) {
+    if (_sbCustomizePop && !_sbCustomizePop.contains(ev.target)) { closeSidebarCustomize(); document.removeEventListener('click', onDoc); }
+  }), 0);
+}
 document.getElementById('sidebar-add')?.addEventListener('click', (e) => {
   e.stopPropagation();
-  openSidebarAddModal();
+  if (_sbCustomizePop) closeSidebarCustomize(); else openSidebarCustomize();
 });
 document.getElementById('sb-cancel')?.addEventListener('click', closeSidebarAddModal);
 document.getElementById('sb-save')?.addEventListener('click', saveSidebarShortcut);

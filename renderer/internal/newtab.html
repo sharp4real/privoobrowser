@@ -1490,7 +1490,22 @@ function applyNtpLook(settings) {
     // wallpaper, a theme, or transparency, so every explicit choice wins.
     if (!settings?.increaseTransparency) {
       const isDark = document.body.classList.contains('ntp-dark');
-      setWallpaperImage(bg, isDark ? 'privoo://newtab/darkbg.png' : 'privoo://newtab/lightbg.png');
+      // Shipped wallpaper sets — one is picked per session so every launch
+      // feels a little different, but new tabs within a session stay stable.
+      const LIGHT_BGS = ['lightbg.png','lightbglightblue.png','lightbglightindigo.png',
+                         'lightbgorange.png','lightbgpink.png','lightbgred.png'];
+      const DARK_BGS  = ['darkbg.png'];   // more arriving — drop files in, list them here
+      const set = isDark ? DARK_BGS : LIGHT_BGS;
+      let pick;
+      try {
+        const key = 'privoo_default_wp_' + (isDark ? 'd' : 'l');
+        pick = sessionStorage.getItem(key);
+        if (!pick || !set.includes(pick)) {
+          pick = set[Math.floor(Math.random() * set.length)];
+          sessionStorage.setItem(key, pick);
+        }
+      } catch { pick = set[0]; }
+      setWallpaperImage(bg, 'privoo://newtab/' + pick);
       // No dim over the shipped art — the user's dim slider belongs to THEIR
       // wallpaper; the defaults are already tuned for legible foreground text.
     }

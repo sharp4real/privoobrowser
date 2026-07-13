@@ -200,14 +200,11 @@ const DEFAULTS = {
   // Starter shortcuts seeded for fresh installs. (Existing users keep their
   // own — an empty array they've already saved is respected.)
   ntpQuickLinks: [
-    { name: 'WhatsApp',  url: 'https://web.whatsapp.com' },
-    { name: 'Gmail',     url: 'https://mail.google.com' },
-    { name: 'Snapchat',  url: 'https://web.snapchat.com' },
-    { name: 'Spotify',   url: 'https://open.spotify.com' },
-    { name: 'Discord',   url: 'https://discord.com/app' },
-    { name: 'YouTube',   url: 'https://youtube.com' },
-    { name: 'Reddit',    url: 'https://reddit.com' },
-    { name: 'Amazon',    url: 'https://www.amazon.com' },
+    { name: 'eBay',          url: 'https://www.ebay.com' },
+    { name: 'Jet2holidays',  url: 'https://www.jet2holidays.com' },
+    { name: 'YouTube',       url: 'https://youtube.com' },
+    { name: 'Amazon',        url: 'https://www.amazon.com' },
+    { name: 'Spotify',       url: 'https://open.spotify.com' },
   ],
 
   // Downloads
@@ -229,6 +226,7 @@ const DEFAULTS = {
   lucidMode: false,       // Lucid Mode — hover a video for a star that enhances its picture
   extMoveNoticeShown: false, // one-time "features moved to Extensions" notice in Settings
   showSidebar: true,      // shortcuts rail on the left (toggle in Settings → Features)
+  sidebarQuickAccess: true, // pinned Downloads/History/Bookmarks/Settings row at the top of the rail
   sidebarPanelWidth: 320, // width of the embedded web panel in the sidebar
   showAiButton: true,     // AI toolbar button — can be hidden via Settings → Features
   showTranslateButton: false, // Translate toolbar button — off by default, enable in Settings → Features
@@ -258,7 +256,7 @@ const DEFAULTS = {
   uiRoundness: 'default', // corner style of the whole UI: default | sharp | round
   customChromeCss: '',    // power-user: raw CSS injected into the browser chrome
   sidebarLinks: [
-    { title: 'WhatsApp', url: 'https://web.whatsapp.com' },
+    { title: 'WhatsApp', url: 'https://www.whatsapp.com' },
     { title: 'Gmail',    url: 'https://mail.google.com' },
     { title: 'Snapchat', url: 'https://web.snapchat.com' },
     { title: 'Spotify',  url: 'https://open.spotify.com' },
