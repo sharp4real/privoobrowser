@@ -6791,9 +6791,26 @@ body.privoo-one .sw-disc-icon { background: var(--accent-soft); border-color: tr
   font-size: 13px; color: var(--text);
 }
 .sb-customize-pop h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 2px 4px 8px; }
-.sb-cz-row { display: flex; align-items: center; gap: 9px; padding: 7px 8px; border-radius: 10px; cursor: default; }
+.sb-cz-row { display: flex; align-items: center; gap: 10px; padding: 8px 9px; border-radius: 12px; cursor: default;
+  transition: background var(--t-fast) ease; }
 .sb-cz-row:hover { background: var(--hover); }
-.sb-cz-row input { accent-color: var(--accent); }
+.sb-cz-fav { width: 20px; height: 20px; border-radius: 6px; flex-shrink: 0; object-fit: contain; }
+.sb-cz-letter { display: flex; align-items: center; justify-content: center;
+  background: var(--accent-soft); color: var(--accent); font-size: 11px; font-weight: 700; }
+.sb-cz-name { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.25;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb-cz-name small { color: var(--muted); font-size: 10.5px; font-weight: 400; }
+/* mini pill switch */
+.sb-cz-sw { position: relative; width: 32px; height: 18px; flex-shrink: 0; }
+.sb-cz-sw input { position: absolute; opacity: 0; width: 0; height: 0; }
+.sb-cz-sw i { position: absolute; inset: 0; border-radius: 999px; background: rgba(38,36,58,.16);
+  transition: background .18s ease; }
+.sb-cz-sw i::before { content: ""; position: absolute; width: 14px; height: 14px; left: 2px; top: 2px;
+  border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(38,36,58,.3);
+  transition: transform .18s cubic-bezier(.2,.8,.25,1); }
+.sb-cz-sw input:checked + i { background: var(--accent); }
+.sb-cz-sw input:checked + i::before { transform: translateX(14px); }
+body.dark .sb-cz-sw i { background: rgba(255,255,255,.14); }
 .sb-cz-add {
   display: block; width: 100%; margin-top: 8px; padding: 8px 0;
   border: 1px dashed color-mix(in srgb, var(--accent) 45%, transparent);

@@ -200,11 +200,12 @@ const DEFAULTS = {
   // Starter shortcuts seeded for fresh installs. (Existing users keep their
   // own — an empty array they've already saved is respected.)
   ntpQuickLinks: [
-    { name: 'eBay',          url: 'https://www.ebay.com' },
-    { name: 'Jet2holidays',  url: 'https://www.jet2holidays.com' },
-    { name: 'YouTube',       url: 'https://youtube.com' },
-    { name: 'Amazon',        url: 'https://www.amazon.com' },
-    { name: 'Spotify',       url: 'https://open.spotify.com' },
+    { name: 'YouTube', url: 'https://youtube.com' },
+    { name: 'Spotify', url: 'https://open.spotify.com' },
+    { name: 'Gmail',   url: 'https://mail.google.com' },
+    { name: 'Amazon',  url: 'https://www.amazon.com' },
+    { name: 'eBay',    url: 'https://www.ebay.com' },
+    { name: 'Reddit',  url: 'https://reddit.com' },
   ],
 
   // Downloads

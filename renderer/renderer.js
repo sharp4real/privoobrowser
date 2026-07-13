@@ -5242,11 +5242,20 @@ function openSidebarCustomize() {
   pop.className = 'sb-customize-pop';
   const links = sidebarLinkList();
   const has = (url) => links.some(l => l.url === url);
+  const swRow = (inner, checked, attrs) =>
+    `<label class="sb-cz-row">${inner}` +
+    `<span class="sb-cz-sw"><input type="checkbox" ${attrs} ${checked ? 'checked' : ''}/><i></i></span></label>`;
   pop.innerHTML = '<h4>Customize sidebar</h4>' +
-    `<label class="sb-cz-row"><input type="checkbox" id="sb-cz-qa" ${settings?.sidebarQuickAccess === false ? '' : 'checked'}/> Quick access (Downloads, History…)</label>` +
-    '<h4 style="margin-top:10px">Apps</h4>' +
-    SIDEBAR_APP_CATALOG.map((a, i) =>
-      `<label class="sb-cz-row"><input type="checkbox" data-app="${i}" ${has(a.url) ? 'checked' : ''}/> ${esc(a.title)}</label>`).join('') +
+    swRow('<span class="sb-cz-name">Quick access <small>Downloads, History…</small></span>',
+          settings?.sidebarQuickAccess !== false, 'id="sb-cz-qa"') +
+    '<h4 style="margin-top:12px">Apps</h4>' +
+    SIDEBAR_APP_CATALOG.map((a, i) => {
+      const fav = faviconForSidebar(a.url);
+      const icon = fav
+        ? `<img class="sb-cz-fav" src="${fav}" alt="" onerror="this.style.display='none'"/>`
+        : `<span class="sb-cz-fav sb-cz-letter">${esc(a.title[0])}</span>`;
+      return swRow(icon + `<span class="sb-cz-name">${esc(a.title)}</span>`, has(a.url), `data-app="${i}"`);
+    }).join('') +
     '<button type="button" class="sb-cz-add" id="sb-cz-add">Add a custom site…</button>';
   document.body.appendChild(pop);
   _sbCustomizePop = pop;

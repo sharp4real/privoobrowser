@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="0.4" y2="1">
+    <stop offset="0" stop-color="#191b28"/><stop offset="1" stop-color="#202436"/>
+  </linearGradient>
+  <linearGradient id="w1" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#323b5e" stop-opacity=".0"/><stop offset="1" stop-color="#323b5e" stop-opacity=".85"/>
+  </linearGradient>
+  <linearGradient id="w2" x1="0" y1="1" x2="1" y2="0">
+    <stop offset="0" stop-color="#3d488a" stop-opacity=".0"/><stop offset="1" stop-color="#3d488a" stop-opacity=".8"/>
+  </linearGradient>
+  <linearGradient id="w3" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#6478f0" stop-opacity=".0"/><stop offset="1" stop-color="#6478f0" stop-opacity=".55"/>
+  </linearGradient>
+  <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="14"/></filter>
+</defs>
+<rect width="1920" height="1080" fill="url(#bg)"/>
+<path filter="url(#soft)" fill="url(#w1)" d="M900 1120 C 1150 900, 1230 700, 1420 520 C 1610 340, 1830 300, 2000 340 L 2000 1120 Z"/>
+<path filter="url(#soft)" fill="url(#w2)" d="M1150 1120 C 1330 950, 1380 760, 1560 620 C 1740 480, 1900 470, 2000 520 L 2000 1120 Z"/>
+<path filter="url(#soft)" fill="url(#w3)" d="M1380 1120 C 1520 1000, 1560 850, 1720 740 C 1860 645, 1960 640, 2000 660 L 2000 1120 Z"/>
+<path fill="#6478f0" fill-opacity=".16" d="M700 1120 C 1000 860, 1060 640, 1300 440 C 1540 240, 1820 200, 2000 250 L 2000 1120 Z"/>
+</svg>

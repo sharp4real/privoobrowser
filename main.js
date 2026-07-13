@@ -730,7 +730,7 @@ function buildPrivooProtocolHandler() {
     if (imgMatch) {
       const name = path.basename(imgMatch[1]);
       const ext  = path.extname(name).slice(1).replace('jpg', 'jpeg');
-      const ct   = `image/${ext}`;
+      const ct   = ext === 'svg' ? 'image/svg+xml' : `image/${ext}`;
       // Prefer extraResources path (outside ASAR) so the file is always reachable.
       const candidates = process.resourcesPath
         ? [path.join(process.resourcesPath, name), path.join(__dirname, name)]

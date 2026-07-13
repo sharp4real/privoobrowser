@@ -1497,15 +1497,20 @@ function applyNtpLook(settings) {
       // on the closest shipped art. Dark variants slot in the same way once
       // their files exist.
       const LIGHT_BY_HUE = [
-        { hue: 275, file: 'lightbg.png'            }, // purple / lavender (default)
-        { hue: 235, file: 'lightbglightindigo.png' },
-        { hue: 205, file: 'lightbglightblue.png'   },
-        { hue:  30, file: 'lightbgorange.png'      },
-        { hue: 330, file: 'lightbgpink.png'        },
-        { hue:   0, file: 'lightbgred.png'         },
+        { hue: 275, file: 'lightbg.svg'       }, // purple / lavender (default)
+        { hue: 235, file: 'lightbgindigo.svg' },
+        { hue: 205, file: 'lightbgblue.svg'   },
+        { hue:  30, file: 'lightbgorange.svg' },
+        { hue: 330, file: 'lightbgpink.svg'   },
+        { hue:   0, file: 'lightbgred.svg'    },
       ];
       const DARK_BY_HUE = [
-        { hue: 275, file: 'darkbg.png' },             // more arriving — list them here
+        { hue: 275, file: 'darkbg.svg'       },
+        { hue: 235, file: 'darkbgindigo.svg' },
+        { hue: 205, file: 'darkbgblue.svg'   },
+        { hue:  30, file: 'darkbgorange.svg' },
+        { hue: 330, file: 'darkbgpink.svg'   },
+        { hue:   0, file: 'darkbgred.svg'    },
       ];
       function accentHue(hex) {
         const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
