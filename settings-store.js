@@ -157,7 +157,7 @@ const DEFAULTS = {
   // and never bleeds over the web page area. The chrome tinting stays either way.
   vibeOverPages: true,
   fontSizeScale: 1,        // 1 = default, 0.9 = small, 1.2 = large
-  showBookmarksBar: false,
+  showBookmarksBar: true,
   showHomeButton: false,
   homePage: 'privoo://newtab/',
   bookmarks: [
@@ -228,7 +228,7 @@ const DEFAULTS = {
   showCalculator: false,  // Calculator toolbar button — enable via the Calculator extension
   lucidMode: false,       // Lucid Mode — hover a video for a star that enhances its picture
   extMoveNoticeShown: false, // one-time "features moved to Extensions" notice in Settings
-  showSidebar: false,     // shortcuts rail on the left (toggle in Settings → Features)
+  showSidebar: true,      // shortcuts rail on the left (toggle in Settings → Features)
   sidebarPanelWidth: 320, // width of the embedded web panel in the sidebar
   showAiButton: true,     // AI toolbar button — can be hidden via Settings → Features
   showTranslateButton: false, // Translate toolbar button — off by default, enable in Settings → Features
@@ -257,7 +257,14 @@ const DEFAULTS = {
   uiFont: 'system',       // interface font: system | rounded | classic | grotesk | mono | dyslexic
   uiRoundness: 'default', // corner style of the whole UI: default | sharp | round
   customChromeCss: '',    // power-user: raw CSS injected into the browser chrome
-  sidebarLinks: [],
+  sidebarLinks: [
+    { title: 'WhatsApp', url: 'https://web.whatsapp.com' },
+    { title: 'Gmail',    url: 'https://mail.google.com' },
+    { title: 'Snapchat', url: 'https://web.snapchat.com' },
+    { title: 'Spotify',  url: 'https://open.spotify.com' },
+    { title: 'Discord',  url: 'https://discord.com/app' },
+    { title: 'Instagram',url: 'https://www.instagram.com' },
+  ],
   ghostName: '',          // user-supplied name for the Privoo mascot
   accentColor: '#8b7cf7', // Lavender — the single "quiet & precise" accent, whole UI
   /** Last window bounds + maximized state — restored on next launch. */
@@ -365,6 +372,12 @@ function load() {
       }
       if (parsed.newTabBtnCircle === false || parsed.newTabBtnCircle === undefined) {
         cache.newTabBtnCircle = true;
+      }
+      if (parsed.showSidebar === false || parsed.showSidebar === undefined) {
+        cache.showSidebar = true;
+      }
+      if (parsed.showBookmarksBar === false || parsed.showBookmarksBar === undefined) {
+        cache.showBookmarksBar = true;
       }
       cache.uiRefresh2Applied = true;
       try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
