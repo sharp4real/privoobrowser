@@ -597,14 +597,17 @@ body.ntp-dark:not(.ntp-wp) .ql-item:hover .ql-name{color:#ece9e0;}
   width:100%;text-align:center;transition:color .14s;
 }
 .ql-remove{
-  position:absolute;top:3px;right:9px;
-  width:18px;height:18px;border-radius:10px;
-  background:rgba(20,19,17,.7);display:none;
+  position:absolute;top:6px;right:6px;
+  width:20px;height:20px;border-radius:50%;
+  background:rgba(38,36,58,.55);display:none;
   align-items:center;justify-content:center;
   cursor:default;color:#fff;
+  backdrop-filter:blur(4px);
+  transition:background .14s ease, transform .14s cubic-bezier(.34,1.6,.64,1);
 }
-.ql-item:hover .ql-remove{display:flex;}
-.ql-remove:hover{background:rgba(20,19,17,.92);}
+.ql-item:hover .ql-remove{display:flex;animation:ql-x-in .16s cubic-bezier(.2,.8,.25,1) both;}
+@keyframes ql-x-in{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+.ql-remove:hover{background:#e05252;transform:scale(1.1);}
 body.ntp-dark:not(.ntp-wp) .ql-remove{background:rgba(210,208,200,.22);}
 body.ntp-dark:not(.ntp-wp) .ql-remove:hover{background:rgba(210,208,200,.4);}
 
@@ -738,39 +741,50 @@ body.ntp-dark #custom-modal .mini-btn.primary:hover { background:#f1f3f4; }
 .btn-save{background:#1f1f1f;color:#fff;}
 .btn-save:hover{background:#000;}
 
-/* ── Add-shortcut modal — warm charcoal + pine, squared (overrides old grey) ── */
+/* ── Add-shortcut modal — the lavender system: white card, soft inputs,
+      accent primary. (Replaces the retired warm-charcoal brand block.) ── */
 #ql-modal,#custom-modal{
-  background:#f4f2ec !important;color:#20201b;border:1px solid #d7d3c7 !important;
-  border-radius:12px !important;box-shadow:0 30px 74px -22px rgba(0,0,0,.4) !important;
+  background:#ffffff !important;color:#26243a;border:1px solid rgba(38,36,58,.08) !important;
+  border-radius:20px !important;padding:22px !important;
+  box-shadow:0 30px 74px -22px rgba(38,36,58,.35) !important;
 }
 body.ntp-dark #ql-modal,body.ntp-dark #custom-modal,
 body.ntp-dark.ntp-wp #ql-modal,body.ntp-dark.ntp-wp #custom-modal{
-  background:#201f1c !important;color:#ece9e0;border-color:#35332e !important;
+  background:#2a2938 !important;color:#eceaf6;border-color:rgba(255,255,255,.09) !important;
   box-shadow:0 30px 74px -22px rgba(0,0,0,.7) !important;
 }
-#ql-modal h3,#custom-modal h3{font-weight:640;}
+#ql-modal h3,#custom-modal h3{font-weight:650;letter-spacing:-.01em;}
 #ql-modal input,#custom-modal input[type="text"]{
-  border-radius:10px !important;border:1px solid #d7d3c7 !important;background:#f2efe8 !important;color:#20201b !important;
+  border-radius:12px !important;border:1px solid rgba(38,36,58,.10) !important;
+  background:#f4f3fa !important;color:#26243a !important;
+  transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
 }
 body.ntp-dark #ql-modal input,body.ntp-dark #custom-modal input[type="text"]{
-  background:#2b2a27 !important;border-color:#35332e !important;color:#ece9e0 !important;
+  background:rgba(255,255,255,.06) !important;border-color:rgba(255,255,255,.10) !important;color:#eceaf6 !important;
 }
 #ql-modal input:focus,#custom-modal input[type="text"]:focus{
-  border-color:var(--accent,#8b7cf7) !important;box-shadow:0 0 0 2px rgba(139,124,247,.18) !important;
+  background:#fff !important;
+  border-color:var(--accent,#8b7cf7) !important;box-shadow:0 0 0 3px rgba(139,124,247,.16) !important;
 }
-.btn{border-radius:10px !important;}
-.btn-cancel,body.ntp-dark .btn-cancel{border-color:#d7d3c7 !important;color:#6a685e !important;background:transparent !important;}
-body.ntp-dark .btn-cancel{border-color:#35332e !important;color:#928f84 !important;}
-.btn-cancel:hover{background:#e0ddd1 !important;}
-body.ntp-dark .btn-cancel:hover{background:#322f2b !important;}
-.btn-save,body.ntp-dark .btn-save{background:var(--accent,#8b7cf7) !important;color:#10160f !important;border-color:transparent !important;}
-.btn-save:hover,body.ntp-dark .btn-save:hover{filter:brightness(1.06);}
-#custom-modal .mini-btn{border-radius:10px !important;border-color:#d7d3c7 !important;color:#6a685e !important;background:#f2efe8 !important;}
-body.ntp-dark #custom-modal .mini-btn{border-color:#35332e !important;color:#928f84 !important;background:#2b2a27 !important;}
+body.ntp-dark #ql-modal input:focus,body.ntp-dark #custom-modal input[type="text"]:focus{
+  background:rgba(255,255,255,.1) !important;
+}
+.btn{border-radius:999px !important;font-weight:600;padding:9px 20px;
+  transition:background .15s ease, transform .12s cubic-bezier(.34,1.6,.64,1), filter .15s ease;}
+.btn:active{transform:scale(.96);}
+.btn-cancel,body.ntp-dark .btn-cancel{border-color:rgba(38,36,58,.14) !important;color:#6d6a85 !important;background:transparent !important;}
+body.ntp-dark .btn-cancel{border-color:rgba(255,255,255,.14) !important;color:#a5a2bd !important;}
+.btn-cancel:hover{background:rgba(38,36,58,.05) !important;}
+body.ntp-dark .btn-cancel:hover{background:rgba(255,255,255,.07) !important;}
+.btn-save,body.ntp-dark .btn-save{background:var(--accent,#8b7cf7) !important;color:#fff !important;border-color:transparent !important;}
+.btn-save:hover,body.ntp-dark .btn-save:hover{filter:brightness(1.07);}
+#custom-modal .mini-btn{border-radius:999px !important;border-color:rgba(38,36,58,.12) !important;color:#6d6a85 !important;background:#f4f3fa !important;}
+body.ntp-dark #custom-modal .mini-btn{border-color:rgba(255,255,255,.12) !important;color:#a5a2bd !important;background:rgba(255,255,255,.06) !important;}
 #custom-modal .mini-btn.primary,body.ntp-dark #custom-modal .mini-btn.primary{
-  border-color:var(--accent,#8b7cf7) !important;color:var(--accent,#8b7cf7) !important;background:transparent !important;
+  border-color:transparent !important;color:#fff !important;background:var(--accent,#8b7cf7) !important;
 }
-#custom-modal .row-label,body.ntp-dark #custom-modal .row-label{color:#928f84 !important;}
+#custom-modal .row-label,body.ntp-dark #custom-modal .row-label{color:#8b88a3 !important;
+  font-size:11px;text-transform:uppercase;letter-spacing:.07em;}
 
 footer{
   padding:14px 24px 72px;font-size:12px;color:#9aa0a6;text-align:center;
