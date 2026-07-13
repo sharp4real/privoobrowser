@@ -257,8 +257,6 @@ const DEFAULTS = {
   uiRoundness: 'default', // corner style of the whole UI: default | sharp | round
   customChromeCss: '',    // power-user: raw CSS injected into the browser chrome
   sidebarLinks: [
-    { title: 'WhatsApp', url: 'https://www.whatsapp.com' },
-    { title: 'Gmail',    url: 'https://mail.google.com' },
     { title: 'Snapchat', url: 'https://web.snapchat.com' },
     { title: 'Spotify',  url: 'https://open.spotify.com' },
     { title: 'Discord',  url: 'https://discord.com/app' },

@@ -555,7 +555,7 @@ body.ntp-dark:not(.ntp-wp) .ss-icon{background:rgba(255,255,255,.06);color:#928f
 .ql-item{
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
   width:118px;height:94px;padding:10px;border-radius:16px;
-  cursor:default;color:#55526b;font-size:12px;font-weight:600;
+  cursor:default;color:#5d5a73;font-size:11.5px;font-weight:550;letter-spacing:.01em;
   position:relative;
   background:rgba(255,255,255,.88);
   border:1px solid rgba(38,36,58,.06);
@@ -1198,6 +1198,32 @@ body.ntp-wp #search-icon-img{border-radius:10px;}
 #quick-links{gap:14px;margin-top:34px;max-width:860px;justify-content:center;}
 .ql-name{font-size:10.5px;font-weight:500;}
 body.ntp-wp .ql-name{color:rgba(255,255,255,.85);text-shadow:0 1px 4px rgba(0,0,0,.4);}
+
+/* ── Entrance choreography — one downstage rise, staggered top-to-bottom.
+   Everything shares a single curve so the page reads as one gesture. ── */
+@keyframes ntp-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+#ntp-logo-wrap{animation:ntp-rise .55s cubic-bezier(.2,.8,.25,1) .05s both}
+#search-form{animation:ntp-rise .55s cubic-bezier(.2,.8,.25,1) .14s both}
+#quick-links{animation:ntp-rise .55s cubic-bezier(.2,.8,.25,1) .23s both}
+#ntp-clock,#ntp-weather,#ntp-news-link{animation:ntp-rise .55s cubic-bezier(.2,.8,.25,1) .32s both}
+/* cards land one after another inside the grid's own rise */
+.ql-item,.ql-add{animation:ql-fade-in .5s cubic-bezier(.2,.8,.25,1) both}
+#quick-links>*:nth-child(1){animation-delay:.26s} #quick-links>*:nth-child(2){animation-delay:.31s}
+#quick-links>*:nth-child(3){animation-delay:.36s} #quick-links>*:nth-child(4){animation-delay:.41s}
+#quick-links>*:nth-child(5){animation-delay:.46s} #quick-links>*:nth-child(6){animation-delay:.51s}
+#quick-links>*:nth-child(7){animation-delay:.56s} #quick-links>*:nth-child(n+8){animation-delay:.6s}
+
+/* ── Ambient wallpaper drift — a barely-there 45s breathe. ── */
+@keyframes ntp-bg-drift{from{transform:scale(1)}to{transform:scale(1.045)}}
+#ntp-bg{animation:ntp-bg-drift 45s ease-in-out infinite alternate;will-change:transform}
+
+/* ── Search bar micro-polish: shadow bloom on hover, calm at rest. ── */
+#search-form:hover{box-shadow:0 12px 38px -10px rgba(38,36,58,.22), 0 2px 8px rgba(38,36,58,.07)}
+
+@media (prefers-reduced-motion: reduce){
+  #ntp-logo-wrap,#search-form,#quick-links,#ntp-clock,#ntp-weather,#ntp-news-link,
+  .ql-item,.ql-add,#ntp-bg{animation:none !important}
+}
 </style>
 </head>
 <body>
