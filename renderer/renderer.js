@@ -1346,17 +1346,27 @@ function hideSidebarFlyout() {
 
 let openSidebarBtn = null;
 
-function faviconForSidebar(url) {
+const FAVICON_HOST_ALIASES = {
+  'mail.google.com': 'gmail.com',
+  'open.spotify.com': 'spotify.com',
+  'web.snapchat.com': 'snapchat.com',
+  'web.whatsapp.com': 'whatsapp.com',
+  'web.telegram.org': 'telegram.org',
+};
+function faviconHostFor(url) {
   try {
-    const h = new URL(url).hostname;
-    return `https://www.google.com/s2/favicons?domain=${h}&sz=64`;
+    let h = new URL(url).hostname.toLowerCase();
+    h = FAVICON_HOST_ALIASES[h] || h.replace(/^www\./, '');
+    return h;
   } catch { return ''; }
 }
+function faviconForSidebar(url) {
+  const h = faviconHostFor(url);
+  return h ? `https://www.google.com/s2/favicons?domain=${h}&sz=64` : '';
+}
 function faviconFallbackForSidebar(url) {
-  try {
-    const h = new URL(url).hostname;
-    return `https://icons.duckduckgo.com/ip3/${h}.ico`;
-  } catch { return ''; }
+  const h = faviconHostFor(url);
+  return h ? `https://icons.duckduckgo.com/ip3/${h}.ico` : '';
 }
 
 // Fixed, non-removable quick-access shortcuts to Privoo's own pages — always

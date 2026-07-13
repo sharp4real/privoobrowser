@@ -535,7 +535,7 @@ body.ntp-dark:not(.ntp-wp) .ss-icon{background:rgba(255,255,255,.06);color:#928f
 
 #quick-links{
   display:flex;flex-wrap:wrap;justify-content:center;
-  gap:16px;margin-top:38px;max-width:1020px;width:100%;
+  gap:12px;margin-top:32px;max-width:940px;width:100%;
 }
 @keyframes ql-fade-in{
   from{opacity:0;transform:scale(.88);}
@@ -607,19 +607,21 @@ body.ntp-dark:not(.ntp-wp) .ql-remove{background:rgba(210,208,200,.22);}
 body.ntp-dark:not(.ntp-wp) .ql-remove:hover{background:rgba(210,208,200,.4);}
 
 .ql-add{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
   width:118px;height:94px;padding:10px;border-radius:16px;cursor:default;
-  color:#6a628f;font-size:12px;font-weight:600;
-  background:rgba(139,124,247,.14);
-  border:1px solid rgba(139,124,247,.18);
-  transition:transform .22s cubic-bezier(.2,.8,.25,1), box-shadow .22s ease, background .18s ease;
+  color:#8b88a3;font-size:11.5px;font-weight:600;
+  background:rgba(255,255,255,.35);
+  border:1.5px dashed rgba(38,36,58,.16);
+  transition:transform .22s cubic-bezier(.2,.8,.25,1), border-color .18s ease,
+             color .18s ease, background .18s ease;
 }
 .ql-add:hover{
-  transform:translateY(-4px);
-  background:rgba(139,124,247,.22);
-  box-shadow:0 14px 34px -10px rgba(139,124,247,.35);
+  transform:translateY(-3px);
+  background:rgba(255,255,255,.6);
+  border-color:color-mix(in srgb, var(--accent,#8b7cf7) 55%, transparent);
+  color:var(--accent,#8b7cf7);
 }
-body.ntp-dark:not(.ntp-wp) .ql-add{background:rgba(139,124,247,.16);}
+body.ntp-dark:not(.ntp-wp) .ql-add{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.16);color:#8f8ca6;}
 body.ntp-wp .ql-add{color:rgba(255,255,255,.85);}
 body.ntp-dark:not(.ntp-wp) .ql-add{color:#928f84;}
 .ql-add .ql-ico{color:var(--accent,#8b7cf7);border-style:dashed;background:transparent;}
@@ -1672,11 +1674,26 @@ async function loadNtp() {
   renderWeather(settings);
 }
 
-function faviconUrl(url) {
+const FAVICON_HOST_ALIASES = {
+  'mail.google.com': 'gmail.com',
+  'open.spotify.com': 'spotify.com',
+  'web.snapchat.com': 'snapchat.com',
+  'web.whatsapp.com': 'whatsapp.com',
+  'web.telegram.org': 'telegram.org',
+};
+function faviconHostOf(url) {
   try {
-    const host = new URL(url).hostname;
-    return `https://icons.duckduckgo.com/ip3/${host}.ico`;
+    let h = new URL(url).hostname.toLowerCase();
+    return FAVICON_HOST_ALIASES[h] || h.replace(/^www\./, '');
   } catch { return ''; }
+}
+function faviconUrl(url) {
+  const h = faviconHostOf(url);
+  return h ? `https://www.google.com/s2/favicons?domain=${h}&sz=64` : '';
+}
+function faviconFallbackUrl(url) {
+  const h = faviconHostOf(url);
+  return h ? `https://icons.duckduckgo.com/ip3/${h}.ico` : '';
 }
 
 // Show the chosen search engine's colored favicon in the search bar (UC-style),
@@ -1723,13 +1740,15 @@ function renderQL() {
       const img = new Image();
       img.alt = '';
       img.addEventListener('error', () => {
+        const fb = faviconFallbackUrl(ql.url);
+        if (fb && img.src !== fb) { img.src = fb; return; }
         ico.textContent = '';
         const span = document.createElement('span');
         span.style.fontSize = '16px';
         span.style.fontWeight = '600';
         span.textContent = letterAvatar(ql.name);
         ico.appendChild(span);
-      }, { once: true });
+      });
       img.src = fav;
       ico.appendChild(img);
     } else {
