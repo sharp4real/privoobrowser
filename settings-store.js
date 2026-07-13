@@ -202,7 +202,6 @@ const DEFAULTS = {
   ntpQuickLinks: [
     { name: 'YouTube', url: 'https://youtube.com' },
     { name: 'Spotify', url: 'https://open.spotify.com' },
-    { name: 'Gmail',   url: 'https://mail.google.com' },
     { name: 'Amazon',  url: 'https://www.amazon.com' },
     { name: 'eBay',    url: 'https://www.ebay.com' },
     { name: 'Reddit',  url: 'https://reddit.com' },
@@ -376,10 +375,20 @@ function load() {
       if (parsed.showBookmarksBar === false || parsed.showBookmarksBar === undefined) {
         cache.showBookmarksBar = true;
       }
+      cache.uiRefresh2Applied = true;
+      try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
+    }
+    // Second migration wave — MUST live outside the uiRefresh2 block: profiles
+    // that already ran wave 1 have the flag set, so anything added inside that
+    // block after the fact never fires for them.
+    if (!parsed.seedTrim1Applied) {
       if (!parsed.sidebarPanelWidth || parsed.sidebarPanelWidth <= 340) {
         cache.sidebarPanelWidth = 480;
       }
-      cache.uiRefresh2Applied = true;
+      const _dropSeed = (l) => !/mail\.google\.com|whatsapp\.com/i.test((l && l.url) || '');
+      if (Array.isArray(parsed.sidebarLinks)) cache.sidebarLinks = parsed.sidebarLinks.filter(_dropSeed);
+      if (Array.isArray(parsed.ntpQuickLinks)) cache.ntpQuickLinks = parsed.ntpQuickLinks.filter(_dropSeed);
+      cache.seedTrim1Applied = true;
       try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
     }
   } catch {
