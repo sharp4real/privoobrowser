@@ -378,6 +378,9 @@ function load() {
       if (parsed.showBookmarksBar === false || parsed.showBookmarksBar === undefined) {
         cache.showBookmarksBar = true;
       }
+      if (!parsed.sidebarPanelWidth || parsed.sidebarPanelWidth <= 340) {
+        cache.sidebarPanelWidth = 480;
+      }
       cache.uiRefresh2Applied = true;
       try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
     }

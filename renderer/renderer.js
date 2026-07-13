@@ -1503,11 +1503,20 @@ function openSidebarPanel(link) {
   if (!sidebarWv.getAttribute('preload') && window.privoo?.webviewPreloadUrl) {
     sidebarWv.setAttribute('preload', window.privoo.webviewPreloadUrl);
   }
+  // The panel is a phone-shaped viewport, so render sites AS a phone: with a
+  // desktop UA every site lays out at ~1000px+ and gets clipped; with a
+  // mobile UA responsive sites serve their narrow layout and fit exactly.
+  // Same approach Opera uses for its sidebar apps. Set before first load.
+  if (!sidebarWv.getAttribute('useragent')) {
+    const chromeVer = (navigator.userAgent.match(/Chrome\/([\d.]+)/) || [])[1] || '142.0.0.0';
+    sidebarWv.setAttribute('useragent',
+      `Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVer} Mobile Safari/537.36`);
+  }
   const _incoPart = window.__privooIncognitoPartition || window.privoo?.incognitoPartition;
   if (_incoPart && !sidebarWv.getAttribute('partition')) {
     sidebarWv.setAttribute('partition', _incoPart);
   }
-  const w = settings?.sidebarPanelWidth || 320;
+  const w = settings?.sidebarPanelWidth || 480;
   sidebarPanel.style.width = `${w}px`;
   const titleEl = document.getElementById('sidebar-panel-title');
   if (titleEl) {
