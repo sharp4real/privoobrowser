@@ -1490,22 +1490,44 @@ function applyNtpLook(settings) {
     // wallpaper, a theme, or transparency, so every explicit choice wins.
     if (!settings?.increaseTransparency) {
       const isDark = document.body.classList.contains('ntp-dark');
-      // Shipped wallpaper sets — one is picked per session so every launch
-      // feels a little different, but new tabs within a session stay stable.
-      const LIGHT_BGS = ['lightbg.png','lightbglightblue.png','lightbglightindigo.png',
-                         'lightbgorange.png','lightbgpink.png','lightbgred.png'];
-      const DARK_BGS  = ['darkbg.png'];   // more arriving — drop files in, list them here
-      const set = isDark ? DARK_BGS : LIGHT_BGS;
-      let pick;
-      try {
-        const key = 'privoo_default_wp_' + (isDark ? 'd' : 'l');
-        pick = sessionStorage.getItem(key);
-        if (!pick || !set.includes(pick)) {
-          pick = set[Math.floor(Math.random() * set.length)];
-          sessionStorage.setItem(key, pick);
-        }
-      } catch { pick = set[0]; }
-      setWallpaperImage(bg, 'privoo://newtab/' + pick);
+      // The default wallpaper FOLLOWS THE ACCENT: each shipped background is
+      // colour-graded to match one accent family, so picking an accent in the
+      // customizer re-dresses the whole Speed Dial to match. lightbg.png is
+      // the purple/lavender default. Nearest-hue wins, so custom accents land
+      // on the closest shipped art. Dark variants slot in the same way once
+      // their files exist.
+      const LIGHT_BY_HUE = [
+        { hue: 275, file: 'lightbg.png'            }, // purple / lavender (default)
+        { hue: 235, file: 'lightbglightindigo.png' },
+        { hue: 205, file: 'lightbglightblue.png'   },
+        { hue:  30, file: 'lightbgorange.png'      },
+        { hue: 330, file: 'lightbgpink.png'        },
+        { hue:   0, file: 'lightbgred.png'         },
+      ];
+      const DARK_BY_HUE = [
+        { hue: 275, file: 'darkbg.png' },             // more arriving — list them here
+      ];
+      function accentHue(hex) {
+        const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
+        if (!m) return 275;
+        const n = parseInt(m[1], 16);
+        const r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+        const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+        if (d < 0.03) return 275; // grey accent -> default art
+        let h;
+        if (max === r) h = ((g - b) / d) % 6;
+        else if (max === g) h = (b - r) / d + 2;
+        else h = (r - g) / d + 4;
+        return ((h * 60) + 360) % 360;
+      }
+      const hue = accentHue(settings?.accentColor);
+      const set = isDark ? DARK_BY_HUE : LIGHT_BY_HUE;
+      let pick = set[0], bd = 361;
+      for (const c of set) {
+        const diff = Math.min(Math.abs(c.hue - hue), 360 - Math.abs(c.hue - hue));
+        if (diff < bd) { bd = diff; pick = c; }
+      }
+      setWallpaperImage(bg, 'privoo://newtab/' + pick.file);
       // No dim over the shipped art — the user's dim slider belongs to THEIR
       // wallpaper; the defaults are already tuned for legible foreground text.
     }
