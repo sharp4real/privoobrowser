@@ -17,6 +17,11 @@
   color-scheme:dark;
 }
 html,body{min-height:100%;background:var(--bg);color:var(--text);user-select:none;}
+body{
+  background-image:url('privoo://newtab/lightbg.svg');
+  background-size:cover;background-position:center;background-attachment:fixed;
+}
+:root.dark body{background-image:url('privoo://newtab/darkbg.svg');}
 
 /* ── Hero ─────────────────────────────────────────────────────────────── */
 .hero{
@@ -27,7 +32,6 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);user-select:non
   background:
     radial-gradient(120% 150% at 12% -30%, var(--accent-soft), transparent 62%),
     var(--surface);
-  backdrop-filter:saturate(1.4) blur(16px);-webkit-backdrop-filter:saturate(1.4) blur(16px);
   box-shadow:0 24px 60px -24px rgba(38,36,58,.22), 0 4px 14px rgba(38,36,58,.06);
   animation:hero-in .5s cubic-bezier(.2,.8,.25,1) both;
 }

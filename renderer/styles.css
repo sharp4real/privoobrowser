@@ -9,12 +9,12 @@
   /* Surfaces */
   --strip:       #e9e7f4;                    /* window / titlebar wash          */
   --strip-focus: #dfdcef;
-  --tab-active:  rgba(255,255,255,.92);      /* active pill                     */
+  --tab-active:  #ffffff;                    /* active pill                     */
   --tab-width:   220px;
-  --tab-hover:   rgba(255,255,255,.55);
-  --toolbar:     #fbfbfe;                    /* main bar + popover surface      */
-  --omni-bg:     rgba(255,255,255,.75);
-  --omni-hover:  rgba(255,255,255,.95);
+  --tab-hover:   rgba(255,255,255,.65);
+  --toolbar:     #ffffff;                    /* main bar + popover surface      */
+  --omni-bg:     #f1f0f7;
+  --omni-hover:  #eceaf4;
   --glass:       rgba(255,255,255,.72);      /* frosted panel fill              */
   --glass-blur:  saturate(1.4) blur(18px);
 
@@ -1285,14 +1285,14 @@ svg { fill: currentColor; display: block; flex-shrink: 0; }
 
 /* Active tab — white, sits flush on toolbar */
 .tab.active {
-  background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.88));
+  background: #ffffff;
   color: var(--text);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.9), var(--shadow);
+  box-shadow: var(--shadow);
   z-index: 2;
 }
 body.dark .tab.active {
-  background: linear-gradient(180deg, rgba(56,54,74,.98), rgba(44,42,60,.94));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), var(--shadow);
+  background: #34324a;
+  box-shadow: var(--shadow);
 }
 /* The old trapezoid "merge with toolbar" corner curves are gone — pills float. */
 
@@ -1423,10 +1423,9 @@ body.platform-mac #window-controls { display: none !important; }
   height: 48px;
   min-height: 48px;
   padding: 0 10px;
-  /* Frosted bar: translucent over the lavender window wash. */
-  background: var(--glass);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  /* Flat white bar, Opera-style. Frosted only when the user enables
+     transparency (body.transparent-ui overrides below). */
+  background: var(--toolbar);
   border-bottom: 1px solid var(--border);
   position: relative;
   z-index: 10;
@@ -1562,8 +1561,8 @@ body.platform-mac #window-controls { display: none !important; }
   height: 38px; padding: 0 8px 0 16px;
   background: var(--omni-bg);
   border-radius: 999px;
-  border: 1px solid var(--border);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.75), var(--shadow);
+  border: 1px solid transparent;
+  box-shadow: none;
   transition: background var(--t-fast) ease, border-color var(--t-fast) ease,
               box-shadow var(--t-med) var(--ease);
   position: relative;
@@ -1672,9 +1671,7 @@ body.search-square #omnibox-wrap:focus-within { border-color: var(--accent); box
   top: calc(100% + 8px);
   right: 0;
   width: 280px;
-  background: var(--glass);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  background: var(--toolbar);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   box-shadow: var(--panel-shadow);
@@ -1731,9 +1728,7 @@ body.search-square #omnibox-wrap:focus-within { border-color: var(--accent); box
   top: calc(100% + 8px);
   left: 0;
   width: 320px;
-  background: var(--glass);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  background: var(--toolbar);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   box-shadow: var(--panel-shadow);
@@ -1820,9 +1815,7 @@ body.dark .si-icon.insecure { background: rgba(242,139,130,.18); color: #f28b82;
   top: calc(100% + 6px);
   left: 0;
   right: 0;
-  background: var(--glass);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  background: var(--toolbar);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   box-shadow: var(--panel-shadow);
@@ -1865,9 +1858,7 @@ body.dark .si-icon.insecure { background: rgba(242,139,130,.18); color: #f28b82;
   right: 0;
   min-width: 280px;
   max-width: calc(100vw - 16px);
-  background: var(--glass);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  background: var(--toolbar);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   box-shadow: var(--panel-shadow);
@@ -3902,9 +3893,7 @@ body.dark .translate-select {
   right: 0;
   width: 340px;
   max-width: min(340px, calc(100vw - 24px));
-  background: var(--glass);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  background: var(--toolbar);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   box-shadow: var(--panel-shadow);
@@ -4221,9 +4210,7 @@ body.dark .dl-pop-action-btn:hover svg {
   z-index: 15000;
   min-width: 230px;
   max-width: 320px;
-  background: var(--glass);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  background: var(--toolbar);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   overflow: hidden;
@@ -6785,8 +6772,7 @@ body.privoo-one .sw-disc-icon { background: var(--accent-soft); border-color: tr
 .sb-customize-pop {
   position: fixed; left: 62px; bottom: 12px; z-index: 14000;
   width: 250px; padding: 12px;
-  background: var(--glass);
-  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+  background: var(--toolbar);
   border: 1px solid var(--border); border-radius: var(--r-lg);
   box-shadow: var(--panel-shadow);
   animation: pop-in .2s cubic-bezier(.16,.84,.44,1);
@@ -6827,8 +6813,7 @@ body.dark .sb-cz-sw i { background: rgba(255,255,255,.14); }
   position: fixed; z-index: 14000; left: 62px;
   display: flex; align-items: center; gap: 10px;
   padding: 9px 12px; max-width: 260px;
-  background: var(--glass);
-  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+  background: var(--toolbar);
   border: 1px solid var(--border); border-radius: 999px;
   box-shadow: var(--panel-shadow);
   animation: pop-in .18s cubic-bezier(.16,.84,.44,1);
