@@ -1,6 +1,6 @@
 {
   "name": "privoo-browser",
-  "version": "4.0.9",
+  "version": "5.0.0",
   "description": "Privacy focused browser built on Chromium.",
   "main": "main.js",
   "scripts": {

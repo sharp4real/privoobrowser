@@ -1368,16 +1368,17 @@ function faviconHostFor(url) {
 // and WhatsApp returned nothing at all — and every lookup was an external
 // request Privoo didn't otherwise need to make. No network round-trip, no
 // stale/wrong result possible.
+// Only the two hosts that were ACTUALLY broken get an embedded icon.
+// Google's s2 favicon service returns the plain Google "G" for
+// mail.google.com (not the Gmail envelope) and nothing at all for
+// WhatsApp — both wrong regardless of network conditions, so a local
+// SVG is the only real fix. Discord/Spotify/Instagram/Snapchat/etc. were
+// resolving fine via the normal favicon-service chain; they were swapped
+// to hand-drawn approximations in a previous pass and looked worse than
+// the real icons that service was already returning — reverted.
 const BRAND_ICON_SVG = {
   'whatsapp.com': '<svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#25D366"/><path fill="#fff" d="M12 5.5a6.5 6.5 0 0 0-5.6 9.8L5.5 18.5l3.3-.9A6.5 6.5 0 1 0 12 5.5zm-2.7 3.6c.14 0 .3.01.43.02.14.01.3-.02.47.37.18.42.6 1.46.65 1.56.05.11.09.23.02.37-.07.14-.11.23-.22.35-.11.13-.23.28-.33.38-.11.11-.22.22-.1.44.13.22.57.98 1.24 1.6.85.8 1.57 1.05 1.79 1.17.22.11.35.1.48-.06.13-.16.55-.65.7-.87.15-.22.29-.19.49-.11.2.07 1.28.62 1.5.73.22.11.37.17.42.26.06.1.06.55-.13 1.08-.19.54-1.11 1.02-1.55 1.09-.4.06-.89.09-1.44-.09-.33-.1-.75-.24-1.3-.48-2.4-.9-3.88-3.25-4-3.4-.11-.16-.93-1.24-.93-2.36s.6-1.66.8-1.9c.2-.24.45-.3.6-.3z"/></svg>',
   'gmail.com': '<svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#fff" stroke="#e3e1ef" stroke-width="1"/><path fill="#EA4335" d="M5 8.2 12 13l7-4.8V17a1 1 0 0 1-1 1h-1V9.9l-5 3.5-5-3.5V18H6a1 1 0 0 1-1-1z"/><path fill="#4285F4" d="M17 7H7a1 1 0 0 0-.85.47L12 12.1l5.85-4.63A1 1 0 0 0 17 7z"/></svg>',
-  'spotify.com': '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#1ED760"/><path fill="none" stroke="#08351d" stroke-width="1.7" stroke-linecap="round" d="M6.6 15.4c3.1-1 6.9-.8 9.8 1M6.1 12c3.6-1.2 8.1-1 11.6.9M5.7 8.6c4.1-1.5 9.7-1.3 13.7 1"/></svg>',
-  'discord.com': '<svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#5865F2"/><circle cx="9" cy="13" r="1.6" fill="#fff"/><circle cx="15" cy="13" r="1.6" fill="#fff"/><path fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round" d="M8 17c1.2.8 2.6 1.2 4 1.2s2.8-.4 4-1.2M9 8.5c1-.3 2-.5 3-.5s2 .2 3 .5"/></svg>',
-  'instagram.com': '<svg viewBox="0 0 24 24"><rect width="24" height="24" rx="7" fill="#D6249F"/><rect x="6" y="6" width="12" height="12" rx="4" fill="none" stroke="#fff" stroke-width="1.6"/><circle cx="12" cy="12" r="3.1" fill="none" stroke="#fff" stroke-width="1.6"/><circle cx="16.2" cy="7.8" r="1" fill="#fff"/></svg>',
-  'snapchat.com': '<svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#FFFC00"/><path fill="#111" d="M12 5.8c-2.1 0-3.6 1.7-3.6 3.9 0 .6.04 1.2.12 1.8-.7.2-1.5.5-1.5 1.1 0 .5.6.8 1.2 1-.1.4-.2.8-.4 1.1-.2.4.1.7.5.7h.7c.2.7 1 1.3 2.9 1.3s2.7-.6 2.9-1.3h.7c.4 0 .7-.3.5-.7-.2-.3-.3-.7-.4-1.1.6-.2 1.2-.5 1.2-1 0-.6-.8-.9-1.5-1.1.08-.6.12-1.2.12-1.8 0-2.2-1.5-3.9-3.6-3.9z"/></svg>',
-  'messenger.com': '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#00B2FF"/><path fill="#fff" d="M12 4.5c-4.3 0-7.7 3.2-7.7 7.2 0 2.3 1.1 4.3 2.9 5.6v2.8l2.7-1.5c.7.2 1.4.3 2.1.3 4.3 0 7.7-3.2 7.7-7.2S16.3 4.5 12 4.5zm.9 9.7-2-2.1-3.8 2.1 4.2-4.4 2 2.1 3.8-2.1z"/></svg>',
-  'telegram.org': '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#29A9EB"/><path fill="#fff" d="m5 12 14-6-2.4 13-4-3-2 2-.4-3.6L16 8.6 7.6 13z"/></svg>',
-  'x.com': '<svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#000"/><path fill="#fff" d="m6.3 6 4.8 6.4L6 18h1.5l4.2-4.8 3.5 4.8H18l-5-6.7L17.6 6H16l-3.9 4.4L9 6z"/></svg>',
 };
 function brandIconSvgFor(url) {
   const h = faviconHostFor(url);

@@ -184,7 +184,8 @@ const DEFAULTS = {
   newsSeenVersion: '',
   // What shows above the search bar on the new tab page: the "privoo." text
   // wordmark, or the logo.png mark. Settings → New tab.
-  ntpBrandStyle: 'text', // 'text' | 'logo'
+  ntpBrandStyle: 'logo', // 'text' | 'logo' — the logo mark is the default look
+  ntpWallpaperAnimated: true, // subtle ambient motion on the default wave wallpaper
   ntpShowQuickLinks: true,   // shortcut cards under the search bar — on by default
   // Brave-style focused search: when the user clicks/focuses the search bar
   // on the new tab page, it scales up and the shortcuts below fade out so
@@ -388,6 +389,9 @@ function load() {
       const _dropSeed = (l) => !/mail\.google\.com|whatsapp\.com/i.test((l && l.url) || '');
       if (Array.isArray(parsed.sidebarLinks)) cache.sidebarLinks = parsed.sidebarLinks.filter(_dropSeed);
       if (Array.isArray(parsed.ntpQuickLinks)) cache.ntpQuickLinks = parsed.ntpQuickLinks.filter(_dropSeed);
+      if (parsed.ntpBrandStyle === 'text' || parsed.ntpBrandStyle === undefined) {
+        cache.ntpBrandStyle = 'logo';
+      }
       cache.seedTrim1Applied = true;
       try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
     }
