@@ -618,6 +618,10 @@ function applyAppSettings() {
   document.body.classList.add('privoo-one');
   document.body.classList.toggle('ui-compact', !!settings.compactMode);
   document.body.classList.toggle('has-vibe', !!settings.vibeEnabled);
+  // Recompute the titlebar/sidebar accent wash for the CURRENT dark/vibe
+  // state — without this, toggling dark mode alone (no accent change) left
+  // the strip using whichever light/dark formula was last computed.
+  if (settings.accentColor) applyAccentTriad(settings.accentColor);
   // Confine the ambient vibe gradient to the chrome when the user doesn't want
   // it bleeding over web pages (chrome surface tinting stays regardless).
   document.body.classList.toggle('vibe-chrome-only', settings.vibeOverPages === false);
@@ -1361,24 +1365,22 @@ function faviconHostFor(url) {
   } catch { return ''; }
 }
 
-// Known catalog apps (the sidebar's built-in shortcut list) get a real,
-// embedded brand mark instead of a third-party favicon lookup. Third-party
-// icon services were inconsistent for exactly these hosts — Gmail returned
-// the plain Google "G" (mail.google.com's own favicon, not the envelope),
-// and WhatsApp returned nothing at all — and every lookup was an external
-// request Privoo didn't otherwise need to make. No network round-trip, no
-// stale/wrong result possible.
-// Only the two hosts that were ACTUALLY broken get an embedded icon.
-// Google's s2 favicon service returns the plain Google "G" for
-// mail.google.com (not the Gmail envelope) and nothing at all for
-// WhatsApp — both wrong regardless of network conditions, so a local
-// SVG is the only real fix. Discord/Spotify/Instagram/Snapchat/etc. were
-// resolving fine via the normal favicon-service chain; they were swapped
-// to hand-drawn approximations in a previous pass and looked worse than
-// the real icons that service was already returning — reverted.
+// A small, deliberate embedded-icon list — not the whole app catalog.
+// WhatsApp and Gmail are here because Google's s2 favicon service returns
+// the plain Google "G" for mail.google.com (not the Gmail envelope) and
+// nothing at all for WhatsApp — both wrong regardless of network
+// conditions, so a local SVG is the only real fix. Spotify is here
+// because its real mark (green circle, black sound-wave arcs) reads
+// better than the favicon service's result. Discord/Instagram/Snapchat/
+// etc. were resolving fine via the normal favicon lookup and were
+// swapped to hand-drawn approximations in a previous pass that looked
+// worse than the originals — reverted, so they use the lookup again.
 const BRAND_ICON_SVG = {
   'whatsapp.com': '<svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#25D366"/><path fill="#fff" d="M12 5.5a6.5 6.5 0 0 0-5.6 9.8L5.5 18.5l3.3-.9A6.5 6.5 0 1 0 12 5.5zm-2.7 3.6c.14 0 .3.01.43.02.14.01.3-.02.47.37.18.42.6 1.46.65 1.56.05.11.09.23.02.37-.07.14-.11.23-.22.35-.11.13-.23.28-.33.38-.11.11-.22.22-.1.44.13.22.57.98 1.24 1.6.85.8 1.57 1.05 1.79 1.17.22.11.35.1.48-.06.13-.16.55-.65.7-.87.15-.22.29-.19.49-.11.2.07 1.28.62 1.5.73.22.11.37.17.42.26.06.1.06.55-.13 1.08-.19.54-1.11 1.02-1.55 1.09-.4.06-.89.09-1.44-.09-.33-.1-.75-.24-1.3-.48-2.4-.9-3.88-3.25-4-3.4-.11-.16-.93-1.24-.93-2.36s.6-1.66.8-1.9c.2-.24.45-.3.6-.3z"/></svg>',
   'gmail.com': '<svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#fff" stroke="#e3e1ef" stroke-width="1"/><path fill="#EA4335" d="M5 8.2 12 13l7-4.8V17a1 1 0 0 1-1 1h-1V9.9l-5 3.5-5-3.5V18H6a1 1 0 0 1-1-1z"/><path fill="#4285F4" d="M17 7H7a1 1 0 0 0-.85.47L12 12.1l5.85-4.63A1 1 0 0 0 17 7z"/></svg>',
+  // Real Spotify mark: green circle, BLACK arcs (the earlier hand-drawn
+  // version used white strokes, which isn't the actual logo).
+  'spotify.com': '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#1DB954"/><path d="M7.3 15.6c2.9-.9 6.4-.7 8.9.8" stroke="#000" stroke-width="1.6" stroke-linecap="round" fill="none"/><path d="M6.7 12.3c3.5-1.2 7.9-1 10.9.9" stroke="#000" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M6.1 8.9c4.1-1.5 9.4-1.2 12.9 1" stroke="#000" stroke-width="2" stroke-linecap="round" fill="none"/></svg>',
 };
 function brandIconSvgFor(url) {
   const h = faviconHostFor(url);
@@ -4673,6 +4675,7 @@ const cpWpLiveBtn   = document.getElementById('cp-wp-live');
 const cpWpClearBtn  = document.getElementById('cp-wp-clear');
 const cpWpFull      = document.getElementById('cp-wp-full');
 const cpWpSound     = document.getElementById('cp-wp-sound');
+const cpWpAnimated  = document.getElementById('cp-wp-animated');
 
 function paintAccentSwatches() {
   if (!cpAccentRow) return;
@@ -4720,6 +4723,21 @@ function applyAccentTriad(hex) {
   );
   document.documentElement.style.setProperty('--accent-hover', hover);
   document.documentElement.style.setProperty('--accent-soft', `rgba(${r},${g},${b},.18)`);
+  // The chosen accent tints the WHOLE chrome — titlebar, sidebar (both
+  // consume --strip), toolbar and omnibox — not just isolated pages, in both
+  // light and dark. Graduated so the strongest wash sits at the top of the
+  // browser and content areas stay legible: strip > toolbar > omnibox.
+  // This unconditionally wins over "Your Vibe"'s own hue math — two
+  // independent systems fighting for the same properties was the actual
+  // bug ("vibe" blocking the accent look on some surfaces but not others).
+  // Accent IS the vibe now; there's only one system.
+  const isDark = document.body.classList.contains('dark');
+  const mix = (pct, darkBase) => isDark
+    ? `color-mix(in srgb, ${hex} ${pct + 10}%, ${darkBase})`
+    : `color-mix(in srgb, ${hex} ${pct}%, #ffffff)`;
+  document.documentElement.style.setProperty('--strip',   mix(11, '#14131c'));
+  document.documentElement.style.setProperty('--toolbar', mix(5,  '#1a1926'));
+  document.documentElement.style.setProperty('--omni-bg', mix(7,  '#20202e'));
   // Repaint Privoo-page favicons in the new accent.
   if (_pvAccent !== hex) { _pvAccent = hex; if (typeof refreshPrivooFavicons === 'function') refreshPrivooFavicons(); }
 }
@@ -4750,6 +4768,7 @@ function paintCustomizePanel() {
   if (cpShowNotes)      cpShowNotes.checked      = !!settings?.showNotesButton;
   if (cpWpFull)         cpWpFull.checked         = !!settings?.ntpWallpaperFullBrowser;
   if (cpWpSound)        cpWpSound.checked        = !!settings?.ntpWallpaperSound;
+  if (cpWpAnimated)     cpWpAnimated.checked     = settings?.ntpWallpaperAnimated !== false;
 }
 
 function openCustomizePanel() {
@@ -4800,6 +4819,9 @@ cpWpClearBtn?.addEventListener('click', async () => {
 });
 cpWpSound?.addEventListener('change', () => {
   saveBrowserSetting({ ntpWallpaperSound: cpWpSound.checked });
+});
+cpWpAnimated?.addEventListener('change', () => {
+  saveBrowserSetting({ ntpWallpaperAnimated: cpWpAnimated.checked });
 });
 cpWpFull?.addEventListener('change', () => {
   saveBrowserSetting({ ntpWallpaperFullBrowser: cpWpFull.checked });
@@ -5296,8 +5318,6 @@ async function showSidebarNowPlaying(btn, link) {
 // ─── Sidebar wiring ──────────────────────────────────────────────────────────
 // Known web apps offered as one-click sidebar toggles in Customize.
 const SIDEBAR_APP_CATALOG = [
-  { title: 'WhatsApp',  url: 'https://www.whatsapp.com' },
-  { title: 'Gmail',     url: 'https://mail.google.com' },
   { title: 'Snapchat',  url: 'https://web.snapchat.com' },
   { title: 'Spotify',   url: 'https://open.spotify.com' },
   { title: 'Discord',   url: 'https://discord.com/app' },

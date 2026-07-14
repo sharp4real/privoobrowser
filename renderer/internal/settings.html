@@ -195,7 +195,7 @@
   }
   .accent-swatch:hover { transform: scale(1.15); }
   .accent-swatch.active { border-color: #fff; box-shadow: 0 0 0 2px var(--accent); }
-  body.dark .accent-swatch.active { border-color: #232220; }
+  body.dark .accent-swatch.active { border-color: #2a2938; }
   /* Custom-colour swatch — native picker styled as a round swatch with a
      rainbow ring so it reads as "pick your own". */
   .accent-custom {
@@ -258,20 +258,63 @@
   /* Font scale + compact row inline control */
   .inline-select {
     min-width: 130px; height: 32px;
-    border: 1px solid #dadce0; border-radius: 10px;
+    border: 1px solid rgba(38,36,58,.1); border-radius: 10px;
     padding: 0 10px; font-size: 13px;
-    background: #fff; color: #1f1f1f;
+    background: #f4f3fa; color: #26243a;
     appearance: none; -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235f6368' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236d6a85' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 10px center;
     padding-right: 28px;
     cursor: default;
+    text-align: left;
+    transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
   }
-  body.dark .inline-select { background-color: #303134; border-color: #5f6368; color: #e8eaed;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239aa0a6' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  body.dark .inline-select { background-color: rgba(255,255,255,.06); border-color: rgba(255,255,255,.1); color: #eceaf6;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23a5a2bd' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   }
-  .inline-select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+  .inline-select:focus,
+  .inline-select.csel-trigger.open { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+  /* ── Fully custom dropdowns ──────────────────────────────────────────
+     Native <select> popups are OS-rendered and can't be themed. Every
+     select on this page is progressively enhanced (see enhanceSelect() in
+     the script below): the native element stays in the DOM as the real
+     source of truth (value/selectedIndex/change events all still work
+     exactly as before — nothing else in this file had to change), it's
+     just visually hidden, with a custom button + floating list drawn on
+     top of it that fully matches the app's design language. */
+  .csel-native {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    opacity: 0; pointer-events: none; border: none;
+  }
+  .csel-wrap { position: relative; display: inline-flex; }
+  .csel-trigger {
+    display: flex; align-items: center; width: 100%;
+    font-family: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .csel-list {
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0; min-width: 100%;
+    max-height: 280px; overflow-y: auto;
+    background: #fff; border: 1px solid rgba(38,36,58,.08); border-radius: 14px;
+    box-shadow: 0 20px 50px -14px rgba(38,36,58,.28), 0 4px 14px rgba(38,36,58,.08);
+    padding: 6px; z-index: 400;
+    display: none;
+    animation: csel-pop .15s cubic-bezier(.2,.8,.25,1) both;
+  }
+  .csel-list.open { display: block; }
+  @keyframes csel-pop { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: none; } }
+  body.dark .csel-list { background: #2a2938; border-color: rgba(255,255,255,.09); }
+  .csel-item {
+    padding: 8px 12px; border-radius: 9px; font-size: 13px; cursor: default;
+    color: #26243a; transition: background .12s ease;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .csel-item:hover { background: rgba(38,36,58,.06); }
+  .csel-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  body.dark .csel-item { color: #eceaf6; }
+  body.dark .csel-item:hover { background: rgba(255,255,255,.07); }
+  body.dark .csel-item.active { background: var(--accent-soft); color: var(--accent); }
 
   /* ── Filter lists ── */
   .filter-lists { display: flex; flex-direction: column; gap: 6px; padding: 6px 0 2px; }
@@ -948,33 +991,35 @@ body.dark header { background: #171a24; border-color: transparent; box-shadow: 0
    Matches the browser chrome so Settings feels like the same app. ── */
 :root { --pv-mono: ui-monospace,"Cascadia Code","SF Mono","JetBrains Mono",Consolas,monospace; }
 
-/* Light — warm stone. */
-body:not(.dark) { background: #e8e5dc; }
-body:not(.dark) header { background: #e8e5dc; border-bottom: 1px solid #d7d3c7; }
+/* Light — lavender canvas (matches the rest of the app). */
+body:not(.dark) { background: #f2f1f9; }
+body:not(.dark) header { background: #f2f1f9; border-bottom: 1px solid rgba(38,36,58,.08); }
 
-/* Dark — warm charcoal. */
-body.dark { background: #1a1917; }
-body.dark header { background: #1a1917; border-bottom: 1px solid #35332e; }
-body.dark .brand span { color: #928f84; }
+/* Dark — matching deep lavender. */
+body.dark { background: #1c1b26; }
+body.dark header { background: #1c1b26; border-bottom: 1px solid rgba(255,255,255,.08); }
+body.dark .brand span { color: #a5a2bd; }
 body.dark nav#nav { background: transparent; }
 
-header input.settings-search { border-radius: 12px; font-size: 13px; }
-body.dark header input.settings-search { background: #232220; border-color: #35332e; color: #ece9e0; }
-body.dark header input.settings-search:hover { background: #2a2925; }
-body.dark header input.settings-search:focus { background: #232220; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+header input.settings-search { border-radius: 999px; font-size: 13px; background: #f4f3fa; border: 1px solid rgba(38,36,58,.08); }
+header input.settings-search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+body.dark header input.settings-search { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.1); color: #eceaf6; }
+body.dark header input.settings-search:hover { background: rgba(255,255,255,.09); }
+body.dark header input.settings-search:focus { background: rgba(255,255,255,.1); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 
-/* Nav — quiet items; active gets a warm fill + a pine left marker. */
-.nav-btn { height: 38px; border-radius: 12px; }
-.nav-btn.active { background: transparent; color: var(--accent); font-weight: 600; box-shadow: inset 2px 0 0 var(--accent); }
-body.dark .nav-btn { color: #928f84; }
-body.dark .nav-btn:hover { background: #322f2b; color: #ece9e0; }
-body.dark .nav-btn.active { background: #232220; color: var(--text); font-weight: 600; box-shadow: inset 2px 0 0 var(--accent); }
-body:not(.dark) .nav-btn.active { background: #f2efe8; color: #20201b; }
+/* Nav — active item is a filled accent pill, matching the active-state
+   language used everywhere else in the app (tabs, menu items). */
+.nav-btn { height: 38px; border-radius: 999px; transition: background .15s ease, color .15s ease, transform .15s cubic-bezier(.34,1.5,.64,1); }
+.nav-btn:hover { transform: translateX(2px); }
+.nav-btn.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; box-shadow: none; }
+body.dark .nav-btn { color: #a5a2bd; }
+body.dark .nav-btn:hover { background: rgba(255,255,255,.07); color: #eceaf6; }
+body.dark .nav-btn.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; box-shadow: none; }
 
-/* Cards — flat, hairline border, squared. */
-.card { border-radius: 10px; }
-body:not(.dark) .card { background: #f2efe8; border: 1px solid #d7d3c7; }
-body.dark .card { background: #232220; border: 1px solid #35332e; box-shadow: none; }
+/* Cards — floating white, soft shadow, matches the rest of the app. */
+.card { border-radius: 16px; }
+body:not(.dark) .card { background: rgba(255,255,255,.92); border: 1px solid rgba(38,36,58,.07); box-shadow: 0 2px 10px rgba(38,36,58,.05); }
+body.dark .card { background: #2a2938; border: 1px solid rgba(255,255,255,.08); box-shadow: none; }
 /* One-time "moved to Extensions" notice. */
 .ext-move-notice{
   display:flex;align-items:center;gap:10px;margin-top:12px;padding:11px 14px;
@@ -991,25 +1036,25 @@ body.dark .card { background: #232220; border: 1px solid #35332e; box-shadow: no
   font-size:14px;padding:2px 6px;border-radius:5px;flex-shrink:0;opacity:.7;
 }
 .ext-move-notice button:hover{opacity:1;background:color-mix(in srgb,var(--accent) 18%,transparent)}
-body:not(.dark) .row { border-color: #e0ddd1; }
-body.dark .row { border-color: #35332e; }
+body:not(.dark) .row { border-color: rgba(38,36,58,.08); }
+body.dark .row { border-color: rgba(255,255,255,.08); }
 /* Section headers — uppercase tracked labels. */
 h3.card-subhead { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
-body.dark h3.card-subhead { color: #928f84; }
+body.dark h3.card-subhead { color: #a5a2bd; }
 
-/* Inputs / selects pick up the warm field tone. */
+/* Inputs / selects — lavender field tone, matching everywhere else. */
 body:not(.dark) .inline-select,
 body:not(.dark) select,
 body:not(.dark) input[type="text"],
 body:not(.dark) input[type="url"],
-body:not(.dark) input[type="number"] { background-color: #f2efe8; border-color: #d7d3c7; color: #20201b; }
+body:not(.dark) input[type="number"] { background-color: #f4f3fa; border-color: rgba(38,36,58,.1); color: #26243a; }
 body.dark .inline-select,
 body.dark select,
 body.dark input[type="text"],
 body.dark input[type="url"],
-body.dark input[type="number"] { background-color: #232220; border-color: #35332e; color: #ece9e0; }
-body.dark .filter-add-row input { background: #232220; border-color: #35332e; }
-body.dark .filter-list-item { background: #201f1c; border-color: #35332e; }
+body.dark input[type="number"] { background-color: rgba(255,255,255,.06); border-color: rgba(255,255,255,.1); color: #eceaf6; }
+body.dark .filter-add-row input { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.1); }
+body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.08); }
 
 /* ── Opera-style icons beside each settings section ──
    Rendered as CSS masks so they inherit the nav text colour (muted → purple
@@ -1267,7 +1312,7 @@ body.dark .filter-list-item { background: #201f1c; border-color: #35332e; }
             </select>
           </div>
           <div class="row">
-            <div><div class="label">Animate wallpaper</div><div class="desc">A slow, subtle breathing motion on the default wave wallpaper.</div></div>
+            <div><div class="label">Animate Default Wallpaper</div><div class="desc">A slow, subtle breathing motion on the default wave wallpaper.</div></div>
             <label class="switch"><input type="checkbox" id="ntpWallpaperAnimated"><span class="slider"></span></label>
           </div>
           <div class="row">
@@ -3031,6 +3076,109 @@ const _pwRevealCache = new Map();
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') closeClearModal();
 });
+
+// ── Fully custom dropdowns ───────────────────────────────────────────────
+// Progressively enhances every native <select> into a custom floating list
+// that matches the app's design language. The native <select> is kept in
+// the DOM (just visually hidden) and remains the real source of truth —
+// every existing `$('id').value = x`, `.addEventListener('change', ...)`,
+// and IPC round-trip elsewhere in this file keeps working completely
+// unmodified. Two sync paths cover every way the value can change:
+//   1. A MutationObserver catches <option> list changes (searchEngine,
+//      dohProvider and preferredLanguage are populated dynamically, after
+//      this runs) and rebuilds the custom list + label.
+//   2. `value`/`selectedIndex` are shadowed with instance-level accessors,
+//      so a plain `select.value = x` assignment anywhere in this file (the
+//      common way settings get applied on load) ALSO updates the custom
+//      trigger's label — a DOM mutation observer alone can't see that, since
+//      it doesn't touch any element's children or attributes.
+function enhanceSelect(select) {
+  if (select.dataset.enhanced) return;
+  select.dataset.enhanced = '1';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'csel-wrap';
+  // Carry over any inline width (e.g. style="width:100%") so the wrap takes
+  // the same footprint the select used to — the select itself becomes
+  // absolutely positioned inside it and can no longer size the layout.
+  if (select.style.width) wrap.style.width = select.style.width;
+  select.parentNode.insertBefore(wrap, select);
+  wrap.appendChild(select);
+  select.classList.add('csel-native');
+  select.tabIndex = -1;
+
+  const trigger = document.createElement('button');
+  trigger.type = 'button';
+  // Reuses the select's own classes (almost always .inline-select) so the
+  // trigger automatically matches its size/padding/font with no new CSS.
+  trigger.className = select.className.replace('csel-native', '').trim() + ' csel-trigger';
+  trigger.disabled = select.disabled;
+  wrap.appendChild(trigger);
+
+  const list = document.createElement('div');
+  list.className = 'csel-list';
+  wrap.appendChild(list);
+
+  function syncLabel() {
+    const opt = select.options[select.selectedIndex];
+    trigger.textContent = opt ? opt.textContent : '';
+    trigger.disabled = select.disabled;
+  }
+  function buildList() {
+    list.innerHTML = '';
+    Array.from(select.options).forEach((opt, i) => {
+      const item = document.createElement('div');
+      item.className = 'csel-item' + (i === select.selectedIndex ? ' active' : '');
+      item.textContent = opt.textContent;
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (select.selectedIndex !== i) {
+          select.selectedIndex = i;   // shadowed setter below also fires syncLabel()
+          select.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        closeList();
+      });
+      list.appendChild(item);
+    });
+  }
+  function openList() {
+    if (select.disabled) return;
+    document.querySelectorAll('.csel-list.open').forEach((l) => l.classList.remove('open'));
+    buildList();
+    list.classList.add('open');
+    trigger.classList.add('open');
+  }
+  function closeList() { list.classList.remove('open'); trigger.classList.remove('open'); }
+
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (list.classList.contains('open')) closeList(); else openList();
+  });
+  document.addEventListener('click', (e) => { if (!wrap.contains(e.target)) closeList(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeList(); });
+
+  new MutationObserver(() => {
+    syncLabel();
+    if (list.classList.contains('open')) buildList();
+  }).observe(select, { childList: true, subtree: true, attributes: true, attributeFilter: ['disabled'] });
+
+  // Shadow value/selectedIndex so ANY programmatic set anywhere in this file
+  // (the normal way settings apply their saved values on load) keeps the
+  // custom trigger's label in sync — a childList observer can't see this,
+  // since setting .value doesn't mutate the DOM tree.
+  for (const prop of ['value', 'selectedIndex']) {
+    const desc = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, prop);
+    if (!desc) continue;
+    Object.defineProperty(select, prop, {
+      configurable: true,
+      get() { return desc.get.call(select); },
+      set(v) { desc.set.call(select, v); syncLabel(); },
+    });
+  }
+
+  syncLabel();
+}
+document.querySelectorAll('select').forEach(enhanceSelect);
 
 init();
 </script>

@@ -11,9 +11,9 @@
    Accent vars live ONLY on :root (the <html> element). Redeclaring them on
    body.dark would win over the inline --accent that applyAccent() sets on
    <html>, freezing the accent to pine in dark mode. */
-:root{ --accent:#8b7cf7; --accent-hover:#6bbb90; --accent-soft:rgba(139,124,247,.16); }
-body:not(.dark){ background:#e8e5dc !important; color:#20201b; }
-body.dark{ background:#1a1917 !important; color:#ece9e0; }
+:root{ --accent:#8b7cf7; --accent-hover:#9d90f8; --accent-soft:rgba(139,124,247,.16); }
+body:not(.dark){ background:#f2f1f9 !important; color:#26243a; }
+body.dark{ background:#1c1b26 !important; color:#eceaf6; }
 /* html is always transparent — body's solid fill covers it in normal mode,
    and in transparency mode the see-through html lets the OS material reach
    the corners. (A `body.transparent-ui html` selector can't work — html is
@@ -49,11 +49,11 @@ html::-webkit-scrollbar-thumb:hover{background:#bdc1c6;background-clip:padding-b
 body.dark html::-webkit-scrollbar-thumb,body.dark::-webkit-scrollbar-thumb{background:#5f6368;background-clip:padding-box;border:3px solid transparent}
 
 header{
-  background:#f2efe8;border-bottom:1px solid #d7d3c7;
+  background:#ffffff;border-bottom:1px solid #e3e1ef;
   padding:0 28px;height:60px;display:flex;align-items:center;gap:16px;
   position:sticky;top:0;z-index:10;
 }
-body.dark header{background:#1a1917;border-color:#35332e}
+body.dark header{background:#1c1b26;border-color:#3a3850}
 .logo-img{
   width:28px;height:28px;border-radius:10px;
   object-fit:contain;flex-shrink:0;
@@ -96,8 +96,8 @@ body.dark #empty h2,body.dark .ext-name{color:#e8eaed}
   color:var(--accent,#8b7cf7);background:var(--accent-soft,rgba(139,124,247,.16));
   border-radius:10px;padding:3px 8px;
 }
-.section-note{font-size:12.5px;color:#6a685e;margin:0 0 16px}
-body.dark .section-note{color:#928f84}
+.section-note{font-size:12.5px;color:#6d6a85;margin:0 0 16px}
+body.dark .section-note{color:#a5a2bd}
 
 /* Built-in extension cards carry a small "By Privoo" tag + accent edge. */
 #builtin-list .ext-card,
@@ -113,11 +113,11 @@ body.dark #builtin-list .ext-card{border-color:var(--accent,#8b7cf7)}
 .ext-always::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent,#8b7cf7)}
 
 .ext-card{
-  background:#f2efe8;border-radius:10px;padding:18px;
-  border:1px solid #d7d3c7;display:flex;flex-direction:column;gap:12px;
+  background:#ffffff;border-radius:10px;padding:18px;
+  border:1px solid #e3e1ef;display:flex;flex-direction:column;gap:12px;
   transition:box-shadow .12s;position:relative;
 }
-body.dark .ext-card{background:#232220;border-color:#35332e}
+body.dark .ext-card{background:#2a2938;border-color:#3a3850}
 .ext-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.08)}
 body.dark .ext-card:hover{box-shadow:none}
 

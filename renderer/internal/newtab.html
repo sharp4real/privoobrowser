@@ -42,15 +42,15 @@ body.ntp-ready.ntp-wave-on #ntp-root{
   /* Pre-paint background follows the OS color-scheme so we don't flash
      white on dark-mode launches before applyNtpLook() runs. The host
      forwards prefers-color-scheme: dark via CDP when darkMode is on. */
-  background-color:#e8e5dc;
+  background-color:#f2f1f9;
   background-size:cover;background-position:center;background-repeat:no-repeat;
 }
 @media (prefers-color-scheme: dark) {
-  #ntp-bg { background-color:#1a1917; }
+  #ntp-bg { background-color:#1c1b26; }
 }
 /* Explicit theme classes win over the OS media query so dark/light never mismatch. */
-body.ntp-dark #ntp-bg { background-color:#1a1917; }
-body:not(.ntp-dark):not(.ntp-wp) #ntp-bg { background-color:#e8e5dc; }
+body.ntp-dark #ntp-bg { background-color:#1c1b26; }
+body:not(.ntp-dark):not(.ntp-wp) #ntp-bg { background-color:#f2f1f9; }
 /* Increase Transparency on the new tab — drop the solid fill so the OS
    material peeks through. Only kicks in when no wallpaper is set; if the
    user uploaded a wallpaper, that takes precedence (transparency over a
@@ -170,7 +170,7 @@ body.ntp-wp .ntp-brand-logo{filter:drop-shadow(0 2px 14px rgba(0,0,0,.5));}
   letter-spacing:-.045em;
   line-height:1;
   text-align:center;
-  color:#20201b;
+  color:#26243a;
   user-select:none;
   -webkit-user-select:none;
   /* Word rises + tightens into place on load. */
@@ -205,20 +205,20 @@ body.ntp-wm-glow .ntp-brand{animation:wm-glow 2.6s ease-in-out infinite;}
 body.ntp-wm-bounce .ntp-brand{animation:wm-bounce 2.4s cubic-bezier(.3,.7,.4,1) infinite;}
 @keyframes wm-bounce{0%,100%{transform:translateY(0)}14%{transform:translateY(-11px)}28%{transform:translateY(0)}40%{transform:translateY(-5px)}52%{transform:translateY(0)}}
 body.ntp-wm-shimmer .ntp-brand{
-  color:#20201b;
+  color:#26243a;
   background:linear-gradient(100deg,currentColor 0 40%,var(--accent,#8b7cf7) 50%,currentColor 60% 100%);
   background-size:230% 100%;
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
   animation:wm-shimmer 3.4s linear infinite;
 }
 body.ntp-dark.ntp-wm-shimmer .ntp-brand,
-body.ntp-wp.ntp-wm-shimmer .ntp-brand{color:#ece9e0;}
+body.ntp-wp.ntp-wm-shimmer .ntp-brand{color:#eceaf6;}
 @keyframes wm-shimmer{from{background-position:130% 0}to{background-position:-130% 0}}
 
 @media(prefers-reduced-motion:reduce){
   .ntp-brand,.ntp-brand i{animation:none !important}
 }
-body.ntp-dark:not(.ntp-wp) .ntp-brand{color:#ece9e0;}
+body.ntp-dark:not(.ntp-wp) .ntp-brand{color:#eceaf6;}
 body.ntp-wp .ntp-brand{
   color:#fff;
   text-shadow:0 2px 22px rgba(0,0,0,.5),0 1px 4px rgba(0,0,0,.35);
@@ -426,28 +426,28 @@ body.ntp-dark:not(.ntp-wp) #search-form svg{fill:#9aa0a6;}
 #search-form.has-engine-icon #search-icon{display:none;}
 #search-form.has-engine-icon #search-icon-img{display:block;}
 
-#search-form svg{ fill:#928f84; }
+#search-form svg{ fill:#a5a2bd; }
 /* Leading search icon + trailing clear button (muted, never accent). */
 #search-icon{ flex-shrink:0; color:#8a887e; transition:transform .15s cubic-bezier(.34,1.6,.64,1); }
 #search-form:focus-within #search-icon{ color:var(--accent,#8b7cf7); transform:scale(1.08); }
-body.ntp-dark:not(.ntp-wp) #search-icon{ color:#928f84; }
+body.ntp-dark:not(.ntp-wp) #search-icon{ color:#a5a2bd; }
 body.ntp-wp #search-icon{ color:rgba(255,255,255,.8); }
 #search-clear{
   flex-shrink:0;border:none;background:transparent;cursor:pointer;padding:4px;
   display:flex;align-items:center;justify-content:center;border-radius:10px;
   color:#8a887e;
 }
-#search-clear:hover{ background:rgba(0,0,0,.06); color:#20201b; }
-body.ntp-dark:not(.ntp-wp) #search-clear:hover{ background:rgba(255,255,255,.08); color:#ece9e0; }
+#search-clear:hover{ background:rgba(0,0,0,.06); color:#26243a; }
+body.ntp-dark:not(.ntp-wp) #search-clear:hover{ background:rgba(255,255,255,.08); color:#eceaf6; }
 body.ntp-wp #search-clear{ color:rgba(255,255,255,.85); }
 #search-clear[hidden]{ display:none; }
 #q{
   flex:1;border:none;outline:none;background:transparent;user-select:text;
-  font-size:15px;color:#20201b;
+  font-size:15px;color:#26243a;
 }
-body.ntp-dark:not(.ntp-wp) #q{color:#ece9e0;}
+body.ntp-dark:not(.ntp-wp) #q{color:#eceaf6;}
 body.ntp-wp #q{color:#fff;}
-#q::placeholder{color:#928f84;}
+#q::placeholder{color:#a5a2bd;}
 
 /* ── Focus mode ── click the search: it lifts with a pine ring while the
    wordmark, shortcuts, clock and news recede, so the field owns the screen.
@@ -476,9 +476,9 @@ body.ntp-focused-search-on #ntp-root.search-focused #ntp-clock{
 
 #search-suggestions{
   position:absolute;top:calc(100% + 8px);left:0;right:0;
-  background:#f2efe8;border:1px solid #d7d3c7;border-radius:12px;
+  background:#ffffff;border:1px solid #e3e1ef;border-radius:12px;
   box-shadow:0 16px 40px -12px rgba(0,0,0,.28), 0 3px 10px rgba(0,0,0,.08);
-  overflow:hidden;z-index:150;color:#20201b;
+  overflow:hidden;z-index:150;color:#26243a;
   padding:5px;
   display:none;
   animation:ss-pop .14s cubic-bezier(.2,0,.2,1);
@@ -490,9 +490,9 @@ body.ntp-focused-search-on #ntp-root.search-focused #ntp-clock{
   to{opacity:1;transform:translateY(0);}
 }
 body.ntp-dark:not(.ntp-wp) #search-suggestions{
-  background:#232220;border-color:#35332e;
+  background:#2a2938;border-color:#3a3850;
   box-shadow:0 18px 44px -14px rgba(0,0,0,.6), 0 3px 12px rgba(0,0,0,.4);
-  color:#ece9e0;
+  color:#eceaf6;
 }
 .ss-item{
   display:flex;align-items:center;gap:12px;
@@ -512,9 +512,9 @@ body.ntp-dark:not(.ntp-wp) .ss-item.active{background:rgba(139,124,247,.16);}
 .ss-icon{
   width:22px;height:22px;flex-shrink:0;border-radius:10px;
   display:flex;align-items:center;justify-content:center;
-  background:rgba(0,0,0,.05);color:#6a685e;
+  background:rgba(0,0,0,.05);color:#6d6a85;
 }
-body.ntp-dark:not(.ntp-wp) .ss-icon{background:rgba(255,255,255,.06);color:#928f84;}
+body.ntp-dark:not(.ntp-wp) .ss-icon{background:rgba(255,255,255,.06);color:#a5a2bd;}
 .ss-icon svg{width:14px;height:14px;fill:currentColor;}
 .ss-item > span:not(.ss-icon){
   flex:1;min-width:0;
@@ -522,7 +522,7 @@ body.ntp-dark:not(.ntp-wp) .ss-icon{background:rgba(255,255,255,.06);color:#928f
 }
 /* Trailing hint (e.g. "Search") on the right of a suggestion row. */
 .ss-item .ss-hint{
-  flex:0 0 auto;font-size:11px;font-weight:600;color:#928f84;
+  flex:0 0 auto;font-size:11px;font-weight:600;color:#a5a2bd;
   letter-spacing:.02em;
 }
 
@@ -582,7 +582,7 @@ body.ntp-dark:not(.ntp-wp) .ql-item{background:rgba(40,38,54,.85);border-color:r
 body.ntp-wp .ql-item{background:rgba(255,255,255,.82);}
 body.ntp-wp.ntp-dark .ql-item{background:rgba(35,34,48,.75);color:rgba(255,255,255,.85);}
 body.ntp-wp .ql-item{color:rgba(255,255,255,.85);}
-body.ntp-dark:not(.ntp-wp) .ql-item{color:#928f84;}
+body.ntp-dark:not(.ntp-wp) .ql-item{color:#a5a2bd;}
 .ql-ico{
   width:38px;height:38px;border-radius:10px;
   background:transparent;
@@ -594,12 +594,12 @@ body.ntp-dark:not(.ntp-wp) .ql-item{color:#928f84;}
 }
 .ql-item:hover .ql-ico{transform:scale(1.06);}
 body.ntp-wp .ql-ico{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.16);color:#fff;}
-body.ntp-dark:not(.ntp-wp) .ql-ico{background:#232220;border-color:#35332e;color:#928f84;}
-.ql-item:hover .ql-ico{border-color:var(--accent,#8b7cf7);color:var(--text,#20201b);}
-body.ntp-dark:not(.ntp-wp) .ql-item:hover .ql-ico{color:#ece9e0;}
+body.ntp-dark:not(.ntp-wp) .ql-ico{background:#2a2938;border-color:#3a3850;color:#a5a2bd;}
+.ql-item:hover .ql-ico{border-color:var(--accent,#8b7cf7);color:var(--text,#26243a);}
+body.ntp-dark:not(.ntp-wp) .ql-item:hover .ql-ico{color:#eceaf6;}
 body.ntp-wp .ql-item:hover .ql-ico{color:#fff;}
-.ql-item:hover .ql-name{color:var(--text,#20201b);}
-body.ntp-dark:not(.ntp-wp) .ql-item:hover .ql-name{color:#ece9e0;}
+.ql-item:hover .ql-name{color:var(--text,#26243a);}
+body.ntp-dark:not(.ntp-wp) .ql-item:hover .ql-name{color:#eceaf6;}
 .ql-ico img{width:100%;height:100%;object-fit:contain;border-radius:10px;}
 .ql-ico svg{width:100%;height:100%;border-radius:10px;}
 .ql-name{
@@ -805,17 +805,17 @@ footer{
 .wx-card{
   display:inline-flex;align-items:center;gap:13px;
   padding:10px 16px;border-radius:10px;
-  background:#f2efe8;
-  border:1px solid #d7d3c7;
+  background:#ffffff;
+  border:1px solid #e3e1ef;
   box-shadow:none;
-  color:#20201b;
+  color:#26243a;
   font-size:13px;
   user-select:none;
 }
 body.ntp-dark:not(.ntp-wp) .wx-card{
-  background:#232220;
-  border-color:#35332e;
-  color:#ece9e0;
+  background:#2a2938;
+  border-color:#3a3850;
+  color:#eceaf6;
 }
 body.ntp-wp .wx-card{
   background:rgba(20,19,17,.5);
@@ -844,7 +844,7 @@ body.ntp-wp .wx-card{
   display:block;width:fit-content;
   margin:14px auto 0;padding:2px 0;
   border:0;background:none;
-  color:var(--muted,#6a685e);
+  color:var(--muted,#6d6a85);
   font-size:12.5px;font-weight:500;text-decoration:none;
   border-bottom:1px solid transparent;
   -webkit-app-region:no-drag;cursor:pointer;
@@ -1244,7 +1244,7 @@ body.ntp-wp .ql-name{color:rgba(255,255,255,.85);text-shadow:0 1px 4px rgba(0,0,
 #ntp-clock,#ntp-weather,#ntp-news-link{animation:ntp-rise .5s cubic-bezier(.2,.8,.25,1) .24s both}
 
 /* ── Ambient wallpaper drift — a barely-there 45s breathe. Settings ->
-   New tab -> "Animate wallpaper". Gated by a body class so it's a real,
+   New tab -> "Animate Default Wallpaper". Gated by a body class so it's a real,
    user-controllable toggle rather than always-on. ── */
 @keyframes ntp-bg-drift{from{transform:scale(1)}to{transform:scale(1.045)}}
 body.ntp-wp-animated #ntp-bg{animation:ntp-bg-drift 45s ease-in-out infinite alternate;will-change:transform}
@@ -1345,6 +1345,9 @@ body.ntp-wp-animated #ntp-bg{animation:ntp-bg-drift 45s ease-in-out infinite alt
     <div class="btn-row">
       <button type="button" class="mini-btn primary" id="cw-choose">Choose image</button>
       <button type="button" class="mini-btn" id="cw-clear">Remove wallpaper</button>
+    </div>
+    <div class="btn-row">
+      <button type="button" class="mini-btn" id="cw-animate-toggle">Animate Default Wallpaper: <span id="cw-animate-state">On</span></button>
     </div>
     <div class="modal-btns">
       <button type="button" class="btn btn-cancel" id="custom-close">Close</button>
@@ -1747,22 +1750,19 @@ function faviconHostOf(url) {
     return FAVICON_HOST_ALIASES[h] || h.replace(/^www\./, '');
   } catch { return ''; }
 }
-// Known catalog apps get an embedded brand mark instead of a third-party
-// lookup — same set and same reasoning as the sidebar's registry: those
-// lookups were inconsistent for exactly these hosts (Gmail returned the
-// plain Google "G", WhatsApp returned nothing), and this needs no network
-// round-trip at all.
-// Only the two hosts that were ACTUALLY broken get an embedded icon.
-// Google's s2 favicon service returns the plain Google "G" for
-// mail.google.com (not the Gmail envelope) and nothing at all for
-// WhatsApp — both wrong regardless of network conditions, so a local
-// SVG is the only real fix. Discord/Spotify/Instagram/Snapchat/etc. were
-// resolving fine via the normal favicon-service chain; they were swapped
-// to hand-drawn approximations in a previous pass and looked worse than
-// the real icons that service was already returning — reverted.
+// A small, deliberate embedded-icon list — same set and reasoning as the
+// sidebar's registry in renderer.js. WhatsApp and Gmail: the favicon
+// service returns the plain Google "G" for mail.google.com (not the
+// Gmail envelope) and nothing at all for WhatsApp. Spotify: its real
+// mark (green circle, black sound-wave arcs) reads better than the
+// favicon service's result. Discord/Instagram/Snapchat/etc. use the
+// normal lookup — they were resolving fine already.
 const BRAND_ICON_SVG = {
   'whatsapp.com': '<svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#25D366"/><path fill="#fff" d="M12 5.5a6.5 6.5 0 0 0-5.6 9.8L5.5 18.5l3.3-.9A6.5 6.5 0 1 0 12 5.5zm-2.7 3.6c.14 0 .3.01.43.02.14.01.3-.02.47.37.18.42.6 1.46.65 1.56.05.11.09.23.02.37-.07.14-.11.23-.22.35-.11.13-.23.28-.33.38-.11.11-.22.22-.1.44.13.22.57.98 1.24 1.6.85.8 1.57 1.05 1.79 1.17.22.11.35.1.48-.06.13-.16.55-.65.7-.87.15-.22.29-.19.49-.11.2.07 1.28.62 1.5.73.22.11.37.17.42.26.06.1.06.55-.13 1.08-.19.54-1.11 1.02-1.55 1.09-.4.06-.89.09-1.44-.09-.33-.1-.75-.24-1.3-.48-2.4-.9-3.88-3.25-4-3.4-.11-.16-.93-1.24-.93-2.36s.6-1.66.8-1.9c.2-.24.45-.3.6-.3z"/></svg>',
   'gmail.com': '<svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#fff" stroke="#e3e1ef" stroke-width="1"/><path fill="#EA4335" d="M5 8.2 12 13l7-4.8V17a1 1 0 0 1-1 1h-1V9.9l-5 3.5-5-3.5V18H6a1 1 0 0 1-1-1z"/><path fill="#4285F4" d="M17 7H7a1 1 0 0 0-.85.47L12 12.1l5.85-4.63A1 1 0 0 0 17 7z"/></svg>',
+  // Real Spotify mark: green circle, BLACK arcs (the earlier hand-drawn
+  // version used white strokes, which isn't the actual logo).
+  'spotify.com': '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#1DB954"/><path d="M7.3 15.6c2.9-.9 6.4-.7 8.9.8" stroke="#000" stroke-width="1.6" stroke-linecap="round" fill="none"/><path d="M6.7 12.3c3.5-1.2 7.9-1 10.9.9" stroke="#000" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M6.1 8.9c4.1-1.5 9.4-1.2 12.9 1" stroke="#000" stroke-width="2" stroke-linecap="round" fill="none"/></svg>',
 };
 function brandIconSvgFor(url) {
   const h = faviconHostOf(url);
@@ -1863,11 +1863,9 @@ function renderQL() {
     frag.appendChild(el);
   }
 
-  const addEl = document.createElement('div');
-  addEl.className = 'ql-add';
-  addEl.innerHTML = `<div class="ql-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></div><span>Add</span>`;
-  addEl.addEventListener('click', () => openModal());
-  frag.appendChild(addEl);
+  // The in-grid "Add" ghost card is gone — the dedicated top-right
+  // "Add shortcut" button (#ntp-add-shortcut) is the one entry point now,
+  // so the shortcut row only ever shows actual shortcuts.
 
   // Atomic swap — single reflow.
   wrap.replaceChildren(frag);
@@ -1943,6 +1941,8 @@ async function openCustomize() {
   if (!api) return;
   const { settings } = await api.getSettings();
   syncThemeButtons(settings);
+  const stateEl = document.getElementById('cw-animate-state');
+  if (stateEl) stateEl.textContent = settings?.ntpWallpaperAnimated === false ? 'Off' : 'On';
 }
 function closeCustomize() {
   document.getElementById('custom-modal-bg').classList.remove('open');
@@ -1987,6 +1987,16 @@ document.getElementById('cw-clear').addEventListener('click', async () => {
   if (!api?.clearNtpWallpaper) return;
   await api.clearNtpWallpaper();
   await loadNtp();
+});
+
+document.getElementById('cw-animate-toggle').addEventListener('click', async () => {
+  if (!api) return;
+  const { settings } = await api.getSettings();
+  const next = settings?.ntpWallpaperAnimated === false;   // toggle
+  await api.setSettings({ ntpWallpaperAnimated: next });
+  const stateEl = document.getElementById('cw-animate-state');
+  if (stateEl) stateEl.textContent = next ? 'On' : 'Off';
+  document.body.classList.toggle('ntp-wp-animated', next);
 });
 
 const qInput = document.getElementById('q');

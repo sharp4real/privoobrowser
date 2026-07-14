@@ -251,7 +251,7 @@ const DEFAULTS = {
   newSearchBarStyle: false, // legacy boolean for the "soft" address bar (superseded by searchBarStyle)
   searchBarStyle: '',     // address-bar appearance: classic | soft | pill | square ('' = derive from newSearchBarStyle)
   vtabsCenterIcons: false, // vertically centre the vertical-tabs icon rail
-  newTabBtnCircle: true, // draw a circle around the new-tab "+" button
+  newTabBtnCircle: false, // draw a circle around the new-tab "+" button
   syncDiscordTheme: true,  // recolor discord.com to match Privoo's accent + theme palette
   uiFont: 'system',       // interface font: system | rounded | classic | grotesk | mono | dyslexic
   uiRoundness: 'default', // corner style of the whole UI: default | sharp | round
@@ -393,6 +393,17 @@ function load() {
         cache.ntpBrandStyle = 'logo';
       }
       cache.seedTrim1Applied = true;
+      try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
+    }
+    // Third migration wave, same "must live outside the earlier block" reason.
+    // seedTrim1 had turned newTabBtnCircle ON for anyone who'd never touched
+    // it; that decision is reversed, so undo it once for anyone still sitting
+    // on the value that migration set (never touched it since).
+    if (!parsed.circleUndo1Applied) {
+      if (parsed.newTabBtnCircle === true) {
+        cache.newTabBtnCircle = false;
+      }
+      cache.circleUndo1Applied = true;
       try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
     }
   } catch {
