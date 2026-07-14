@@ -9,7 +9,7 @@
 Ads and trackers blocked out of the box. No accounts, no sync servers, no telemetry.
 Everything you do stays on your device.
 
-[![Version](https://img.shields.io/badge/version-4.0.8-8b7cf7)](https://github.com/sharp4real/privoobrowser/releases)
+[![Version](https://img.shields.io/badge/version-4.0.9-8b7cf7)](https://github.com/sharp4real/privoobrowser/releases)
 [![License](https://img.shields.io/badge/license-MIT-57a97e)](LICENSE)
 [![Discord](https://img.shields.io/badge/discord-join-57a97e)](https://discord.gg/WweUzF3YCQ)
 

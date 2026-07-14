@@ -1113,6 +1113,31 @@ const _YT_ALLOWLIST = [
   '@@||jnn-pa.googleapis.com^',   // player attestation — blocking it breaks playback
 ];
 
+// Same problem, same fix, for Spotify's web player: EasyPrivacy/EasyList
+// carry generic rules that key on path fragments like "collection" or
+// "library" as tracking signals, which also happen to be the literal names
+// of Spotify's own saved-library endpoints. An over-eager match there is
+// exactly what produces "Something went wrong" on the Your Library page —
+// the request never leaves the machine, so Spotify's client just sees a
+// failed fetch. apresolve.spotify.com is the most critical entry: it's how
+// the client discovers which spclient host to talk to, so blocking it can
+// break the player entirely, not just the library view. isSpotifyAdRequest()
+// (webRequest-based, applied separately in setupHeaderPrivacy) still blocks
+// Spotify's actual ad/telemetry hosts — this only protects the real API.
+const _SPOTIFY_ALLOWLIST = [
+  '@@||apresolve.spotify.com^',
+  '@@||api.spotify.com^',
+  '@@||api-partner.spotify.com^',
+  '@@||spclient.wg.spotify.com^',
+  '@@||*.spclient.wg.spotify.com^',   // regional hosts, e.g. gew4-spclient.spotify.com
+  '@@||open.spotify.com/api/^',
+  '@@||open.spotify.com/collection^',
+  '@@||open.spotify.com/library^',
+  '@@||guc-spclient.spotify.com^',
+  '@@||scdn.co^',
+  '@@||*.scdn.co^',
+];
+
 // Ad-serving/tracking network blocks + cosmetic ad-UI removal. Kept separate
 // from the allowlist above so a parse hiccup here can never drop that.
 const _YT_EXTRA_FILTERS = [
@@ -1282,6 +1307,7 @@ async function getSharedBlocker() {
     // lands even if a later ad/cosmetic rule fails to parse. Then the ad rules.
     try { blocker.updateFromDiff({ added: _YT_ALLOWLIST }); } catch {}
     try { blocker.updateFromDiff({ added: _YT_EXTRA_FILTERS }); } catch {}
+    try { blocker.updateFromDiff({ added: _SPOTIFY_ALLOWLIST }); } catch {}
 
     blocker.on('request-blocked',    () => { stats.blockedAds++; });
     blocker.on('request-redirected', () => { stats.blockedAds++; });
