@@ -23,25 +23,45 @@ body{
 }
 :root.dark body{background-image:url('privoo://newtab/darkbg.svg');}
 
+/* Custom scrollbar — matches the rest of the app */
+html::-webkit-scrollbar{width:12px;height:12px}
+html::-webkit-scrollbar-track{background:transparent}
+html::-webkit-scrollbar-thumb{background:#dadce0;border-radius:12px;border:3px solid transparent;background-clip:padding-box}
+html::-webkit-scrollbar-thumb:hover{background:#bdc1c6;background-clip:padding-box;border:3px solid transparent}
+:root.dark::-webkit-scrollbar-thumb{background:#5f6368;background-clip:padding-box;border:3px solid transparent}
+
 /* ── Hero ─────────────────────────────────────────────────────────────── */
 .hero{
   position:relative;overflow:hidden;
   margin:28px auto 6px;max-width:820px;
-  border:1px solid var(--border);border-radius:22px;
-  padding:56px 32px 42px;
-  background:
-    radial-gradient(120% 150% at 12% -30%, var(--accent-soft), transparent 62%),
-    var(--surface);
-  box-shadow:0 24px 60px -24px rgba(38,36,58,.22), 0 4px 14px rgba(38,36,58,.06);
+  border:1px solid var(--border);border-radius:26px;
+  padding:52px 36px 44px;
+  background:var(--surface);
+  box-shadow:0 28px 70px -28px rgba(38,36,58,.26), 0 4px 14px rgba(38,36,58,.06), inset 0 1px 0 rgba(255,255,255,.5);
   animation:hero-in .5s cubic-bezier(.2,.8,.25,1) both;
 }
+.hero::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(60% 70% at 8% -20%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 70%),
+    radial-gradient(45% 55% at 96% 10%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 72%);
+  animation:hero-glow 16s ease-in-out infinite alternate;
+}
+@keyframes hero-glow{from{background-position:0 0, 0 0}to{background-position:6% 4%, -5% -3%}}
 @keyframes hero-in{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
-.hero-inner{max-width:760px;margin:0 auto;}
+.hero-inner{position:relative;max-width:760px;margin:0 auto;}
+.hero-mark{
+  width:44px;height:44px;border-radius:13px;margin-bottom:18px;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(155deg, var(--accent), color-mix(in srgb, var(--accent) 60%, #c58af7));
+  box-shadow:0 10px 26px -8px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.hero-mark svg{width:22px;height:22px;fill:#fff;}
 .eyebrow{
-  display:inline-flex;align-items:center;gap:8px;margin-bottom:20px;
+  display:inline-flex;align-items:center;gap:8px;margin-bottom:16px;
   font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
   color:var(--accent);background:var(--accent-soft);
-  border:1px solid var(--accent);border-radius:100px;padding:5px 12px;
+  border-radius:100px;padding:5px 12px;
 }
 .eyebrow svg{width:13px;height:13px;fill:currentColor;}
 h1{
@@ -62,24 +82,32 @@ h1 .dot{color:var(--accent);}
 
 .item{
   display:grid;grid-template-columns:44px 1fr;gap:18px;
-  padding:22px 0;border-bottom:1px solid var(--border);
+  padding:22px 16px;margin:0 -16px;border-bottom:1px solid var(--border);border-radius:14px;
   opacity:0;transform:translateY(10px);
   animation:rise .55s cubic-bezier(.2,.85,.25,1) both;
+  transition:background .16s ease;
 }
+.item:hover{background:var(--accent-soft);}
+.item:hover .ico{transform:scale(1.06);}
 .item:last-of-type{border-bottom:none;}
 .item:nth-of-type(1){animation-delay:.04s}
 .item:nth-of-type(2){animation-delay:.11s}
 .item:nth-of-type(3){animation-delay:.18s}
 .item:nth-of-type(4){animation-delay:.25s}
 .item:nth-of-type(5){animation-delay:.32s}
+.item:nth-of-type(6){animation-delay:.39s}
+.item:nth-of-type(7){animation-delay:.46s}
+.item:nth-of-type(8){animation-delay:.53s}
 @keyframes rise{to{opacity:1;transform:none}}
-@media(prefers-reduced-motion:reduce){.item{animation:none;opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.item{animation:none;opacity:1;transform:none}.hero::before{animation:none}}
 
 .ico{
-  width:44px;height:44px;border-radius:11px;
+  width:44px;height:44px;border-radius:13px;
   display:flex;align-items:center;justify-content:center;
-  background:var(--accent-soft);color:var(--accent);
+  background:linear-gradient(155deg, color-mix(in srgb, var(--accent) 20%, var(--surface)), var(--accent-soft));
+  color:var(--accent);
   border:1px solid var(--border);
+  transition:transform .18s cubic-bezier(.34,1.5,.64,1);
 }
 .ico svg{width:21px;height:21px;fill:currentColor;}
 .kicker{
@@ -105,12 +133,13 @@ h1 .dot{color:var(--accent);}
 
 <header class="hero">
   <div class="hero-inner">
+    <div class="hero-mark"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z"/></svg></div>
     <div class="eyebrow" id="ver">
       <svg viewBox="0 0 24 24"><path d="M12 2l1.9 5.5L19.5 9l-4.6 3.4L16.5 18 12 14.7 7.5 18l1.6-5.6L4.5 9l5.6-1.5z"/></svg>
       <span id="ver-text">What's new</span>
     </div>
     <h1>Privoo News<span class="dot">.</span></h1>
-    <p class="lede">Every improvement, shipped straight to your browser. Rendered locally from this build — nothing is ever fetched, logged, or tracked.</p>
+    <p class="lede">Every improvement, shipped straight to your browser. Rendered locally from this build, nothing is ever fetched, logged, or tracked.</p>
   </div>
 </header>
 
@@ -121,20 +150,47 @@ h1 .dot{color:var(--accent);}
   </div>
 
   <article class="item">
-    <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z"/></svg></div>
+    <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
     <div>
-      <div class="kicker">Design</div>
-      <div class="title">A calmer, lighter Privoo</div>
-      <p class="body">A full visual refresh: light glass surfaces, a redesigned tab strip and search bar, and an accent colour that now runs through the entire interface — pick one in <b>Settings → Appearance</b> and everything from tabs to toggles follows it.</p>
+      <div class="kicker">New &middot; Identities</div>
+      <div class="title">Autofill that learns your details, not your data</div>
+      <p class="body">Save one or more identities, name, address, phone, email, in <b>Settings → Identities</b> or <b>privoo://identities</b>, then right-click any form field and choose <b>Autofill identity</b>. Common fields fill instantly; a local Ollama model (nothing leaves your device) steps in only for unusual field labels the fast path can't recognise.</p>
+    </div>
+  </article>
+
+  <article class="item">
+    <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3zm0 4.5A3.5 3.5 0 1 1 8.5 10 3.5 3.5 0 0 1 12 6.5zm0 11c-2.3 0-4.3-1.2-5.5-3 .03-1.8 3.7-2.8 5.5-2.8s5.47 1 5.5 2.8c-1.2 1.8-3.2 3-5.5 3z"/></svg></div>
+    <div>
+      <div class="kicker">New &middot; Decentralised web</div>
+      <div class="title">.onion, .eth, and IPFS just work</div>
+      <p class="body">Type a <b>.onion</b> address and Privoo brings up its own Tor circuit for it automatically, nothing else is rerouted. ENS (<b>.eth</b>) and Unstoppable Domains names resolve through a public gateway, and <b>ipfs://</b> / <b>ipns://</b> links open directly, no extension required.</p>
     </div>
   </article>
 
   <article class="item">
     <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 4h7v7H4zm9 0h7v7h-7zM4 13h7v7H4zm9 0h7v7h-7z"/></svg></div>
     <div>
-      <div class="kicker">New — Sidebar apps</div>
+      <div class="kicker">Improved &middot; Sidebar</div>
+      <div class="title">Hover mode now truly gets out of the way</div>
+      <p class="body">Set the shortcuts sidebar to <b>Hover</b> in Customize Privoo and it disappears completely, zero width, no leftover gap, until your cursor touches the left edge of the window.</p>
+    </div>
+  </article>
+
+  <article class="item">
+    <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z"/></svg></div>
+    <div>
+      <div class="kicker">Design</div>
+      <div class="title">A calmer, lighter Privoo</div>
+      <p class="body">A full visual refresh: light glass surfaces, a redesigned tab strip and search bar, and an accent colour that now runs through the entire interface, pick one in <b>Settings → Appearance</b> and everything from tabs to toggles follows it.</p>
+    </div>
+  </article>
+
+  <article class="item">
+    <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 4h7v7H4zm9 0h7v7h-7zM4 13h7v7H4zm9 0h7v7h-7z"/></svg></div>
+    <div>
+      <div class="kicker">New &middot; Sidebar apps</div>
       <div class="title">Your apps, one hover away</div>
-      <p class="body">Pin WhatsApp, Spotify, Discord, Instagram and more to the sidebar and open them in a proper mobile-sized panel — no more sites clipped to a tiny strip. Hovering an app that's playing audio now shows what's playing, with a pause button right there.</p>
+      <p class="body">Pin WhatsApp, Spotify, Discord, Instagram and more to the sidebar and open them in a proper mobile-sized panel, no more sites clipped to a tiny strip. Hovering an app that's playing audio now shows what's playing, with a pause button right there.</p>
     </div>
   </article>
 
@@ -142,26 +198,26 @@ h1 .dot{color:var(--accent);}
     <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1.4 14.4L7.4 12.2l1.3-1.3 1.9 1.9 4-4 1.3 1.3z"/></svg></div>
     <div>
       <div class="kicker">Fixed</div>
-      <div class="title">Spotify and TikTok no longer sign you out</div>
-      <p class="body">Closing Privoo could drop the last few seconds of a site's login cookie, which mattered most for services that rotate their session constantly. Cookies are now flushed to disk the moment the browser closes, so logins actually stick.</p>
+      <div class="title">Turning off ad &amp; tracker blocking now actually stops it</div>
+      <p class="body">The shield's ad-blocking engine only checked the setting once, at startup, so switching it off in Settings didn't do anything until you restarted. It's now checked live on every request, so the toggle takes effect immediately in both directions. Settings also now explains up front what the shield bundles and clarifies that each protection genuinely stops when you turn it off.</p>
     </div>
   </article>
 
   <article class="item">
-    <div class="ico"><svg viewBox="0 0 24 24"><path d="M10 16.5 16 12l-6-4.5zM12 2a10 10 0 1 0 0 20 10 10 0 0 1 0-20z"/></svg></div>
+    <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3zm-1 14-4-4 1.4-1.4L11 13.2l5.6-5.6L18 9l-7 7z"/></svg></div>
     <div>
       <div class="kicker">Fixed</div>
-      <div class="title">YouTube: no more black-frame videos</div>
-      <p class="body">The very first video played each session could load to a black frame until you refreshed. That was a GPU rendering conflict — removed, so playback starts clean the first time.</p>
+      <div class="title">New tab page polish</div>
+      <p class="body">Cleaned up several small rendering glitches on the new tab search bar, a stray white outline that could show up over a custom wallpaper, quick-link text turning the wrong colour on hover, and a rendering seam that briefly appeared on new tab or hover.</p>
     </div>
   </article>
 
   <article class="item">
-    <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 1 3 5v6c0 5.6 3.8 10.7 9 12 5.2-1.3 9-6.4 9-12V5l-9-4z"/></svg></div>
+    <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 4h7v7H4zm9 0h7v7h-7zM4 13h7v7H4zm9 0h7v7h-7z"/></svg></div>
     <div>
-      <div class="kicker">DRM</div>
-      <div class="title">Spotify and Netflix playback, properly signed</div>
-      <p class="body">Widevine content protection is now correctly signed on every release, so DRM-protected audio and video play reliably instead of cutting out partway through.</p>
+      <div class="kicker">Changed</div>
+      <div class="title">System tray, back to the native menu</div>
+      <p class="body">The tray icon's right-click menu is back to your OS's native context menu, now with more in it: new tab, new incognito window, downloads, history, bookmarks, settings, a minimize-to-tray toggle, and check for updates.</p>
     </div>
   </article>
 

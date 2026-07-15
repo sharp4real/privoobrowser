@@ -36,6 +36,13 @@ if (location.protocol === 'privoo:') {
      passwordsRemove: (id)    => ipcRenderer.invoke('passwords-remove', id),
      passwordsSave:   (entry) => ipcRenderer.invoke('passwords-save', entry),
 
+    // Identities (privoo://identities)
+    identitiesList:       () => ipcRenderer.invoke('identities-list'),
+    identitiesSave:       (entry) => ipcRenderer.invoke('identities-save', entry),
+    identitiesRemove:     (id) => ipcRenderer.invoke('identities-remove', id),
+    identitiesSetDefault: (id) => ipcRenderer.invoke('identities-set-default', id),
+    ollamaStatus:         () => ipcRenderer.invoke('ollama-status'),
+
     getDownloads:    ()      => ipcRenderer.invoke('get-downloads'),
     clearDownloads:  ()      => ipcRenderer.invoke('clear-downloads'),
     removeDownload:  (id)    => ipcRenderer.invoke('remove-download', id),

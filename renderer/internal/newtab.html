@@ -162,74 +162,17 @@ main{
 }
 body.ntp-wp .ntp-brand-logo{filter:drop-shadow(0 2px 14px rgba(0,0,0,.5));}
 @media(prefers-reduced-motion:reduce){.ntp-brand-logo{animation:none !important}}
-/* "privoo." wordmark — lowercase, heavy, tight tracking; pine full-stop. */
-.ntp-brand{
-  font-family:"Inter","Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
-  font-weight:680;
-  font-size:clamp(38px,5vw,56px);
-  letter-spacing:-.045em;
-  line-height:1;
-  text-align:center;
-  color:#26243a;
-  user-select:none;
-  -webkit-user-select:none;
-  /* Word rises + tightens into place on load. */
-  animation:pv-word-in .72s cubic-bezier(.2,.85,.25,1) both;
-}
-.ntp-brand i{
-  font-style:normal;color:var(--accent,#8b7cf7);display:inline-block;
-  /* Pine full-stop drops in with a small bounce, then breathes softly. */
-  animation:pv-dot-in .5s cubic-bezier(.3,1.4,.5,1) .48s both, pv-dot-pulse 3s ease-in-out 1.1s infinite;
-}
 @keyframes pv-word-in{
   from{opacity:0;transform:translateY(12px);letter-spacing:.04em;filter:blur(4px)}
   to{opacity:1;transform:none;letter-spacing:-.045em;filter:none}
 }
-@keyframes pv-dot-in{
-  0%{opacity:0;transform:translateY(-14px) scale(.4)}
-  70%{opacity:1;transform:translateY(2px) scale(1.12)}
-  100%{opacity:1;transform:none}
-}
-@keyframes pv-dot-pulse{ 0%,100%{opacity:1} 50%{opacity:.4} }
-
-/* ── Looping wordmark animations (Settings → New tab) — override the one-shot
-   entrance with a continuous effect when the user picks one. ── */
-body.ntp-wm-pulse .ntp-brand{animation:wm-pulse 2.4s ease-in-out infinite;}
-@keyframes wm-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.045);opacity:.82}}
-body.ntp-wm-pop .ntp-brand{animation:wm-pop 3.2s cubic-bezier(.3,1.5,.5,1) infinite;}
-@keyframes wm-pop{0%,68%,100%{transform:scale(1)}80%{transform:scale(1.14)}90%{transform:scale(.97)}}
-body.ntp-wm-fizzle .ntp-brand{animation:wm-fizzle 3.4s steps(1,end) infinite;}
-@keyframes wm-fizzle{0%,68%{opacity:1}70%{opacity:.3}71%{opacity:1}73%{opacity:.5}74%{opacity:1}84%{opacity:1}85%{opacity:.25}86%{opacity:1}100%{opacity:1}}
-body.ntp-wm-glow .ntp-brand{animation:wm-glow 2.6s ease-in-out infinite;}
-@keyframes wm-glow{0%,100%{text-shadow:0 0 0 transparent}50%{text-shadow:0 0 24px var(--accent,#8b7cf7)}}
-body.ntp-wm-bounce .ntp-brand{animation:wm-bounce 2.4s cubic-bezier(.3,.7,.4,1) infinite;}
-@keyframes wm-bounce{0%,100%{transform:translateY(0)}14%{transform:translateY(-11px)}28%{transform:translateY(0)}40%{transform:translateY(-5px)}52%{transform:translateY(0)}}
-body.ntp-wm-shimmer .ntp-brand{
-  color:#26243a;
-  background:linear-gradient(100deg,currentColor 0 40%,var(--accent,#8b7cf7) 50%,currentColor 60% 100%);
-  background-size:230% 100%;
-  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
-  animation:wm-shimmer 3.4s linear infinite;
-}
-body.ntp-dark.ntp-wm-shimmer .ntp-brand,
-body.ntp-wp.ntp-wm-shimmer .ntp-brand{color:#eceaf6;}
-@keyframes wm-shimmer{from{background-position:130% 0}to{background-position:-130% 0}}
-
-@media(prefers-reduced-motion:reduce){
-  .ntp-brand,.ntp-brand i{animation:none !important}
-}
-body.ntp-dark:not(.ntp-wp) .ntp-brand{color:#eceaf6;}
-body.ntp-wp .ntp-brand{
-  color:#fff;
-  text-shadow:0 2px 22px rgba(0,0,0,.5),0 1px 4px rgba(0,0,0,.35);
-}
 .ntp-ghost-name{
   text-align:center;
-  font-size:15px;
-  font-weight:500;
-  color:#5f6368;
+  font-size:22px;
+  font-weight:400;
+  color:#1a1a1a;
   margin-bottom:18px;
-  letter-spacing:.01em;
+  letter-spacing:.005em;
 }
 body.ntp-dark .ntp-ghost-name{color:#9aa0a6}
 body.ntp-wp .ntp-ghost-name{
@@ -240,14 +183,29 @@ body.ntp-wp .ntp-ghost-name{
 #search-form{
   width:100%;max-width:620px;
   display:flex;align-items:center;gap:14px;
-  /* Frosted white pill with a soft gloss edge and a two-layer drop shadow
-     (tight + wide) for real depth against the wave wallpaper. */
-  background:rgba(255,255,255,.94);border:1px solid rgba(38,36,58,.07);border-radius:999px;
+  /* Accent-tinted glass pill — a faint wash of the live accent colour
+     instead of neutral white, plus a soft accent-coloured ambient glow
+     underneath so the bar reads as "alive" even at rest. */
+  background:color-mix(in srgb, var(--accent,#8b7cf7) 4%, rgba(255,255,255,.95));
+  border:1px solid color-mix(in srgb, var(--accent,#8b7cf7) 16%, rgba(38,36,58,.06));
+  border-radius:999px;
   padding:0 20px;height:54px;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.9), 0 10px 34px -10px rgba(38,36,58,.18), 0 2px 8px rgba(38,36,58,.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.9),
+    0 10px 34px -10px rgba(38,36,58,.18),
+    0 2px 8px rgba(38,36,58,.06),
+    0 0 0 0 color-mix(in srgb, var(--accent,#8b7cf7) 0%, transparent);
   backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);
   position:relative;
   -webkit-app-region:no-drag;
+  /* Keep this on its own GPU layer permanently, not just while a property
+     is actively changing. Promoting/demoting it on every hover or entrance
+     regenerates the backdrop-filter's rounded-corner mask, and that
+     regeneration can misalign by a hair right at the edge for one frame —
+     a thin seam on one side of the pill. A stable layer avoids the
+     regeneration entirely instead of just narrowing the timing window. */
+  will-change:transform,backdrop-filter;
+  animation:search-glow-breathe 5s ease-in-out infinite;
   /* Brave-style focused search. Important: NO scale() transform — that
      subpixel-rendered the suggestions text and made it blurry. We grow the
      bar by adjusting height/padding/max-width/shadow instead, which gives
@@ -257,18 +215,47 @@ body.ntp-wp .ntp-ghost-name{
              max-width .25s cubic-bezier(.2,0,.2,1),
              box-shadow .25s,
              border-color .2s,
+             background .2s,
              transform .25s cubic-bezier(.2,0,.2,1);
 }
+/* Ambient glow — the accent quietly pulses in and out of the drop shadow.
+   Subtle by design: this is a "the bar is alive" cue, not a disco light. */
+@keyframes search-glow-breathe{
+  0%,100%{ box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.9),
+    0 10px 34px -10px rgba(38,36,58,.18),
+    0 2px 8px rgba(38,36,58,.06),
+    0 0 0 0 color-mix(in srgb, var(--accent,#8b7cf7) 0%, transparent); }
+  50%{ box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.9),
+    0 10px 34px -10px rgba(38,36,58,.18),
+    0 2px 8px rgba(38,36,58,.06),
+    0 4px 26px -6px color-mix(in srgb, var(--accent,#8b7cf7) 30%, transparent); }
+}
 #search-form:hover{
+  background:color-mix(in srgb, var(--accent,#8b7cf7) 6%, #fff);
+  border-color:color-mix(in srgb, var(--accent,#8b7cf7) 26%, rgba(38,36,58,.06));
   box-shadow:inset 0 1px 0 rgba(255,255,255,.9), 0 14px 40px -10px rgba(38,36,58,.22), 0 2px 8px rgba(38,36,58,.08);
+  animation-play-state:paused;
 }
 body.ntp-focused-search-on #ntp-root.search-focused #search-form{
   height:58px;
   max-width:640px;
   padding:0 22px;
-  box-shadow:0 18px 44px rgba(32,33,36,.22);
-  border-color:transparent;
+  background:color-mix(in srgb, var(--accent,#8b7cf7) 4%, rgba(255,255,255,.95));
+  box-shadow:0 0 0 4px var(--accent-soft,rgba(139,124,247,.16)), 0 18px 44px -10px rgba(38,36,58,.26);
+  border-color:color-mix(in srgb, var(--accent,#8b7cf7) 55%, transparent);
   transform:translateY(6px);
+  animation:none;
+}
+body.ntp-wp:not(.ntp-dark).ntp-focused-search-on #ntp-root.search-focused #search-form{
+  background:rgba(255,255,255,.68);
+}
+body.ntp-wp.ntp-dark.ntp-focused-search-on #ntp-root.search-focused #search-form{
+  background:rgba(32,33,36,.78);
+}
+body.ntp-dark:not(.ntp-wp).ntp-focused-search-on #ntp-root.search-focused #search-form{
+  background:color-mix(in srgb, var(--accent,#8b7cf7) 10%, #2a2938);
 }
 body.ntp-focused-search-on #ntp-root.search-focused #q{
   font-size:16px;
@@ -284,17 +271,44 @@ body.ntp-focused-search-on #ntp-root.search-focused #quick-links{
 body.ntp-focused-search-on #quick-links{
   transition:opacity .22s ease, transform .22s ease;
 }
-/* Wallpaper — base frosted glass (overridden per-theme and per-vibe below) */
+/* Wallpaper — base frosted glass (overridden per-theme and per-vibe below).
+   The breathing glow animation's keyframes always include a white inset
+   highlight (see search-glow-breathe above); an animated box-shadow beats
+   any plain box-shadow override regardless of specificity, so the only way
+   to actually kill that white ring on top of a wallpaper is to stop the
+   animation itself, not just override its shadow. */
+body.ntp-wp #search-form{
+  animation:none;
+}
+/* The base #search-form rule's OWN declared box-shadow (not just its
+   keyframes) bakes in that white inset top line — it was never scoped out
+   of wallpaper mode, so it showed up at rest, not just on hover/focus.
+   Plain neutral shadow here, no inset line, no accent glow. */
 body.ntp-wp:not(.ntp-dark) #search-form{
   background:rgba(255,255,255,.68);
   border-color:rgba(255,255,255,.35);
   backdrop-filter:blur(18px) saturate(160%);
   -webkit-backdrop-filter:blur(18px) saturate(160%);
+  box-shadow:0 10px 34px -10px rgba(38,36,58,.18), 0 2px 8px rgba(38,36,58,.06);
 }
 body.ntp-wp.ntp-dark #search-form{
   background:rgba(32,33,36,.78);
   border-color:rgba(255,255,255,.10);
   color:#e8eaed;
+  box-shadow:0 10px 34px -10px rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.15);
+}
+/* The generic #search-form:hover rule forces a near-opaque white background
+   and a white inset highlight, which read as a stray white outline sitting
+   on top of the wallpaper. No inset highlight here, ever, in wallpaper mode. */
+body.ntp-wp:not(.ntp-dark) #search-form:hover{
+  background:rgba(255,255,255,.8);
+  border-color:rgba(255,255,255,.45);
+  box-shadow:0 14px 40px -10px rgba(38,36,58,.28), 0 2px 8px rgba(38,36,58,.1);
+}
+body.ntp-wp.ntp-dark #search-form:hover{
+  background:rgba(32,33,36,.88);
+  border-color:rgba(255,255,255,.16);
+  box-shadow:0 14px 40px -10px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.2);
 }
 body.ntp-wp.ntp-dark #q{color:#e8eaed;}
 body.ntp-wp.ntp-dark #search-form svg{fill:#9aa0a6;}
@@ -304,8 +318,15 @@ body.ntp-wp.ntp-dark #search-suggestions{
 body.ntp-wp.ntp-dark .ss-item:hover,
 body.ntp-wp.ntp-dark .ss-item.active{background:rgba(255,255,255,.10);}
 body.ntp-dark:not(.ntp-wp) #search-form{
-  background:#303134;border-color:#3c4043;
-  box-shadow:0 1px 8px rgba(0,0,0,.35);
+  background:color-mix(in srgb, var(--accent,#8b7cf7) 10%, #2a2938);
+  border-color:color-mix(in srgb, var(--accent,#8b7cf7) 22%, rgba(255,255,255,.08));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 4px 20px rgba(0,0,0,.4);
+}
+body.ntp-dark:not(.ntp-wp) #search-form:hover{
+  background:color-mix(in srgb, var(--accent,#8b7cf7) 14%, #2a2938);
+}
+body.ntp-dark.ntp-focused-search-on:not(.ntp-wp) #ntp-root.search-focused #search-form{
+  background:#2a2938;
 }
 /* Increase Transparency — the new-tab search bar becomes a frosted glass
    pill so the OS material shows through it. !important + the extra
@@ -419,6 +440,21 @@ body.ntp-vibe.ntp-dark #search-suggestions{
   box-shadow:inset 0 1px 0 rgba(255,255,255,.9), 0 0 0 4px var(--accent-soft,rgba(139,124,247,.16)),
              0 14px 40px -10px rgba(38,36,58,.22);
 }
+/* Same white-outline problem as the hover rule above, just on focus this
+   time (clicking into the bar) — this was never scoped for wallpaper mode
+   at all, so it stamped an opaque white box, a white inset ring, AND a
+   purple accent ring over the wallpaper the moment you clicked in. None of
+   that here — just the translucent glass background, no ring, no glow. */
+body.ntp-wp:not(.ntp-dark) #search-form:focus-within{
+  background:rgba(255,255,255,.85);
+  border-color:rgba(255,255,255,.45);
+  box-shadow:0 14px 40px -10px rgba(38,36,58,.28), 0 2px 8px rgba(38,36,58,.1);
+}
+body.ntp-wp.ntp-dark #search-form:focus-within{
+  background:rgba(32,33,36,.92);
+  border-color:rgba(255,255,255,.16);
+  box-shadow:0 14px 40px -10px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.2);
+}
 #search-form svg{fill:#9aa0a6;flex-shrink:0;}
 body.ntp-dark:not(.ntp-wp) #search-form svg{fill:#9aa0a6;}
 /* Search-engine favicon shown in place of the magnifying glass. */
@@ -436,8 +472,12 @@ body.ntp-wp #search-icon{ color:rgba(255,255,255,.8); }
   flex-shrink:0;border:none;background:transparent;cursor:pointer;padding:4px;
   display:flex;align-items:center;justify-content:center;border-radius:10px;
   color:#8a887e;
+  animation:sc-pop-in .18s cubic-bezier(.34,1.6,.5,1) both;
+  transition:background .14s ease, color .14s ease, transform .14s cubic-bezier(.34,1.6,.5,1);
 }
-#search-clear:hover{ background:rgba(0,0,0,.06); color:#26243a; }
+@keyframes sc-pop-in{ from{ opacity:0; transform:scale(.4) rotate(-90deg); } to{ opacity:1; transform:none; } }
+#search-clear:hover{ background:rgba(0,0,0,.06); color:#26243a; transform:rotate(90deg); }
+#search-clear:active{ transform:rotate(90deg) scale(.85); }
 body.ntp-dark:not(.ntp-wp) #search-clear:hover{ background:rgba(255,255,255,.08); color:#eceaf6; }
 body.ntp-wp #search-clear{ color:rgba(255,255,255,.85); }
 #search-clear[hidden]{ display:none; }
@@ -452,25 +492,39 @@ body.ntp-wp #q{color:#fff;}
 /* ── Focus mode ── click the search: it lifts with a pine ring while the
    wordmark, shortcuts, clock and news recede, so the field owns the screen.
    (!important + placed after the flat rules so it beats them cleanly.) */
-#search-form{transition:transform .26s cubic-bezier(.2,.85,.25,1),border-color .18s ease,box-shadow .26s ease !important;}
-body.ntp-focused-search-on #ntp-root.search-focused #search-form{
-  transform:translateY(-5px) !important;
-  border-color:var(--accent,#8b7cf7) !important;
-  box-shadow:0 0 0 3px color-mix(in srgb, var(--accent,#8b7cf7) 22%, transparent),
-             0 24px 54px -20px rgba(0,0,0,.55) !important;
+/* background/border-color/box-shadow must share one duration+easing — if
+   they finish at different times (they used to: .22s/.18s/.26s), one edge
+   shows the new border color while the fill/shadow haven't caught up yet,
+   which reads as a darker seam on one side of the pill for a beat. */
+#search-form{
+  transition:
+    height .26s cubic-bezier(.2,.85,.25,1),
+    padding .26s cubic-bezier(.2,.85,.25,1),
+    max-width .26s cubic-bezier(.2,.85,.25,1),
+    background .24s ease,
+    transform .26s cubic-bezier(.2,.85,.25,1),
+    border-color .24s ease,
+    box-shadow .24s ease !important;
 }
-#ntp-logo-wrap,#ntp-news-link,#ntp-clock{
+body.ntp-focused-search-on #ntp-root.search-focused #search-form{
+  transform:translateY(-3px) !important;
+  border-color:var(--accent,#8b7cf7) !important;
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--accent,#8b7cf7) 20%, transparent),
+             0 14px 34px -16px rgba(0,0,0,.28) !important;
+}
+#ntp-logo-wrap,#ntp-news-link,#ntp-clock,#ntp-ghost-name{
   transition:opacity .26s ease, transform .3s cubic-bezier(.2,.8,.25,1), filter .26s ease;
 }
 body.ntp-focused-search-on #ntp-root.search-focused #ntp-logo-wrap{
   opacity:0;transform:translateY(-16px) scale(.95);filter:blur(2px);pointer-events:none;
 }
 body.ntp-focused-search-on #ntp-root.search-focused #ntp-news-link,
-body.ntp-focused-search-on #ntp-root.search-focused #ntp-clock{
+body.ntp-focused-search-on #ntp-root.search-focused #ntp-clock,
+body.ntp-focused-search-on #ntp-root.search-focused #ntp-ghost-name{
   opacity:0;transform:translateY(10px);pointer-events:none;
 }
 @media(prefers-reduced-motion:reduce){
-  #search-form,#ntp-logo-wrap,#ntp-news-link,#ntp-clock{transition:none !important}
+  #search-form,#ntp-logo-wrap,#ntp-news-link,#ntp-clock,#ntp-ghost-name{transition:none !important}
   body.ntp-focused-search-on #ntp-root.search-focused #search-form{transform:none !important}
 }
 
@@ -529,7 +583,7 @@ body.ntp-dark:not(.ntp-wp) .ss-icon{background:rgba(255,255,255,.06);color:#a5a2
 #quick-links{
   display:flex;flex-wrap:wrap;justify-content:center;
   gap:12px;margin-top:30px;max-width:900px;width:100%;
-  transition:opacity .12s ease;
+  transition:opacity .22s cubic-bezier(.2,0,.2,1), transform .22s cubic-bezier(.2,0,.2,1);
 }
 /* Suggestions dropdown is open — fade the grid out from underneath it
    instead of letting the two visually collide. Two independent triggers on
@@ -544,7 +598,7 @@ body.ntp-dark:not(.ntp-wp) .ss-icon{background:rgba(255,255,255,.06);color:#a5a2
    showing through the dropdown no matter what else changed. */
 #search-form:has(#search-suggestions.open) + #quick-links,
 body.ss-open #quick-links{
-  opacity:0 !important;pointer-events:none !important;
+  opacity:0 !important;transform:translateY(10px) !important;pointer-events:none !important;
 }
 @keyframes ql-fade-in{
   from{opacity:0;transform:scale(.88);}
@@ -565,18 +619,30 @@ body.ss-open #quick-links{
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
   width:112px;height:88px;padding:10px;border-radius:16px;
   cursor:default;color:#5d5a73;font-size:11.5px;font-weight:550;letter-spacing:.01em;
-  position:relative;
+  position:relative;overflow:hidden;
   background:rgba(255,255,255,.9);
   border:1px solid rgba(38,36,58,.05);
   box-shadow:0 2px 8px rgba(38,36,58,.05);
   transition:transform .22s cubic-bezier(.2,.8,.25,1), box-shadow .22s ease,
              background .18s ease, border-color .18s ease;
 }
+/* Shine sweep — a soft diagonal highlight glides across the card on hover. */
+.ql-item::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg, transparent 30%, color-mix(in srgb, var(--accent,#8b7cf7) 16%, transparent) 48%, transparent 66%);
+  transform:translateX(-120%);
+  transition:transform .55s cubic-bezier(.2,.8,.25,1);
+}
+.ql-item:hover::after{ transform:translateX(120%); }
 .ql-item:hover{
-  transform:translateY(-3px);
+  transform:translateY(-4px) scale(1.015);
   background:#fff;
   border-color:color-mix(in srgb, var(--accent,#8b7cf7) 30%, transparent);
-  box-shadow:0 12px 30px -10px rgba(38,36,58,.2);
+  box-shadow:0 14px 32px -10px rgba(38,36,58,.22), 0 0 0 1px color-mix(in srgb, var(--accent,#8b7cf7) 12%, transparent);
+}
+.ql-item:active{
+  transform:translateY(-1px) scale(.97);
+  transition-duration:.09s;
 }
 body.ntp-dark:not(.ntp-wp) .ql-item{background:rgba(40,38,54,.85);border-color:rgba(255,255,255,.07);}
 body.ntp-wp .ql-item{background:rgba(255,255,255,.82);}
@@ -590,9 +656,9 @@ body.ntp-dark:not(.ntp-wp) .ql-item{color:#a5a2bd;}
   font-size:18px;font-weight:700;color:#55526b;
   overflow:hidden;
   border:none;
-  transition:color .14s,transform .22s cubic-bezier(.2,.8,.25,1);
+  transition:color .14s,transform .32s cubic-bezier(.34,1.6,.5,1);
 }
-.ql-item:hover .ql-ico{transform:scale(1.06);}
+.ql-item:hover .ql-ico{transform:scale(1.14) translateY(-1px);}
 body.ntp-wp .ql-ico{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.16);color:#fff;}
 body.ntp-dark:not(.ntp-wp) .ql-ico{background:#2a2938;border-color:#3a3850;color:#a5a2bd;}
 .ql-item:hover .ql-ico{border-color:var(--accent,#8b7cf7);color:var(--text,#26243a);}
@@ -600,6 +666,7 @@ body.ntp-dark:not(.ntp-wp) .ql-item:hover .ql-ico{color:#eceaf6;}
 body.ntp-wp .ql-item:hover .ql-ico{color:#fff;}
 .ql-item:hover .ql-name{color:var(--text,#26243a);}
 body.ntp-dark:not(.ntp-wp) .ql-item:hover .ql-name{color:#eceaf6;}
+body.ntp-wp .ql-item:hover .ql-name{color:#fff;}
 .ql-ico img{width:100%;height:100%;object-fit:contain;border-radius:10px;}
 .ql-ico svg{width:100%;height:100%;border-radius:10px;}
 .ql-name{
@@ -1052,24 +1119,52 @@ body.ntp-dark .britain-close{background:#4f73d6;}
 }
 .ntp-pen-btn:hover{transform:scale(1.06);background:#111;}
 .ntp-pen-btn svg{fill:currentColor;}
+body:not(.ntp-dark) .ntp-pen-btn{color:#fff !important;}
+body:not(.ntp-dark) .ntp-pen-btn svg{fill:#fff !important;}
 
 /* Top-right "Add shortcut" — a dedicated, discoverable entry point to the
-   add-shortcut dialog, separate from the wallpaper/theme customize button. */
+   add-shortcut dialog, separate from the wallpaper/theme customize button.
+   Icon-only circle, accent-tinted so it reads as its own distinct action
+   next to the neutral grey pen button rather than blending into it.
+   Optional — Settings → New tab → "Show add-shortcut button" (on by default). */
 .ntp-add-btn{
   position:fixed;top:16px;right:18px;z-index:40;
   width:36px;height:36px;border-radius:50%;
-  background:rgba(255,255,255,.75);color:#5d5a73;border:1px solid rgba(38,36,58,.08);
-  backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);
+  background:color-mix(in srgb, var(--accent,#8b7cf7) 14%, #fff);
+  color:var(--accent,#8b7cf7);border:1px solid color-mix(in srgb, var(--accent,#8b7cf7) 26%, transparent);
   box-shadow:0 2px 10px rgba(38,36,58,.08);
   display:flex;align-items:center;justify-content:center;
   cursor:default;transition:transform .18s cubic-bezier(.34,1.5,.64,1),background .15s ease,color .15s ease;
 }
-.ntp-add-btn:hover{transform:scale(1.08) rotate(90deg);background:#fff;color:var(--accent,#8b7cf7);}
+.ntp-add-btn:hover{transform:scale(1.08) rotate(90deg);background:var(--accent,#8b7cf7);color:#fff;}
 .ntp-add-btn svg{fill:currentColor;}
-body.ntp-dark:not(.ntp-wp) .ntp-add-btn{background:rgba(255,255,255,.06);color:#a5a2bd;border-color:rgba(255,255,255,.09);}
-body.ntp-dark:not(.ntp-wp) .ntp-add-btn:hover{background:rgba(255,255,255,.12);}
-body.ntp-wp .ntp-add-btn{background:rgba(20,19,17,.4);color:rgba(255,255,255,.85);border-color:rgba(255,255,255,.16);}
-body.ntp-wp .ntp-add-btn:hover{background:rgba(20,19,17,.6);color:#fff;}
+body.ntp-dark:not(.ntp-wp) .ntp-add-btn{background:color-mix(in srgb, var(--accent,#8b7cf7) 22%, #2a2938);color:#eceaf6;border-color:color-mix(in srgb, var(--accent,#8b7cf7) 40%, transparent);}
+body.ntp-dark:not(.ntp-wp) .ntp-add-btn:hover{background:var(--accent,#8b7cf7);color:#fff;}
+body.ntp-wp .ntp-add-btn{background:color-mix(in srgb, var(--accent,#8b7cf7) 55%, rgba(20,19,17,.5));color:#fff;border-color:rgba(255,255,255,.16);}
+body.ntp-wp .ntp-add-btn:hover{background:var(--accent,#8b7cf7);}
+.ntp-add-btn.ntp-hidden{display:none !important;}
+
+/* One-time "protected online" banner — bottom centre, shown for 15s on the
+   very first new tab a user ever opens, then never again. */
+#ntp-protected-toast{
+  position:fixed;bottom:14px;left:50%;z-index:35;
+  transform:translateX(-50%) translateY(10px);
+  opacity:0;pointer-events:none;
+  display:flex;align-items:center;gap:6px;
+  padding:8px 16px;border-radius:999px;
+  background:rgba(255,255,255,.7);color:#5d5a73;
+  border:1px solid rgba(38,36,58,.08);
+  backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);
+  box-shadow:0 2px 10px rgba(38,36,58,.08);
+  font-size:12.5px;font-weight:500;white-space:nowrap;
+  transition:opacity .35s cubic-bezier(.2,.8,.25,1),transform .35s cubic-bezier(.2,.8,.25,1);
+}
+#ntp-protected-toast.visible{opacity:1;transform:translateX(-50%) translateY(0);}
+body.ntp-dark:not(.ntp-wp) #ntp-protected-toast{background:rgba(255,255,255,.06);color:#a5a2bd;border-color:rgba(255,255,255,.09);}
+body.ntp-wp #ntp-protected-toast{background:rgba(20,19,17,.4);color:rgba(255,255,255,.85);border-color:rgba(255,255,255,.16);}
+.ntp-pt-heart{color:#e8505a;animation:ntp-pt-beat 1.4s ease-in-out infinite;display:inline-block;}
+@keyframes ntp-pt-beat{0%,100%{transform:scale(1)}50%{transform:scale(1.22)}}
+@media(prefers-reduced-motion:reduce){.ntp-pt-heart{animation:none}}
 
 /* ── One-time "thanks for the trust" toast ── */
 #ntp-updates-toast{
@@ -1239,15 +1334,25 @@ body.ntp-wp .ql-name{color:rgba(255,255,255,.85);text-shadow:0 1px 4px rgba(0,0,
 /* ── Entrance choreography — one downstage rise, staggered top-to-bottom.
    Everything shares a single curve so the page reads as one gesture. ── */
 @keyframes ntp-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-#search-form{animation:ntp-rise .5s cubic-bezier(.2,.8,.25,1) .08s both}
+/* Fade only, no transform — #search-form always carries backdrop-filter +
+   a fully-rounded border-radius, and transforming an element with both can
+   make its rounded clip mask lag a frame, letting a rectangular sliver of
+   the blurred content bleed past the edge on every new tab. Same bug class
+   as the #ntp-root fix above, just on #search-form's own entrance. */
+#search-form{animation:ntp-in-fade .5s cubic-bezier(.2,.8,.25,1) .08s both}
 #quick-links{animation:ntp-rise .5s cubic-bezier(.2,.8,.25,1) .16s both}
 #ntp-clock,#ntp-weather,#ntp-news-link{animation:ntp-rise .5s cubic-bezier(.2,.8,.25,1) .24s both}
 
 /* ── Ambient wallpaper drift — a barely-there 45s breathe. Settings ->
-   New tab -> "Animate Default Wallpaper". Gated by a body class so it's a real,
+   New tab -> "Animate Wallpaper". Gated by a body class so it's a real,
    user-controllable toggle rather than always-on. ── */
-@keyframes ntp-bg-drift{from{transform:scale(1)}to{transform:scale(1.045)}}
-body.ntp-wp-animated #ntp-bg{animation:ntp-bg-drift 45s ease-in-out infinite alternate;will-change:transform}
+@keyframes ntp-bg-drift{
+  0%{transform:scale(1.02) translate(0,0)}
+  33%{transform:scale(1.09) translate(-1.2%,-0.8%)}
+  66%{transform:scale(1.06) translate(1%,0.6%)}
+  100%{transform:scale(1.02) translate(0,0)}
+}
+body.ntp-wp-animated #ntp-bg{animation:ntp-bg-drift 22s ease-in-out infinite;will-change:transform}
 
 @media (prefers-reduced-motion: reduce){
   #search-form,#quick-links,#ntp-clock,#ntp-weather,#ntp-news-link,#ntp-bg{animation:none !important}
@@ -1273,7 +1378,7 @@ body.ntp-wp-animated #ntp-bg{animation:ntp-bg-drift 45s ease-in-out infinite alt
     <img id="search-icon-img" alt="" aria-hidden="true"/>
     <svg id="search-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5 1.49-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg>
     <input id="q" type="text" autocomplete="off" spellcheck="false"
-           placeholder="search or type a url"/>
+           placeholder="Search or type a url"/>
     <button id="search-clear" type="button" aria-label="Clear" title="Clear" hidden><svg viewBox="0 0 24 24" width="15" height="15"><path fill="currentColor" d="M19 6.4 17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg></button>
     <div id="search-suggestions"></div>
   </div>
@@ -1298,7 +1403,7 @@ body.ntp-wp-animated #ntp-bg{animation:ntp-bg-drift 45s ease-in-out infinite alt
       <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
     </svg>
     <div class="mmhm-title" id="mmhm-title">It's okay not to be okay</div>
-    <p class="mmhm-text">June is Men's Mental Health Month. It's okay to talk, to feel, and to ask for help — you're never alone in what you're going through.</p>
+    <p class="mmhm-text">June is Men's Mental Health Month. It's okay to talk, to feel, and to ask for help, you're never alone in what you're going through.</p>
     <button class="mmhm-close" id="mmhm-close">Got it</button>
   </div>
 </div>
@@ -1320,7 +1425,7 @@ body.ntp-wp-animated #ntp-bg{animation:ntp-bg-drift 45s ease-in-out infinite alt
     </div>
     <div class="britain-kicker">Proudly British</div>
     <div class="britain-title" id="britain-title">Made with care in Britain</div>
-    <p class="britain-text">Privoo is designed, built and looked after in Britain — crafted with care for your privacy, and never funded by selling your data. Thank you for being part of the journey.</p>
+    <p class="britain-text">Privoo is designed, built and looked after in Britain, crafted with care for your privacy, and never funded by selling your data. Thank you for being part of the journey.</p>
     <button class="britain-close" id="britain-close">Okay!</button>
   </div>
 </div>
@@ -1332,6 +1437,8 @@ body.ntp-wp-animated #ntp-bg{animation:ntp-bg-drift 45s ease-in-out infinite alt
 <button type="button" class="ntp-add-btn" id="ntp-add-shortcut" title="Add shortcut" aria-label="Add shortcut">
   <svg viewBox="0 0 24 24" width="17" height="17"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
 </button>
+
+<div id="ntp-protected-toast" hidden>We <span class="ntp-pt-heart">♥</span> keeping you protected online!</div>
 
 <div id="custom-modal-bg">
   <div id="custom-modal">
@@ -1347,7 +1454,7 @@ body.ntp-wp-animated #ntp-bg{animation:ntp-bg-drift 45s ease-in-out infinite alt
       <button type="button" class="mini-btn" id="cw-clear">Remove wallpaper</button>
     </div>
     <div class="btn-row">
-      <button type="button" class="mini-btn" id="cw-animate-toggle">Animate Default Wallpaper: <span id="cw-animate-state">On</span></button>
+      <button type="button" class="mini-btn" id="cw-animate-toggle">Animate Wallpaper: <span id="cw-animate-state">On</span></button>
     </div>
     <div class="modal-btns">
       <button type="button" class="btn btn-cancel" id="custom-close">Close</button>
@@ -1370,28 +1477,18 @@ body.ntp-wp-animated #ntp-bg{animation:ntp-bg-drift 45s ease-in-out infinite alt
 <script>
 const api = window.privooInternal;
 
-// Above the search bar: either the "privoo." text wordmark, or the logo.png
-// mark — Settings → New tab. Re-run whenever settings load/change.
-let _ntpBrandStyle = 'text';
-function mountLogo(style) {
+// Logo above the search bar.
+function mountLogo() {
   const wrap = document.getElementById('ntp-logo-wrap');
   if (!wrap) return;
-  if (style) _ntpBrandStyle = style;
   wrap.innerHTML = '';
-  if (_ntpBrandStyle === 'logo') {
-    const img = document.createElement('img');
-    img.className = 'ntp-brand-logo';
-    img.src = 'privoo://newtab/logo.png';
-    img.alt = 'Privoo';
-    img.draggable = false;
-    img.onerror = () => { img.style.display = 'none'; };
-    wrap.appendChild(img);
-    return;
-  }
-  const brand = document.createElement('div');
-  brand.className = 'ntp-brand';
-  brand.innerHTML = 'privoo<i>.</i>';
-  wrap.appendChild(brand);
+  const img = document.createElement('img');
+  img.className = 'ntp-brand-logo';
+  img.src = 'privoo://newtab/logo.png';
+  img.alt = 'Privoo';
+  img.draggable = false;
+  img.onerror = () => { img.style.display = 'none'; };
+  wrap.appendChild(img);
 }
 mountLogo();
 
@@ -1419,6 +1516,44 @@ function setWallpaperImage(bg, url) {
   else { img.onload = apply; img.onerror = apply; }
 }
 
+let _protectedToastShown = false;
+function maybeShowProtectedToast(settings) {
+  if (_protectedToastShown || settings?.protectedToastSeen) return;
+  _protectedToastShown = true;
+  const el = document.getElementById('ntp-protected-toast');
+  if (!el) return;
+  el.hidden = false;
+  requestAnimationFrame(() => el.classList.add('visible'));
+  setTimeout(() => {
+    el.classList.remove('visible');
+    setTimeout(() => { el.hidden = true; }, 400);
+  }, 15000);
+  api?.setSettings?.({ protectedToastSeen: true }).catch(() => {});
+}
+
+function renderAddShortcutBtn(settings) {
+  const btn = document.getElementById('ntp-add-shortcut');
+  if (!btn) return;
+  btn.classList.toggle('ntp-hidden', settings?.ntpShowAddShortcutBtn === false);
+}
+
+// Good Morning / Good Afternoon / Good Evening / Good Night under the logo,
+// based on the local system clock. On by default — Settings → New tab.
+function renderGreeting(settings) {
+  const el = document.getElementById('ntp-ghost-name');
+  if (!el) return;
+  if (settings?.ntpShowGreeting === false) { el.hidden = true; return; }
+  el.style.fontFamily = '';
+  const h = new Date().getHours();
+  const text = h < 5 ? 'Good night'
+    : h < 12 ? 'Good morning'
+    : h < 18 ? 'Good afternoon'
+    : h < 22 ? 'Good evening'
+    : 'Good night';
+  el.textContent = text;
+  el.hidden = false;
+}
+
 function applyNtpLook(settings) {
   const bg = document.getElementById('ntp-bg');
   const dim = document.getElementById('ntp-bg-dim');
@@ -1433,12 +1568,6 @@ function applyNtpLook(settings) {
   document.body.classList.toggle('ntp-grad', false);
   document.body.classList.toggle('ntp-wp', hasWp || isWave);
   document.body.classList.toggle('ntp-dark', dark);
-  // Looping wordmark animation (Settings → New tab).
-  document.body.classList.remove('ntp-wm-pulse','ntp-wm-pop','ntp-wm-fizzle','ntp-wm-glow','ntp-wm-bounce','ntp-wm-shimmer');
-  const _wm = settings?.ntpWordmarkAnim || 'none';
-  if (_wm && _wm !== 'none') document.body.classList.add('ntp-wm-' + _wm);
-  // Text wordmark vs logo image above the search bar (Settings → New tab).
-  mountLogo(settings?.ntpBrandStyle === 'logo' ? 'logo' : 'text');
   // Default ON — toggle in Settings → New tab.
   document.body.classList.toggle('ntp-focused-search-on', settings?.ntpFocusedSearch !== false);
   // Increase Transparency — let the OS material show through the NTP too.
@@ -1459,7 +1588,9 @@ function applyNtpLook(settings) {
   const logoWrap = document.getElementById('ntp-logo-wrap');
   if (logoWrap) logoWrap.style.display = '';
 
-  document.body.classList.toggle('ntp-wp-animated', settings?.ntpWallpaperAnimated !== false);
+  // Only the shipped default art breathes — a custom wallpaper the user
+  // uploaded is theirs as-is, not something to animate on top of.
+  document.body.classList.toggle('ntp-wp-animated', settings?.ntpWallpaperAnimated !== false && !hasWp);
 
   // Optional "See what's new" link under the search bar — off by default. It ships
   // with [hidden] in the HTML, so showing it means removing the attribute outright;
@@ -1723,9 +1854,9 @@ async function loadNtp() {
   syncThemeButtons(settings);
   renderQL();
 
-  // Greeting feature removed — keep the element hidden so legacy DOM stays inert.
-  const ghostEl = document.getElementById('ntp-ghost-name');
-  if (ghostEl) ghostEl.hidden = true;
+  renderGreeting(settings);
+  renderAddShortcutBtn(settings);
+  maybeShowProtectedToast(settings);
 
   // In vtabs search-popup mode the overlay handles search — hide logo + search bar.
   // With the popup disabled the new-tab page shows its normal search bar.
@@ -1996,7 +2127,8 @@ document.getElementById('cw-animate-toggle').addEventListener('click', async () 
   await api.setSettings({ ntpWallpaperAnimated: next });
   const stateEl = document.getElementById('cw-animate-state');
   if (stateEl) stateEl.textContent = next ? 'On' : 'Off';
-  document.body.classList.toggle('ntp-wp-animated', next);
+  const hasCustomWp = settings?.ntpWallpaperPath !== '' && settings?.ntpWallpaperPath != null;
+  document.body.classList.toggle('ntp-wp-animated', next && !hasCustomWp);
 });
 
 const qInput = document.getElementById('q');
@@ -2300,6 +2432,9 @@ document.addEventListener('keydown', (e) => {
 // Safety net — reveal even if settings never arrive, so the page can't
 // stay stuck invisible.
 setTimeout(() => document.body.classList.add('ntp-ready'), 800);
+// New tab pages can sit open for hours — recheck the greeting periodically
+// so it still reads "Good evening" instead of "Good morning" at 6pm.
+setInterval(() => renderGreeting(ntpSettings), 5 * 60 * 1000);
 api?.onSettingsChanged?.((settings) => {
   try {
     ntpSettings = settings;
@@ -2316,6 +2451,8 @@ api?.onSettingsChanged?.((settings) => {
       renderQL();
     }
     renderWeather(settings);
+  renderGreeting(settings);
+  renderAddShortcutBtn(settings);
   } catch (e) {
     console.error('Privoo NTP settings update:', e);
   }

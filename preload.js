@@ -2,6 +2,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 const path = require('path');
 const { pathToFileURL } = require('url');
 const { buildPasswordAutofillScript, buildGooglePasswordPreferScript } = require('./password-autofill');
+const { buildIdentityAutofillScript } = require('./identity-autofill');
+const { buildFilePickerScript } = require('./file-picker-recent');
 
 // Read the incognito partition passed via webPreferences.additionalArguments
 // — available synchronously so the renderer knows it's private before it
@@ -118,6 +120,7 @@ contextBridge.exposeInMainWorld('privoo', {
   openMobileWindow:   (url) => ipcRenderer.invoke('open-mobile-window', url),
   isDefaultBrowser:   () => ipcRenderer.invoke('is-default-browser'),
   setDefaultBrowser:  () => ipcRenderer.invoke('set-default-browser'),
+  markMobileWebview:  (id, device) => ipcRenderer.send('mark-mobile-webview', id, device),
 
   passwordsList:       () => ipcRenderer.invoke('passwords-list'),
   passwordsGetForUrl:  (url) => ipcRenderer.invoke('passwords-get-for-url', url),
@@ -125,6 +128,19 @@ contextBridge.exposeInMainWorld('privoo', {
   passwordsRemove:     (id) => ipcRenderer.invoke('passwords-remove', id),
   passwordAutofillScript: buildPasswordAutofillScript(),
   googlePasswordPreferScript: buildGooglePasswordPreferScript(),
+
+  identityAutofillScript: buildIdentityAutofillScript(),
+  identitiesList:      () => ipcRenderer.invoke('identities-list'),
+  identitiesGetDefault:() => ipcRenderer.invoke('identities-get-default'),
+  identitiesSave:      (entry) => ipcRenderer.invoke('identities-save', entry),
+  identitiesRemove:    (id) => ipcRenderer.invoke('identities-remove', id),
+  identitiesSetDefault:(id) => ipcRenderer.invoke('identities-set-default', id),
+  ollamaResolveFields: (fields, keys) => ipcRenderer.invoke('ollama-resolve-fields', fields, keys),
+  ollamaStatus:        () => ipcRenderer.invoke('ollama-status'),
+
+  filePickerScript: buildFilePickerScript(),
+  recentFilesList:  () => ipcRenderer.invoke('recent-files-list'),
+  recentFileRead:   (p) => ipcRenderer.invoke('recent-file-read', p),
 
   // Google sign-in via system browser
   googleSignIn: (continueUrl) => ipcRenderer.invoke('google-signin-start', continueUrl),

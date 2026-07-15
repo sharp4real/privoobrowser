@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Identities - Privoo</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%238b7cf7' d='M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z'/%3E%3Cpath fill='%23fff' d='M10.6 15.4 7.4 12.2l1.3-1.3 1.9 1.9 4-4 1.3 1.3z'/%3E%3C/svg%3E"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Inter","Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+html{height:100%;background:transparent}
+body{height:100%;background:#f2f1f9;color:#26243a;user-select:none;display:flex;flex-direction:column}
+body.dark{background:#1c1b26;color:#eceaf6;color-scheme:dark}
+button,input{font:inherit}
+button{cursor:default;border:none;background:transparent;color:inherit}
+
+header{
+  background:#fff;border-bottom:1px solid #e3e1ef;
+  padding:16px 28px;display:flex;align-items:center;gap:12px;
+  position:sticky;top:0;z-index:10;flex-shrink:0;flex-wrap:wrap
+}
+body.dark header{background:#1c1b26;border-bottom-color:#3a3850}
+h1{font-size:20px;font-weight:500;margin-right:auto}
+.ollama-badge{
+  display:flex;align-items:center;gap:6px;font-size:12px;color:#6d6a85;
+  padding:5px 10px;border-radius:999px;background:#ece9f7;
+  white-space:nowrap;flex-shrink:0
+}
+body.dark .ollama-badge{background:#2a2938;color:#a5a2bd}
+.ollama-dot{width:7px;height:7px;border-radius:50%;background:#9aa0a6;flex-shrink:0}
+.ollama-badge.on .ollama-dot{background:#34a853}
+.toolbar-btn{
+  height:32px;padding:0 14px;border-radius:999px;border:none;
+  font-size:13px;color:#fff;background:var(--accent,#8b7cf7);
+  box-shadow:0 2px 8px rgba(139,124,247,.35)
+}
+.toolbar-btn:hover{filter:brightness(1.06)}
+
+main{flex:1;min-height:0;max-width:760px;margin:0 auto;width:100%;padding:20px 20px 32px;overflow-y:auto}
+#empty{text-align:center;padding:80px 20px;color:#6d6a85}
+body.dark #empty{color:#a5a2bd}
+#empty svg{width:64px;height:64px;fill:#e3e1ef;margin-bottom:16px}
+body.dark #empty svg{fill:#3a3850}
+#empty h2{font-size:18px;font-weight:400;margin-bottom:8px;color:#3a3850}
+body.dark #empty h2{color:#eceaf6}
+
+#list{display:flex;flex-direction:column;gap:10px}
+
+.id-card{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 16px;border-radius:16px;cursor:default;
+  border:1px solid #e3e1ef;background:#fff;
+  transition:background .1s,border-color .1s
+}
+.id-card:hover{border-color:var(--accent,#8b7cf7)}
+body.dark .id-card{background:#2a2938;border-color:#3a3850}
+
+.id-dot{
+  width:36px;height:36px;border-radius:12px;
+  background:var(--accent-soft,rgba(139,124,247,.18));color:var(--accent,#8b7cf7);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:700;flex-shrink:0
+}
+.id-info{flex:1;min-width:0}
+.id-name{font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:8px}
+.id-meta{font-size:11.5px;color:#6d6a85;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
+body.dark .id-meta{color:#a5a2bd}
+.id-default-pill{
+  font-size:10px;font-weight:600;color:var(--accent,#8b7cf7);
+  background:var(--accent-soft,rgba(139,124,247,.18));
+  padding:2px 8px;border-radius:999px
+}
+.id-actions{display:flex;gap:4px;flex-shrink:0}
+.id-btn{
+  width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  color:#6d6a85
+}
+.id-btn:hover{background:rgba(0,0,0,.06)}
+body.dark .id-btn{color:#a5a2bd}
+body.dark .id-btn:hover{background:rgba(255,255,255,.08)}
+.id-btn.danger:hover{color:#d93025;background:rgba(217,48,37,.1)}
+
+/* Modal */
+#modal-backdrop{
+  position:fixed;inset:0;background:rgba(20,18,30,.4);
+  display:flex;align-items:center;justify-content:center;z-index:100
+}
+#modal-backdrop[hidden]{display:none}
+#modal{
+  width:480px;max-width:92vw;max-height:86vh;overflow-y:auto;
+  background:#fff;border-radius:20px;padding:24px;
+  box-shadow:0 24px 60px -12px rgba(38,36,58,.35)
+}
+body.dark #modal{background:#1c1b26}
+#modal h2{font-size:16px;font-weight:600;margin-bottom:16px}
+.field-row{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.field-row.two{flex-direction:row;gap:10px}
+.field-row.two > div{flex:1;display:flex;flex-direction:column;gap:5px}
+.field-row label{font-size:11.5px;color:#6d6a85}
+body.dark .field-row label{color:#a5a2bd}
+.field-row input{
+  border:1px solid #e3e1ef;border-radius:10px;padding:8px 12px;
+  font-size:13px;outline:none;background:#f9f8fd
+}
+.field-row input:focus{border-color:var(--accent,#8b7cf7)}
+body.dark .field-row input{background:#2a2938;border-color:#3a3850;color:#eceaf6}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.modal-btn{
+  height:34px;padding:0 16px;border-radius:999px;font-size:13px
+}
+.modal-btn.primary{color:#fff;background:var(--accent,#8b7cf7)}
+.modal-btn.secondary{color:#6d6a85;background:#ece9f7}
+body.dark .modal-btn.secondary{background:#2a2938;color:#a5a2bd}
+</style>
+</head>
+<body>
+<header>
+  <h1>Identities</h1>
+  <div class="ollama-badge" id="ollama-badge"><span class="ollama-dot"></span><span id="ollama-text">Checking Ollama…</span></div>
+  <button class="toolbar-btn" id="btn-add">Add identity</button>
+</header>
+<main>
+  <div id="empty" hidden>
+    <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 8 1.34 8 4v2H4v-2c0-2.66 5.3-4 8-4zm0-2a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg>
+    <h2>No identities yet</h2>
+    <p>Add one to enable autofill for names, addresses, and contact info.</p>
+  </div>
+  <div id="list"></div>
+</main>
+
+<div id="modal-backdrop" hidden>
+  <div id="modal">
+    <h2 id="modal-title">Add identity</h2>
+    <input type="hidden" id="f-id"/>
+    <div class="field-row"><label>Label</label><input id="f-label" placeholder="e.g. Personal, Work"/></div>
+    <div class="field-row two">
+      <div><label>First name</label><input id="f-firstName"/></div>
+      <div><label>Last name</label><input id="f-lastName"/></div>
+    </div>
+    <div class="field-row"><label>Full name</label><input id="f-fullName" placeholder="Used when a site has a single name field"/></div>
+    <div class="field-row two">
+      <div><label>Email</label><input id="f-email" type="email"/></div>
+      <div><label>Phone</label><input id="f-phone" type="tel"/></div>
+    </div>
+    <div class="field-row"><label>Company</label><input id="f-company"/></div>
+    <div class="field-row"><label>Address line 1</label><input id="f-address1"/></div>
+    <div class="field-row"><label>Address line 2</label><input id="f-address2"/></div>
+    <div class="field-row two">
+      <div><label>City</label><input id="f-city"/></div>
+      <div><label>State / Province</label><input id="f-state"/></div>
+    </div>
+    <div class="field-row two">
+      <div><label>ZIP / Postal code</label><input id="f-zip"/></div>
+      <div><label>Country</label><input id="f-country"/></div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn secondary" id="btn-cancel">Cancel</button>
+      <button class="modal-btn primary" id="btn-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const FIELD_KEYS = ['fullName','firstName','lastName','email','phone','address1','address2','city','state','zip','country','company'];
+  let identities = [];
+  let defaultId = null;
+
+  function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function applyAccent(hex){
+    const r=document.documentElement;
+    if(!hex){ r.style.removeProperty('--accent'); r.style.removeProperty('--accent-soft'); return; }
+    r.style.setProperty('--accent',hex);
+    const m=hex.replace('#','').match(/.{2}/g);
+    if(m){ const[rv,g,b]=m.map(x=>parseInt(x,16)); r.style.setProperty('--accent-soft',`rgba(${rv},${g},${b},.18)`); }
+  }
+
+  async function load(){
+    const r = await window.privooInternal.getSettings();
+    const settings = r?.settings || r;
+    document.body.classList.toggle('dark', !!settings?.darkMode);
+    applyAccent(settings?.accentColor);
+
+    identities = await window.privooInternal.identitiesList();
+    defaultId = identities.find(i => i.__default)?.id || (identities[0] && identities[0].id) || null;
+    render();
+
+    window.privooInternal.ollamaStatus().then((s) => {
+      const badge = document.getElementById('ollama-badge');
+      const text = document.getElementById('ollama-text');
+      badge.classList.toggle('on', !!s?.running);
+      text.textContent = s?.running ? 'Ollama connected' : 'Ollama not running';
+    }).catch(() => {});
+  }
+
+  function render(){
+    const listEl = document.getElementById('list');
+    const emptyEl = document.getElementById('empty');
+    listEl.innerHTML = '';
+    if(!identities.length){ emptyEl.hidden = false; return; }
+    emptyEl.hidden = true;
+    for(const id of identities){
+      const f = id.fields || {};
+      const display = f.fullName || [f.firstName,f.lastName].filter(Boolean).join(' ') || id.label;
+      const letter = (id.label||'?')[0].toUpperCase();
+      const card = document.createElement('div');
+      card.className = 'id-card';
+      card.innerHTML = `
+        <div class="id-dot">${esc(letter)}</div>
+        <div class="id-info">
+          <div class="id-name">${esc(id.label)}${id.id===defaultId?'<span class="id-default-pill">Default</span>':''}</div>
+          <div class="id-meta">${esc([display, f.email].filter(Boolean).join(' · '))}</div>
+        </div>
+        <div class="id-actions">
+          ${id.id!==defaultId?'<button class="id-btn" data-act="default" title="Set as default"><svg viewBox="0 0 24 24" width="15" height="15"><path fill="currentColor" d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></button>':''}
+          <button class="id-btn" data-act="edit" title="Edit"><svg viewBox="0 0 24 24" width="15" height="15"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75zm17.71-10.04a1 1 0 0 0 0-1.42l-2.5-2.5a1 1 0 0 0-1.42 0l-1.96 1.96 3.75 3.75z"/></svg></button>
+          <button class="id-btn danger" data-act="delete" title="Delete"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+        </div>`;
+      card.querySelector('[data-act="default"]')?.addEventListener('click', async () => {
+        await window.privooInternal.identitiesSetDefault(id.id);
+        defaultId = id.id;
+        render();
+      });
+      card.querySelector('[data-act="edit"]').addEventListener('click', () => openModal(id));
+      card.querySelector('[data-act="delete"]').addEventListener('click', async () => {
+        if(!confirm(`Delete "${id.label}"?`)) return;
+        await window.privooInternal.identitiesRemove(id.id);
+        identities = identities.filter(i => i.id !== id.id);
+        if(defaultId === id.id) defaultId = identities[0]?.id || null;
+        render();
+      });
+      listEl.appendChild(card);
+    }
+  }
+
+  const backdrop = document.getElementById('modal-backdrop');
+  function openModal(id){
+    document.getElementById('modal-title').textContent = id ? 'Edit identity' : 'Add identity';
+    document.getElementById('f-id').value = id?.id || '';
+    document.getElementById('f-label').value = id?.label || '';
+    for(const k of FIELD_KEYS) document.getElementById('f-'+k).value = id?.fields?.[k] || '';
+    backdrop.hidden = false;
+    document.getElementById('f-label').focus();
+  }
+  function closeModal(){ backdrop.hidden = true; }
+
+  document.getElementById('btn-add').addEventListener('click', () => openModal(null));
+  document.getElementById('btn-cancel').addEventListener('click', closeModal);
+  backdrop.addEventListener('click', (e) => { if(e.target === backdrop) closeModal(); });
+
+  document.getElementById('btn-save').addEventListener('click', async () => {
+    const label = document.getElementById('f-label').value.trim();
+    if(!label){ document.getElementById('f-label').focus(); return; }
+    const fields = {};
+    for(const k of FIELD_KEYS) fields[k] = document.getElementById('f-'+k).value.trim();
+    const id = document.getElementById('f-id').value || undefined;
+    const res = await window.privooInternal.identitiesSave({ id, label, fields });
+    if(res?.ok){
+      identities = await window.privooInternal.identitiesList();
+      if(!defaultId && identities.length) defaultId = identities[0].id;
+      closeModal();
+      render();
+    }
+  });
+
+  window.privooInternal.onSettingsChanged((data) => {
+    const s = data?.settings || data;
+    document.body.classList.toggle('dark', !!s?.darkMode);
+    applyAccent(s?.accentColor);
+  });
+
+  load().catch(console.error);
+})();
+</script>
+</body>
+</html>

@@ -111,6 +111,8 @@ const DEFAULTS = {
 
   // Privacy
   adBlocking: true,
+  cryptojackingProtection: true, // blocks known in-browser cryptomining scripts
+  protectedToastSeen: false, // "We ❤️ keeping you protected online!" — shown once on the new tab page
   httpsUpgrade: true,
   httpsUpgradeShowNotice: true,  // show the "upgrading to HTTPS" splash for 3s
   blockThirdPartyCookies: true,
@@ -138,7 +140,7 @@ const DEFAULTS = {
   proxyTorPort: 9100,  // local SOCKS port Tor listens on / we route through
 
   // Appearance
-  darkMode: false,   // light is the default look; dark stays one toggle away
+  darkMode: true,
   forceDarkMode: false,
   // Increase Transparency — uses Mica/Acrylic on Win11, vibrancy on macOS,
   // and a translucent toolbar fallback on Linux. Off by default; turn it on
@@ -182,11 +184,10 @@ const DEFAULTS = {
   // Last app version we auto-opened Privoo News for — drives "show news once
   // after an update". Empty on a fresh install (setup records it instead).
   newsSeenVersion: '',
-  // What shows above the search bar on the new tab page: the "privoo." text
-  // wordmark, or the logo.png mark. Settings → New tab.
-  ntpBrandStyle: 'logo', // 'text' | 'logo' — the logo mark is the default look
   ntpWallpaperAnimated: true, // subtle ambient motion on the default wave wallpaper
   ntpShowQuickLinks: true,   // shortcut cards under the search bar — on by default
+  ntpShowGreeting: true,     // "Good morning/afternoon/evening/night" under the logo
+  ntpShowAddShortcutBtn: true, // top-right "Add shortcut" pill
   // Brave-style focused search: when the user clicks/focuses the search bar
   // on the new tab page, it scales up and the shortcuts below fade out so
   // the attention is on the search input.
@@ -195,9 +196,6 @@ const DEFAULTS = {
   ntpWallpaperPath: '',
   ntpWallpaperDim: 0.42,
   ntpDark: false,
-  // Looping animation for the "privoo." wordmark on the new tab:
-  // none | pulse | pop | fizzle | glow | bounce | shimmer
-  ntpWordmarkAnim: 'none',
   // Starter shortcuts seeded for fresh installs. (Existing users keep their
   // own — an empty array they've already saved is respected.)
   ntpQuickLinks: [
@@ -225,13 +223,15 @@ const DEFAULTS = {
   showNotesButton: false, // hidden by default — enable via the Notes extension
   showCalculator: false,  // Calculator toolbar button — enable via the Calculator extension
   lucidMode: false,       // Lucid Mode — hover a video for a star that enhances its picture
+  clearDataOnExit: false, // wipes history, cache, cookies, site data and downloads on quit
   extMoveNoticeShown: false, // one-time "features moved to Extensions" notice in Settings
-  showSidebar: true,      // shortcuts rail on the left (toggle in Settings → Features)
+  showSidebar: true,      // legacy boolean — derived from/kept in sync with sidebarMode below
+  sidebarMode: 'on',      // 'on' | 'off' | 'hover' — hover auto-collapses the rail until the cursor nears the edge
   sidebarQuickAccess: true, // pinned Downloads/History/Bookmarks/Settings row at the top of the rail
   sidebarPanelWidth: 320, // width of the embedded web panel in the sidebar
+  mobileEmulationDevice: 'samsung', // 'samsung' | 'iphone', used by the sidebar web panel and Mobile View
   showAiButton: true,     // AI toolbar button — can be hidden via Settings → Features
   showTranslateButton: false, // Translate toolbar button — off by default, enable in Settings → Features
-  centerSidebarIcons: true, // vertically center shortcut icons in the sidebar rail
   verticalTabs: false,    // show tabs in a vertical left panel instead of horizontal strip
   vtabsCollapsed: false,  // vertical tabs panel collapsed to icon-only rail
   vtabsIntegrated: false,   // move toolbar icon buttons into the vertical tabs panel
@@ -253,7 +253,6 @@ const DEFAULTS = {
   vtabsCenterIcons: false, // vertically centre the vertical-tabs icon rail
   newTabBtnCircle: false, // draw a circle around the new-tab "+" button
   syncDiscordTheme: true,  // recolor discord.com to match Privoo's accent + theme palette
-  uiFont: 'system',       // interface font: system | rounded | classic | grotesk | mono | dyslexic
   uiRoundness: 'default', // corner style of the whole UI: default | sharp | round
   customChromeCss: '',    // power-user: raw CSS injected into the browser chrome
   sidebarLinks: [
@@ -294,6 +293,14 @@ const DEFAULTS = {
   passwordManagerEnabled: true,
   /** On Google sign-in, steer toward password instead of passkey prompts. */
   preferPasswordLogin: true,
+
+  /** Multi-identity form autofill (name/address/etc, distinct from the
+   *  password vault above). Ollama assists field-matching when a local
+   *  Ollama server is reachable; heuristics alone otherwise. */
+  identityAutofillEnabled: true,
+  ollamaModel: 'llama3.2',
+  easyFilesEnabled: true,
+  downloadBoosterEnabled: false, // splits large downloads into parallel range requests
 
   // Safety
   safeMode: false,        // blur/block explicit images via CSS injection
@@ -389,9 +396,6 @@ function load() {
       const _dropSeed = (l) => !/mail\.google\.com|whatsapp\.com/i.test((l && l.url) || '');
       if (Array.isArray(parsed.sidebarLinks)) cache.sidebarLinks = parsed.sidebarLinks.filter(_dropSeed);
       if (Array.isArray(parsed.ntpQuickLinks)) cache.ntpQuickLinks = parsed.ntpQuickLinks.filter(_dropSeed);
-      if (parsed.ntpBrandStyle === 'text' || parsed.ntpBrandStyle === undefined) {
-        cache.ntpBrandStyle = 'logo';
-      }
       cache.seedTrim1Applied = true;
       try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
     }
@@ -404,6 +408,13 @@ function load() {
         cache.newTabBtnCircle = false;
       }
       cache.circleUndo1Applied = true;
+      try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
+    }
+    // Fourth migration wave. sidebarMode is new; derive it from whatever the
+    // old showSidebar boolean already said so nobody's existing choice
+    // changes on upgrade.
+    if (!parsed.sidebarMode) {
+      cache.sidebarMode = parsed.showSidebar === false ? 'off' : 'on';
       try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
     }
   } catch {

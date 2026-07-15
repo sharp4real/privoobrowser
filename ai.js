@@ -478,4 +478,37 @@ async function detectOllama() {
   }
 }
 
-module.exports = { getConfig, setConfig, chat, chatStream, detectOllama, DEFAULT_MODELS };
+/**
+ * Ask a local Ollama model to map ambiguous form-field descriptors to
+ * identity field keys (fullName, email, address1, …) for autofill. Used only
+ * for fields the cheap regex heuristics in the renderer couldn't classify.
+ * Returns a plain { fieldIndex: identityKey } object, or {} on any failure —
+ * never throws, since autofill must degrade gracefully without Ollama.
+ */
+async function resolveIdentityFields(fields, keys, model) {
+  if (!Array.isArray(fields) || !fields.length || !Array.isArray(keys) || !keys.length) return {};
+  const prompt = `You map HTML form fields to identity data keys for browser autofill.
+Keys available: ${keys.join(', ')}.
+Fields (index, then any of name/id/label/placeholder/autocomplete/type):
+${fields.map((f) => `${f.index}: name="${f.name}" id="${f.id}" label="${f.label}" placeholder="${f.placeholder}" autocomplete="${f.autocomplete}" type="${f.type}"`).join('\n')}
+Reply with ONLY a JSON object mapping each field index (as a string) to the single best-matching key from the list above. Omit a field entirely if none of the keys fit. No prose, no markdown.`;
+  try {
+    const res = await ollamaRequest('/api/generate', {
+      method: 'POST',
+      timeoutMs: 6000,
+      body: { model: model || DEFAULT_MODELS.ollama, prompt, stream: false, format: 'json' },
+    });
+    if (res.status !== 200 || !res.json?.response) return {};
+    const parsed = JSON.parse(res.json.response);
+    if (!parsed || typeof parsed !== 'object') return {};
+    const out = {};
+    for (const [idx, key] of Object.entries(parsed)) {
+      if (keys.includes(key)) out[idx] = key;
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+module.exports = { getConfig, setConfig, chat, chatStream, detectOllama, resolveIdentityFields, DEFAULT_MODELS };

@@ -178,8 +178,8 @@
       <div class="sw-done-ring">
         <svg viewBox="0 0 48 48" width="32" height="32"><path d="M10 26l10 10 20-20" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
-      <h2 class="sw-headline" id="sw-done-headline">And you're in.</h2>
-      <p class="sw-sub">Privacy's already handled — ads, trackers and fingerprinting scripts are blocked from your very first page.</p>
+      <h2 class="sw-headline" id="sw-done-headline">You're all set.</h2>
+      <p class="sw-sub">Thank you for choosing Privoo. Ads, trackers, and fingerprinting scripts are already blocked, starting from your very first page.</p>
       <div class="sw-recap" id="sw-recap"></div>
       <div class="sw-actions">
         <button class="sw-btn primary" id="sw-finish">Continue →</button>
@@ -660,6 +660,8 @@
                 </label>
               </div>
 
+              <div class="sp-reassure">Your privacy matters. Everything above happens on this device, nothing is ever sent to us.</div>
+
               <div class="sp-panel-foot">
                 <button id="stats-reset-btn" type="button" class="sp-reset-link">Reset counters</button>
                 <button type="button" class="sp-settings-link" data-action="settings">Privacy settings →</button>
@@ -1049,7 +1051,7 @@
             <label class="switch"><input type="checkbox" id="cp-wp-sound"><span class="slider"></span></label>
           </div>
           <div class="cp-row">
-            <span>Animate Default Wallpaper</span>
+            <span>Animate Wallpaper</span>
             <label class="switch"><input type="checkbox" id="cp-wp-animated"><span class="slider"></span></label>
           </div>
         </section>
@@ -1064,9 +1066,13 @@
             <span>Show bookmarks bar</span>
             <label class="switch"><input type="checkbox" id="cp-show-bookmarks"><span class="slider"></span></label>
           </div>
-          <div class="cp-row">
+          <div class="cp-row cp-row-stack">
             <span>Shortcuts sidebar</span>
-            <label class="switch"><input type="checkbox" id="cp-show-sidebar"><span class="slider"></span></label>
+            <div class="cp-seg" id="cp-sidebar-mode" role="group" aria-label="Shortcuts sidebar visibility">
+              <button type="button" class="cp-seg-btn" data-mode="off">Off</button>
+              <button type="button" class="cp-seg-btn" data-mode="on">On</button>
+              <button type="button" class="cp-seg-btn" data-mode="hover">Hover</button>
+            </div>
           </div>
           <div class="cp-row">
             <span>Vertical tabs</span>
@@ -1184,8 +1190,8 @@
   <div id="thankyou-popup" class="ty-popup hidden" role="dialog" aria-modal="true" aria-label="Thank you for using Privoo">
     <div class="ty-card">
       <img class="ty-logo" src="privoo://newtab/logo.png" width="40" height="40" alt="Privoo" draggable="false"/>
-      <div class="ty-title">ty for using privoo</div>
-      <div class="ty-text">hope u enjoy my absolute peak browser i made : )</div>
+      <div class="ty-title">Thank you for using Privoo</div>
+      <div class="ty-text">We built Privoo to put your privacy first, no accounts, no tracking, no compromise. We hope it serves you well.</div>
       <button class="ty-btn" id="thankyou-ok">Continue</button>
     </div>
   </div>

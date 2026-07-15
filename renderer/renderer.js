@@ -726,19 +726,8 @@ function applyAppSettings() {
   try { refreshDiscordThemeTabs(); } catch { /* ignore */ }
 }
 
-// Interface font choices. Each maps to a font stack applied to the whole chrome.
-const UI_FONT_STACKS = {
-  system:   '"Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif',
-  rounded:  '"Segoe UI Variable Display", "SF Pro Rounded", "Nunito", "Quicksand", system-ui, sans-serif',
-  classic:  'Georgia, "Times New Roman", "Iowan Old Style", serif',
-  grotesk:  '"Inter", "Helvetica Neue", "Arial Nova", Helvetica, Arial, sans-serif',
-  mono:     'ui-monospace, "Cascadia Code", "JetBrains Mono", Consolas, "Courier New", monospace',
-  dyslexic: '"Comic Sans MS", "Comic Neue", "Trebuchet MS", system-ui, sans-serif',
-};
-
-// Apply the font + raw custom CSS to a single injected <style>. The font rule
-// uses !important so it overrides the many hard-coded font-family declarations
-// in styles.css; the user's custom CSS is appended LAST so it wins over both.
+// Applies the user's raw custom CSS to a single injected <style>, wins over
+// everything else since it's appended last.
 function applyStyleCustomizations() {
   let el = document.getElementById('privoo-style-custom');
   if (!el) {
@@ -747,11 +736,6 @@ function applyStyleCustomizations() {
     document.head.appendChild(el);
   }
   let css = '';
-  const font = settings?.uiFont && settings.uiFont !== 'system' ? UI_FONT_STACKS[settings.uiFont] : '';
-  if (font) {
-    css += 'body, button, input, select, textarea, #omnibox, .menu-item, '
-        +  '.tab, .tab-title, .label, .desc, .vtab-title { font-family: ' + font + ' !important; }\n';
-  }
   if (settings?.customChromeCss) css += String(settings.customChromeCss) + '\n';
   el.textContent = css;
 }
@@ -1328,11 +1312,15 @@ function paintToolbarWidgets() {
   // AI toolbar button — on by default, can be hidden in Settings → Features
   const aiAnchor = document.getElementById('ai-anchor');
   if (aiAnchor) aiAnchor.hidden = settings.showAiButton === false;
-  // Shortcuts sidebar — also off by default, enable in Settings → Features
-  if (appSidebar) appSidebar.hidden = !settings.showSidebar;
-  document.body.classList.toggle('sidebar-centered', !!settings.centerSidebarIcons);
+  // Shortcuts sidebar — three modes: off, always on, or reveal on hover.
+  // sidebarMode is the source of truth; showSidebar is kept in sync as a
+  // simple on/off mirror for any code that only cares about visibility.
+  const sidebarMode = settings.sidebarMode || (settings.showSidebar === false ? 'off' : 'on');
+  const sidebarVisible = sidebarMode !== 'off';
+  if (appSidebar) appSidebar.hidden = !sidebarVisible;
+  document.body.classList.toggle('sidebar-hover-mode', sidebarMode === 'hover');
   renderPinnedExtensions();
-  if (settings.showSidebar) renderSidebarRail();
+  if (sidebarVisible) renderSidebarRail();
 }
 
 function sidebarLinkList() {
@@ -1551,6 +1539,12 @@ let _sidebarResizing = false;
 let _sidebarResizeStart = 0;
 let _sidebarResizeW = 320;
 
+const MOBILE_DEVICE_UAS = {
+  samsung: () => `Mozilla/5.0 (Linux; Android 14; SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${(navigator.userAgent.match(/Chrome\/([\d.]+)/) || [])[1] || '142.0.0.0'} Mobile Safari/537.36`,
+  iphone: () => 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+};
+const MOBILE_DEVICE_WIDTHS = { samsung: 412, iphone: 393 };
+
 function openSidebarPanel(link) {
   if (!sidebarPanel || !sidebarWv) return;
   // Apply preload + partition once before first real navigation
@@ -1560,23 +1554,37 @@ function openSidebarPanel(link) {
   // The panel is a phone-shaped viewport, so render sites AS a phone: with a
   // desktop UA every site lays out at ~1000px+ and gets clipped; with a
   // mobile UA responsive sites serve their narrow layout and fit exactly.
-  // Same approach Opera uses for its sidebar apps. Set before first load.
-  if (!sidebarWv.getAttribute('useragent')) {
-    const chromeVer = (navigator.userAgent.match(/Chrome\/([\d.]+)/) || [])[1] || '142.0.0.0';
-    sidebarWv.setAttribute('useragent',
-      `Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVer} Mobile Safari/537.36`);
-  }
+  // Same approach Opera uses for its sidebar apps.
+  const device = settings?.mobileEmulationDevice === 'iphone' ? 'iphone' : 'samsung';
+  sidebarWv.setAttribute('useragent', MOBILE_DEVICE_UAS[device]());
   const _incoPart = window.__privooIncognitoPartition || window.privoo?.incognitoPartition;
   if (_incoPart && !sidebarWv.getAttribute('partition')) {
     sidebarWv.setAttribute('partition', _incoPart);
   }
-  const w = settings?.sidebarPanelWidth || 480;
-  sidebarPanel.style.width = `${w}px`;
+  // Match the panel to the chosen device's real CSS width. A mismatched
+  // width fights the mobile UA/viewport it claims to be, since sites
+  // reading window.innerWidth would see a width no real phone ever reports.
+  let w = settings?.sidebarPanelWidth || MOBILE_DEVICE_WIDTHS[device];
   const titleEl = document.getElementById('sidebar-panel-title');
-  if (titleEl) {
-    try { titleEl.textContent = new URL(link.url).hostname.replace(/^www\./, ''); }
-    catch { titleEl.textContent = link.title || link.url; }
-  }
+  let linkHost = '';
+  try { linkHost = new URL(link.url).hostname; } catch {}
+  if (titleEl) titleEl.textContent = linkHost ? linkHost.replace(/^www\./, '') : (link.title || link.url);
+  // Spotify's web player doesn't have a clean phone-width breakpoint the way
+  // WhatsApp/Instagram do — below ~480px it lands on a half-collapsed layout
+  // instead of its actual mobile view. Give it more room regardless of
+  // device, without touching the width every other app gets.
+  const SIDEBAR_WIDE_HOSTS = { 'open.spotify.com': 480 };
+  const wideMin = SIDEBAR_WIDE_HOSTS[linkHost];
+  if (wideMin && w < wideMin) w = wideMin;
+  sidebarPanel.style.width = `${w}px`;
+  // Every one of Electron's three UA layers (webContents UA, CDP Client
+  // Hints, session wide header rewrite) otherwise forces this webview back
+  // to a desktop identity, see the matching note in main.js. Mark it before
+  // navigating so the very first request already carries the device identity.
+  try {
+    const wcId = sidebarWv.getWebContentsId?.();
+    if (wcId) window.privoo?.markMobileWebview?.(wcId, device);
+  } catch { /* not attached yet, falls back to session default */ }
   sidebarWv.src = link.url;
   sidebarPanel.hidden = false;
   sidebarOverlay?.classList.remove('hidden');
@@ -1776,6 +1784,7 @@ function renderTabStrip() {
     if (g) tabsEl.appendChild(makeGroupChip(g));
     for (const t of buckets.get(gid)) tabsEl.appendChild(t.tabEl);
   }
+  applySplitTabStripJoin();
   requestAnimationFrame(resizeTabs);
   renderVtabs();
 }
@@ -2043,7 +2052,26 @@ function ensureDisclaimer() {
       }
       // Done step — build a real recap of what was just chosen, so it's not
       // the same static blurb every time.
-      if (to.id === 'sw-step-6') renderSetupRecap();
+      if (to.id === 'sw-step-6') { renderSetupRecap(); fireConfetti(); }
+    }
+
+    function fireConfetti() {
+      const colors = ['#8b7cf7', '#c58af7', '#f7c58a', '#8af7c5', '#f78ab0'];
+      const layer = document.createElement('div');
+      layer.className = 'sw-confetti-layer';
+      for (let i = 0; i < 90; i++) {
+        const p = document.createElement('span');
+        p.className = 'sw-confetti-piece';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.background = colors[i % colors.length];
+        p.style.animationDelay = (Math.random() * 0.4) + 's';
+        p.style.animationDuration = (2.2 + Math.random() * 1.4) + 's';
+        p.style.setProperty('--drift', (Math.random() * 140 - 70) + 'px');
+        p.style.setProperty('--spin', (Math.random() * 720 - 360) + 'deg');
+        layer.appendChild(p);
+      }
+      document.body.appendChild(layer);
+      setTimeout(() => layer.remove(), 4000);
     }
 
     const ENGINE_LABELS = { brave: 'Brave Search', duckduckgo: 'DuckDuckGo', google: 'Google', bing: 'Bing' };
@@ -2366,7 +2394,7 @@ function toUrl(input) {
     // malformed or no hostname — treat as a search query
     return searchUrl(t);
   }
-  if (/^(privoo:\/\/|about:|view-source:|file:\/\/)/i.test(t)) return t;
+  if (/^(privoo:\/\/|about:|view-source:|file:\/\/|ipfs:\/\/|ipns:\/\/)/i.test(t)) return t;
   const host = !/\s/.test(t) && (/\.[a-z]{2,}(:\d+)?(\/|\?|#|$)/i.test(t) || /^localhost(:\d+)?(\/|$)/i.test(t));
   return host ? 'https://' + t : searchUrl(t);
 }
@@ -2435,7 +2463,7 @@ function createTab(url = defaultNewTabUrl(), activate = true, opts = {}) {
   tabEl.innerHTML =
     `<span class="favicon tab-fav"></span>` +
     `<span class="tab-title">${newTabLabel()}</span>` +
-    `<span class="tab-audio-ind" title="Audio playing — click to mute"><svg viewBox="0 0 24 24" width="12" height="12"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg></span>` +
+    `<span class="tab-audio-ind" title="Audio playing, click to mute"><svg viewBox="0 0 24 24" width="12" height="12"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg></span>` +
     `<span class="tab-close" title="Close tab"><svg viewBox="0 0 14 14" width="10" height="10"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></span>`;
   tabsEl.appendChild(tabEl);
   // Tab widths are un-animated now, so the strip's final layout exists this
@@ -2710,8 +2738,20 @@ function _buildCtxRows(container, items) {
       arr.textContent = '▸';
       row.appendChild(arr);
       const subItems = item.submenu;
-      row.addEventListener('mouseenter', function () {
+      // Click to open/close, not hover. A hover flyout depends on the
+      // pointer's exact path between the row and the flyout never crossing
+      // a dead zone, which is fragile and was the previous bug here
+      // ("New group" doing nothing). A click toggle has no such dependency.
+      row.addEventListener('mousedown', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        if (_ctxFlyout && row.classList.contains('ctx-submenu-open')) {
+          _ctxFlyout.remove(); _ctxFlyout = null;
+          row.classList.remove('ctx-submenu-open');
+          return;
+        }
         if (_ctxFlyout) { _ctxFlyout.remove(); _ctxFlyout = null; }
+        container.querySelectorAll('.ctx-submenu-open').forEach((r) => r.classList.remove('ctx-submenu-open'));
+        row.classList.add('ctx-submenu-open');
         const fly = document.createElement('div');
         fly.className = 'context-menu';
         _buildCtxRows(fly, subItems);
@@ -2723,17 +2763,12 @@ function _buildCtxRows(container, items) {
         const vw = window.innerWidth, vh = window.innerHeight;
         fly.style.left = `${Math.min(rect.right + 2, vw - fw - 4)}px`;
         fly.style.top  = `${Math.min(rect.top,      vh - fh - 4)}px`;
-        fly.addEventListener('mousedown', (e) => {
-          const r = e.target.closest('.ctx-item');
+        fly.addEventListener('mousedown', (ev) => {
+          const r = ev.target.closest('.ctx-item');
           if (!r || r.classList.contains('disabled') || !r.dataset.menuId) return;
-          e.preventDefault(); e.stopPropagation();
+          ev.preventDefault(); ev.stopPropagation();
           _closeCtxMenu(r.dataset.menuId);
         }, true);
-      });
-      row.addEventListener('mouseleave', function (e) {
-        if (_ctxFlyout && !_ctxFlyout.contains(e.relatedTarget)) {
-          _ctxFlyout.remove(); _ctxFlyout = null;
-        }
       });
     } else if (!off && item.id) {
       row.dataset.menuId = item.id;
@@ -3039,6 +3074,14 @@ function wireWebview(tab) {
       showPasswordSaveOffer(tab, e.args?.[0] || {});
       return;
     }
+    if (e.channel === 'identity-request-fill') {
+      void handleIdentityFillRequest(tab, e.args?.[0] || {});
+      return;
+    }
+    if (e.channel === 'file-picker-request') {
+      void showFilePickerPopover(tab);
+      return;
+    }
     if (e.channel === 'open-customize-panel') {
       openCustomizePanel();
       return;
@@ -3209,6 +3252,12 @@ function applyInjections(wv) {
   if (settings?.passwordManagerEnabled !== false && window.privoo?.passwordAutofillScript) {
     wv.executeJavaScript(window.privoo.passwordAutofillScript).catch(() => {});
   }
+  if (settings?.identityAutofillEnabled !== false && window.privoo?.identityAutofillScript) {
+    wv.executeJavaScript(window.privoo.identityAutofillScript).catch(() => {});
+  }
+  if (settings?.easyFilesEnabled !== false && window.privoo?.filePickerScript) {
+    wv.executeJavaScript(window.privoo.filePickerScript).catch(() => {});
+  }
   if (settings?.preferPasswordLogin !== false && window.privoo?.googlePasswordPreferScript) {
     try {
       const host = new URL(url).hostname.toLowerCase();
@@ -3281,6 +3330,137 @@ function showPasswordSaveOffer(tab, payload) {
       : `Save password for ${host}?`;
   }
   passwordSaveBar.classList.remove('hidden');
+}
+
+// ── Identity autofill (name/address/phone/etc, separate from the password
+// vault above) ──────────────────────────────────────────────────────────────
+// Cheap regex heuristics handle the common cases (autocomplete attributes,
+// conventional name/id patterns) with zero latency. Fields that don't match
+// anything fall back to a local Ollama model, when one is reachable, to
+// interpret less conventional labels/placeholders — this never blocks the
+// fill if Ollama is absent or slow.
+const IDENTITY_HEURISTICS = [
+  ['email',     /email|e-mail/i],
+  ['phone',     /phone|tel(ephone)?|mobile/i],
+  ['firstName', /first[-_ ]?name|given[-_ ]?name|fname/i],
+  ['lastName',  /last[-_ ]?name|sur[-_ ]?name|family[-_ ]?name|lname/i],
+  ['fullName',  /full[-_ ]?name|^name$|your[-_ ]?name/i],
+  ['company',   /compan(y|ies)|organi[sz]ation|business/i],
+  ['address2',  /address[-_ ]?(line)?[-_ ]?2|apt|suite|unit/i],
+  ['address1',  /address[-_ ]?(line)?[-_ ]?1|street|address$/i],
+  ['city',      /city|town/i],
+  ['state',     /\bstate\b|province|region/i],
+  ['zip',       /zip|postal/i],
+  ['country',   /country/i],
+];
+
+function heuristicIdentityMap(fields) {
+  const map = {};
+  const used = new Set();
+  for (const f of fields) {
+    const hay = [f.autocomplete, f.name, f.id, f.label, f.placeholder].join(' ').toLowerCase();
+    for (const [key, re] of IDENTITY_HEURISTICS) {
+      if (used.has(key)) continue;
+      if (re.test(hay)) { map[f.index] = key; used.add(key); break; }
+    }
+  }
+  return map;
+}
+
+function requestIdentityAutofill(tab) {
+  if (!tab?.wv) return;
+  tab.wv.executeJavaScript(`window.postMessage({ __privoo_id_request: true }, '*');`).catch(() => {});
+}
+
+async function handleIdentityFillRequest(tab, payload) {
+  if (!window.privoo?.identitiesGetDefault || settings?.identityAutofillEnabled === false) return;
+  const fields = Array.isArray(payload?.fields) ? payload.fields : [];
+  if (!fields.length) return;
+
+  let identity = null;
+  try { identity = await window.privoo.identitiesGetDefault(); } catch { return; }
+  if (!identity?.fields) return;
+
+  let map = heuristicIdentityMap(fields);
+  const unmatched = fields.filter((f) => map[f.index] == null);
+  if (unmatched.length && window.privoo?.ollamaResolveFields) {
+    try {
+      const extra = await window.privoo.ollamaResolveFields(unmatched, Object.keys(identity.fields));
+      if (extra && typeof extra === 'object') map = { ...extra, ...map };
+    } catch { /* Ollama unreachable — heuristics-only fill still applies */ }
+  }
+
+  const values = {};
+  for (const idx in map) {
+    const v = identity.fields[map[idx]];
+    if (v) values[idx] = v;
+  }
+  if (!Object.keys(values).length) return;
+  tab.wv.executeJavaScript(
+    `window.postMessage({ __privoo_id_fill: true, map: ${JSON.stringify(values)} }, '*');`
+  ).catch(() => {});
+}
+
+let _fpPop = null;
+function closeFilePickerPopover() { _fpPop?.remove(); _fpPop = null; }
+document.addEventListener('click', (ev) => {
+  if (!_fpPop || _fpPop.dataset.justOpened) return;
+  if (!_fpPop.contains(ev.target)) closeFilePickerPopover();
+});
+
+function fpRelativeTime(ms) {
+  const diff = Date.now() - ms;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return mins + 'm ago';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  return Math.floor(hrs / 24) + 'd ago';
+}
+
+async function showFilePickerPopover(tab) {
+  if (settings?.easyFilesEnabled === false || !window.privoo?.recentFilesList) return;
+  closeFilePickerPopover();
+
+  let vx = 200, vy = 200;
+  try {
+    const c = await window.privoo.getCursorPos();
+    if (c && c.x >= 0 && c.y >= 0) { vx = c.x; vy = c.y; }
+  } catch { /* fall back to default position */ }
+
+  let files = [];
+  try { files = await window.privoo.recentFilesList(); } catch { files = []; }
+
+  const pop = document.createElement('div');
+  pop.className = 'fp-pop';
+  pop.style.left = Math.min(vx, window.innerWidth - 300) + 'px';
+  pop.style.top = Math.min(vy, window.innerHeight - 260) + 'px';
+
+  const rows = files.length
+    ? files.map((f) => `<button type="button" class="fp-item" data-path="${esc(f.path)}"><span class="fp-item-name">${esc(f.name)}</span><span class="fp-item-time">${fpRelativeTime(f.mtimeMs)}</span></button>`).join('')
+    : '<div class="fp-empty">No recent files yet</div>';
+
+  pop.innerHTML = '<h4>Recent files</h4>' + rows + '<button type="button" class="fp-browse" id="fp-browse">Browse for a file…</button>';
+  document.body.appendChild(pop);
+  _fpPop = pop;
+  pop.dataset.justOpened = '1';
+  requestAnimationFrame(() => { delete pop.dataset.justOpened; });
+
+  pop.querySelectorAll('.fp-item').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const filePath = btn.dataset.path;
+      closeFilePickerPopover();
+      let res = null;
+      try { res = await window.privoo.recentFileRead(filePath); } catch { res = null; }
+      if (!res?.ok) return;
+      const payload = JSON.stringify({ name: res.name, mime: res.mime, base64: res.base64 });
+      tab.wv.executeJavaScript(`window.postMessage({ __privoo_fp_fill: true, file: ${payload} }, '*');`).catch(() => {});
+    });
+  });
+  pop.querySelector('#fp-browse').addEventListener('click', () => {
+    closeFilePickerPopover();
+    tab.wv.executeJavaScript(`window.postMessage({ __privoo_fp_open_native: true }, '*');`).catch(() => {});
+  });
 }
 
 function hidePasswordSaveBar() {
@@ -4013,6 +4193,8 @@ function closePopovers() {
   hideTabContextMenu();
   hideWvContextMenu();
   hideSidebarFlyout();
+  closeSidebarCustomize();
+  closeFilePickerPopover();
 }
 
 function hideWvContextMenu() {
@@ -4580,6 +4762,9 @@ async function showWvContextMenu(tab, params, vx = 200, vy = 200) {
 
   if (params?.isEditable) {
     add('Emojis', () => openEmojiPicker(wv));
+    if (settings?.identityAutofillEnabled !== false) {
+      add('Autofill identity', () => requestIdentityAutofill(tab));
+    }
     sep();
   }
 
@@ -4653,20 +4838,21 @@ document.getElementById('extensions-btn')?.addEventListener('click', (e) => {
 
 // ─── Customize side panel (right-side, opens from menu) ─────────────────────
 const CP_ACCENTS = [
-  { name: 'pine',   value: '#8b7cf7' },  // default
-  { name: 'blue',   value: '#8ab4f8' },
-  { name: 'indigo', value: '#a78bfa' },
-  { name: 'pink',   value: '#f48fb1' },
-  { name: 'red',    value: '#f28b82' },
-  { name: 'orange', value: '#fcad70' },
-  { name: 'yellow', value: '#fdd663' },
+  { name: 'lavender', value: '#8b7cf7' },  // default
+  { name: 'blue',     value: '#8ab4f8' },
+  { name: 'teal',     value: '#4dd0e1' },
+  { name: 'green',    value: '#81c995' },
+  { name: 'yellow',   value: '#fdd663' },
+  { name: 'orange',   value: '#fcad70' },
+  { name: 'red',      value: '#f28b82' },
+  { name: 'pink',     value: '#f48fb1' },
 ];
 const cpPanel       = document.getElementById('customize-panel');
 const cpCloseBtn    = document.getElementById('cp-close');
 const cpAccentRow   = document.getElementById('cp-accent-row');
 const cpShowHome    = document.getElementById('cp-show-home');
 const cpShowBks     = document.getElementById('cp-show-bookmarks');
-const cpShowSidebar = document.getElementById('cp-show-sidebar');
+const cpSidebarMode = document.getElementById('cp-sidebar-mode');
 const cpShowNotes      = document.getElementById('cp-show-notes');
 const cpVerticalTabs   = document.getElementById('cp-vertical-tabs');
 // cpShowGreet removed — greeting feature deleted
@@ -4763,7 +4949,10 @@ function paintCustomizePanel() {
   paintAccentSwatches();
   if (cpShowHome)       cpShowHome.checked       = !!settings?.showHomeButton;
   if (cpShowBks)        cpShowBks.checked        = !!settings?.showBookmarksBar;
-  if (cpShowSidebar)    cpShowSidebar.checked    = !!settings?.showSidebar;
+  if (cpSidebarMode) {
+    const mode = settings?.sidebarMode || (settings?.showSidebar === false ? 'off' : 'on');
+    cpSidebarMode.querySelectorAll('.cp-seg-btn').forEach((b) => b.classList.toggle('active', b.dataset.mode === mode));
+  }
   if (cpVerticalTabs)   cpVerticalTabs.checked   = !!settings?.verticalTabs;
   if (cpShowNotes)      cpShowNotes.checked      = !!settings?.showNotesButton;
   if (cpWpFull)         cpWpFull.checked         = !!settings?.ntpWallpaperFullBrowser;
@@ -4794,13 +4983,21 @@ document.querySelectorAll('.cp-theme-btn').forEach(btn => {
 });
 cpShowHome?.addEventListener('change',    () => saveBrowserSetting({ showHomeButton:    cpShowHome.checked }));
 cpShowBks?.addEventListener('change',     () => saveBrowserSetting({ showBookmarksBar:  cpShowBks.checked  }));
-cpShowSidebar?.addEventListener('change', () => saveBrowserSetting({ showSidebar: cpShowSidebar.checked }));
+cpSidebarMode?.querySelectorAll('.cp-seg-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const mode = btn.dataset.mode;
+    cpSidebarMode.querySelectorAll('.cp-seg-btn').forEach((b) => b.classList.toggle('active', b === btn));
+    saveBrowserSetting({ sidebarMode: mode, showSidebar: mode !== 'off' });
+  });
+});
 cpVerticalTabs?.addEventListener('change', async () => {
   const on = cpVerticalTabs.checked;
   const patch = { verticalTabs: on };
-  if (on && settings?.showSidebar) {
+  const curMode = settings?.sidebarMode || (settings?.showSidebar === false ? 'off' : 'on');
+  if (on && curMode !== 'off') {
+    patch.sidebarMode = 'off';
     patch.showSidebar = false;
-    if (cpShowSidebar) cpShowSidebar.checked = false;
+    cpSidebarMode?.querySelectorAll('.cp-seg-btn').forEach((b) => b.classList.toggle('active', b.dataset.mode === 'off'));
   }
   await saveBrowserSetting(patch);
 });
@@ -5337,7 +5534,13 @@ function openSidebarCustomize() {
   const swRow = (inner, checked, attrs) =>
     `<label class="sb-cz-row">${inner}` +
     `<span class="sb-cz-sw"><input type="checkbox" ${attrs} ${checked ? 'checked' : ''}/><i></i></span></label>`;
+  const curMode = settings?.sidebarMode || (settings?.showSidebar === false ? 'off' : 'on');
   pop.innerHTML = '<h4>Customize sidebar</h4>' +
+    '<div class="sb-cz-modes" id="sb-cz-modes">' +
+      ['off', 'on', 'hover'].map((m) =>
+        `<button type="button" class="sb-cz-mode-btn${m === curMode ? ' active' : ''}" data-mode="${m}">${m === 'off' ? 'Off' : m === 'on' ? 'Always on' : 'On hover'}</button>`
+      ).join('') +
+    '</div>' +
     swRow('<span class="sb-cz-name">Quick access <small>Downloads, History…</small></span>',
           settings?.sidebarQuickAccess !== false, 'id="sb-cz-qa"') +
     '<h4 style="margin-top:12px">Apps</h4>' +
@@ -5358,6 +5561,16 @@ function openSidebarCustomize() {
   pop.querySelector('#sb-cz-qa').addEventListener('change', (ev) => {
     void saveBrowserSetting({ sidebarQuickAccess: ev.target.checked }).then(renderSidebarRail);
   });
+  pop.querySelectorAll('.sb-cz-mode-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const mode = btn.dataset.mode;
+      pop.querySelectorAll('.sb-cz-mode-btn').forEach((b) => b.classList.toggle('active', b === btn));
+      void saveBrowserSetting({ sidebarMode: mode, showSidebar: mode !== 'off' });
+      if (cpSidebarMode) {
+        cpSidebarMode.querySelectorAll('.cp-seg-btn').forEach((b) => b.classList.toggle('active', b.dataset.mode === mode));
+      }
+    });
+  });
   pop.querySelectorAll('input[data-app]').forEach((cb) => {
     cb.addEventListener('change', () => {
       const app = SIDEBAR_APP_CATALOG[Number(cb.dataset.app)];
@@ -5369,10 +5582,22 @@ function openSidebarCustomize() {
     });
   });
   pop.querySelector('#sb-cz-add').addEventListener('click', () => { closeSidebarCustomize(); openSidebarAddModal(); });
-  setTimeout(() => document.addEventListener('click', function onDoc(ev) {
-    if (_sbCustomizePop && !_sbCustomizePop.contains(ev.target)) { closeSidebarCustomize(); document.removeEventListener('click', onDoc); }
-  }), 0);
+  // Popover flagged "just opened" for one tick so the SAME click that opened
+  // it (the cog button) doesn't immediately fall through to the single
+  // persistent outside-click listener below and close it right back.
+  pop.dataset.justOpened = '1';
+  requestAnimationFrame(() => { delete pop.dataset.justOpened; });
 }
+// One persistent listener instead of attaching/detaching a new one on every
+// open — the previous version added a fresh document click listener each
+// time openSidebarCustomize() ran, and closing via the cog button (rather
+// than an outside click) never removed it, so listeners piled up on every
+// open/close cycle and the popover's outside-click behaviour got flakier
+// the longer a session ran.
+document.addEventListener('click', (ev) => {
+  if (!_sbCustomizePop || _sbCustomizePop.dataset.justOpened) return;
+  if (!_sbCustomizePop.contains(ev.target)) closeSidebarCustomize();
+});
 document.getElementById('sidebar-add')?.addEventListener('click', (e) => {
   e.stopPropagation();
   if (_sbCustomizePop) closeSidebarCustomize(); else openSidebarCustomize();
@@ -5886,6 +6111,76 @@ geoApplyBtn?.addEventListener('click', async () => {
   await saveBrowserSetting(patch);
 });
 
+// Progressive-enhancement custom dropdown. The native <select> stays in the
+// DOM as the real source of truth (value/change events keep working
+// unmodified everywhere else in this file), just visually hidden, with a
+// themed button + floating list drawn on top. Mirrors the pattern already
+// used in settings.html, ported here for the media download format picker.
+function enhanceNativeSelect(select) {
+  if (!select || select.dataset.enhanced) return;
+  select.dataset.enhanced = '1';
+  const wrap = document.createElement('div');
+  wrap.className = 'csel-wrap';
+  select.parentNode.insertBefore(wrap, select);
+  wrap.appendChild(select);
+  select.classList.add('csel-native');
+  select.tabIndex = -1;
+
+  const trigger = document.createElement('button');
+  trigger.type = 'button';
+  trigger.className = select.className.replace('csel-native', '').trim() + ' csel-trigger';
+  wrap.appendChild(trigger);
+
+  const list = document.createElement('div');
+  list.className = 'csel-list';
+  wrap.appendChild(list);
+
+  function syncLabel() {
+    const opt = select.options[select.selectedIndex];
+    trigger.textContent = opt ? opt.textContent : '';
+  }
+  function buildList() {
+    list.innerHTML = '';
+    Array.from(select.options).forEach((opt, i) => {
+      const item = document.createElement('div');
+      item.className = 'csel-item' + (i === select.selectedIndex ? ' active' : '');
+      item.textContent = opt.textContent;
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (select.selectedIndex !== i) {
+          select.selectedIndex = i;
+          select.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        closeList();
+      });
+      list.appendChild(item);
+    });
+  }
+  function openList() {
+    document.querySelectorAll('.csel-list.open').forEach((l) => l.classList.remove('open'));
+    buildList();
+    list.classList.add('open');
+    trigger.classList.add('open');
+  }
+  function closeList() { list.classList.remove('open'); trigger.classList.remove('open'); }
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    list.classList.contains('open') ? closeList() : openList();
+  });
+  document.addEventListener('click', (e) => { if (!wrap.contains(e.target)) closeList(); });
+  for (const prop of ['value', 'selectedIndex']) {
+    const desc = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, prop);
+    if (!desc) continue;
+    Object.defineProperty(select, prop, {
+      configurable: true,
+      get() { return desc.get.call(select); },
+      set(v) { desc.set.call(select, v); syncLabel(); },
+    });
+  }
+  syncLabel();
+}
+enhanceNativeSelect(document.getElementById('ytdlp-format'));
+
 const YTDLP_DISCLAIMER_KEY = 'privoo:ytdlp-rights-shown';
 async function runYtdlpDownload() {
   const url = (ytdlpUrlInput?.value || '').trim();
@@ -6104,7 +6399,7 @@ function toggleReaderMode() {
   }
   tab.wv.executeJavaScript(readerModeScript(!!settings?.darkMode)).then((r) => {
     if (r === 'no-article') privooToast("Reader mode couldn't find an article here");
-    else if (r === 'open')   privooToast('Reader mode on — press Esc to exit');
+    else if (r === 'open')   privooToast('Reader mode on, press Esc to exit');
   }).catch(() => {});
 }
 
@@ -6265,6 +6560,22 @@ function layoutSplit() {
   setPaneBox(right.wv, divX + 3,  Math.max(0, w - divX - 3));
   splitDivider.hidden = false;
   splitDivider.style.left = divX + 'px';
+  applySplitTabStripJoin();
+}
+
+// Joins the two split tabs into one connected pill in the strip, matching
+// the joined panes below, instead of leaving them as two disconnected tabs.
+function applySplitTabStripJoin() {
+  for (const t of tabs) t.tabEl.classList.remove('split-left', 'split-right');
+  if (!isSplit()) return;
+  const left = getTab(splitLeftId);
+  const right = getTab(splitRightId);
+  if (!left || !right) return;
+  left.tabEl.classList.add('split-left');
+  right.tabEl.classList.add('split-right');
+  if (left.tabEl.nextElementSibling !== right.tabEl) {
+    left.tabEl.after(right.tabEl);
+  }
 }
 
 function enterSplitView() {
@@ -6279,7 +6590,7 @@ function enterSplitView() {
   splitRatio = 0.5;
   viewsEl.classList.add('split');
   layoutSplit();
-  privooToast('Split View — click a pane’s tab to control that side, or any other tab to exit');
+  privooToast("Split View, click a panel's tab to control that side, or any other tab to exit");
 }
 
 function exitSplitView() {
@@ -8320,7 +8631,7 @@ function toggleFocusMode() {
   _focusMode = !_focusMode;
   document.body.classList.toggle('focus-mode', _focusMode);
   if (focusStripEl) focusStripEl.hidden = !_focusMode;
-  privooToast(_focusMode ? 'Focus mode on — press Ctrl+Shift+F to exit' : 'Focus mode off');
+  privooToast(_focusMode ? 'Focus mode on, press Ctrl+Shift+F to exit' : 'Focus mode off');
 }
 focusStripEl?.addEventListener('click', () => { if (_focusMode) toggleFocusMode(); });
 

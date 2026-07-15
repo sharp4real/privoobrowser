@@ -35,8 +35,10 @@
 
   /* Increase Transparency — host signals via settings; we drop the body
      fill and tint cards so the OS material shows through. Inputs stay
-     opaque so text remains legible. */
-  body.transparent-ui { background: transparent; }
+     opaque so text remains legible. !important: body:not(.dark)/body.dark
+     further down this file set an opaque background at equal specificity
+     and later source order, which otherwise silently wins. */
+  body.transparent-ui { background: transparent !important; }
   body.transparent-ui header {
     background: rgba(255,255,255,.65) !important;
     backdrop-filter: blur(20px) saturate(160%);
@@ -48,12 +50,12 @@
     border-color: rgba(255,255,255,.08) !important;
   }
   body.transparent-ui .card {
-    background: rgba(255, 255, 255, .72);
+    background: rgba(255, 255, 255, .72) !important;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
   }
   body.transparent-ui.dark .card {
-    background: rgba(41, 42, 45, .68);
+    background: rgba(41, 42, 45, .68) !important;
   }
   body.transparent-ui nav#nav { background: transparent; }
   body.transparent-ui .nav-btn:hover  { background: rgba(0,0,0,.07); }
@@ -294,11 +296,11 @@
     font-family: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .csel-list {
-    position: absolute; top: calc(100% + 6px); left: 0; right: 0; min-width: 100%;
+    position: fixed;
     max-height: 280px; overflow-y: auto;
     background: #fff; border: 1px solid rgba(38,36,58,.08); border-radius: 14px;
     box-shadow: 0 20px 50px -14px rgba(38,36,58,.28), 0 4px 14px rgba(38,36,58,.08);
-    padding: 6px; z-index: 400;
+    padding: 6px; z-index: 5000;
     display: none;
     animation: csel-pop .15s cubic-bezier(.2,.8,.25,1) both;
   }
@@ -1079,6 +1081,7 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
 #nav .nav-btn[data-target="performance"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 2v11h3v9l7-12h-4l4-8z'/%3E%3C/svg%3E"); }
 #nav .nav-btn[data-target="system"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z'/%3E%3C/svg%3E"); }
 #nav .nav-btn[data-target="passwords"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z'/%3E%3C/svg%3E"); }
+#nav .nav-btn[data-target="identities"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E"); }
 #nav .nav-btn[data-target="about"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z'/%3E%3C/svg%3E"); }
 </style>
 </head>
@@ -1102,6 +1105,7 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
       <button class="nav-btn" data-target="performance">Performance</button>
       <button class="nav-btn" data-target="system">System</button>
       <button class="nav-btn" data-target="passwords">Passwords</button>
+      <button class="nav-btn" data-target="identities">Identities</button>
       <button class="nav-btn" data-target="about">About</button>
     </nav>
 
@@ -1133,7 +1137,7 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
           <div class="row">
             <div>
               <div class="label">Increase Transparency</div>
-              <div class="desc">Frosted-glass toolbar — uses Acrylic on Windows 11, Vibrancy on macOS. Some older systems may appear solid white.</div>
+              <div class="desc">Frosted-glass toolbar, uses Acrylic on Windows 11, Vibrancy on macOS. Some older systems may appear solid white.</div>
             </div>
             <label class="switch"><input type="checkbox" id="increaseTransparency"><span class="slider"></span></label>
           </div>
@@ -1190,7 +1194,7 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
           <h3 class="card-subhead">Themes</h3>
           <div class="theme-gallery" id="theme-gallery"></div>
           <div class="row">
-            <div><div class="label">Browser sounds</div><div class="desc">Short blips when you open/close tabs, type and click — tuned to the active theme.</div></div>
+            <div><div class="label">Browser sounds</div><div class="desc">Short blips when you open/close tabs, type and click, tuned to the active theme.</div></div>
             <label class="switch"><input type="checkbox" id="uiSounds"><span class="slider"></span></label>
           </div>
           <div class="row">
@@ -1251,17 +1255,6 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
             </select>
           </div>
           <div class="row">
-            <div><div class="label">Interface font</div><div class="desc">Font used across the whole browser UI — tabs, menus, toolbar.</div></div>
-            <select id="uiFont" class="inline-select">
-              <option value="system">System default</option>
-              <option value="rounded">Rounded</option>
-              <option value="grotesk">Grotesk</option>
-              <option value="classic">Serif</option>
-              <option value="mono">Monospace</option>
-              <option value="dyslexic">Easy-read</option>
-            </select>
-          </div>
-          <div class="row">
             <div><div class="label">Corner style</div><div class="desc">How rounded the whole interface looks.</div></div>
             <select id="uiRoundness" class="inline-select">
               <option value="default">Default</option>
@@ -1270,7 +1263,7 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
             </select>
           </div>
           <div class="row stack">
-            <div><div class="label">Custom CSS</div><div class="desc">Advanced — inject your own CSS to restyle any part of the browser interface. Applies live as you type; leave blank to disable. Targets the chrome (toolbar, tabs, menus), not page content.</div></div>
+            <div><div class="label">Custom CSS</div><div class="desc">Advanced, inject your own CSS to restyle any part of the browser interface. Applies live as you type; leave blank to disable. Targets the chrome (toolbar, tabs, menus), not page content.</div></div>
             <textarea id="customChromeCss" class="wide" spellcheck="false" rows="6" placeholder="/* e.g.  #toolbar{background:#101225}  .tab.active{font-weight:700} */" style="font-family:ui-monospace,Consolas,monospace;font-size:12.5px;line-height:1.5;resize:vertical;min-height:96px;"></textarea>
           </div>
           <div class="row">
@@ -1305,31 +1298,20 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
         <div class="card">
           <h3 class="card-subhead">New tab page</h3>
           <div class="row">
-            <div><div class="label">Brand mark</div><div class="desc">Show the “privoo.” text or the logo image above the search bar.</div></div>
-            <select id="ntpBrandStyle" class="inline-select">
-              <option value="text">Privoo text</option>
-              <option value="logo">Logo</option>
-            </select>
-          </div>
-          <div class="row">
-            <div><div class="label">Animate Default Wallpaper</div><div class="desc">A slow, subtle breathing motion on the default wave wallpaper.</div></div>
+            <div><div class="label">Animate Wallpaper</div><div class="desc">A slow, subtle breathing motion on the default wave wallpaper.</div></div>
             <label class="switch"><input type="checkbox" id="ntpWallpaperAnimated"><span class="slider"></span></label>
-          </div>
-          <div class="row">
-            <div><div class="label">Wordmark animation</div><div class="desc">A looping effect on the “privoo.” text — plays continuously, not just on load.</div></div>
-            <select id="ntpWordmarkAnim" class="inline-select">
-              <option value="none">None</option>
-              <option value="pulse">Pulse</option>
-              <option value="pop">Pop</option>
-              <option value="fizzle">Fizzle</option>
-              <option value="glow">Glow</option>
-              <option value="bounce">Bounce</option>
-              <option value="shimmer">Shimmer</option>
-            </select>
           </div>
           <div class="row">
             <div><div class="label">Show quick links</div><div class="desc">Display site shortcut tiles on the new tab page.</div></div>
             <label class="switch"><input type="checkbox" id="ntpShowQuickLinks"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Show greeting</div><div class="desc">"Good morning / afternoon / evening / night" under the logo, based on the time of day.</div></div>
+            <label class="switch"><input type="checkbox" id="ntpShowGreeting"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Show add-shortcut button</div><div class="desc">The pill button in the top-right corner of the new tab page for adding a shortcut.</div></div>
+            <label class="switch"><input type="checkbox" id="ntpShowAddShortcutBtn"><span class="slider"></span></label>
           </div>
           <div class="row">
             <div><div class="label">Centre sidebar icons</div><div class="desc">Vertically centre the vertical-tabs icon rail, Opera-style.</div></div>
@@ -1355,7 +1337,7 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
             <div><div class="label">Weather location</div><div class="desc">City name to fetch weather for (e.g. London, New York).</div></div>
             <input type="text" id="weatherLocation" class="wide" spellcheck="false" placeholder="e.g. London">
             <div id="weather-location-hint" style="font-size:12px;color:#f29900;margin-top:6px;display:none">
-              Add a location — nothing will be displayed on the new tab until you do.
+              Add a location, otherwise nothing will show on the new tab.
             </div>
           </div>
         </div>
@@ -1369,12 +1351,15 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
             <label class="switch"><input type="checkbox" id="showSidebar"><span class="slider"></span></label>
           </div>
           <div class="row">
-            <div><div class="label">Center sidebar icons</div><div class="desc">Align shortcut icons to the middle of the sidebar instead of the top.</div></div>
-            <label class="switch"><input type="checkbox" id="centerSidebarIcons"><span class="slider"></span></label>
-          </div>
-          <div class="row">
             <div><div class="label">Translate toolbar button</div><div class="desc">Adds a translate button that sends the current page to Google Translate.</div></div>
             <label class="switch"><input type="checkbox" id="showTranslateButton"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Mobile emulation device</div><div class="desc">Used by the sidebar's app panel and Mobile View to request each site's phone layout.</div></div>
+            <select id="mobileEmulationDevice" class="inline-select">
+              <option value="samsung">Samsung Galaxy</option>
+              <option value="iphone">iPhone</option>
+            </select>
           </div>
         </div>
         <div id="ext-move-notice" class="ext-move-notice" hidden>
@@ -1399,12 +1384,30 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
         </div>
       </section>
 
+      <section id="identities" data-keywords="identity autofill name address phone ollama form">
+        <h2>Identities</h2>
+        <div class="card">
+          <div class="row">
+            <div><div class="label">Identity autofill</div><div class="desc">Fill name, address, email and phone fields from a saved identity. A local Ollama model helps match unusual field labels when available.</div></div>
+            <label class="switch"><input type="checkbox" id="identityAutofillEnabled"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Manage identities</div><div class="desc">Add, edit or remove the identities used for autofill.</div></div>
+            <button class="btn" id="btn-open-identities">Open</button>
+          </div>
+          <div class="row stack" id="ollama-model-row">
+            <div><div class="label">Ollama model</div><div class="desc">Used to match unusual field labels, if a local Ollama server is running.</div></div>
+            <input type="text" id="ollamaModel" placeholder="llama3.2" autocomplete="off" spellcheck="false" style="max-width:240px"/>
+          </div>
+        </div>
+      </section>
+
       <section id="search" data-keywords="search engine suggestions omnibox">
         <h2>Search engine</h2>
         <div class="card">
           <div class="row">
             <div><div class="label">Address bar search</div><div class="desc">Used in the address bar and new tab.</div></div>
-            <select id="searchEngine"></select>
+            <select id="searchEngine" class="inline-select"></select>
           </div>
           <div class="row" id="custom-search-row" style="display:none">
             <div>
@@ -1420,12 +1423,22 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
         </div>
       </section>
 
-      <section id="privacy" data-keywords="privacy security cookies https dns fingerprint webrtc geolocation dnt filter lists adblock easylist custom">
+      <section id="privacy" data-keywords="privacy security cookies https dns fingerprint webrtc geolocation dnt filter lists adblock easylist custom shield">
         <h2>Privacy and security</h2>
         <div class="card">
+          <div class="row stack">
+            <div>
+              <div class="label">What the Privacy Shield does</div>
+              <div class="desc">The shield icon in the toolbar isn't one setting, it's a status display for the toggles below: ad &amp; tracker blocking, Force HTTPS, third-party cookie blocking, Encrypted DNS, anti-fingerprinting, and WebRTC IP protection. Each one runs (or stops) independently and takes effect immediately when you flip it here, no restart needed, unless a toggle's own description says otherwise. Turning a protection off here means it's genuinely off, not just hidden from the shield panel.</div>
+            </div>
+          </div>
           <div class="row">
-            <div><div class="label">Ad and tracker blocking</div><div class="desc">Block common ads and trackers.</div></div>
+            <div><div class="label">Ad and tracker blocking</div><div class="desc">Block common ads and trackers. Takes effect immediately, in both directions.</div></div>
             <label class="switch"><input type="checkbox" id="adBlocking"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Cryptojacking protection</div><div class="desc">Blocks known in-browser cryptomining scripts that hijack your CPU without asking. Applies after you restart Privoo.</div></div>
+            <label class="switch"><input type="checkbox" id="cryptojackingProtection"><span class="slider"></span></label>
           </div>
           <div class="row stack" id="filter-lists-row">
             <div>
@@ -1454,17 +1467,17 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
             <label class="switch"><input type="checkbox" id="blockThirdPartyCookies"><span class="slider"></span></label>
           </div>
           <div class="row">
-            <div><div class="label">Encrypted DNS (DNS-over-HTTPS)</div><div class="desc">Encrypts your DNS lookups end-to-end. Strict mode — never falls back to your ISP's plaintext DNS, so no leaks.</div></div>
+            <div><div class="label">Encrypted DNS (DNS-over-HTTPS)</div><div class="desc">Encrypts your DNS lookups end-to-end. Strict mode, never falls back to your ISP's plaintext DNS, so no leaks.</div></div>
             <label class="switch"><input type="checkbox" id="dnsOverHttps"><span class="slider"></span></label>
           </div>
           <div class="row" id="doh-provider-row" style="display:none">
-            <div><div class="label">DNS provider</div><div class="desc" id="doh-provider-desc">Cloudflare — 1.1.1.1, the default.</div></div>
-            <select id="dohProvider"></select>
+            <div><div class="label">DNS provider</div><div class="desc" id="doh-provider-desc">Cloudflare, 1.1.1.1, the default.</div></div>
+            <select id="dohProvider" class="inline-select"></select>
           </div>
           <div class="row" id="custom-doh-row" style="display:none">
             <div>
               <div class="label">Custom DNS-over-HTTPS URL</div>
-              <div class="desc">Full <code>https://</code> URL of your DoH endpoint — typically ends in <code>/dns-query</code>.</div>
+              <div class="desc">Full <code>https://</code> URL of your DoH endpoint, typically ends in <code>/dns-query</code>.</div>
             </div>
             <input type="url" id="customDohUrl" placeholder="https://your-resolver.example.com/dns-query" autocomplete="off" spellcheck="false" style="min-width:320px"/>
           </div>
@@ -1498,7 +1511,7 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
           </div>
           <div class="row">
             <div><div class="label">Proxy</div><div class="desc">Route all traffic through a proxy. <b>Tor</b> launches Tor and routes through <code>127.0.0.1:9100</code> (requires Tor installed or bundled).</div></div>
-            <select id="proxyMode">
+            <select id="proxyMode" class="inline-select">
               <option value="none">No proxy</option>
               <option value="manual">Manual</option>
               <option value="tor">Tor</option>
@@ -1514,30 +1527,30 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
           </div>
           <div class="row">
             <div><div class="label">Preferred language</div><div class="desc">Language sites should use. <b>Automatic</b> follows your device, so content stays in your language even behind a VPN in another country.</div></div>
-            <select id="preferredLanguage">
+            <select id="preferredLanguage" class="inline-select">
               <option value="auto">Automatic (match device)</option>
               <option value="en-GB">English (UK)</option>
               <option value="en-US">English (US)</option>
-              <option value="de">German — Deutsch</option>
-              <option value="fr">French — Français</option>
-              <option value="es">Spanish — Español</option>
-              <option value="it">Italian — Italiano</option>
-              <option value="pt">Portuguese — Português</option>
-              <option value="nl">Dutch — Nederlands</option>
-              <option value="pl">Polish — Polski</option>
-              <option value="sv">Swedish — Svenska</option>
-              <option value="da">Danish — Dansk</option>
-              <option value="no">Norwegian — Norsk</option>
-              <option value="fi">Finnish — Suomi</option>
-              <option value="cs">Czech — Čeština</option>
-              <option value="el">Greek — Ελληνικά</option>
-              <option value="tr">Turkish — Türkçe</option>
-              <option value="ru">Russian — Русский</option>
-              <option value="uk">Ukrainian — Українська</option>
-              <option value="ar">Arabic — العربية</option>
-              <option value="hi">Hindi — हिन्दी</option>
-              <option value="ja">Japanese — 日本語</option>
-              <option value="ko">Korean — 한국어</option>
+              <option value="de">German, Deutsch</option>
+              <option value="fr">French, Français</option>
+              <option value="es">Spanish, Español</option>
+              <option value="it">Italian, Italiano</option>
+              <option value="pt">Portuguese, Português</option>
+              <option value="nl">Dutch, Nederlands</option>
+              <option value="pl">Polish, Polski</option>
+              <option value="sv">Swedish, Svenska</option>
+              <option value="da">Danish, Dansk</option>
+              <option value="no">Norwegian, Norsk</option>
+              <option value="fi">Finnish, Suomi</option>
+              <option value="cs">Czech, Čeština</option>
+              <option value="el">Greek, Ελληνικά</option>
+              <option value="tr">Turkish, Türkçe</option>
+              <option value="ru">Russian, Русский</option>
+              <option value="uk">Ukrainian, Українська</option>
+              <option value="ar">Arabic, العربية</option>
+              <option value="hi">Hindi, हिन्दी</option>
+              <option value="ja">Japanese, 日本語</option>
+              <option value="ko">Korean, 한국어</option>
               <option value="zh-CN">Chinese (Simplified)</option>
               <option value="zh-TW">Chinese (Traditional)</option>
             </select>
@@ -1562,6 +1575,14 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
           <div class="row">
             <div><div class="label">Clear browsing data</div><div class="desc">History, cache, cookies, site data, and downloads.</div></div>
             <button class="btn danger" id="open-clear">Clear data</button>
+          </div>
+          <div class="row">
+            <div><div class="label">Clear data on exit</div><div class="desc">Automatically clears history, cache, cookies, site data and download records every time Privoo closes.</div></div>
+            <label class="switch"><input type="checkbox" id="clearDataOnExit"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Delete all data</div><div class="desc">Immediately wipes everything above, no confirmation dialog to click through first, this asks once and does it.</div></div>
+            <button class="btn danger" id="delete-all-data">Delete all data</button>
           </div>
           <div class="row stack">
             <div>
@@ -1593,6 +1614,14 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
             <div><div class="label">Ask where to save each file</div><div class="desc">Choose a folder before each download.</div></div>
             <label class="switch"><input type="checkbox" id="askDownloadPath"><span class="slider"></span></label>
           </div>
+          <div class="row">
+            <div><div class="label">Easy Files</div><div class="desc">Clicking a file upload button on a site shows your recently downloaded files for one click selection, instead of always opening the OS file picker.</div></div>
+            <label class="switch"><input type="checkbox" id="easyFilesEnabled"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Download Booster</div><div class="desc">Splits large downloads into several parallel connections instead of one, when the server supports it.</div></div>
+            <label class="switch"><input type="checkbox" id="downloadBoosterEnabled"><span class="slider"></span></label>
+          </div>
         </div>
       </section>
 
@@ -1602,6 +1631,10 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
           <div class="row">
             <div><div class="label">Video pop-out button</div><div class="desc">Adds a Picture-in-Picture shortcut on pages.</div></div>
             <label class="switch"><input type="checkbox" id="videoPopOut"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Lucid Mode</div><div class="desc">Hover the top of any video for a star that boosts contrast, saturation and brightness on the fly.</div></div>
+            <label class="switch"><input type="checkbox" id="lucidMode"><span class="slider"></span></label>
           </div>
         </div>
 
@@ -1640,7 +1673,7 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
           </div>
           <div class="row">
             <div>
-              <div class="label">Safe Mode — nudity filter</div>
+              <div class="label">Safe Mode, nudity filter</div>
               <div class="desc">Blurs images and videos on all pages as a broad catch-all for explicit content.</div>
             </div>
             <label class="switch"><input type="checkbox" id="safeMode"><span class="slider"></span></label>
@@ -1672,7 +1705,7 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
           <div class="row">
             <div>
               <div class="label">Reset Snapchat web state</div>
-              <div class="desc">Snapchat's web client often refuses privacy browsers — this clears its session so you can sign back in.</div>
+              <div class="desc">Snapchat's web client often refuses privacy browsers, this clears its session so you can sign back in.</div>
             </div>
             <button class="btn site-fix-btn" data-host="snapchat.com" data-label="Snapchat">Reset Snapchat</button>
           </div>
@@ -1704,7 +1737,7 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
           <div class="row">
             <div>
               <div class="label">Reset YouTube / Google account state</div>
-              <div class="desc">Use cautiously — this signs you out of Google services in Privoo and clears Google's bot-detection flags.</div>
+              <div class="desc">Use cautiously, this signs you out of Google services in Privoo and clears Google's bot-detection flags.</div>
             </div>
             <button class="btn site-fix-btn" data-host="google.com" data-label="Google">Reset Google</button>
           </div>
@@ -1784,7 +1817,7 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
           <div class="row">
             <div>
               <div class="label">Auto-update</div>
-              <div class="desc">Check for new versions on launch and install them automatically when you quit. Requires a packaged build — has no effect in dev mode.</div>
+              <div class="desc">Check for new versions on launch and install them automatically when you quit. Requires a packaged build, has no effect in dev mode.</div>
             </div>
             <label class="switch"><input type="checkbox" id="autoUpdates"><span class="slider"></span></label>
           </div>
@@ -1793,7 +1826,7 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
 
       <section id="passwords" data-keywords="password manager saved logins credentials autofill">
         <h2>Password manager</h2>
-        <p class="section-blurb">Passwords are encrypted with your OS keychain — DPAPI on Windows, Keychain on macOS, libsecret on Linux. They stay on this device and aren't synced anywhere.</p>
+        <p class="section-blurb">Passwords are encrypted with your OS keychain, DPAPI on Windows, Keychain on macOS, libsecret on Linux. They stay on this device and aren't synced anywhere.</p>
         <div class="card pw-card">
           <div class="pw-header">
             <div>
@@ -1826,59 +1859,59 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
           <ul class="credits-list">
             <li>
               <a href="#" class="credit-link" data-url="https://www.electronjs.org/"><b>Electron</b></a>
-              — desktop runtime · MIT
+              , desktop runtime · MIT
             </li>
             <li>
               <a href="#" class="credit-link" data-url="https://github.com/castlabs/electron-releases"><b>castLabs Electron for Content Security</b></a>
-              — Widevine DRM support · MIT
+              , Widevine DRM support · MIT
             </li>
             <li>
               <a href="#" class="credit-link" data-url="https://www.chromium.org/"><b>Chromium</b></a>
-              — rendering engine · BSD-3-Clause
+              , rendering engine · BSD-3-Clause
             </li>
             <li>
               <a href="#" class="credit-link" data-url="https://github.com/ghostery/adblocker"><b>@ghostery/adblocker</b></a>
-              — ad &amp; tracker blocking engine · MPL-2.0
+              , ad &amp; tracker blocking engine · MPL-2.0
             </li>
             <li>
               <a href="#" class="credit-link" data-url="https://easylist.to/"><b>EasyList</b> &amp; <b>EasyPrivacy</b></a>
-              — filter lists · CC BY-SA 3.0
+              , filter lists · CC BY-SA 3.0
             </li>
             <li>
               <a href="#" class="credit-link" data-url="https://github.com/uBlockOrigin/uAssets"><b>uBlock Origin filter set</b></a>
-              — extra filter coverage · GPL-3.0
+              , extra filter coverage · GPL-3.0
             </li>
             <li>
               <a href="#" class="credit-link" data-url="https://github.com/hagezi/dns-blocklists"><b>Hagezi DNS Blocklists</b></a>
-              — 18+ blocker source · GPL-3.0
+              , 18+ blocker source · GPL-3.0
             </li>
             <li>
               <a href="#" class="credit-link" data-url="https://github.com/StevenBlack/hosts"><b>StevenBlack/hosts</b></a>
-              — 18+ blocker mirror · MIT
+              , 18+ blocker mirror · MIT
             </li>
             <li>
               <a href="#" class="credit-link" data-url="https://github.com/yt-dlp/yt-dlp"><b>yt-dlp</b></a>
-              — media downloader binary · Unlicense
+              , media downloader binary · Unlicense
             </li>
             <li>
               <a href="#" class="credit-link" data-url="https://github.com/maxogden/extract-zip"><b>extract-zip</b></a>
-              — .crx unpacker · BSD-2-Clause
+              , .crx unpacker · BSD-2-Clause
             </li>
             <li>
               <a href="#" class="credit-link" data-url="https://github.com/thejoshwolfe/yauzl"><b>yauzl</b></a>
-              — ZIP parser · MIT
+              , ZIP parser · MIT
             </li>
             <li>
               <a href="#" class="credit-link" data-url="https://duckduckgo.com/ip3"><b>DuckDuckGo favicon service</b></a>
-              — site icons in suggestions
+              , site icons in suggestions
             </li>
             <li>
               <a href="#" class="credit-link" data-url="https://wttr.in/"><b>wttr.in</b></a>
-              — new-tab weather widget · Apache-2.0
+              , new-tab weather widget · Apache-2.0
             </li>
             <li>
               <a href="#" class="credit-link" data-url="https://fonts.google.com/icons"><b>Material Icons</b></a>
-              — toolbar &amp; menu glyphs · Apache-2.0
+              , toolbar &amp; menu glyphs · Apache-2.0
             </li>
           </ul>
           <div class="credits-foot">
@@ -1894,7 +1927,7 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
        can deliver. -->
   <div class="modal-bg" id="adult-disclaimer-modal">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="adult-disclaimer-title">
-      <h3 id="adult-disclaimer-title">Heads up — no filter is perfect</h3>
+      <h3 id="adult-disclaimer-title">Heads up, no filter is perfect</h3>
       <p id="adult-disclaimer-body" style="line-height:1.55;color:var(--muted);margin-bottom:16px"></p>
       <div class="modal-actions">
         <button class="btn" id="adult-disclaimer-cancel">Turn it off</button>
@@ -1935,13 +1968,14 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
 const api = window.privooInternal;
 const TOGGLES = [
   'verticalTabs', 'vtabsIntegrated', 'vtabsSearchPopup', 'searchPopupGlass', 'uiSounds', 'newTabBtnCircle', 'vtabsCenterIcons', 'darkMode', 'forceDarkMode', 'showHomeButton', 'showBookmarksBar',
-  'ntpShowWeather', 'ntpShowClock', 'ntpFocusedSearch', 'ntpShowQuickLinks', 'ntpNewsLink', 'ntpWallpaperAnimated',
+  'ntpShowWeather', 'ntpShowClock', 'ntpFocusedSearch', 'ntpShowQuickLinks', 'ntpShowGreeting', 'ntpShowAddShortcutBtn', 'ntpNewsLink', 'ntpWallpaperAnimated', 'cryptojackingProtection', 'easyFilesEnabled', 'clearDataOnExit', 'downloadBoosterEnabled',
   'increaseTransparency', 'aeroGradient', 'vibeEnabled', 'vibeOverPages', 'compactMode', 'searchSuggestions',
   'askDownloadPath', 'adBlocking', 'httpsUpgrade', 'httpsUpgradeShowNotice', 'blockThirdPartyCookies',
   'dnsOverHttps', 'adultContentBlocking', 'spoofUserAgent', 'canvasSpoofing', 'webrtcProtection',
-  'doNotTrack', 'allowGeolocation', 'videoPopOut', 'strongerTrackingProtection',
+  'doNotTrack', 'allowGeolocation', 'videoPopOut', 'lucidMode', 'strongerTrackingProtection',
   'wobblyWindows',
-  'showSidebar', 'centerSidebarIcons', 'showTranslateButton', 'passwordManagerEnabled', 'preferPasswordLogin',
+  'showSidebar', 'showTranslateButton', 'passwordManagerEnabled', 'preferPasswordLogin',
+  'identityAutofillEnabled',
   'musicEnabled',
   'blockAdultSites', 'safeMode',
   'hardwareAcceleration', 'lowEndDevice', 'discordRpc', 'syncDiscordTheme',
@@ -2009,14 +2043,14 @@ async function savePatch(patch, message = 'Settings saved') {
 }
 
 const ACCENT_SWATCHES = [
-  { name: 'Pine',    value: '#8b7cf7' },
-  { name: 'Blue',    value: '#8ab4f8' },
-  { name: 'Indigo',  value: '#a78bfa' },
-  { name: 'Pink',    value: '#f48fb1' },
-  { name: 'Red',     value: '#f28b82' },
-  { name: 'Orange',  value: '#fcad70' },
-  { name: 'Yellow',  value: '#fdd663' },
-  { name: 'Teal',    value: '#4dd0e1' },
+  { name: 'Lavender', value: '#8b7cf7' },
+  { name: 'Blue',      value: '#8ab4f8' },
+  { name: 'Teal',      value: '#4dd0e1' },
+  { name: 'Green',     value: '#81c995' },
+  { name: 'Yellow',    value: '#fdd663' },
+  { name: 'Orange',    value: '#fcad70' },
+  { name: 'Red',       value: '#f28b82' },
+  { name: 'Pink',      value: '#f48fb1' },
 ];
 
 function renderAccentSwatches(currentHex) {
@@ -2184,7 +2218,7 @@ function renderFilterLists(settings) {
     item.appendChild(_toggleSwitch(toggles[l.id] !== false, (on) => {
       const next = { ...(currentSettings.defaultFilterLists || {}) };
       next[l.id] = on;
-      savePatch({ defaultFilterLists: next }, 'Filter lists updated — restart to apply');
+      savePatch({ defaultFilterLists: next }, 'Filter lists updated, restart to apply');
     }));
     defWrap.appendChild(item);
   }
@@ -2208,7 +2242,7 @@ function renderFilterLists(settings) {
       item.appendChild(info);
       item.appendChild(_toggleSwitch(c.enabled !== false, (on) => {
         const next = (currentSettings.customFilterLists || []).slice();
-        if (next[idx]) { next[idx] = { ...next[idx], enabled: on }; savePatch({ customFilterLists: next }, 'Filter lists updated — restart to apply'); }
+        if (next[idx]) { next[idx] = { ...next[idx], enabled: on }; savePatch({ customFilterLists: next }, 'Filter lists updated, restart to apply'); }
       }));
       const del = document.createElement('button');
       del.type = 'button'; del.className = 'fl-remove'; del.title = 'Remove list';
@@ -2216,7 +2250,7 @@ function renderFilterLists(settings) {
       del.addEventListener('click', () => {
         const next = (currentSettings.customFilterLists || []).slice();
         next.splice(idx, 1);
-        savePatch({ customFilterLists: next }, 'Filter list removed — restart to apply').then(() => renderFilterLists(currentSettings));
+        savePatch({ customFilterLists: next }, 'Filter list removed, restart to apply').then(() => renderFilterLists(currentSettings));
       });
       item.appendChild(del);
       cusWrap.appendChild(item);
@@ -2241,7 +2275,7 @@ function addCustomFilterList() {
     return;
   }
   next.push({ name, url, enabled: true });
-  savePatch({ customFilterLists: next }, 'Filter list added — restart to apply').then(() => {
+  savePatch({ customFilterLists: next }, 'Filter list added, restart to apply').then(() => {
     if (nameEl) nameEl.value = '';
     urlEl.value = '';
     renderFilterLists(currentSettings);
@@ -2336,6 +2370,13 @@ function renderProfiles(profiles) {
 
 function openClearModal() { $('clear-modal').classList.add('open'); }
 function closeClearModal() { $('clear-modal').classList.remove('open'); }
+
+$('delete-all-data')?.addEventListener('click', async () => {
+  if (!confirm('Delete all browsing data? History, cache, cookies, site data and download records will be permanently removed. This cannot be undone.')) return;
+  await api.clearBrowsingData({ range: 'all', history: true, cache: true, cookies: true, siteData: true, downloads: true });
+  showToast('All data deleted');
+  await refreshSummary();
+});
 
 async function clearData() {
   const options = {
@@ -2486,14 +2527,6 @@ async function init() {
     $('ntpThemeMusicVolume').value = Math.round((currentSettings.ntpThemeMusicVolume ?? 0.4) * 100);
     $('ntpThemeMusicVolume').addEventListener('change', () => savePatch({ ntpThemeMusicVolume: (+$('ntpThemeMusicVolume').value) / 100 }, 'Music volume saved'));
   }
-  if ($('ntpWordmarkAnim')) {
-    $('ntpWordmarkAnim').value = currentSettings.ntpWordmarkAnim || 'none';
-    $('ntpWordmarkAnim').addEventListener('change', () => savePatch({ ntpWordmarkAnim: $('ntpWordmarkAnim').value }, 'Wordmark animation updated'));
-  }
-  if ($('ntpBrandStyle')) {
-    $('ntpBrandStyle').value = currentSettings.ntpBrandStyle || 'text';
-    $('ntpBrandStyle').addEventListener('change', () => savePatch({ ntpBrandStyle: $('ntpBrandStyle').value }, 'Brand mark updated'));
-  }
   if ($('transparencyStyle')) {
     $('transparencyStyle').value = currentSettings.transparencyStyle || 'frosted';
     $('transparencyStyle').addEventListener('change', () => savePatch({ transparencyStyle: $('transparencyStyle').value }, 'Glass style updated'));
@@ -2501,10 +2534,6 @@ async function init() {
   if ($('searchBarStyle')) {
     $('searchBarStyle').value = currentSettings.searchBarStyle || (currentSettings.newSearchBarStyle ? 'soft' : 'classic');
     $('searchBarStyle').addEventListener('change', () => savePatch({ searchBarStyle: $('searchBarStyle').value }, 'Search bar style updated'));
-  }
-  if ($('uiFont')) {
-    $('uiFont').value = currentSettings.uiFont || 'system';
-    $('uiFont').addEventListener('change', () => savePatch({ uiFont: $('uiFont').value }, 'Interface font updated'));
   }
   if ($('uiRoundness')) {
     $('uiRoundness').value = currentSettings.uiRoundness || 'default';
@@ -2545,7 +2574,31 @@ async function init() {
   }
 
   // These settings default to ON when unset — treat undefined as true.
-  const DEFAULT_ON = new Set(['restoreTabsOnLaunch', 'autoUpdates', 'adBlocking', 'httpsUpgrade', 'passwordManagerEnabled', 'syncDiscordTheme', 'vibeOverPages', 'centerSidebarIcons']);
+  const DEFAULT_ON = new Set(['restoreTabsOnLaunch', 'autoUpdates', 'adBlocking', 'httpsUpgrade', 'passwordManagerEnabled', 'syncDiscordTheme', 'vibeOverPages', 'identityAutofillEnabled', 'ntpShowGreeting', 'ntpShowAddShortcutBtn', 'cryptojackingProtection', 'easyFilesEnabled']);
+
+  const ollamaModelInp = $('ollamaModel');
+  if (ollamaModelInp) {
+    ollamaModelInp.value = currentSettings.ollamaModel || 'llama3.2';
+    ollamaModelInp.addEventListener('change', () => {
+      savePatch({ ollamaModel: ollamaModelInp.value.trim() || 'llama3.2' });
+    });
+  }
+  const mobileDeviceSel = $('mobileEmulationDevice');
+  if (mobileDeviceSel) {
+    mobileDeviceSel.value = currentSettings.mobileEmulationDevice === 'iphone' ? 'iphone' : 'samsung';
+    mobileDeviceSel.addEventListener('change', () => {
+      savePatch({ mobileEmulationDevice: mobileDeviceSel.value });
+    });
+  }
+  const openIdentitiesBtn = $('btn-open-identities');
+  if (openIdentitiesBtn) {
+    openIdentitiesBtn.addEventListener('click', () => api.navigate?.('privoo://identities'));
+  }
+  {
+    const row = $('ollama-model-row');
+    const enabled = 'identityAutofillEnabled' in currentSettings ? !!currentSettings.identityAutofillEnabled : true;
+    if (row) row.style.display = enabled ? '' : 'none';
+  }
   for (const id of TOGGLES) {
     const input = $(id);
     if (!input) continue;
@@ -2569,7 +2622,11 @@ async function init() {
         });
       }
       if (id === 'ntpShowWeather') updateWeatherLocationRow({ ntpShowWeather: input.checked });
-      if (id === 'hardwareAcceleration' || id === 'lowEndDevice') showToast('Restart Privoo to apply this change');
+      if (id === 'identityAutofillEnabled') {
+        const row = $('ollama-model-row');
+        if (row) row.style.display = input.checked ? '' : 'none';
+      }
+      if (id === 'hardwareAcceleration' || id === 'lowEndDevice' || id === 'cryptojackingProtection') showToast('Restart Privoo to apply this change');
     });
   }
 
@@ -2676,7 +2733,7 @@ async function init() {
       const port = Math.min(65535, Math.max(1, parseInt(proxyTorPortInp.value, 10) || 9100));
       proxyTorPortInp.value = port;
       if (label) label.textContent = port;
-      savePatch({ proxyTorPort: port }, 'Tor port updated — reconnecting…');
+      savePatch({ proxyTorPort: port }, 'Tor port updated, reconnecting…');
     });
   }
 
@@ -2684,7 +2741,7 @@ async function init() {
   if (prefLangSel) {
     prefLangSel.value = currentSettings.preferredLanguage || 'auto';
     prefLangSel.addEventListener('change', () => {
-      savePatch({ preferredLanguage: prefLangSel.value }, 'Language saved — reload open pages to apply');
+      savePatch({ preferredLanguage: prefLangSel.value }, 'Language saved, reload open pages to apply');
     });
   }
 
@@ -3115,9 +3172,15 @@ function enhanceSelect(select) {
   trigger.disabled = select.disabled;
   wrap.appendChild(trigger);
 
+  // Appended to <body>, not `wrap` — `.card` (and other ancestors) has
+  // `overflow:hidden` for its rounded corners, which was silently clipping
+  // any dropdown long enough to extend past the card's edge (e.g. Preferred
+  // language's 25+ options). A fixed-position popup anchored to the
+  // trigger's own rect escapes that entirely, matching how a native <select>
+  // popup always paints above everything regardless of ancestor overflow.
   const list = document.createElement('div');
   list.className = 'csel-list';
-  wrap.appendChild(list);
+  document.body.appendChild(list);
 
   function syncLabel() {
     const opt = select.options[select.selectedIndex];
@@ -3141,10 +3204,26 @@ function enhanceSelect(select) {
       list.appendChild(item);
     });
   }
+  function positionList() {
+    const r = trigger.getBoundingClientRect();
+    const maxHeight = 280;
+    const spaceBelow = window.innerHeight - r.bottom - 6;
+    const openUpward = spaceBelow < Math.min(maxHeight, list.scrollHeight) && r.top > spaceBelow;
+    list.style.left = Math.round(r.left) + 'px';
+    list.style.minWidth = Math.round(r.width) + 'px';
+    if (openUpward) {
+      list.style.top = '';
+      list.style.bottom = (window.innerHeight - r.top + 6) + 'px';
+    } else {
+      list.style.bottom = '';
+      list.style.top = Math.round(r.bottom + 6) + 'px';
+    }
+  }
   function openList() {
     if (select.disabled) return;
     document.querySelectorAll('.csel-list.open').forEach((l) => l.classList.remove('open'));
     buildList();
+    positionList();
     list.classList.add('open');
     trigger.classList.add('open');
   }
@@ -3154,8 +3233,10 @@ function enhanceSelect(select) {
     e.stopPropagation();
     if (list.classList.contains('open')) closeList(); else openList();
   });
-  document.addEventListener('click', (e) => { if (!wrap.contains(e.target)) closeList(); });
+  document.addEventListener('click', (e) => { if (!wrap.contains(e.target) && !list.contains(e.target)) closeList(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeList(); });
+  window.addEventListener('scroll', () => { if (list.classList.contains('open')) positionList(); }, true);
+  window.addEventListener('resize', () => { if (list.classList.contains('open')) closeList(); });
 
   new MutationObserver(() => {
     syncLabel();
@@ -3192,7 +3273,7 @@ init();
       <span class="wn-banner-title">Your Vibe ✨</span>
     </div>
     <div class="wn-body">
-      <p class="wn-desc">Set an ambient color gradient that tints your entire browser chrome. Pick from presets like Ocean, Sunset, or Neon — or drag the hue slider to your own custom color. Control the intensity too.</p>
+      <p class="wn-desc">Set an ambient color gradient that tints your entire browser chrome. Pick from presets like Ocean, Sunset, or Neon, or drag the hue slider to your own custom color. Control the intensity too.</p>
       <div class="wn-actions">
         <button class="wn-btn ghost" id="wn-later">Maybe later</button>
         <button class="wn-btn primary" id="wn-try">Check it out →</button>

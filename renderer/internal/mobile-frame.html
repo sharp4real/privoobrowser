@@ -83,12 +83,34 @@ body {
   transform: translateX(-50%) scaleY(0);
 }
 
+/* Samsung style centred punch-hole camera, used instead of the island */
+.punch-hole {
+  position: absolute;
+  top: 20px; left: 50%;
+  transform: translateX(-50%);
+  width: 12px; height: 12px;
+  background: #000;
+  border: 1px solid #1a1a1a;
+  border-radius: 50%;
+  z-index: 100;
+  pointer-events: none;
+  display: none;
+}
+body.device-samsung .punch-hole { display: block; }
+body.device-samsung .dynamic-island { display: none; }
+body.device-samsung .phone { border-radius: 34px; }
+body.device-samsung .screen { border-radius: 26px; }
+
 /* ── Content webview ─────────────────────────────────────────── */
 webview {
   position: absolute;
   top: 0; left: 0; right: 0;
   bottom: 52px;
   border: none;
+  /* Electron paints a webview white until the guest page's own CSS loads
+     (a well-known flash-of-white on navigation) — match the phone shell's
+     black backdrop instead so it never shows as a stray white panel. */
+  background: #000;
 }
 
 /* ── Navigation bar ──────────────────────────────────────────── */
@@ -195,6 +217,28 @@ webview {
   border-top: 1px solid rgba(255,255,255,0.07);
 }
 
+.device-seg {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 9px;
+  background: rgba(255,255,255,0.08);
+}
+.device-seg-btn {
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.6);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 5px 9px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background .14s, color .14s;
+}
+.device-seg-btn:hover { color: rgba(255,255,255,0.9); }
+.device-seg-btn.active { background: #5b8ef0; color: #fff; }
+
 /* Inline toggle */
 .mini-toggle {
   position: relative;
@@ -227,7 +271,7 @@ webview {
 /* ── Loading spinner ─────────────────────────────────────────── */
 .loading {
   position: absolute;
-  inset: 0; top: 60px;
+  inset: 0;
   display: flex; align-items: center; justify-content: center;
   background: #0d0d0f;
   z-index: 80;
@@ -249,12 +293,13 @@ webview {
 <div class="phone">
   <div class="screen">
     <div class="dynamic-island" id="dynamic-island"></div>
+    <div class="punch-hole"></div>
 
     <div class="loading" id="loading">
       <div class="spinner"></div>
     </div>
 
-    <webview id="wv" allowpopups useragent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"></webview>
+    <webview id="wv" allowpopups></webview>
 
     <div class="nav">
       <button class="nav-btn" id="btn-back" title="Back">
@@ -295,6 +340,13 @@ webview {
 <!-- Mobile settings popup -->
 <div class="mobile-popup" id="mobile-popup">
   <div class="popup-row">
+    <span>Device</span>
+    <div class="device-seg" id="device-seg">
+      <button type="button" class="device-seg-btn" data-device="iphone">iPhone</button>
+      <button type="button" class="device-seg-btn" data-device="samsung">Samsung</button>
+    </div>
+  </div>
+  <div class="popup-row" id="island-row">
     <span>Dynamic Island</span>
     <label class="mini-toggle">
       <input type="checkbox" id="toggle-island">
@@ -315,11 +367,52 @@ const loading       = document.getElementById('loading');
 const dynamicIsland = document.getElementById('dynamic-island');
 const popup         = document.getElementById('mobile-popup');
 const toggleIsland  = document.getElementById('toggle-island');
+const deviceSeg     = document.getElementById('device-seg');
+const islandRow     = document.getElementById('island-row');
+const api           = window.privooMobileFrame;
 
-// ── URL from query param ────────────────────────────────────────
+const DEVICE_UA = {
+  iphone: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+  samsung: 'Mozilla/5.0 (Linux; Android 14; SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/' +
+    ((navigator.userAgent.match(/Chrome\/([\d.]+)/) || [])[1] || '142.0.0.0') + ' Mobile Safari/537.36',
+};
+
 const params   = new URLSearchParams(location.search);
 const startUrl = params.get('url') || '';
+let device = params.get('device') === 'samsung' ? 'samsung' : 'iphone';
+
+function applyDevice(next) {
+  device = next;
+  document.body.classList.toggle('device-samsung', device === 'samsung');
+  islandRow.style.display = device === 'samsung' ? 'none' : '';
+  deviceSeg.querySelectorAll('.device-seg-btn').forEach((b) => b.classList.toggle('active', b.dataset.device === device));
+  wv.setAttribute('useragent', DEVICE_UA[device]);
+  try {
+    const wcId = wv.getWebContentsId?.();
+    if (wcId) api?.markMobileWebview?.(wcId, device);
+  } catch { /* not attached yet */ }
+}
+applyDevice(device);
+deviceSeg.querySelectorAll('.device-seg-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.device === device) return;
+    applyDevice(btn.dataset.device);
+    api?.setSettings?.({ mobileEmulationDevice: btn.dataset.device }).catch(() => {});
+    wv.reload();
+  });
+});
+
 if (startUrl) wv.setAttribute('src', startUrl);
+
+// getWebContentsId can be unavailable if this runs before the webview has
+// actually attached. dom-ready always fires after attach, so retry there
+// too, catching the initial navigation before its headers go out.
+wv.addEventListener('dom-ready', () => {
+  try {
+    const wcId = wv.getWebContentsId?.();
+    if (wcId) api?.markMobileWebview?.(wcId, device);
+  } catch { /* ignore */ }
+}, { once: true });
 
 // ── Dynamic Island preference ───────────────────────────────────
 const ISLAND_KEY = 'privoo_mobile_island';

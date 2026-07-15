@@ -1219,6 +1219,43 @@ svg { fill: currentColor; display: block; flex-shrink: 0; }
 /* Legacy no-anim class (kept harmless in case anything still references it). */
 .tab.tab-no-anim { transition: none; }
 
+/* ── Split view — the two paired tabs read as one joined pill, matching the
+   joined panes below, instead of two disconnected tabs. ── */
+.tab.split-left, .tab.split-right {
+  background: var(--accent-soft);
+  box-shadow: inset 0 -3px 0 var(--accent);
+}
+.tab.split-left:hover:not(.active), .tab.split-right:hover:not(.active) {
+  background: color-mix(in srgb, var(--accent-soft) 100%, rgba(0,0,0,.04));
+}
+.tab.split-left {
+  border-top-right-radius: 0;
+  margin-right: 0;
+}
+.tab.split-right {
+  border-top-left-radius: 0;
+  margin-left: 0;
+}
+.tab.split-left::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 4px; bottom: 4px;
+  width: 1px;
+  background: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+/* Each side keeps its own, always-visible close button (not hover-only like
+   normal tabs) — the whole point of joining the pair visually is that each
+   half still needs to read as independently closable. Closing one exits
+   split view and leaves the other as a normal single tab. */
+.tab.split-left .tab-close, .tab.split-right .tab-close {
+  opacity: .85;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.tab.split-left:hover .tab-close, .tab.split-right:hover .tab-close,
+.tab.split-left .tab-close:hover, .tab.split-right .tab-close:hover {
+  opacity: 1;
+}
+
 /* ── Tab groups (Chrome-style colored underline + subtle tint) ── */
 .tab.grouped {
   background: var(--group-tint, transparent);
@@ -1425,8 +1462,8 @@ body.platform-mac #window-controls { display: none !important; }
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 48px;
-  min-height: 48px;
+  height: 52px;
+  min-height: 52px;
   padding: 0 10px;
   /* Flat white bar, Opera-style. Frosted only when the user enables
      transparency (body.transparent-ui overrides below). */
@@ -1567,24 +1604,28 @@ body.platform-mac #window-controls { display: none !important; }
    instead of stadium-shaped, and a touch more height for presence. */
 #omnibox-wrap {
   display: flex; align-items: center; gap: 6px;
-  height: 40px; padding: 0 9px 0 16px;
+  height: 46px; padding: 0 12px 0 16px;
   background: var(--omni-bg);
-  border-radius: 12px;
+  border-radius: 14px;
   border: 1px solid var(--border);
-  box-shadow: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 1px 2px rgba(38,36,58,.04);
   transition: background var(--t-fast) ease, border-color var(--t-fast) ease,
               box-shadow var(--t-med) var(--ease);
   position: relative;
 }
-#omnibox-wrap:hover { background: var(--omni-hover); border-color: color-mix(in srgb, var(--text) 14%, var(--border)); }
+body.dark #omnibox-wrap { box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
+#omnibox-wrap:hover {
+  background: var(--omni-hover);
+  border-color: color-mix(in srgb, var(--text) 14%, var(--border));
+}
 #omnibox-wrap:focus-within {
   background: #fff;
   border-color: color-mix(in srgb, var(--accent) 55%, transparent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 0 0 3px var(--accent-soft), 0 4px 14px -6px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 body.dark #omnibox-wrap:focus-within {
   border-color: color-mix(in srgb, var(--accent) 45%, transparent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 0 0 3px var(--accent-soft), 0 4px 14px -6px rgba(0,0,0,.4);
 }
 body.vertical-tabs #toolbar { gap: 8px; padding: 0 10px; }
 body.vertical-tabs #omnibox-outer { margin: 0 4px; }
@@ -1812,7 +1853,8 @@ body.dark .si-icon.insecure { background: rgba(242,139,130,.18); color: #f28b82;
   flex: 1;
   height: 100%;
   border: none; outline: none; background: transparent;
-  font-size: 13.5px; line-height: normal; color: var(--text);
+  font-family: var(--font);
+  font-size: 14px; line-height: normal; color: var(--text);
   user-select: text;
   min-width: 0;
 }
@@ -1930,11 +1972,11 @@ body.dark .si-icon.insecure { background: rgba(242,139,130,.18); color: #f28b82;
   color: var(--accent);
 }
 
-/* Incognito window — a deeper, cooler-warm charcoal than normal so a private
-   window is unmistakable, still in the "quiet & precise" language. */
-body.incognito { --strip: #131210; --toolbar: #131210; --tab-active: #232220; --tab-hover: #242320;
-  --omni-bg: #201f1c; --omni-hover: #26241f; --border: #2b2a27; --hover: #26241f;
-  --text: #e6e3da; --muted: #8a877c; --pv-rail: #100f0e; }
+/* Incognito window — a deeper, cooler charcoal than normal so a private
+   window is unmistakable, in the lavender design language. */
+body.incognito { --strip: #141320; --toolbar: #141320; --tab-active: #221f36; --tab-hover: #24213a;
+  --omni-bg: #1c1a2e; --omni-hover: #241f3a; --border: rgba(255,255,255,.08); --hover: #241f3a;
+  --text: #eceaf6; --muted: #a5a2bd; --pv-rail: #100f1a; }
 body.incognito #titlebar { background: var(--strip); color: var(--text); }
 body.incognito .tab { color: var(--muted); }
 body.incognito .tab.active { background: var(--tab-active); color: var(--text); box-shadow: inset 0 2px 0 var(--accent); }
@@ -1979,37 +2021,46 @@ body.ui-compact .vtabs-new-btn { height: 28px; }
 
 /* Hero — big shield on the left, status + site on the right. No green. */
 .sp-hero {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 20px 18px 18px;
-  background: var(--surface);
+  padding: 22px 18px 20px;
+  background:
+    radial-gradient(70% 90% at 15% -10%, var(--accent-soft), transparent 70%),
+    var(--surface);
   color: var(--text);
+  overflow: hidden;
 }
 .sp-hero-shield {
   position: relative;
-  width: 56px; height: 56px;
+  width: 52px; height: 52px;
   flex-shrink: 0;
+  border-radius: 15px;
   display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(155deg, var(--accent), color-mix(in srgb, var(--accent) 60%, #c58af7));
+  box-shadow: 0 10px 26px -8px color-mix(in srgb, var(--accent) 55%, transparent);
 }
 .sp-hero-shield > svg {
-  width: 56px; height: 56px;
-  /* Softer slate in light mode (--text would be nearly black and reads as
-     heavy/harsh); light gray in dark mode for the inverse reason. */
-  fill: #5f6368;
+  width: 26px; height: 26px;
+  fill: #fff;
 }
-body.dark .sp-hero-shield > svg { fill: #e8eaed; }
 .sp-hero-check {
   position: absolute;
-  width: 24px !important; height: 24px !important;
-  fill: var(--surface) !important;
+  width: 12px !important; height: 12px !important;
+  fill: #fff !important;
   filter: none !important;
-  top: 16px; left: 16px;
+  bottom: -3px; right: -3px;
+  background: #34a853;
+  border-radius: 50%;
+  padding: 4px;
+  box-sizing: content-box;
+  border: 2px solid var(--surface);
 }
-.sp-hero-text { flex: 1; min-width: 0; }
+.sp-hero-text { position: relative; flex: 1; min-width: 0; }
 .sp-hero-title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 15.5px;
+  font-weight: 650;
   color: var(--text);
   margin-bottom: 3px;
   letter-spacing: -.1px;
@@ -2026,6 +2077,8 @@ body.dark .sp-hero-shield > svg { fill: #e8eaed; }
 .sp-stats-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 10px;
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   background: var(--bg);
@@ -2036,12 +2089,14 @@ body.dark .sp-hero-shield > svg { fill: #e8eaed; }
   align-items: center;
   padding: 12px 4px 10px;
   gap: 3px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
 }
-.sp-stat-card + .sp-stat-card { border-left: 1px solid var(--border); }
 .sp-stat-card b {
   font-size: 19px;
   font-weight: 700;
-  color: var(--text);
+  color: var(--accent);
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
@@ -2062,17 +2117,25 @@ body.dark .sp-hero-shield > svg { fill: #e8eaed; }
   font-size: 13px;
   color: var(--text);
   border-radius: 12px;
+  transition: background .1s ease;
 }
+.feature-row:hover { background: var(--hover); }
 .feature-row + .feature-row { margin-top: 1px; }
 .feature-row > svg {
   width: 16px; height: 16px;
   flex-shrink: 0;
-  fill: var(--text);
-  opacity: .85;
+  fill: var(--accent);
+  opacity: .9;
 }
 .feature-row > span { flex: 1; min-width: 0; }
+.feature-row::before {
+  content: '';
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #34a853; flex-shrink: 0;
+}
 .feature-row.off { color: var(--muted); }
 .feature-row.off > svg { opacity: .35; }
+.feature-row.off::before { background: var(--muted); }
 .feature-row.off::after {
   content: 'Off';
   font-size: 10.5px;
@@ -2080,6 +2143,17 @@ body.dark .sp-hero-shield > svg { fill: #e8eaed; }
   color: var(--muted);
   letter-spacing: .3px;
   text-transform: uppercase;
+}
+
+.sp-reassure {
+  display: flex; align-items: center; gap: 8px;
+  margin: 2px 14px 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--text);
+  font-size: 11.5px;
+  line-height: 1.4;
 }
 
 /* Panel footer */
@@ -2262,15 +2336,17 @@ body.dark .setup-overlay { background: rgba(32, 33, 36, .68); }
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(40% 44% at 28% 26%, rgba(138, 180, 248, .40), transparent 72%),
-    radial-gradient(38% 42% at 74% 76%, rgba(167, 139, 250, .34), transparent 72%);
+    radial-gradient(46% 50% at 22% 22%, rgba(139,124,247,.46), transparent 72%),
+    radial-gradient(42% 46% at 78% 74%, rgba(197,138,247,.36), transparent 72%),
+    radial-gradient(60% 60% at 50% 100%, rgba(139,124,247,.16), transparent 70%);
   background-repeat: no-repeat;
   animation: sw-glow 18s ease-in-out infinite alternate;
 }
 body.dark .setup-overlay::before {
   background:
-    radial-gradient(40% 44% at 28% 26%, rgba(138, 180, 248, .26), transparent 72%),
-    radial-gradient(38% 42% at 74% 76%, rgba(167, 139, 250, .24), transparent 72%);
+    radial-gradient(46% 50% at 22% 22%, rgba(139,124,247,.32), transparent 72%),
+    radial-gradient(42% 46% at 78% 74%, rgba(197,138,247,.26), transparent 72%),
+    radial-gradient(60% 60% at 50% 100%, rgba(139,124,247,.12), transparent 70%);
 }
 @keyframes sw-glow {
   from { background-position: -4% -3%, 4% 3%; }
@@ -2764,6 +2840,17 @@ body.dark .cp-body::-webkit-scrollbar-thumb { background: #5f6368; }
   font-size: 13px;
   color: var(--text);
 }
+/* Three-way segmented control (Off / On / Hover) — same row layout, just a
+   pill group instead of a binary switch where a checkbox can't express the
+   third state. */
+.cp-seg { display: flex; gap: 2px; padding: 2px; border-radius: 10px; background: var(--hover); }
+.cp-seg-btn {
+  border: none; background: transparent; color: var(--muted);
+  font-size: 12px; font-weight: 600; padding: 5px 11px; border-radius: 8px;
+  cursor: default; transition: background .15s ease, color .15s ease;
+}
+.cp-seg-btn:hover { color: var(--text); }
+.cp-seg-btn.active { background: var(--accent); color: #fff; }
 .cp-row .switch {
   position: relative;
   width: 36px;
@@ -3010,21 +3097,36 @@ body.dark .cp-row input:checked + .slider { background: var(--accent); }
 }
 .sw-loading { font-size: 13px; color: var(--muted); text-align: center; padding: 16px 0; }
 .sw-profile-btn {
-  width: 100%; text-align: left; padding: 11px 14px;
-  border: 1px solid var(--border); border-radius: 10px;
+  width: 100%; text-align: left; padding: 12px 15px;
+  border: 1.5px solid var(--border); border-radius: 14px;
   background: var(--omni-bg); color: var(--text);
   font-size: 13px; cursor: pointer;
-  transition: border-color .12s, background .12s;
+  transition: border-color .14s ease, background .14s ease, transform .16s cubic-bezier(.2,.8,.25,1);
 }
-.sw-profile-btn:hover { border-color: var(--muted); }
-.sw-profile-btn.selected { border-color: var(--accent); background: var(--hover); font-weight: 500; }
+.sw-profile-btn:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); transform: translateY(-1px); }
+.sw-profile-btn.selected { border-color: var(--accent); background: var(--accent-soft); font-weight: 600; color: var(--accent); }
 .sw-no-browsers { font-size: 13px; color: var(--muted); text-align: center; padding: 14px 0; }
 
 .sw-import-checks {
-  display: flex; gap: 20px; margin-bottom: 10px; font-size: 13px; color: var(--text);
+  display: flex; gap: 22px; margin-bottom: 10px; font-size: 13px; color: var(--text);
 }
-.sw-chk-label { display: flex; align-items: center; gap: 7px; cursor: default; }
-.sw-chk-label input { accent-color: var(--accent); }
+.sw-chk-label { display: flex; align-items: center; gap: 9px; cursor: pointer; }
+.sw-chk-label input {
+  appearance: none; -webkit-appearance: none;
+  width: 18px; height: 18px; border-radius: 6px; margin: 0; flex-shrink: 0;
+  border: 1.5px solid var(--border); background: var(--omni-bg);
+  position: relative; cursor: pointer;
+  transition: background .14s ease, border-color .14s ease;
+}
+.sw-chk-label input:checked {
+  background: var(--accent); border-color: var(--accent);
+}
+.sw-chk-label input:checked::after {
+  content: ""; position: absolute; left: 5px; top: 1px;
+  width: 5px; height: 9px;
+  border: solid #fff; border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
 
 .sw-import-msg {
   font-size: 12.5px; color: var(--muted); min-height: 18px; margin-bottom: 6px;
@@ -3157,6 +3259,45 @@ body.dark .sw-disc-para { color: #e8eaed; border-color: rgba(255,255,255,.08); }
   gap: 4px;
 }
 .app-sidebar[hidden] { display: none !important; }
+/* Hover-to-reveal mode — collapses to a thin 5px sliver at rest (not full
+   zero — a real <webview> is a separate native compositor surface that
+   ignores normal CSS z-index, so a 0-width sidebar with a fixed-position
+   trigger sitting "on top" never actually receives the hover; it silently
+   sits behind the webview instead). Because .browser-column is flex:1, it
+   resizes to fill whatever the sidebar isn't using — no overlap, so the 5px
+   sliver is always genuinely hoverable. Simple width transition, no tricks.
+   !important throughout: body.privoo-one .app-sidebar (further down this
+   file) sets width:54px at equal selector specificity and later source
+   order, and would otherwise silently win over this block. */
+body.sidebar-hover-mode .app-sidebar {
+  width: 5px !important;
+  min-width: 5px !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  border-right-width: 0 !important;
+  opacity: 0 !important;
+  overflow: hidden;
+  transition: width .16s ease .3s, opacity .1s ease .3s, padding .16s ease .3s, border-color .16s ease .3s;
+}
+body.sidebar-hover-mode .app-sidebar:hover,
+body.sidebar-hover-mode .app-sidebar:focus-within {
+  width: 58px !important;
+  min-width: 58px !important;
+  padding: 12px 0 14px !important;
+  border-right-width: 1px !important;
+  opacity: 1 !important;
+  transition: width .12s ease, opacity .1s ease, padding .12s ease, border-color .12s ease;
+}
+/* The pull-out web panel and its "Playing" flyout should keep the sidebar
+   revealed while they're open, even after the cursor leaves the rail. */
+body.sidebar-hover-mode:has(#sidebar-panel:not([hidden])) .app-sidebar,
+body.sidebar-hover-mode:has(.sb-customize-pop) .app-sidebar {
+  width: 58px !important;
+  min-width: 58px !important;
+  padding: 12px 0 14px !important;
+  border-right-width: 1px !important;
+  opacity: 1 !important;
+}
 body.transparent-ui .app-sidebar {
   background: rgba(255,255,255,.22) !important;
   backdrop-filter: blur(11px) saturate(150%);
@@ -3913,6 +4054,7 @@ body.dark .translate-select {
   overflow: hidden;
   animation: pop-in .15s cubic-bezier(.2,0,.2,1);
   transform-origin: top right;
+  font-family: var(--font);
 }
 .toolbar-popover.vpn-pop {
   width: 360px;
@@ -3937,18 +4079,19 @@ body.dark .translate-select {
 .vpn-pop-hero {
   display: flex;
   gap: 12px;
-  padding: 14px 16px;
+  padding: 16px;
   border-bottom: 1px solid var(--border);
   background: var(--omni-bg);
 }
 .vpn-pop-icon {
-  width: 40px; height: 40px;
-  border-radius: 10px;
-  background: var(--hover);
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(155deg, color-mix(in srgb, var(--accent) 22%, var(--omni-bg)), var(--accent-soft));
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--border));
   display: flex; align-items: center; justify-content: center;
-  color: var(--text); flex-shrink: 0;
+  color: var(--accent); flex-shrink: 0;
 }
-.vpn-pop-title { font-size: 14px; font-weight: 600; color: var(--text); }
+.vpn-pop-title { font-size: 14.5px; font-weight: 650; letter-spacing: -.005em; color: var(--text); }
 .vpn-pop-sub { font-size: 12px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
 .vpn-pop-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
 .mini-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
@@ -3985,6 +4128,35 @@ body.dark .vpn-select { color-scheme: dark; background-color: var(--omni-bg); co
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239aa0a6'><path d='M7 10l5 5 5-5z'/></svg>");
 }
 body.dark .vpn-input { background: var(--omni-bg); color: var(--text); }
+
+/* Fully custom dropdown (progressive enhancement over a native <select>) —
+   see enhanceNativeSelect() in renderer.js. Native popups can't be themed;
+   this draws a button + floating list on top instead. */
+.csel-wrap { position: relative; display: block; }
+.csel-native { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; pointer-events: none; border: none; }
+.csel-trigger {
+  display: flex; align-items: center; width: 100%;
+  font-family: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.csel-trigger.open { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent); }
+.csel-list {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; min-width: 100%;
+  max-height: 240px; overflow-y: auto;
+  background: var(--toolbar); border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: var(--panel-shadow);
+  padding: 6px; z-index: 400;
+  display: none;
+  animation: csel-pop .15s cubic-bezier(.2,.8,.25,1) both;
+}
+.csel-list.open { display: block; }
+@keyframes csel-pop { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: none; } }
+.csel-item {
+  padding: 8px 12px; border-radius: 9px; font-size: 13px; cursor: default;
+  color: var(--text); transition: background .12s ease;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.csel-item:hover { background: var(--hover); }
+.csel-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 .vpn-pop-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
 .vpn-btn {
   height: 34px; padding: 0 16px;
@@ -4253,6 +4425,7 @@ body.dark .dl-pop-action-btn:hover svg {
   flex-shrink: 0;
 }
 .ctx-item:hover:not(.disabled) { background: var(--hover); }
+.ctx-item.ctx-submenu-open { background: var(--hover); }
 .ctx-item.disabled { color: var(--muted); opacity: .55; }
 .ctx-item.muted { color: var(--muted); font-size: 11px; pointer-events: none; padding: 6px 14px 4px; }
 .ctx-sep { height: 1px; background: var(--border); margin: 5px 0; }
@@ -5186,10 +5359,6 @@ body.transparent-ui.dark .ai-composer {
   background: rgba(28,29,33,.26) !important;
 }
 
-/* ── Centered sidebar icons ── */
-body.sidebar-centered .sidebar-rail {
-  justify-content: center;
-}
 
 /* ── Inline AI side panel ───────────────────────────────────────── */
 #ai-panel {
@@ -5514,10 +5683,10 @@ body.dark .ai-field select { color-scheme: dark; }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #e6e3da;
+  background: #eeecf9;
   animation: upd-fadein .22s ease;
 }
-body.dark .updating-overlay { background: #171614; }
+body.dark .updating-overlay { background: #17161f; }
 .updating-overlay[hidden] { display: none !important; }
 @keyframes upd-fadein { from { opacity: 0; } to { opacity: 1; } }
 .updating-card {
@@ -5816,9 +5985,36 @@ body.focus-mode #bookmarks-bar { display: none !important; }
   color: var(--text);
   font-weight: 500;
 }
-.sp-site-switch .slider {
-  background: var(--border);
+.sp-site-switch {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+  display: inline-block;
 }
+.sp-site-switch input {
+  opacity: 0; width: 0; height: 0;
+  position: absolute;
+}
+.sp-site-switch .slider {
+  position: absolute; inset: 0;
+  background: var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background .18s;
+}
+.sp-site-switch .slider::before {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  left: 3px; top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  transition: transform .18s;
+}
+.sp-site-switch input:checked + .slider { background: var(--accent); }
+.sp-site-switch input:checked + .slider::before { transform: translateX(16px); }
 
 /* ── Wobbly Windows ────────────────────────────────────────────────────────── */
 @keyframes wobbly-enter {
@@ -6088,30 +6284,33 @@ body.transparent-ui.dark .discord-card { background: rgba(32, 34, 40, .88); }
 }
 .ty-popup.hidden { display: none; }
 .ty-card {
-  width: min(340px, 92vw);
+  width: min(360px, 92vw);
   background: var(--toolbar);
-  border-radius: 14px;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, .35);
-  padding: 26px 24px 20px;
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .32), 0 0 0 1px color-mix(in srgb, var(--accent) 8%, transparent);
+  padding: 30px 26px 22px;
   text-align: center;
   animation: sp-rise .24s cubic-bezier(.16, 1, .3, 1) both;
 }
 .ty-logo {
   display: block;
-  margin: 0 auto 14px;
-  border-radius: 9px;
+  margin: 0 auto 16px;
+  border-radius: 12px;
+  width: 46px; height: 46px;
+  filter: drop-shadow(0 6px 14px color-mix(in srgb, var(--accent) 35%, transparent));
 }
 .ty-title {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -.01em;
   color: var(--text);
-  margin-bottom: 7px;
+  margin-bottom: 8px;
 }
 .ty-text {
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.55;
   color: var(--muted);
-  margin-bottom: 20px;
+  margin-bottom: 22px;
 }
 .ty-btn {
   width: 100%;
@@ -6536,14 +6735,32 @@ body.privoo-one .setup-overlay::before { opacity: .5; }
 
 /* ── Step 1 intro — clean and simple: wordmark, heading, subtitle, button. ── */
 .sw-hero {
+  position: relative;
   display: flex; flex-direction: column; align-items: center; text-align: center;
   gap: 12px; padding: 8px 4px 4px;
 }
 .sw-hero-logo {
+  position: relative;
   width: 66px; height: 66px; border-radius: 14px; margin-bottom: 10px;
   object-fit: contain; display: block;
   filter: drop-shadow(0 6px 16px rgba(0,0,0,.22));
 }
+/* Soft breathing accent halo behind the intro logo — the one purely
+   decorative flourish on an otherwise restrained step. */
+.sw-hero::before {
+  content: "";
+  position: absolute;
+  top: 8px; left: 50%;
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 38%, transparent), transparent 72%);
+  transform: translate(-50%, -2px);
+  animation: sw-hero-halo 3.2s ease-in-out infinite;
+  z-index: 0;
+}
+.sw-hero-logo { z-index: 1; }
+@keyframes sw-hero-halo { 0%,100% { opacity: .55; transform: translate(-50%, -2px) scale(1); } 50% { opacity: .9; transform: translate(-50%, -2px) scale(1.08); } }
+@media (prefers-reduced-motion: reduce) { .sw-hero::before { animation: none; } }
 .sw-hero .sw-headline { margin: 0; }
 .sw-hero .sw-sub { margin: 0 0 8px; max-width: 40ch; }
 .sw-hero .sw-btn.primary { min-width: 180px; height: 44px; font-size: 14px; }
@@ -6576,50 +6793,61 @@ body.privoo-one input[type="url"],
 body.privoo-one select { border-radius: 10px; }
 
 /* ── Incognito palette — placed last (and 2-class specific) so it wins over the
-   always-on Privoo One dark palette. A deeper, cooler-warm charcoal marks the
-   private window without breaking the design language. ── */
+   always-on dark palette. A deeper, cooler charcoal marks the private window
+   without breaking the lavender design language. ── */
 body.privoo-one.incognito {
-  --strip: #131210; --toolbar: #131210; --tab-active: #232220; --tab-hover: #242320;
-  --omni-bg: #201f1c; --omni-hover: #26241f; --border: #2b2a27; --hover: #26241f;
-  --text: #e6e3da; --muted: #8a877c; --pv-rail: #100f0e;
+  --strip: #141320; --toolbar: #141320; --tab-active: #221f36; --tab-hover: #24213a;
+  --omni-bg: #1c1a2e; --omni-hover: #241f3a; --border: rgba(255,255,255,.08); --hover: #241f3a;
+  --text: #eceaf6; --muted: #a5a2bd; --pv-rail: #100f1a;
 }
-/* A slim pine "private" marker line under the toolbar. */
+/* A slim accent "private" marker line under the toolbar. */
 body.privoo-one.incognito #toolbar { box-shadow: inset 0 -1px 0 var(--accent); }
 
 /* ═══ Setup wizard — completely solid, flat, squared, pine ═══════════════════
    No glass/transparency; every step shares this language. ══════════════════ */
 /* Fully OPAQUE overlay, no backdrop blur — kills the "desktop shows through /
    transparency delay" during setup. */
-.setup-overlay {
-  background: #171614 !important;
-  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
-}
-body:not(.dark) .setup-overlay { background: #e6e3da !important; }
-.setup-overlay::before { display: none !important; }
-/* Don't let the window itself go transparent during setup (that's what showed
-   the blurred desktop and read as a lag). Keep it solid warm charcoal. */
-body.setup-mode { background: #171614 !important; }
-html:has(body.setup-mode) { background: #171614 !important; }
-body:not(.dark).setup-mode { background: #e6e3da !important; }
-html:has(body:not(.dark).setup-mode) { background: #e6e3da !important; }
+/* Solid lavender atmosphere — NOT backdrop-filter: the setup window's own
+   background is genuinely transparent during first-run (so it can sit over
+   the OS material), and blurring it would blur the raw DESKTOP behind the
+   window, not app content, which read as a lag. The animated ::before glow
+   below is pure gradient art on an opaque layer, so it's free to be as rich
+   as we like without that problem — only the previous pass over-corrected
+   and killed it too, via `display:none !important`. */
+.setup-overlay { background: #17161f !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+body:not(.dark) .setup-overlay { background: #eeecf9 !important; }
+body.setup-mode { background: #17161f !important; }
+html:has(body.setup-mode) { background: #17161f !important; }
+body:not(.dark).setup-mode { background: #eeecf9 !important; }
+html:has(body:not(.dark).setup-mode) { background: #eeecf9 !important; }
 /* ── Two-panel frame: a persistent pine brand rail + a content stage where the
    step cards swap. Replaces the single floating card. ── */
 .sw-frame {
   display: flex;
-  width: min(840px, calc(100vw - 40px));
-  height: min(576px, calc(100vh - 40px));
-  background: var(--toolbar);
-  border: 1px solid var(--border);
-  border-radius: 14px;
+  width: min(760px, calc(100vw - 40px));
+  height: min(600px, calc(100vh - 40px));
+  background: #fff;
+  border: 1px solid rgba(38,36,58,.07);
+  border-radius: 26px;
   overflow: hidden;
   box-shadow:
-    0 1px 0 rgba(255,255,255,.04) inset,
-    0 50px 120px -30px rgba(0,0,0,.75),
-    0 12px 40px -18px rgba(0,0,0,.5);
+    inset 0 1px 0 rgba(255,255,255,.9),
+    0 0 0 1px rgba(139,124,247,.08),
+    0 60px 130px -30px rgba(23,22,31,.55),
+    0 16px 44px -18px rgba(23,22,31,.35);
   -webkit-app-region: no-drag;
-  animation: sw-frame-in .4s cubic-bezier(.16,.84,.44,1) both;
+  animation: sw-frame-in .5s cubic-bezier(.16,.84,.44,1) both;
 }
-@keyframes sw-frame-in { from { opacity: 0; transform: translateY(10px) scale(.99); } to { opacity: 1; transform: none; } }
+body.dark .sw-frame {
+  background: #1c1b26;
+  border-color: rgba(255,255,255,.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.05),
+    0 0 0 1px rgba(139,124,247,.12),
+    0 60px 130px -30px rgba(0,0,0,.75),
+    0 16px 44px -18px rgba(0,0,0,.5);
+}
+@keyframes sw-frame-in { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: none; } }
 .sw-side {
   /* Brand rail removed by design — the wizard is a single clean card. Keeping
      the rule (display:none) rather than deleting markup preserves the wizard's
@@ -6696,27 +6924,34 @@ body.privoo-one .sw-card {
 .sw-dot.active,
 .sw-dot:has(~ .sw-dot.active) { background: var(--accent); }
 .sw-dot.active ~ .sw-dot { background: var(--border); }
-.sw-headline { letter-spacing: -.02em; color: var(--text); }
-.sw-sub { color: var(--muted); }
-/* Choice + theme cards → flat, squared, pine-selected (like Settings). */
+.sw-headline { letter-spacing: -.028em; font-weight: 680; color: var(--text); }
+.sw-sub { color: var(--muted); line-height: 1.6; }
+/* Choice + theme cards → soft rounded, lift on hover, accent-ring selected. */
 .sw-choice-card, .sw-theme-card {
   background: var(--omni-bg) !important;
   border: 1.5px solid var(--border) !important;
-  border-radius: 6px !important;
+  border-radius: 16px !important;
   box-shadow: none !important;
   color: var(--text) !important;
-  transition: border-color .14s, box-shadow .14s;
+  transition: border-color .16s ease, box-shadow .16s ease, transform .2s cubic-bezier(.2,.8,.25,1) !important;
 }
-.sw-choice-card:hover, .sw-theme-card:hover { border-color: var(--muted) !important; transform: none !important; }
+.sw-choice-card:hover, .sw-theme-card:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)) !important; transform: translateY(-2px) !important; }
 .sw-choice-card.selected, .sw-theme-card.selected {
   border-color: var(--accent) !important;
-  box-shadow: inset 0 0 0 1px var(--accent) !important;
+  background: var(--accent-soft) !important;
+  box-shadow: 0 0 0 3px var(--accent-soft) !important;
 }
 .sw-choice-card .sw-choice-ico, .sw-theme-card .sw-choice-ico { color: var(--accent) !important; }
 .sw-choice-card span, .sw-choice-card b { color: inherit; }
-.sw-terms-box { background: var(--omni-bg) !important; border: 1px solid var(--border) !important; border-radius: 6px !important; }
-.sw-btn { border-radius: 6px !important; }
-.sw-btn.primary { background: var(--accent) !important; }
+.sw-terms-box { background: var(--omni-bg) !important; border: 1px solid var(--border) !important; border-radius: 16px !important; }
+.sw-btn { border-radius: 999px !important; font-weight: 600 !important; transition: transform .16s cubic-bezier(.34,1.5,.64,1), filter .16s ease, background .16s ease !important; }
+.sw-btn:active { transform: scale(.96) !important; }
+.sw-btn.primary {
+  background: var(--accent) !important; color: #fff !important; border: none !important;
+  box-shadow: 0 10px 26px -8px color-mix(in srgb, var(--accent) 55%, transparent) !important;
+}
+.sw-btn.primary:hover { transform: translateY(-1px) !important; filter: brightness(1.07); }
+.sw-btn.ghost:hover { transform: translateY(-1px) !important; }
 /* Buttons + fineprint text warm. */
 .sw-fineprint { color: var(--muted); }
 /* The "I agree" checkbox becomes a squared green toggle — same as Settings. */
@@ -6761,20 +6996,39 @@ body:not(.dark) .sw-terms-agree input[type="checkbox"] { background: #cfccbf; }
 .sw-theme-toggle-thumb.is-dark { transform: translateX(100%); }
 
 
-/* ── Done step — a single pine checkmark tile, no gradient ring ── */
+/* ── Done step — accent-filled circle with the halo pulse restored ── */
 .sw-done-ring {
-  width: 60px; height: 60px; border-radius: 10px !important;
-  background: var(--accent) !important; color: #10160f !important;
+  width: 68px; height: 68px; border-radius: 50% !important;
+  background: var(--accent) !important; color: #fff !important;
   display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 20px; box-shadow: none !important;
-  animation: sw-zoom-in .45s cubic-bezier(.2,.9,.3,1.05) both !important;
+  margin: 0 auto 20px;
+  box-shadow: 0 12px 30px -8px color-mix(in srgb, var(--accent) 55%, transparent) !important;
+  animation: sw-ring-pop .62s .12s cubic-bezier(.34,1.6,.5,1) both !important;
 }
-.sw-done-ring::before { display: none !important; }
-.sw-done-ring svg path { stroke: #10160f !important; }
+.sw-done-ring::before {
+  content: ""; position: absolute; inset: -2px; border-radius: 50%;
+  border: 2px solid var(--accent);
+  animation: sw-ring-halo 1.9s .55s ease-out infinite;
+}
+.sw-done-ring svg path { stroke: #fff !important; }
+
+.sw-confetti-layer {
+  position: fixed; inset: 0; z-index: 20001; pointer-events: none; overflow: hidden;
+}
+.sw-confetti-piece {
+  position: absolute; top: -12px; width: 8px; height: 14px; border-radius: 2px;
+  opacity: 0;
+  animation: sw-confetti-fall linear forwards;
+}
+@keyframes sw-confetti-fall {
+  0% { transform: translate(0, -10px) rotate(0deg); opacity: 1; }
+  100% { transform: translate(var(--drift), 100vh) rotate(var(--spin)); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .sw-confetti-layer { display: none; } }
 
 /* ── Disclaimer icon — squared, pine-tinted (was amber circle) ── */
 .sw-disc-icon {
-  width: 52px; height: 52px; border-radius: 10px;
+  width: 52px; height: 52px; border-radius: 16px;
   background: var(--accent-soft); border: none; color: var(--accent);
   display: flex; align-items: center; justify-content: center;
   margin: 0 auto 16px;
@@ -6791,6 +7045,33 @@ body.privoo-one .sw-disc-icon { background: var(--accent-soft); border-color: tr
 .sidebar-rail-btn { transition: transform .18s cubic-bezier(.34,1.6,.64,1), background var(--t-fast) ease; }
 .sidebar-rail-btn:hover { transform: scale(1.12); }
 .sidebar-rail-btn:active { transform: scale(.94); }
+
+.fp-pop {
+  position: fixed; z-index: 14000;
+  width: 280px; max-width: calc(100vw - 24px); padding: 10px;
+  background: var(--toolbar);
+  border: 1px solid var(--border); border-radius: var(--r-lg);
+  box-shadow: var(--panel-shadow);
+  animation: pop-in .16s cubic-bezier(.16,.84,.44,1);
+  font-size: 13px; color: var(--text);
+}
+.fp-pop h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 2px 8px 8px; }
+.fp-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  width: 100%; padding: 9px 10px; border-radius: 10px; text-align: left;
+  color: var(--text); transition: background .12s ease;
+}
+.fp-item:hover { background: var(--hover); }
+.fp-item-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fp-item-time { flex-shrink: 0; font-size: 11px; color: var(--muted); }
+.fp-empty { padding: 14px 10px; text-align: center; color: var(--muted); font-size: 12.5px; }
+.fp-browse {
+  width: 100%; margin-top: 4px; padding: 9px 0; text-align: center;
+  border: 1px dashed color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 10px; background: var(--accent-soft); color: var(--accent);
+  font-weight: 600; transition: background .12s ease;
+}
+.fp-browse:hover { background: color-mix(in srgb, var(--accent) 24%, transparent); }
 
 .sb-customize-pop {
   position: fixed; left: 62px; bottom: 12px; z-index: 14000;
@@ -6833,6 +7114,21 @@ body.dark .sb-cz-sw i { background: rgba(255,255,255,.14); }
   transition: background var(--t-fast) ease;
 }
 .sb-cz-add:hover { background: color-mix(in srgb, var(--accent) 24%, transparent); }
+
+/* Off / Always on / On hover — visibility mode picker at the top of the
+   sidebar's own Customize popover. */
+.sb-cz-modes {
+  display: flex; gap: 3px; padding: 3px; margin-bottom: 10px;
+  border-radius: 11px; background: var(--hover);
+}
+.sb-cz-mode-btn {
+  flex: 1; border: none; background: transparent; color: var(--muted);
+  font: inherit; font-size: 11.5px; font-weight: 600; padding: 7px 4px;
+  border-radius: 8px; cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.sb-cz-mode-btn:hover { color: var(--text); }
+.sb-cz-mode-btn.active { background: var(--accent); color: #fff; }
 
 .sb-nowplaying {
   position: fixed; z-index: 14000; left: 62px;

@@ -49,6 +49,7 @@ const { buildGoogleSpoofScript } = require('./google-spoof');
 const { startGoogleSignIn, buildPostSignInUrl, isGoogleSignInUrl } = require('./google-auth');
 const { buildGooglePasswordPreferScript } = require('./password-autofill');
 const passwordStore = require('./password-store');
+const identitiesStore = require('./identities-store');
 const aiBrowser = require('./ai');
 
 // ---------------------------------------------------------------------------
@@ -509,6 +510,7 @@ const INTERNAL_PAGES = {
   incognito:  'incognito.html',
   ai:         'ai.html',
   news:       'news.html',
+  identities: 'identities.html',
 };
 
 // Pin Chrome identity centrally. It must match Electron's bundled Chromium
@@ -565,6 +567,43 @@ const UA_METADATA = {
   bitness: '64',
   wow64: false,
 };
+
+// Mobile emulation used by the sidebar web panel and Mobile View. Three
+// separate layers otherwise force every webview back to the desktop
+// identity: contents.setUserAgent(CHROME_UA) on creation, the CDP
+// Network.setUserAgentOverride in each webview's spoof setup, and the
+// session wide User-Agent/Client Hints header rewrite (when "spoof user
+// agent" is on). webContentsIds tracked in _mobileEmulatedDevices are
+// exempted from all three and get the matching device profile instead.
+const _mobileEmulatedDevices = new Map();
+const MOBILE_DEVICE_PROFILES = {
+  samsung: {
+    ua: `Mozilla/5.0 (Linux; Android 14; SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_VERSION_FULL} Mobile Safari/537.36`,
+    clientHints: true,
+    metadata: {
+      brands: UA_METADATA.brands,
+      fullVersionList: UA_METADATA.fullVersionList,
+      fullVersion: CHROME_VERSION_FULL,
+      platform: 'Android',
+      platformVersion: '14.0.0',
+      architecture: '',
+      model: 'SM-S928B',
+      mobile: true,
+      bitness: '',
+      wow64: false,
+    },
+    secChUaPlatform: '"Android"',
+    secChUaModel: '"SM-S928B"',
+  },
+  iphone: {
+    ua: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+    clientHints: false,
+  },
+};
+function mobileProfileFor(id) {
+  const device = _mobileEmulatedDevices.get(id);
+  return MOBILE_DEVICE_PROFILES[device] || MOBILE_DEVICE_PROFILES.samsung;
+}
 // Built once — depends only on the runtime Chromium version + host platform.
 // Reused for webview guests and OAuth popups so both get spoofed identically.
 const SPOOF_SCRIPT = buildGoogleSpoofScript({
@@ -1138,6 +1177,42 @@ const _SPOTIFY_ALLOWLIST = [
   '@@||*.scdn.co^',
 ];
 
+// In-browser cryptomining ("cryptojacking") scripts hijack the visitor's CPU
+// to mine cryptocurrency for the site owner, usually without disclosure.
+// EasyPrivacy catches some of this incidentally, but these are the actual
+// dedicated miner-widget services (CoinHive-era and its successors) — worth
+// blocking explicitly rather than hoping a generic tracker rule catches them.
+// Settings → Privacy → "Cryptojacking protection" (on by default).
+const _CRYPTOJACKING_BLOCKLIST = [
+  '||coinhive.com^',
+  '||coin-hive.com^',
+  '||cnhv.co^',
+  '||authedmine.com^',
+  '||crypto-loot.com^',
+  '||cryptoloot.pro^',
+  '||coinimp.com^',
+  '||www.coinimp.com^',
+  '||api.coinimp.com^',
+  '||jsecoin.com^',
+  '||load.jsecoin.com^',
+  '||webmine.pro^',
+  '||www.webmine.pro^',
+  '||minero.pw^',
+  '||webminepool.com^',
+  '||monerise.com^',
+  '||deepminer.cc^',
+  '||coinerra.com^',
+  '||minemytraffic.com^',
+  '||projectpoi.com^',
+  '||papoto.com^',
+  '||crypto-webminer.com^',
+  '||moneroocean.stream^',
+  '||coinhiveproxy.com^',
+  '||minecrunch.co^',
+  '||coin-have.com^',
+  '||server.gridcash.net^',
+];
+
 // Ad-serving/tracking network blocks + cosmetic ad-UI removal. Kept separate
 // from the allowlist above so a parse hiccup here can never drop that.
 const _YT_EXTRA_FILTERS = [
@@ -1290,17 +1365,31 @@ async function getSharedBlocker() {
       read: fs.promises.readFile,
       write: fs.promises.writeFile,
     };
+    // Electron's net.fetch instead of Node's global fetch — it goes through
+    // the same networking stack as everything else in the browser (proxy,
+    // Tor, certificate handling), instead of a raw connection that answers
+    // to none of that and had nothing to fall back to when it failed.
     let blocker;
-    if (usePrebuilt) {
-      blocker = await ElectronBlocker.fromPrebuiltAdsAndTracking(fetch, caching);
-    } else if (urls.length) {
-      // User customised their lists — build straight from the enabled URLs.
-      console.log('Privoo: building adblock engine from', urls.length, 'custom filter list(s)');
-      blocker = await ElectronBlocker.fromLists(fetch, urls, {}, caching);
-    } else {
-      // Everything disabled — an empty engine that blocks nothing, so the
-      // 18+/compat wrapper below still functions without the user's lists.
-      blocker = ElectronBlocker.empty();
+    try {
+      if (usePrebuilt) {
+        blocker = await ElectronBlocker.fromPrebuiltAdsAndTracking(net.fetch, caching);
+      } else if (urls.length) {
+        // User customised their lists — build straight from the enabled URLs.
+        console.log('Privoo: building adblock engine from', urls.length, 'custom filter list(s)');
+        blocker = await ElectronBlocker.fromLists(net.fetch, urls, {}, caching);
+      } else {
+        // Everything disabled — an empty engine that blocks nothing, so the
+        // 18+/compat wrapper below still functions without the user's lists.
+        blocker = ElectronBlocker.empty();
+      }
+    } catch (e) {
+      // A failed fetch/build must not poison every future call — without
+      // resetting the promise here, one bad network moment at startup left
+      // ad blocking silently stuck on the crude built-in fallback list for
+      // the rest of the session, with no retry, ever.
+      console.warn('Privoo: adblock engine build failed, will retry on next use:', e.message);
+      _sharedBlockerPromise = null;
+      throw e;
     }
 
     // Apply the YouTube playback allowlist FIRST and on its own, so it always
@@ -1308,6 +1397,9 @@ async function getSharedBlocker() {
     try { blocker.updateFromDiff({ added: _YT_ALLOWLIST }); } catch {}
     try { blocker.updateFromDiff({ added: _YT_EXTRA_FILTERS }); } catch {}
     try { blocker.updateFromDiff({ added: _SPOTIFY_ALLOWLIST }); } catch {}
+    if (settingsStore.load().cryptojackingProtection !== false) {
+      try { blocker.updateFromDiff({ added: _CRYPTOJACKING_BLOCKLIST }); } catch {}
+    }
 
     blocker.on('request-blocked',    () => { stats.blockedAds++; });
     blocker.on('request-redirected', () => { stats.blockedAds++; });
@@ -1318,9 +1410,13 @@ async function getSharedBlocker() {
 }
 
 async function setupAdBlocking(sess) {
-  const settings = settingsStore.load();
-  if (!settings.adBlocking) return;
-
+  // We always register the request wrapper below and gate the actual
+  // blocking decision live off settings.adBlocking on every request. There
+  // is only one onBeforeRequest slot per session, so if we skipped
+  // registering entirely while the setting started off, turning it on later
+  // in Settings would silently do nothing until a restart. Registering
+  // unconditionally and checking live makes the toggle take effect the
+  // moment the user flips it, in both directions.
   try {
     const blocker = await getSharedBlocker();
 
@@ -1370,6 +1466,10 @@ async function setupAdBlocking(sess) {
       if ((isYouTubeHost(sourceHost) || isYouTubeHost(reqHost)) && hasContentBlockerExtension()) {
         return cb({ cancel: false });
       }
+      // Ad blocking itself — checked live on every request, not just once at
+      // startup, so switching it off in Settings actually stops it instead
+      // of continuing to run for the rest of the session.
+      if (!s2.adBlocking) return cb({ cancel: false });
       // Per-site ad-block exclusion — user toggled ads off for this host.
       const excl = s2.adBlockExcludedDomains;
       if (Array.isArray(excl) && excl.length && sourceHost) {
@@ -1407,6 +1507,15 @@ async function setupAdBlocking(sess) {
     return;
   } catch (e) {
     console.warn('Privoo: adblock engine unavailable, using built-in list:', e.message);
+    // A single delayed retry — covers a network blip at startup (DNS not
+    // ready yet, VPN still connecting, etc). getSharedBlocker() resets its
+    // own promise on failure, so this is a fresh attempt, not a repeat of
+    // the same rejection. Re-registering onBeforeRequest below replaces the
+    // fallback listener with the real one if this succeeds.
+    if (!sess._adblockRetried) {
+      sess._adblockRetried = true;
+      setTimeout(() => { setupAdBlocking(sess).catch(() => {}); }, 15000);
+    }
   }
 
   sess.webRequest.onBeforeRequest({ urls: ['<all_urls>'] }, (details, cb) => {
@@ -1435,6 +1544,8 @@ async function setupAdBlocking(sess) {
     // sites unblocked even on the fallback list.
     const sourceHost = documentBaseDomain(details.webContentsId) || host;
     if (isSiteCompatibilityHost(sourceHost)) return cb({ cancel: false });
+
+    if (!s.adBlocking) return cb({ cancel: false });
 
     // Spotify web-player ad / telemetry endpoints.
     if (isSpotifyAdRequest(details.url)) {
@@ -1489,7 +1600,25 @@ function setupHeaderPrivacy(sess) {
     }
 
     const reqHostname = hostnameOf(details.url);
-    if (settings.spoofUserAgent || isGoogleAuthHost(reqHostname) || isByteDanceFamilyHost(reqHostname)) {
+    // Rewrite to the emulated device's identity instead of skipping the
+    // rewrite outright, so it stays internally consistent (a request with a
+    // mobile User-Agent but sec-ch-ua-mobile:?0 is itself a giveaway sites
+    // can key off, and the point here is for the site to confidently serve
+    // its mobile layout).
+    const isMobileEmu = details.webContentsId && _mobileEmulatedDevices.has(details.webContentsId);
+    if (isMobileEmu) {
+      const profile = mobileProfileFor(details.webContentsId);
+      for (const key of Object.keys(headers)) {
+        const low = key.toLowerCase();
+        if (!profile.clientHints && low.startsWith('sec-ch-ua')) { delete headers[key]; continue; }
+        if (low === 'sec-ch-ua-mobile')             headers[key] = '?1';
+        else if (low === 'sec-ch-ua-platform')       headers[key] = profile.secChUaPlatform;
+        else if (low === 'sec-ch-ua-model')          headers[key] = profile.secChUaModel;
+        else if (low === 'sec-ch-ua-form-factors')   headers[key] = '"Mobile"';
+        else if (low === 'user-agent')               headers[key] = profile.ua;
+      }
+      if (!Object.keys(headers).some(k => k.toLowerCase() === 'user-agent')) headers['User-Agent'] = profile.ua;
+    } else if (settings.spoofUserAgent || isGoogleAuthHost(reqHostname) || isByteDanceFamilyHost(reqHostname)) {
       const seenSpoofHeaders = new Set();
       for (const key of Object.keys(headers)) {
         const low = key.toLowerCase();
@@ -1618,9 +1747,106 @@ function setupHeaderPrivacy(sess) {
 // ---------------------------------------------------------------------------
 // Download tracking
 // ---------------------------------------------------------------------------
+// Download Booster — splits a large download into several parallel
+// range-requested chunks instead of one single stream, the same idea as
+// classic download accelerators. Only worth it for big files whose server
+// actually advertises range support; anything else just isn't faster split
+// up, so this probes first and quietly declines rather than forcing it.
+const DOWNLOAD_BOOST_MIN_BYTES = 8 * 1024 * 1024; // below this, one stream is plenty
+const _boostBypassUrls = new Set();
+const DOWNLOAD_BOOST_CHUNKS = 6;
+
+function probeRangeSupport(url) {
+  return new Promise((resolve) => {
+    let u;
+    try { u = new URL(url); } catch { return resolve(null); }
+    const lib = u.protocol === 'http:' ? require('http') : require('https');
+    const req = lib.request(u, { method: 'GET', headers: { Range: 'bytes=0-0' }, timeout: 8000 }, (res) => {
+      res.resume(); // discard the 1-byte probe body
+      const total = parseInt(String(res.headers['content-range'] || '').split('/')[1] || '', 10);
+      const ranges = res.statusCode === 206 && Number.isFinite(total) && total > 0;
+      resolve(ranges ? { totalBytes: total } : null);
+    });
+    req.on('timeout', () => req.destroy());
+    req.on('error', () => resolve(null));
+    req.end();
+  });
+}
+
+// Downloads one byte range into `fd` at the matching file offset. Resolves
+// the number of bytes actually written; rejects on any network failure so
+// the caller can abandon the whole boosted attempt rather than saving a
+// silently-truncated file.
+function fetchRange(url, fd, start, end, onBytes) {
+  return new Promise((resolve, reject) => {
+    let u;
+    try { u = new URL(url); } catch (e) { return reject(e); }
+    const lib = u.protocol === 'http:' ? require('http') : require('https');
+    const req = lib.request(u, { method: 'GET', headers: { Range: `bytes=${start}-${end}` }, timeout: 20000 }, (res) => {
+      if (res.statusCode !== 206 && res.statusCode !== 200) {
+        res.resume();
+        return reject(new Error('Unexpected status ' + res.statusCode));
+      }
+      let pos = start;
+      res.on('data', (chunk) => {
+        try {
+          fs.writeSync(fd, chunk, 0, chunk.length, pos);
+          pos += chunk.length;
+          onBytes(chunk.length);
+        } catch (e) { req.destroy(); reject(e); }
+      });
+      res.on('end', () => resolve(pos - start));
+      res.on('error', reject);
+    });
+    req.on('timeout', () => req.destroy(new Error('Chunk timed out')));
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+async function runBoostedDownload(url, savePath, id, record, totalBytes) {
+  const chunkSize = Math.ceil(totalBytes / DOWNLOAD_BOOST_CHUNKS);
+  const fd = fs.openSync(savePath, 'w');
+  let received = 0;
+  let lastBroadcast = 0;
+  const bump = (n) => {
+    received += n;
+    const now = Date.now();
+    if (now - lastBroadcast < 200 && received < totalBytes) return; // throttle UI updates
+    lastBroadcast = now;
+    const patch = { receivedBytes: received, state: 'progressing' };
+    downloadStore.update(id, patch);
+    broadcastAll('download-update', { ...record, ...patch });
+  };
+  try {
+    const tasks = [];
+    for (let start = 0; start < totalBytes; start += chunkSize) {
+      const end = Math.min(start + chunkSize - 1, totalBytes - 1);
+      tasks.push(fetchRange(url, fd, start, end, bump));
+    }
+    await Promise.all(tasks);
+    fs.closeSync(fd);
+    const patch = { state: 'completed', endTime: Date.now(), receivedBytes: totalBytes };
+    downloadStore.update(id, patch);
+    activeDownloads.delete(id);
+    broadcastAll('download-update', { ...record, ...patch });
+  } catch (e) {
+    try { fs.closeSync(fd); } catch {}
+    try { fs.unlinkSync(savePath); } catch {}
+    console.warn('Privoo: boosted download failed, no partial file kept:', e.message);
+    const patch = { state: 'interrupted', endTime: Date.now() };
+    downloadStore.update(id, patch);
+    activeDownloads.delete(id);
+    broadcastAll('download-update', { ...record, ...patch });
+  }
+}
+
 function setupDownloads(sess) {
-  sess.on('will-download', (event, item) => {
+  sess.on('will-download', (event, item, wc) => {
     const settings = settingsStore.load();
+    // A probe that declined to boost re-triggers this same download once,
+    // normally — without this guard that retry would probe again and loop.
+    const boostBypass = _boostBypassUrls.delete(item.getURL());
     const id = `dl_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     let savePath = path.join(
       settings.downloadPath || app.getPath('downloads'),
@@ -1639,8 +1865,6 @@ function setupDownloads(sess) {
       savePath = picked;
     }
 
-    item.setSavePath(savePath);
-
     const record = {
       id,
       filename: item.getFilename(),
@@ -1654,8 +1878,30 @@ function setupDownloads(sess) {
       endTime: null,
     };
     downloadStore.add(record);
-    activeDownloads.set(id, item);
     broadcastAll('download-update', record);
+
+    if (settings.downloadBoosterEnabled && !boostBypass) {
+      const downloadUrl = item.getURL();
+      item.cancel();
+      probeRangeSupport(downloadUrl).then((info) => {
+        if (info && info.totalBytes >= DOWNLOAD_BOOST_MIN_BYTES) {
+          record.totalBytes = info.totalBytes;
+          downloadStore.update(id, { totalBytes: info.totalBytes });
+          runBoostedDownload(downloadUrl, savePath, id, record, info.totalBytes);
+        } else {
+          // Not worth boosting (small file or server doesn't support ranges) —
+          // the item is already cancelled, so re-trigger a normal download,
+          // marked to bypass the boost check this next time around.
+          downloadStore.remove(id);
+          _boostBypassUrls.add(downloadUrl);
+          try { if (wc && !wc.isDestroyed()) wc.downloadURL(downloadUrl); } catch {}
+        }
+      });
+      return;
+    }
+
+    item.setSavePath(savePath);
+    activeDownloads.set(id, item);
 
     item.on('updated', (_e, state) => {
       const received = item.getReceivedBytes();
@@ -1879,12 +2125,52 @@ function proxyRulesFor(settings) {
   return null;
 }
 
-function applyProxyToSession(sess, settings) {
-  const rules = proxyRulesFor(settings);
+// Converts a "socks5://host:port" / "http://host:port" style setting into
+// the directive PAC scripts use ("SOCKS5 host:port" / "PROXY host:port").
+function pacProxyDirective(raw) {
   try {
-    if (rules) sess.setProxy({ proxyRules: rules, proxyBypassRules: '<local>' }).catch(() => {});
-    else sess.setProxy({ mode: 'direct' }).catch(() => {});
+    const u = new URL(raw);
+    const hostport = `${u.hostname}:${u.port || (u.protocol.startsWith('socks') ? 1080 : 8080)}`;
+    if (u.protocol.startsWith('socks5')) return `SOCKS5 ${hostport}`;
+    if (u.protocol.startsWith('socks')) return `SOCKS ${hostport}`;
+    return `PROXY ${hostport}`;
+  } catch { return 'DIRECT'; }
+}
+
+// .onion addresses only resolve over Tor's own SOCKS proxy, no matter what
+// the user's general proxy setting is — so route them through Tor via PAC
+// unconditionally, and fall back to whatever proxyMode already dictates for
+// everything else.
+function buildPacScript(settings) {
+  const torPort = torPortOf(settings);
+  let fallback = 'DIRECT';
+  if (settings.proxyMode === 'tor') fallback = `SOCKS5 127.0.0.1:${torPort}`;
+  else if (settings.proxyMode === 'manual') {
+    const raw = String(settings.proxyUrl || '').trim();
+    if (raw) fallback = pacProxyDirective(raw);
+  }
+  return `function FindProxyForURL(url, host) {
+    if (shExpMatch(host, "*.onion")) return "SOCKS5 127.0.0.1:${torPort}";
+    return "${fallback}";
+  }`;
+}
+
+function applyProxyToSession(sess, settings) {
+  try {
+    const pac = buildPacScript(settings);
+    const pacScript = `data:application/x-ns-proxy-autoconfig;base64,${Buffer.from(pac, 'utf8').toString('base64')}`;
+    sess.setProxy({ pacScript, proxyBypassRules: '<local>' }).catch(() => {});
   } catch { /* ignore */ }
+}
+
+// Lazily brings up the Tor SOCKS proxy the first time an .onion address is
+// visited, independent of the user's proxyMode setting. Returns true if Tor
+// is already up (safe to navigate now), false if it was just launched (the
+// caller should retry the navigation after a short delay).
+function ensureTorForOnion() {
+  if (_torProc) return true;
+  launchTor();
+  return false;
 }
 
 function torBinaryPath() {
@@ -2271,6 +2557,41 @@ function createWindow(opts = {}) {
 // startup with minimizeToTray=false never spawns one.
 // ---------------------------------------------------------------------------
 let _tray = null;
+
+function buildTrayMenu() {
+  const showAll = () => {
+    const wins = BrowserWindow.getAllWindows();
+    if (wins.length === 0) return createWindow();
+    for (const w of wins) { if (!w.isDestroyed()) { w.show(); w.focus(); } }
+  };
+  const s = settingsStore.load();
+  return Menu.buildFromTemplate([
+    { label: 'Open Privoo', click: showAll },
+    { label: 'New tab', click: () => openUrlInPrivoo('privoo://newtab/') },
+    { label: 'New incognito window', click: () => openIncognitoWindow().catch((e) => console.error('Privoo: tray incognito:', e)) },
+    { type: 'separator' },
+    { label: 'Downloads', click: () => openUrlInPrivoo('privoo://downloads/') },
+    { label: 'History', click: () => openUrlInPrivoo('privoo://history/') },
+    { label: 'Bookmarks', click: () => openUrlInPrivoo('privoo://bookmarks/') },
+    { type: 'separator' },
+    { label: 'Settings', click: () => openUrlInPrivoo('privoo://settings/') },
+    {
+      label: 'Minimize to tray when closed',
+      type: 'checkbox',
+      checked: s.minimizeToTray !== false,
+      click: (item) => saveSettingsAndBroadcast({ minimizeToTray: item.checked }),
+    },
+    { label: 'Check for updates', click: () => checkForUpdatesIfEnabled(true) },
+    { type: 'separator' },
+    {
+      label: 'Quit Privoo', click: () => {
+        global.privooQuittingForReal = true;
+        app.quit();
+      },
+    },
+  ]);
+}
+
 function ensureTray() {
   if (_tray) return _tray;
   let icon = nativeImage.createFromPath(resolveIcon() || '');
@@ -2294,16 +2615,12 @@ function ensureTray() {
     if (wins.length === 0) return createWindow();
     for (const w of wins) { if (!w.isDestroyed()) { w.show(); w.focus(); } }
   };
-  const quitForReal = () => {
-    global.privooQuittingForReal = true;
-    app.quit();
-  };
   _tray.on('click', showAll);
-  _tray.setContextMenu(Menu.buildFromTemplate([
-    { label: 'Open Privoo', click: showAll },
-    { type: 'separator' },
-    { label: 'Quit Privoo', click: quitForReal },
-  ]));
+  // Rebuilt on every right-click rather than set once, so the "minimize to
+  // tray" checkbox always reflects the latest setting instead of whatever it
+  // was when the app started.
+  _tray.on('right-click', () => _tray.popUpContextMenu(buildTrayMenu()));
+  _tray.setContextMenu(buildTrayMenu());
   return _tray;
 }
 
@@ -2499,10 +2816,10 @@ ipcMain.handle('trigger-update-check', () => {
   checkForUpdatesIfEnabled();
 });
 
-function checkForUpdatesIfEnabled() {
+function checkForUpdatesIfEnabled(force) {
   if (!app.isPackaged) return;
   const settings = settingsStore.load();
-  if (!settings.autoUpdates) return;
+  if (!force && !settings.autoUpdates) return;
   autoUpdater.checkForUpdates().catch((e) => {
     console.warn('Privoo updater check failed:', e.message);
   });
@@ -2690,8 +3007,9 @@ app.on('web-contents-created', (_event, contents) => {
   contents.setMaxListeners(200);
   if (contents.getType() !== 'webview') return;
 
-  // Force clean Chrome UA on every webview
-  contents.setUserAgent(CHROME_UA);
+  // Force clean Chrome UA on every webview, except ones marked mobile via
+  // mark-mobile-webview, which get their device identity set explicitly.
+  if (!_mobileEmulatedDevices.has(contents.id)) contents.setUserAgent(CHROME_UA);
 
   if (settingsStore.load().webrtcProtection) {
     contents.setWebRTCIPHandlingPolicy('default_public_interface_only');
@@ -3033,12 +3351,16 @@ app.on('web-contents-created', (_event, contents) => {
         source: spoofScript,
         runImmediately: true,
       }).catch(() => { /* command may fail on internal pages */ });
-      // Native client hints — keeps navigator.userAgentData native (see UA_METADATA).
-      contents.debugger.sendCommand('Network.setUserAgentOverride', {
-        userAgent: CHROME_UA,
-        acceptLanguage: preferredLanguageList().join(','),
-        userAgentMetadata: UA_METADATA,
-      }).catch(() => {});
+      // Native client hints, keeps navigator.userAgentData native (see UA_METADATA).
+      // Mobile emulated webviews get their device identity instead.
+      {
+        const mobileProfile = _mobileEmulatedDevices.has(contents.id) ? mobileProfileFor(contents.id) : null;
+        contents.debugger.sendCommand('Network.setUserAgentOverride', {
+          userAgent: mobileProfile ? mobileProfile.ua : CHROME_UA,
+          acceptLanguage: preferredLanguageList().join(','),
+          userAgentMetadata: mobileProfile ? (mobileProfile.metadata || UA_METADATA) : UA_METADATA,
+        }).catch(() => {});
+      }
       contents.debugger.sendCommand('Page.addScriptToEvaluateOnNewDocument', {
         source: ytAdScript,
         runImmediately: true,
@@ -3184,6 +3506,17 @@ app.on('web-contents-created', (_event, contents) => {
     // then route it: mobile-only app links are dropped silently so flows like
     // TikTok's email verification keep going in-page; any other app protocol is
     // handed to the OS, mirroring Chrome's "open external app?" behaviour.
+    // ── IPFS / IPNS ─────────────────────────────────────────────────────────
+    // Not an http(s) scheme, so it must be handled before the generic
+    // "unknown scheme → hand to OS" fallback below.
+    if (url.startsWith('ipfs://') || url.startsWith('ipns://')) {
+      event.preventDefault();
+      const scheme = url.startsWith('ipfs://') ? 'ipfs' : 'ipns';
+      const rest = url.slice(scheme.length + 3);
+      contents.loadURL(`https://${scheme}.io/${scheme}/${rest}`).catch(() => {});
+      return;
+    }
+
     if (!isWebScheme(url)) {
       event.preventDefault();
       if (!isMobileDeepLink(url)) { try { shell.openExternal(url); } catch {} }
@@ -3193,6 +3526,30 @@ app.on('web-contents-created', (_event, contents) => {
     const s = settingsStore.load();
     const h = hostnameOf(url);
     const local = h === 'localhost' || h === '127.0.0.1' || h === '::1' || h.endsWith('.local');
+
+    // ── .onion (Tor hidden services) ───────────────────────────────────────
+    // Route transparently over Tor's SOCKS proxy regardless of the general
+    // proxy setting. First visit in a session bootstraps Tor and retries.
+    if (h && h.endsWith('.onion')) {
+      if (!ensureTorForOnion()) {
+        event.preventDefault();
+        setTimeout(() => { try { contents.loadURL(url).catch(() => {}); } catch {} }, 4000);
+        return;
+      }
+    }
+
+    // ── ENS / Unstoppable Domains / IPFS naming ────────────────────────────
+    // .eth (ENS) and the Unstoppable Domains TLDs aren't resolvable by plain
+    // DNS. eth.limo runs a public gateway that resolves both naming systems
+    // and IPFS content hashes server-side, so redirect there instead of
+    // running our own chain RPC.
+    const NAMING_TLDS = ['.eth', '.crypto', '.wallet', '.x', '.nft', '.dao', '.888', '.blockchain', '.bitcoin'];
+    if (h && NAMING_TLDS.some(tld => h.endsWith(tld))) {
+      event.preventDefault();
+      const rest = url.replace(/^[a-z]+:\/\/[^/]+/i, '');
+      contents.loadURL(`https://${h}.limo${rest}`).catch(() => {});
+      return;
+    }
 
     // ── 18+ / adult site blocking ──────────────────────────────────────────
     if (s.blockAdultSites && !local && isAdultDomain(h)) {
@@ -3244,6 +3601,85 @@ ipcMain.handle('http-proceed', (_e, url) => {
     if (h) httpBypassHosts.add(h);
     return { ok: true };
   } catch (e) { return { ok: false, error: String(e.message || e) }; }
+});
+
+// Marks a webview's webContents as mobile emulated. Applies the device
+// identity immediately (both the plain webContents level UA and the CDP
+// Client Hints override, which otherwise only gets sent once, on that
+// guest's very first dom-ready, long before the renderer ever knows to
+// ask for mobile).
+ipcMain.on('mark-mobile-webview', (_e, id, device) => {
+  if (typeof id !== 'number') return;
+  _mobileEmulatedDevices.set(id, MOBILE_DEVICE_PROFILES[device] ? device : 'samsung');
+  const wc = webContents.fromId(id);
+  if (!wc || wc.isDestroyed()) return;
+  const profile = mobileProfileFor(id);
+  try { wc.setUserAgent(profile.ua); } catch { /* ignore */ }
+  try {
+    if (!wc.debugger.isAttached()) wc.debugger.attach('1.3');
+    wc.debugger.sendCommand('Network.setUserAgentOverride', {
+      userAgent: profile.ua,
+      acceptLanguage: preferredLanguageList().join(','),
+      userAgentMetadata: profile.metadata || UA_METADATA,
+    }).catch(() => {});
+  } catch { /* debugger already attached elsewhere, or contents gone */ }
+});
+
+let _lastRecentFiles = [];
+ipcMain.handle('recent-files-list', () => {
+  const all = downloadStore.load();
+  const seen = new Set();
+  const out = [];
+  for (const d of all) {
+    if (d.state !== 'completed' || !d.savePath || seen.has(d.savePath)) continue;
+    seen.add(d.savePath);
+    let stat;
+    try { stat = fs.statSync(d.savePath); } catch { continue; }
+    out.push({ name: d.filename || path.basename(d.savePath), path: d.savePath, size: stat.size, mtimeMs: stat.mtimeMs });
+    if (out.length >= 8) break;
+  }
+  _lastRecentFiles = out;
+  return out;
+});
+ipcMain.handle('recent-file-read', async (_e, filePath) => {
+  const entry = _lastRecentFiles.find((f) => f.path === filePath);
+  if (!entry) return { ok: false, error: 'Not in recent files list' };
+  try {
+    const data = await fs.promises.readFile(filePath);
+    return { ok: true, base64: data.toString('base64'), name: entry.name, mime: mimeFromExt(filePath) };
+  } catch (e) { return { ok: false, error: String(e.message || e) }; }
+});
+function mimeFromExt(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  const table = {
+    '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif',
+    '.webp': 'image/webp', '.svg': 'image/svg+xml', '.pdf': 'application/pdf',
+    '.txt': 'text/plain', '.csv': 'text/csv', '.json': 'application/json',
+    '.doc': 'application/msword', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    '.xls': 'application/vnd.ms-excel', '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    '.zip': 'application/zip', '.mp3': 'audio/mpeg', '.mp4': 'video/mp4',
+  };
+  return table[ext] || 'application/octet-stream';
+}
+
+// Clear Data on Exit — only on a genuine app quit (tray Quit, Alt+F4 with
+// minimizeToTray off, etc), never on a close-to-tray, which just hides the
+// window rather than firing before-quit at all.
+let _exitDataCleared = false;
+app.on('before-quit', async (event) => {
+  if (_exitDataCleared) return;
+  const s = settingsStore.load();
+  if (!s.clearDataOnExit) return;
+  event.preventDefault();
+  _exitDataCleared = true;
+  try {
+    historyStore.clearAll();
+    downloadStore.clearAll();
+    await clearSessionData({ cache: true, cookies: true, siteData: true });
+  } catch (e) {
+    console.warn('Privoo: clear data on exit failed:', e.message);
+  }
+  app.quit();
 });
 
 app.on('will-quit', () => { shutdownDiscordRpc(); stopTor(); });
@@ -3352,6 +3788,7 @@ ipcMain.handle('get-cursor-pos', (e) => {
 ipcMain.handle('open-mobile-window', (_e, url) => {
   try {
     const iconPath = resolveIcon();
+    const device = settingsStore.load().mobileEmulationDevice === 'iphone' ? 'iphone' : 'samsung';
     const win = new BrowserWindow({
       width: 560,
       height: 920,
@@ -3368,14 +3805,22 @@ ipcMain.handle('open-mobile-window', (_e, url) => {
         nodeIntegration: false,
         sandbox: false,
         webviewTag: true,
-        // No preload — mobile-frame.html is a self-contained page that
-        // doesn't need any Privoo IPC APIs. A preload here was preventing
-        // the inner webview from loading external URLs.
+        // Minimal preload, only exposes the mobile UA marker + settings
+        // get/set. The full webview-preload.js broke the inner webview's
+        // ability to load external URLs when tried here before.
+        preload: path.join(__dirname, 'mobile-frame-preload.js'),
       },
     });
 
+    // A webview paints white until the guest page's own stylesheet loads —
+    // set its background before first paint so that flash reads as the
+    // phone shell's black instead of a stray white panel.
+    win.webContents.on('will-attach-webview', (_e2, webPreferences) => {
+      webPreferences.backgroundColor = '#000000';
+    });
+
     const framePath = path.join(RENDERER_DIR, 'internal', 'mobile-frame.html');
-    win.loadFile(framePath, { query: { url: url || '' } });
+    win.loadFile(framePath, { query: { url: url || '', device } });
 
     return { ok: true };
   } catch (e) {
@@ -4780,6 +5225,23 @@ ipcMain.handle('ai-chat-stream', async (event, payload) => {
   });
 });
 ipcMain.handle('ai-detect-ollama', () => aiBrowser.detectOllama());
+
+// ---------------------------------------------------------------------------
+// Identities — multi-identity form autofill (name/address/phone/etc, separate
+// from the encrypted password vault above). Ollama assists field-matching
+// for labels the regex heuristics in the renderer can't classify.
+// ---------------------------------------------------------------------------
+ipcMain.handle('identities-list',       () => identitiesStore.list());
+ipcMain.handle('identities-get-default',() => identitiesStore.getDefault());
+ipcMain.handle('identities-save',       (_e, entry) => identitiesStore.upsert(entry || {}));
+ipcMain.handle('identities-remove',     (_e, id) => identitiesStore.remove(id));
+ipcMain.handle('identities-set-default',(_e, id) => identitiesStore.setDefault(id));
+ipcMain.handle('ollama-status',         () => aiBrowser.detectOllama());
+ipcMain.handle('ollama-resolve-fields', (_e, fields, keys) => {
+  const s = settingsStore.load();
+  if (s.identityAutofillEnabled === false) return {};
+  return aiBrowser.resolveIdentityFields(fields, keys, s.ollamaModel);
+});
 
 // One-time new-tab popups (Britain, Men's Mental Health, …) are paced by
 // browsing activity: the next one is only released once the user has visited

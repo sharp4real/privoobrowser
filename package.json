@@ -1,6 +1,6 @@
 {
   "name": "privoo-browser",
-  "version": "5.0.3",
+  "version": "5.0.4",
   "description": "Privacy focused browser built on Chromium.",
   "main": "main.js",
   "scripts": {
@@ -136,9 +136,13 @@
       "google-auth.js",
       "password-store.js",
       "password-autofill.js",
+      "identity-autofill.js",
+      "identities-store.js",
+      "file-picker-recent.js",
       "preload.js",
       "webview-preload.js",
       "oauth-preload.js",
+      "mobile-frame-preload.js",
       "profile-store.js",
       "profile-picker-preload.js",
       "discord-rpc.js",
