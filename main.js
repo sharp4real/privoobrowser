@@ -50,6 +50,7 @@ const { startGoogleSignIn, buildPostSignInUrl, isGoogleSignInUrl } = require('./
 const { buildGooglePasswordPreferScript } = require('./password-autofill');
 const passwordStore = require('./password-store');
 const identitiesStore = require('./identities-store');
+const mariana = require('./mariana');
 const aiBrowser = require('./ai');
 
 // ---------------------------------------------------------------------------
@@ -511,6 +512,7 @@ const INTERNAL_PAGES = {
   ai:         'ai.html',
   news:       'news.html',
   identities: 'identities.html',
+  mariana:    'mariana.html',
 };
 
 // Pin Chrome identity centrally. It must match Electron's bundled Chromium
@@ -722,6 +724,19 @@ protocol.registerSchemesAsPrivileged([
       stream: true,
     },
   },
+  {
+    // Anonymous .mariana sites (Tor hidden service + optional post-quantum
+    // layer). Treated as a real, secure, standard-origin scheme so hosted
+    // pages get a normal origin, fetch(), and relative URLs that work.
+    scheme: 'mariana',
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      corsEnabled: true,
+      stream: true,
+    },
+  },
 ]);
 
 // Builds the privoo:// request handler. The same handler works for any
@@ -831,6 +846,149 @@ function registerPrivooProtocolForSession(sess) {
     // Already registered for this session — fine, ignore.
     if (!/already.*registered|second handler/i.test(String(e && e.message))) {
       console.warn('Privoo: privoo:// protocol register (incognito) failed:', e.message);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// mariana:// — client side. Fetches a .mariana site's files over Tor and, if
+// the host offers it, runs a post-quantum (ML-KEM-768) handshake so the page
+// is encrypted end-to-end a second time on top of Tor's own circuit crypto.
+// ---------------------------------------------------------------------------
+let _marianaTorSession = null;
+// Returns the dedicated Tor-proxied session, guaranteeing the SOCKS proxy is
+// actually applied before we hand it back — otherwise the first request could
+// race ahead of setProxy() and leak out directly instead of over Tor.
+async function marianaTorSession() {
+  if (!_marianaTorSession) _marianaTorSession = session.fromPartition('mariana-tor');
+  await _marianaTorSession.setProxy({
+    proxyRules: `socks5://127.0.0.1:${torPortOf(settingsStore.load())}`,
+  }).catch(() => {});
+  return _marianaTorSession;
+}
+
+// One HTTP GET to an .onion over Tor, returning status + headers + raw body.
+async function torGet(onion, urlPath, extraHeaders) {
+  const torSess = await marianaTorSession();
+  return new Promise((resolve, reject) => {
+    const req = net.request({
+      method: 'GET',
+      url: `http://${onion}${urlPath}`,
+      session: torSess,
+      useSessionCookies: false,
+    });
+    for (const [k, v] of Object.entries(extraHeaders || {})) req.setHeader(k, v);
+    const chunks = [];
+    req.on('response', (res) => {
+      res.on('data', (d) => chunks.push(d));
+      res.on('end', () => resolve({
+        status: res.statusCode,
+        headers: res.headers,
+        body: Buffer.concat(chunks),
+      }));
+      res.on('error', reject);
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+function marianaErrorPage(title, detail) {
+  const html = `<!doctype html><meta charset="utf-8"><title>${title}</title>` +
+    `<style>body{font-family:system-ui,Segoe UI,sans-serif;background:#1c1b26;color:#eceaf6;` +
+    `display:flex;min-height:100vh;margin:0;align-items:center;justify-content:center;text-align:center}` +
+    `.b{max-width:440px;padding:32px}h1{font-size:20px;margin:0 0 10px}p{color:#a5a2bd;line-height:1.6;font-size:14px}` +
+    `code{background:rgba(255,255,255,.08);padding:2px 6px;border-radius:6px}</style>` +
+    `<div class="b"><h1>${title}</h1><p>${detail}</p></div>`;
+  return new Response(html, { status: 200, headers: { 'content-type': 'text/html; charset=utf-8' } });
+}
+
+function buildMarianaProtocolHandler() {
+  return async (request) => {
+    const { name, onion, path: reqPath } = mariana.parseAddress(request.url);
+    if (!onion) {
+      return marianaErrorPage('Unknown .mariana address',
+        `Privoo doesn't know which Tor service <code>${name}.mariana</code> points to yet. ` +
+        `Open the full share link the site owner gave you (it ends in a long address), then this short name will work.`);
+    }
+    if (!ensureTorForOnion()) {
+      return marianaErrorPage('Tor unavailable',
+        'This site is reached over Tor, but Privoo could not start Tor. Check that Tor is installed/bundled, then try again.');
+    }
+    // Cache the friendly name so the short form resolves next time.
+    mariana.rememberVisited(name, onion);
+
+    try {
+      // 1) Ask the host for its post-quantum public key. The onion address is
+      //    self-authenticating, so fetching it over Tor is safe from MITM.
+      let pqKey = null;
+      try {
+        const pub = await torGet(onion, '/__mariana/pubkey');
+        if (pub.status === 200 && pub.body && pub.body.length > 1000) pqKey = new Uint8Array(pub.body);
+      } catch { /* no PQ — fall back to plain Tor */ }
+
+      // 2) If PQ is offered, encapsulate a fresh shared secret for this load.
+      let kemHeader = null, aesKey = null;
+      if (pqKey) {
+        try {
+          const { ct, secret } = await mariana.encapsulate(pqKey);
+          kemHeader = mariana.b64(ct);
+          aesKey = mariana.deriveKey(secret);
+        } catch { kemHeader = null; aesKey = null; }
+      }
+
+      // 3) Fetch the actual resource, handing over the KEM ciphertext.
+      const resp = await torGet(onion, reqPath, kemHeader ? { 'x-mariana-kem': kemHeader } : {});
+      if (resp.status >= 400) {
+        return marianaErrorPage('Not found', `The host returned ${resp.status} for <code>${reqPath}</code>.`);
+      }
+
+      const ctype = resp.headers['content-type']
+        ? (Array.isArray(resp.headers['content-type']) ? resp.headers['content-type'][0] : resp.headers['content-type'])
+        : 'application/octet-stream';
+
+      // 4) Decrypt if the host actually used the PQ layer.
+      const pqFlag = resp.headers['x-mariana-pq'];
+      let bodyBuf = resp.body;
+      if (aesKey && pqFlag && (Array.isArray(pqFlag) ? pqFlag[0] : pqFlag) === '1') {
+        const nonceH = resp.headers['x-mariana-nonce'];
+        const tagH = resp.headers['x-mariana-tag'];
+        const nonce = Buffer.from(mariana.unb64(Array.isArray(nonceH) ? nonceH[0] : nonceH));
+        const tag = Buffer.from(mariana.unb64(Array.isArray(tagH) ? tagH[0] : tagH));
+        try {
+          bodyBuf = mariana.decryptBody(aesKey, nonce, tag, resp.body);
+        } catch {
+          return marianaErrorPage('Decryption failed',
+            'The post-quantum layer could not verify this page. It may have been tampered with in transit — Privoo refused to show it.');
+        }
+      }
+
+      return new Response(bodyBuf, {
+        status: 200,
+        headers: {
+          'content-type': ctype,
+          // Flag the load so the UI can show a "post-quantum" indicator.
+          'x-privoo-mariana-pq': aesKey && pqFlag ? '1' : '0',
+        },
+      });
+    } catch (e) {
+      return marianaErrorPage('Could not reach site',
+        `Privoo couldn't connect to this .mariana site over Tor. The host may be offline. ` +
+        `<br><br><code>${String(e && e.message || e).slice(0, 120)}</code>`);
+    }
+  };
+}
+
+function registerMarianaProtocol() {
+  try { protocol.handle('mariana', buildMarianaProtocolHandler()); }
+  catch (e) { console.warn('Privoo: mariana:// register failed:', e.message); }
+}
+function registerMarianaProtocolForSession(sess) {
+  if (!sess || !sess.protocol) return;
+  try { sess.protocol.handle('mariana', buildMarianaProtocolHandler()); }
+  catch (e) {
+    if (!/already.*registered|second handler/i.test(String(e && e.message))) {
+      console.warn('Privoo: mariana:// register (session) failed:', e.message);
     }
   }
 }
@@ -2116,6 +2274,13 @@ function torPortOf(settings) {
   return (p >= 1 && p <= 65535) ? p : 9100;
 }
 
+// Control port sits one above the SOCKS port. mariana hosting needs it to
+// create hidden services; ordinary .onion browsing doesn't touch it.
+function torControlPortOf(settings) { return torPortOf(settings) + 1; }
+function torControlCookiePath() {
+  return path.join(app.getPath('userData'), 'tor-data', 'control_auth_cookie');
+}
+
 function proxyRulesFor(settings) {
   if (settings.proxyMode === 'tor') return `socks5://127.0.0.1:${torPortOf(settings)}`;
   if (settings.proxyMode === 'manual') {
@@ -2195,7 +2360,15 @@ function launchTor() {
   const dataDir = path.join(app.getPath('userData'), 'tor-data');
   try { fs.mkdirSync(dataDir, { recursive: true }); } catch { /* ignore */ }
   try {
-    _torProc = spawn(bin, ['--SocksPort', `127.0.0.1:${port}`, '--DataDirectory', dataDir], {
+    // ControlPort + cookie auth let mariana create/destroy hidden services.
+    // CookieAuthFileGroupReadable stays off (default) so only our user reads it.
+    const ctrlPort = torControlPortOf(settingsStore.load());
+    _torProc = spawn(bin, [
+      '--SocksPort', `127.0.0.1:${port}`,
+      '--ControlPort', `127.0.0.1:${ctrlPort}`,
+      '--CookieAuthentication', '1',
+      '--DataDirectory', dataDir,
+    ], {
       stdio: 'ignore', windowsHide: true,
     });
     _torProc.on('error', () => {
@@ -2215,7 +2388,10 @@ function stopTor() {
 }
 
 function applyProxyAll(settings) {
-  if (settings.proxyMode === 'tor') launchTor(); else stopTor();
+  // Keep Tor alive if the browsing proxy wants it OR a .mariana site is
+  // being hosted (hosting is independent of the browsing proxy setting).
+  if (settings.proxyMode === 'tor') launchTor();
+  else if (mariana.runningCount() === 0) stopTor();
   for (const sess of _proxiedSessions) applyProxyToSession(sess, settings);
 }
 
@@ -2573,6 +2749,7 @@ function buildTrayMenu() {
     { label: 'Downloads', click: () => openUrlInPrivoo('privoo://downloads/') },
     { label: 'History', click: () => openUrlInPrivoo('privoo://history/') },
     { label: 'Bookmarks', click: () => openUrlInPrivoo('privoo://bookmarks/') },
+    { label: 'Anonymous hosting (.mariana)', click: () => openUrlInPrivoo('privoo://mariana/') },
     { type: 'separator' },
     { label: 'Settings', click: () => openUrlInPrivoo('privoo://settings/') },
     {
@@ -2926,9 +3103,21 @@ async function startBrowser(opts = {}) {
   }
 
   registerPrivooProtocol();
+  registerMarianaProtocol();
   await hardenSession(session.defaultSession);
   // Launch Tor on boot if the saved proxy mode needs it.
   applyProxyAll(settingsStore.load());
+
+  // Wire the .mariana hosting engine to our Tor process, then bring any
+  // sites the user left running back online. Tor needs a few seconds to
+  // bootstrap before ADD_ONION works, so give it a head start.
+  mariana.init(app, {
+    getTorPort: () => torPortOf(settingsStore.load()),
+    getControlPort: () => torControlPortOf(settingsStore.load()),
+    ensureTor: () => ensureTorForOnion(),
+    controlCookiePath: () => torControlCookiePath(),
+  });
+  setTimeout(() => { mariana.startAll().catch(() => {}); }, 8000);
 
   // Resolve any legacy __MSG_*__ placeholders saved into settings before
   // the i18n fix landed (uBlock and friends shipped names/descriptions as
@@ -3497,8 +3686,9 @@ app.on('web-contents-created', (_event, contents) => {
   contents.on('will-navigate', (event, url, isSameDocument, isMainFrame) => {
     if (!isMainFrame) return;
     if (isSameDocument) return;
-    // Don't intercept internal pages
-    if (url.startsWith('privoo://')) return;
+    // Don't intercept internal pages or our own .mariana scheme (handled by
+    // the mariana:// protocol handler, which already routes it over Tor).
+    if (url.startsWith('privoo://') || url.startsWith('mariana://')) return;
 
     // ── Custom (non-web) schemes ───────────────────────────────────────────
     // A page driving the top frame to snssdk://, bytedance://, zoommtg://, etc.
@@ -3682,7 +3872,13 @@ app.on('before-quit', async (event) => {
   app.quit();
 });
 
-app.on('will-quit', () => { shutdownDiscordRpc(); stopTor(); });
+app.on('will-quit', () => {
+  shutdownDiscordRpc();
+  // Tear down hosted .mariana services (DEL_ONION) before Tor dies, so we
+  // don't leave orphaned hidden-service descriptors on the network.
+  try { mariana.stopAllForQuit(); } catch { /* ignore */ }
+  stopTor();
+});
 
 app.on('window-all-closed', () => {
   // With minimize-to-tray on, our `close` handler hides instead of destroys
@@ -4214,6 +4410,42 @@ ipcMain.handle('choose-folder', async (e) => {
     return result.filePaths[0];
   }
   return null;
+});
+
+// ── .mariana hosting IPC ────────────────────────────────────────────────────
+ipcMain.handle('mariana-list', () => {
+  try { return { ok: true, sites: mariana.listSites() }; }
+  catch (e) { return { ok: false, error: String(e && e.message || e) }; }
+});
+
+ipcMain.handle('mariana-choose-folder', async (e) => {
+  const win = winOf(e);
+  const result = await dialog.showOpenDialog(win, {
+    properties: ['openDirectory'],
+    title: 'Choose a folder to host as a .mariana site',
+  });
+  if (!result.canceled && result.filePaths[0]) return result.filePaths[0];
+  return null;
+});
+
+ipcMain.handle('mariana-host', async (_e, opts) => {
+  try {
+    const site = await mariana.hostFolder({ name: opts?.name, folder: opts?.folder });
+    return { ok: true, site };
+  } catch (e) { return { ok: false, error: String(e && e.message || e) }; }
+});
+
+ipcMain.handle('mariana-stop',   async (_e, id) => {
+  try { await mariana.stopSite(id); return { ok: true, sites: mariana.listSites() }; }
+  catch (e) { return { ok: false, error: String(e && e.message || e) }; }
+});
+ipcMain.handle('mariana-resume', async (_e, id) => {
+  try { const site = await mariana.resumeSite(id); return { ok: true, site, sites: mariana.listSites() }; }
+  catch (e) { return { ok: false, error: String(e && e.message || e) }; }
+});
+ipcMain.handle('mariana-remove', async (_e, id) => {
+  try { await mariana.removeSite(id); return { ok: true, sites: mariana.listSites() }; }
+  catch (e) { return { ok: false, error: String(e && e.message || e) }; }
 });
 
 ipcMain.handle('open-directory', async (_e, dirPath) => {
@@ -5013,6 +5245,7 @@ async function openIncognitoWindow() {
   // privoo:// must be registered on this session BEFORE the window loads,
   // otherwise privoo://newtab etc. fail with "no app to open this link".
   registerPrivooProtocolForSession(incognitoSession);
+  registerMarianaProtocolForSession(incognitoSession);
   // Apply the same privacy hardening the default session gets so the
   // private window doesn't behave worse than a regular one.
   try { await hardenSession(incognitoSession); } catch (e) {

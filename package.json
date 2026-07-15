@@ -1,6 +1,6 @@
 {
   "name": "privoo-browser",
-  "version": "5.0.4",
+  "version": "5.0.5",
   "description": "Privacy focused browser built on Chromium.",
   "main": "main.js",
   "scripts": {
@@ -18,7 +18,8 @@
   },
   "dependencies": {
     "@ghostery/adblocker-electron": "^2.5.2",
-    "electron-updater": "^6.3.9"
+    "electron-updater": "^6.3.9",
+    "mlkem": "^2.7.0"
   },
   "build": {
     "appId": "com.privoo.browser",
@@ -139,6 +140,7 @@
       "identity-autofill.js",
       "identities-store.js",
       "file-picker-recent.js",
+      "mariana.js",
       "preload.js",
       "webview-preload.js",
       "oauth-preload.js",

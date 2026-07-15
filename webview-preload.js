@@ -43,6 +43,14 @@ if (location.protocol === 'privoo:') {
     identitiesSetDefault: (id) => ipcRenderer.invoke('identities-set-default', id),
     ollamaStatus:         () => ipcRenderer.invoke('ollama-status'),
 
+    // .mariana anonymous hosting (privoo://mariana)
+    marianaList:         () => ipcRenderer.invoke('mariana-list'),
+    marianaChooseFolder: () => ipcRenderer.invoke('mariana-choose-folder'),
+    marianaHost:         (opts) => ipcRenderer.invoke('mariana-host', opts),
+    marianaStop:         (id) => ipcRenderer.invoke('mariana-stop', id),
+    marianaResume:       (id) => ipcRenderer.invoke('mariana-resume', id),
+    marianaRemove:       (id) => ipcRenderer.invoke('mariana-remove', id),
+
     getDownloads:    ()      => ipcRenderer.invoke('get-downloads'),
     clearDownloads:  ()      => ipcRenderer.invoke('clear-downloads'),
     removeDownload:  (id)    => ipcRenderer.invoke('remove-download', id),

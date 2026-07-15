@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>.mariana - Privoo</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%238b7cf7' d='M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z'/%3E%3Cpath fill='%23fff' d='M10.6 15.4 7.4 12.2l1.3-1.3 1.9 1.9 4-4 1.3 1.3z'/%3E%3C/svg%3E"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Inter","Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+html{height:100%;background:transparent}
+body{height:100%;background:#f2f1f9;color:#26243a;user-select:none;display:flex;flex-direction:column}
+body.dark{background:#1c1b26;color:#eceaf6;color-scheme:dark}
+button,input{font:inherit}
+button{cursor:default;border:none;background:transparent;color:inherit}
+a{color:var(--accent,#8b7cf7);text-decoration:none}
+
+/* Scrollbar to match the rest of the app */
+html::-webkit-scrollbar{width:12px;height:12px}
+html::-webkit-scrollbar-thumb{background:#dadce0;border-radius:12px;border:3px solid transparent;background-clip:padding-box}
+body.dark html::-webkit-scrollbar-thumb{background:#5f6368;background-clip:padding-box;border:3px solid transparent}
+
+header{
+  background:#fff;border-bottom:1px solid #e3e1ef;
+  padding:16px 28px;display:flex;align-items:center;gap:12px;
+  position:sticky;top:0;z-index:10;flex-shrink:0;flex-wrap:wrap
+}
+body.dark header{background:#1c1b26;border-bottom-color:#3a3850}
+h1{font-size:20px;font-weight:500;margin-right:auto;display:flex;align-items:center;gap:9px}
+h1 svg{width:22px;height:22px;fill:var(--accent,#8b7cf7)}
+.tor-badge{
+  display:flex;align-items:center;gap:6px;font-size:12px;color:#6d6a85;
+  padding:5px 10px;border-radius:999px;background:#ece9f7;white-space:nowrap;flex-shrink:0
+}
+body.dark .tor-badge{background:#2a2938;color:#a5a2bd}
+.tor-dot{width:7px;height:7px;border-radius:50%;background:#9aa0a6;flex-shrink:0}
+.tor-badge.on .tor-dot{background:#34a853}
+
+main{flex:1;min-height:0;max-width:800px;margin:0 auto;width:100%;padding:24px 20px 48px;overflow-y:auto}
+
+/* Explainer */
+.explain{
+  background:#fff;border:1px solid #e3e1ef;border-radius:20px;
+  padding:22px 24px;margin-bottom:24px;
+}
+body.dark .explain{background:#232231;border-color:#3a3850}
+.explain h2{font-size:15px;font-weight:650;margin-bottom:8px}
+.explain p{font-size:13.5px;line-height:1.65;color:#57546e;margin-bottom:10px}
+body.dark .explain p{color:#b4b1c8}
+.explain p:last-child{margin-bottom:0}
+.explain b{color:#26243a;font-weight:600}
+body.dark .explain b{color:#eceaf6}
+.pill-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.pq-pill{
+  display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:600;
+  color:var(--accent,#8b7cf7);background:var(--accent-soft,rgba(139,124,247,.16));
+  padding:6px 12px;border-radius:999px
+}
+.pq-pill svg{width:13px;height:13px;fill:currentColor}
+
+/* Host box */
+.host-box{
+  border:2px dashed #d3d0e6;border-radius:20px;
+  padding:28px 24px;text-align:center;margin-bottom:28px;
+  transition:border-color .15s,background .15s;background:#faf9fe
+}
+body.dark .host-box{border-color:#3a3850;background:#232231}
+.host-box.drag{border-color:var(--accent,#8b7cf7);background:var(--accent-soft,rgba(139,124,247,.12))}
+.host-box h3{font-size:15px;font-weight:600;margin-bottom:6px}
+.host-box p{font-size:12.5px;color:#6d6a85;margin-bottom:16px}
+body.dark .host-box p{color:#a5a2bd}
+.host-controls{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}
+.host-controls input{
+  border:1px solid #e3e1ef;border-radius:10px;padding:9px 13px;font-size:13px;
+  outline:none;background:#fff;width:200px
+}
+body.dark .host-controls input{background:#1c1b26;border-color:#3a3850;color:#eceaf6}
+.host-controls input:focus{border-color:var(--accent,#8b7cf7)}
+.btn{
+  height:38px;padding:0 18px;border-radius:999px;font-size:13px;font-weight:500;
+  color:#fff;background:var(--accent,#8b7cf7);box-shadow:0 2px 8px rgba(139,124,247,.32)
+}
+.btn:hover{filter:brightness(1.06)}
+.btn.ghost{color:#6d6a85;background:#ece9f7;box-shadow:none}
+body.dark .btn.ghost{background:#2a2938;color:#a5a2bd}
+.btn[disabled]{opacity:.5}
+
+.section-label{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8f8ca6;margin:0 0 12px 2px}
+body.dark .section-label{color:#6d6a85}
+
+#list{display:flex;flex-direction:column;gap:12px}
+.site{
+  border:1px solid #e3e1ef;border-radius:16px;background:#fff;padding:16px 18px
+}
+body.dark .site{background:#2a2938;border-color:#3a3850}
+.site-top{display:flex;align-items:center;gap:11px}
+.site-dot{
+  width:38px;height:38px;border-radius:12px;flex-shrink:0;
+  background:var(--accent-soft,rgba(139,124,247,.18));color:var(--accent,#8b7cf7);
+  display:flex;align-items:center;justify-content:center
+}
+.site-dot svg{width:19px;height:19px;fill:currentColor}
+.site-info{flex:1;min-width:0}
+.site-name{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.state-pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px}
+.state-pill.on{color:#1a7f37;background:rgba(52,168,83,.14)}
+.state-pill.off{color:#b0432b;background:rgba(217,80,45,.14)}
+body.dark .state-pill.on{color:#4ade80;background:rgba(52,168,83,.16)}
+body.dark .state-pill.off{color:#f0916f;background:rgba(217,80,45,.16)}
+.site-folder{font-size:11.5px;color:#8f8ca6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
+.site-actions{display:flex;gap:4px;flex-shrink:0}
+.icon-btn{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#6d6a85}
+.icon-btn:hover{background:rgba(0,0,0,.06)}
+body.dark .icon-btn{color:#a5a2bd}
+body.dark .icon-btn:hover{background:rgba(255,255,255,.08)}
+.icon-btn.danger:hover{color:#d9502d;background:rgba(217,80,45,.12)}
+.icon-btn svg{width:16px;height:16px;fill:currentColor}
+
+.share{
+  margin-top:13px;display:flex;align-items:center;gap:8px;
+  background:#f6f5fb;border:1px solid #eae8f4;border-radius:11px;padding:8px 8px 8px 13px
+}
+body.dark .share{background:#1c1b26;border-color:#3a3850}
+.share code{
+  flex:1;min-width:0;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;
+  color:#57546e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;user-select:text
+}
+body.dark .share code{color:#b4b1c8}
+.copy-btn{height:30px;padding:0 13px;border-radius:8px;font-size:12px;font-weight:600;color:#fff;background:var(--accent,#8b7cf7)}
+.copy-btn.done{background:#34a853}
+
+#empty{text-align:center;padding:40px 20px;color:#6d6a85;font-size:13px}
+body.dark #empty{color:#a5a2bd}
+
+/* Visit hint */
+.visit{
+  margin-top:26px;font-size:12.5px;color:#6d6a85;line-height:1.6;
+  background:#faf9fe;border:1px solid #eae8f4;border-radius:14px;padding:14px 16px
+}
+body.dark .visit{background:#232231;border-color:#3a3850;color:#a5a2bd}
+.visit b{color:#26243a}
+body.dark .visit b{color:#eceaf6}
+code.inline{background:rgba(139,124,247,.14);color:var(--accent,#8b7cf7);padding:1px 6px;border-radius:6px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px}
+
+#toast{
+  position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(10px);
+  background:#26243a;color:#fff;padding:10px 18px;border-radius:12px;font-size:13px;
+  opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:200
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+body.dark #toast{background:#eceaf6;color:#26243a}
+</style>
+</head>
+<body>
+<header>
+  <h1>
+    <svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3zm-1 14-4-4 1.4-1.4L11 13.2l5.6-5.6L18 9l-7 7z"/></svg>
+    Anonymous hosting
+  </h1>
+  <div class="tor-badge" id="tor-badge"><span class="tor-dot"></span><span id="tor-text">Tor status</span></div>
+</header>
+
+<main>
+  <div class="explain">
+    <h2>What is a .mariana site?</h2>
+    <p>A <b>.mariana</b> site is a website Privoo hosts <b>straight from a folder on your PC</b>, made reachable through the Tor network. There's no server to rent, no domain to buy, and no ports to open. Your computer is the host; Tor keeps both you and your visitors anonymous. It stays online only while Privoo is running.</p>
+    <p>On top of Tor's own encryption, Privoo adds a <b>post-quantum layer (ML-KEM-768)</b> whenever the visitor is also using Privoo: the two browsers run a post-quantum key exchange and encrypt the page a second time, end to end. This guards against an attacker recording traffic today to decrypt with a future quantum computer. It's a genuine extra layer, not a magic bullet, and anyone on a normal Tor browser can still open your site over plain Tor.</p>
+    <div class="pill-row">
+      <span class="pq-pill"><svg viewBox="0 0 24 24"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5z"/></svg>Routed over Tor</span>
+      <span class="pq-pill"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6A5 5 0 0 0 7 6v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2zm-6 9a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm3-9H9V6a3 3 0 0 1 6 0z"/></svg>Post-quantum E2EE (Privoo &harr; Privoo)</span>
+      <span class="pq-pill"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5 1.4-1.4L9 14.2 18.6 4.6z"/></svg>Zero config</span>
+    </div>
+  </div>
+
+  <div class="host-box" id="host-box">
+    <h3>Host a folder</h3>
+    <p>Pick or drag in a folder containing your site (it should have an <code>index.html</code>).</p>
+    <div class="host-controls">
+      <input id="site-name" placeholder="Site name (e.g. myblog)" maxlength="32" autocomplete="off" spellcheck="false"/>
+      <button class="btn ghost" id="btn-choose">Choose folder…</button>
+      <button class="btn" id="btn-host" disabled>Publish</button>
+    </div>
+    <p id="chosen" style="margin-top:12px;display:none"></p>
+  </div>
+
+  <div class="section-label">Your sites</div>
+  <div id="list"></div>
+  <div id="empty" hidden>You're not hosting anything yet. Pick a folder above to publish your first .mariana site.</div>
+
+  <div class="visit">
+    <b>Visiting a .mariana site?</b> Paste a share link like <code class="inline">mariana://name.&lt;address&gt;/</code> into the address bar. The first time you open a link, Privoo remembers the short name, so afterwards <code class="inline">name.mariana</code> works on its own.
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+  const api = window.privooInternal;
+  let pendingFolder = null;
+
+  function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function applyAccent(hex){
+    const r=document.documentElement;
+    if(!hex){ r.style.removeProperty('--accent'); r.style.removeProperty('--accent-soft'); return; }
+    r.style.setProperty('--accent',hex);
+    const m=hex.replace('#','').match(/.{2}/g);
+    if(m){ const[rv,g,b]=m.map(x=>parseInt(x,16)); r.style.setProperty('--accent-soft',`rgba(${rv},${g},${b},.16)`); }
+  }
+  let toastTimer=null;
+  function toast(msg){
+    const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+    clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),1900);
+  }
+
+  async function initTheme(){
+    const r = await api.getSettings();
+    const s = r?.settings || r;
+    document.body.classList.toggle('dark', !!s?.darkMode);
+    applyAccent(s?.accentColor);
+    api.onSettingsChanged?.((n)=>{
+      const ns=n?.settings||n;
+      document.body.classList.toggle('dark', !!ns?.darkMode);
+      applyAccent(ns?.accentColor);
+    });
+  }
+
+  function siteRow(site){
+    const el=document.createElement('div');
+    el.className='site';
+    const stateCls = site.online ? 'on' : 'off';
+    const stateTxt = site.online ? 'Online' : 'Offline';
+    const toggleTitle = site.online ? 'Take offline' : 'Bring online';
+    const toggleIcon = site.online
+      ? '<path d="M6 6h12v12H6z"/>'
+      : '<path d="M8 5v14l11-7z"/>';
+    el.innerHTML = `
+      <div class="site-top">
+        <div class="site-dot"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm6.9 6h-2.5a15.7 15.7 0 0 0-1.3-3.4A8 8 0 0 1 18.9 8zM12 4c.8 1.2 1.5 2.5 1.9 4h-3.8c.4-1.5 1.1-2.8 1.9-4zM4.3 14a7.8 7.8 0 0 1 0-4h2.9a16.6 16.6 0 0 0 0 4zm.8 2h2.5c.3 1.2.8 2.4 1.3 3.4A8 8 0 0 1 5.1 16zm2.5-8H5.1a8 8 0 0 1 3.8-3.4C8.4 5.6 7.9 6.8 7.6 8zM12 20c-.8-1.2-1.5-2.5-1.9-4h3.8c-.4 1.5-1.1 2.8-1.9 4zm2.3-6H9.7a14.7 14.7 0 0 1 0-4h4.6a14.7 14.7 0 0 1 0 4zm.6 5.4c.5-1 1-2.2 1.3-3.4h2.5a8 8 0 0 1-3.8 3.4zM16.8 14a16.6 16.6 0 0 0 0-4h2.9a7.8 7.8 0 0 1 0 4z"/></svg></div>
+        <div class="site-info">
+          <div class="site-name">${esc(site.name)}.mariana <span class="state-pill ${stateCls}">${stateTxt}</span></div>
+          <div class="site-folder" title="${esc(site.folder)}">${esc(site.folder)}</div>
+        </div>
+        <div class="site-actions">
+          <button class="icon-btn" data-act="open" title="Open in a new tab"><svg viewBox="0 0 24 24"><path d="M14 3v2h3.6l-9.8 9.8 1.4 1.4L19 6.4V10h2V3zM5 5h5V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5h-2v5H5z"/></svg></button>
+          <button class="icon-btn" data-act="toggle" title="${toggleTitle}"><svg viewBox="0 0 24 24">${toggleIcon}</svg></button>
+          <button class="icon-btn danger" data-act="remove" title="Delete site"><svg viewBox="0 0 24 24"><path d="M6 7h12l-1 14H7L6 7zm9-3 1 1h4v2H4V5h4l1-1z"/></svg></button>
+        </div>
+      </div>
+      <div class="share">
+        <code title="${esc(site.link)}">${esc(site.link)}</code>
+        <button class="copy-btn" data-act="copy">Copy link</button>
+      </div>`;
+
+    el.querySelector('[data-act="copy"]').addEventListener('click', (e)=>{
+      navigator.clipboard.writeText(site.link).then(()=>{
+        const b=e.currentTarget; b.textContent='Copied'; b.classList.add('done');
+        setTimeout(()=>{ b.textContent='Copy link'; b.classList.remove('done'); },1400);
+      });
+    });
+    el.querySelector('[data-act="open"]').addEventListener('click', ()=>{
+      if(!site.online){ toast('Bring the site online first.'); return; }
+      location.href = site.link;
+    });
+    el.querySelector('[data-act="toggle"]').addEventListener('click', async ()=>{
+      if(site.online){ const r=await api.marianaStop(site.id); if(r.ok){ toast('Site taken offline'); render(r.sites); } else toast(r.error||'Failed'); }
+      else { toast('Bringing online…'); const r=await api.marianaResume(site.id); if(r.ok){ toast('Site is online'); render(r.sites); } else toast(r.error||'Failed'); }
+    });
+    el.querySelector('[data-act="remove"]').addEventListener('click', async ()=>{
+      const r=await api.marianaRemove(site.id); if(r.ok){ toast('Site deleted'); render(r.sites); } else toast(r.error||'Failed');
+    });
+    return el;
+  }
+
+  function render(sites){
+    const listEl=document.getElementById('list');
+    const emptyEl=document.getElementById('empty');
+    listEl.innerHTML='';
+    if(!sites || !sites.length){ emptyEl.hidden=false; return; }
+    emptyEl.hidden=true;
+    for(const s of sites) listEl.appendChild(siteRow(s));
+  }
+
+  async function refresh(){
+    const r=await api.marianaList();
+    if(r.ok) render(r.sites);
+  }
+
+  function setChosen(folder){
+    pendingFolder=folder;
+    const c=document.getElementById('chosen');
+    if(folder){ c.style.display='block'; c.innerHTML='Selected: <b>'+esc(folder)+'</b>'; }
+    else { c.style.display='none'; }
+    updateHostBtn();
+  }
+  function updateHostBtn(){
+    document.getElementById('btn-host').disabled = !pendingFolder;
+  }
+
+  document.getElementById('btn-choose').addEventListener('click', async ()=>{
+    const f=await api.marianaChooseFolder();
+    if(f) setChosen(f);
+  });
+
+  document.getElementById('btn-host').addEventListener('click', async ()=>{
+    if(!pendingFolder) return;
+    const name=document.getElementById('site-name').value.trim();
+    const btn=document.getElementById('btn-host');
+    btn.disabled=true; btn.textContent='Publishing…';
+    const r=await api.marianaHost({ name, folder: pendingFolder });
+    btn.textContent='Publish';
+    if(r.ok){
+      toast('Your .mariana site is live');
+      document.getElementById('site-name').value='';
+      setChosen(null);
+      refresh();
+    } else {
+      toast(r.error||'Could not publish');
+      btn.disabled=false;
+    }
+  });
+
+  // Drag-and-drop a folder (Electron exposes an absolute path on the File).
+  const box=document.getElementById('host-box');
+  ['dragenter','dragover'].forEach(ev=>box.addEventListener(ev,(e)=>{ e.preventDefault(); box.classList.add('drag'); }));
+  ['dragleave','drop'].forEach(ev=>box.addEventListener(ev,(e)=>{ e.preventDefault(); box.classList.remove('drag'); }));
+  box.addEventListener('drop',(e)=>{
+    const f=e.dataTransfer.files && e.dataTransfer.files[0];
+    const p = f && (f.path || '');
+    if(p) setChosen(p);
+    else toast('Use the Choose folder button for this folder.');
+  });
+
+  async function pollTor(){
+    // We infer Tor readiness from whether hosting works; show a live hint.
+    const badge=document.getElementById('tor-badge');
+    const text=document.getElementById('tor-text');
+    const r=await api.marianaList().catch(()=>null);
+    const anyOnline = r && r.ok && r.sites.some(s=>s.online);
+    if(anyOnline){ badge.classList.add('on'); text.textContent='Tor connected'; }
+    else { badge.classList.remove('on'); text.textContent='Tor starts when you publish'; }
+  }
+
+  initTheme();
+  refresh();
+  pollTor();
+  setInterval(()=>{ refresh(); pollTor(); }, 5000);
+})();
+</script>
+</body>
+</html>

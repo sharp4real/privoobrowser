@@ -2394,13 +2394,22 @@ function toUrl(input) {
     // malformed or no hostname — treat as a search query
     return searchUrl(t);
   }
-  if (/^(privoo:\/\/|about:|view-source:|file:\/\/|ipfs:\/\/|ipns:\/\/)/i.test(t)) return t;
+  if (/^(privoo:\/\/|mariana:\/\/|about:|view-source:|file:\/\/|ipfs:\/\/|ipns:\/\/)/i.test(t)) return t;
+  // Bare ".mariana" name (Privoo's anonymous Tor sites) — route to the
+  // mariana:// scheme rather than trying to load it as a normal https host.
+  if (/^[a-z0-9-]+\.mariana(\/.*)?$/i.test(t) && !/\s/.test(t)) {
+    const m = t.match(/^([a-z0-9-]+)\.mariana(\/.*)?$/i);
+    return `mariana://${m[1].toLowerCase()}${m[2] || '/'}`;
+  }
   const host = !/\s/.test(t) && (/\.[a-z]{2,}(:\d+)?(\/|\?|#|$)/i.test(t) || /^localhost(:\d+)?(\/|$)/i.test(t));
   return host ? 'https://' + t : searchUrl(t);
 }
 
 function displayUrl(url) {
   if (!url) return '';
+  if (url.startsWith('mariana://')) {
+    return url.endsWith('/') ? url.slice(0, -1) : url;
+  }
   if (url.startsWith('privoo://')) {
     // Show clean privoo:// URL without trailing slash (newtab shows blank)
     if (url === NEWTAB_URL || url.startsWith('privoo://newtab')) return '';
