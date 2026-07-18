@@ -1539,52 +1539,31 @@ let _sidebarResizing = false;
 let _sidebarResizeStart = 0;
 let _sidebarResizeW = 320;
 
-const MOBILE_DEVICE_UAS = {
-  samsung: () => `Mozilla/5.0 (Linux; Android 14; SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${(navigator.userAgent.match(/Chrome\/([\d.]+)/) || [])[1] || '142.0.0.0'} Mobile Safari/537.36`,
-  iphone: () => 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
-};
-const MOBILE_DEVICE_WIDTHS = { samsung: 412, iphone: 393 };
-
 function openSidebarPanel(link) {
   if (!sidebarPanel || !sidebarWv) return;
   // Apply preload + partition once before first real navigation
   if (!sidebarWv.getAttribute('preload') && window.privoo?.webviewPreloadUrl) {
     sidebarWv.setAttribute('preload', window.privoo.webviewPreloadUrl);
   }
-  // The panel is a phone-shaped viewport, so render sites AS a phone: with a
-  // desktop UA every site lays out at ~1000px+ and gets clipped; with a
-  // mobile UA responsive sites serve their narrow layout and fit exactly.
-  // Same approach Opera uses for its sidebar apps.
-  const device = settings?.mobileEmulationDevice === 'iphone' ? 'iphone' : 'samsung';
-  sidebarWv.setAttribute('useragent', MOBILE_DEVICE_UAS[device]());
+  // Render sidebar sites with the normal DESKTOP identity. A forced mobile UA
+  // made sites "appear different / weird" (mobile layouts, mobile redirects
+  // like m.site.com), which is not what people expect from a pinned site.
+  // The panel is just a narrower desktop viewport; responsive sites adapt.
+  sidebarWv.removeAttribute('useragent');
   const _incoPart = window.__privooIncognitoPartition || window.privoo?.incognitoPartition;
   if (_incoPart && !sidebarWv.getAttribute('partition')) {
     sidebarWv.setAttribute('partition', _incoPart);
   }
-  // Match the panel to the chosen device's real CSS width. A mismatched
-  // width fights the mobile UA/viewport it claims to be, since sites
-  // reading window.innerWidth would see a width no real phone ever reports.
-  let w = settings?.sidebarPanelWidth || MOBILE_DEVICE_WIDTHS[device];
+  // Comfortable desktop-panel width. A phone-narrow strip (~400px) clips
+  // desktop layouts, so default wider when the user hasn't set a width.
+  let w = settings?.sidebarPanelWidth || 560;
   const titleEl = document.getElementById('sidebar-panel-title');
   let linkHost = '';
   try { linkHost = new URL(link.url).hostname; } catch {}
   if (titleEl) titleEl.textContent = linkHost ? linkHost.replace(/^www\./, '') : (link.title || link.url);
-  // Spotify's web player doesn't have a clean phone-width breakpoint the way
-  // WhatsApp/Instagram do — below ~480px it lands on a half-collapsed layout
-  // instead of its actual mobile view. Give it more room regardless of
-  // device, without touching the width every other app gets.
-  const SIDEBAR_WIDE_HOSTS = { 'open.spotify.com': 480 };
-  const wideMin = SIDEBAR_WIDE_HOSTS[linkHost];
-  if (wideMin && w < wideMin) w = wideMin;
   sidebarPanel.style.width = `${w}px`;
-  // Every one of Electron's three UA layers (webContents UA, CDP Client
-  // Hints, session wide header rewrite) otherwise forces this webview back
-  // to a desktop identity, see the matching note in main.js. Mark it before
-  // navigating so the very first request already carries the device identity.
-  try {
-    const wcId = sidebarWv.getWebContentsId?.();
-    if (wcId) window.privoo?.markMobileWebview?.(wcId, device);
-  } catch { /* not attached yet, falls back to session default */ }
+  // Deliberately NOT marking this as a mobile webview: the panel now uses the
+  // default desktop identity across all of Electron's UA layers.
   sidebarWv.src = link.url;
   sidebarPanel.hidden = false;
   sidebarOverlay?.classList.remove('hidden');
@@ -3129,7 +3108,22 @@ function isSiteCompatibilityHost(host) {
     // YouTube — forceDark injects CSS filter:invert on <video> which makes the
     // player render a black frame on first play. Skip all injection on YouTube.
     h === 'youtube.com'                 || h.endsWith('.youtube.com') ||
-    h === 'youtu.be'                    || h.endsWith('.youtu.be')
+    h === 'youtu.be'                    || h.endsWith('.youtu.be') ||
+    // TikTok / ByteDance — their login uses a device-fingerprint SDK
+    // (webmssdk/secsdk) that reads canvas output. Farbling it feeds the SDK a
+    // value it then fails to base64-decode (atob error), which is exactly why
+    // login was breaking. Must match main.js's compat list, which already has
+    // these — the two lists had drifted, leaving farbling on for TikTok here.
+    h === 'tiktok.com'                  || h.endsWith('.tiktok.com') ||
+    h === 'tiktokv.com'                 || h.endsWith('.tiktokv.com') ||
+    h === 'tiktokcdn.com'               || h.endsWith('.tiktokcdn.com') ||
+    h.endsWith('.tiktokcdn-us.com')     ||
+    h === 'byteoversea.com'             || h.endsWith('.byteoversea.com') ||
+    h === 'bytedance.com'               || h.endsWith('.bytedance.com') ||
+    h.endsWith('.ttwstatic.com')        ||
+    // Snapchat web — same class of integrity check; farbling left it blank.
+    h === 'snapchat.com'                || h.endsWith('.snapchat.com') ||
+    h === 'snap.com'                    || h.endsWith('.snap.com')
   );
 }
 
@@ -3261,7 +3255,7 @@ function applyInjections(wv) {
   if (settings?.passwordManagerEnabled !== false && window.privoo?.passwordAutofillScript) {
     wv.executeJavaScript(window.privoo.passwordAutofillScript).catch(() => {});
   }
-  if (settings?.identityAutofillEnabled !== false && window.privoo?.identityAutofillScript) {
+  if (settings?.identityAutofillEnabled === true && window.privoo?.identityAutofillScript) {
     wv.executeJavaScript(window.privoo.identityAutofillScript).catch(() => {});
   }
   if (settings?.easyFilesEnabled !== false && window.privoo?.filePickerScript) {
@@ -3382,7 +3376,7 @@ function requestIdentityAutofill(tab) {
 }
 
 async function handleIdentityFillRequest(tab, payload) {
-  if (!window.privoo?.identitiesGetDefault || settings?.identityAutofillEnabled === false) return;
+  if (!window.privoo?.identitiesGetDefault || settings?.identityAutofillEnabled !== true) return;
   const fields = Array.isArray(payload?.fields) ? payload.fields : [];
   if (!fields.length) return;
 
@@ -4099,14 +4093,22 @@ function paintFeatures() {
   }
 }
 
+const fmtStat = (n) => (n > 999999 ? '999k+' : String(n ?? 0));
+
 async function refreshStats() {
   try {
     const s = await window.privoo.getPrivacyStats();
-    const total = s.blockedAds + s.blockedCookies;
-    shieldCount.textContent = total > 9999 ? '9999+' : String(total);
-    document.getElementById('stat-ads').textContent    = s.blockedAds;
-    document.getElementById('stat-cookies').textContent = s.blockedCookies;
-    document.getElementById('stat-https').textContent  = s.upgradedHttps;
+    // The toolbar shield is icon-only now, so shieldCount may not exist.
+    // It must not throw here: this same function paints the panel's numbers,
+    // and a throw would leave them stuck at zero.
+    if (shieldCount) {
+      const total = (s.blockedAds || 0) + (s.blockedCookies || 0);
+      shieldCount.textContent = total > 9999 ? '9999+' : String(total);
+    }
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = fmtStat(v); };
+    set('stat-ads', s.blockedAds);
+    set('stat-cookies', s.blockedCookies);
+    set('stat-https', s.upgradedHttps);
   } catch { /* ignore */ }
 }
 
@@ -4771,7 +4773,7 @@ async function showWvContextMenu(tab, params, vx = 200, vy = 200) {
 
   if (params?.isEditable) {
     add('Emojis', () => openEmojiPicker(wv));
-    if (settings?.identityAutofillEnabled !== false) {
+    if (settings?.identityAutofillEnabled === true) {
       add('Autofill identity', () => requestIdentityAutofill(tab));
     }
     sep();

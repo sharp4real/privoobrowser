@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Privoo Desktop: Built-in tools</title>
+<meta name="description" content="Reference for Privoo's first-party built-in tools: Privacy Shield, Password Vault, Privoo AI, Media Downloader, Download Booster, Lucid Mode, identities and extension support."/>
+<link rel="icon" href="logo.png"/>
+<script>try{var t=localStorage.getItem('privoo-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;}catch(e){}</script>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="index.html">
+    <img src="logo.png" alt="" width="24" height="24"/>
+    <b>Privoo</b>
+    <span class="ver">reference</span>
+  </a>
+  <div class="topbar-right">
+    <a href="https://github.com/sharp4real/privoobrowser/releases/latest">Download</a>
+    <a href="https://github.com/sharp4real/privoobrowser">Source</a>
+    <a href="https://discord.gg/WweUzF3YCQ">Discord</a>
+    <button class="theme-btn" id="theme-btn" type="button">☾ Dark</button>
+    <button class="menu-btn" id="menu-btn" aria-label="Menu">☰</button>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <h4>Article</h4>
+    <a href="index.html">Privoo Desktop</a>
+    <a href="install.html">Installation</a>
+    <h4>Protection</h4>
+    <a href="privacy.html">Privacy and security</a>
+    <a href="mariana.html">.mariana hosting</a>
+    <h4>Using Privoo Desktop</h4>
+    <a href="tools.html" class="active">Built-in tools</a>
+    <a href="ai.html">Privoo AI</a>
+    <a href="browsing.html">Browsing</a>
+    <a href="appearance.html">Appearance</a>
+    <h4>Other products</h4>
+    <a href="android.html">Privoo for Android</a>
+    <a href="coder.html">Privoo Coder</a>
+    <h4>Reference</h4>
+    <a href="shortcuts.html">Keyboard shortcuts</a>
+    <a href="faq.html">FAQ and troubleshooting</a>
+  </aside>
+
+  <main class="doc">
+    <h1>Privoo Desktop: Built-in tools</h1>
+    <p class="subtitle">From the Privoo reference. This article covers version 5.0.6.</p>
+    <p class="hatnote">Main article: <a href="index.html">Privoo Desktop</a>. Managed at <code>privoo://extensions</code>.</p>
+
+    <aside class="infobox">
+      <div class="ib-head"><div class="ib-title">Built-in tools</div><div class="cap">First-party, shipped with the browser</div></div>
+      <table>
+        <tr class="ib-sec"><td colspan="2">Always on</td></tr>
+        <tr><th>Privacy Shield</th><td>Ad, tracker, malware blocking</td></tr>
+        <tr><th>Downloads</th><td>Download manager</td></tr>
+        <tr class="ib-sec"><td colspan="2">On by default</td></tr>
+        <tr><th>HTTPS-Only Mode</th><td>Connection upgrading</td></tr>
+        <tr><th>Password Vault</th><td>Encrypted local logins</td></tr>
+        <tr><th>Privoo AI</th><td>Assistant, user-supplied key</td></tr>
+        <tr class="ib-sec"><td colspan="2">Off by default</td></tr>
+        <tr><th>Notes</th><td>Toolbar scratchpad</td></tr>
+        <tr><th>Calculator</th><td>Toolbar calculator</td></tr>
+        <tr><th>Media Downloader</th><td>yt-dlp based</td></tr>
+        <tr><th>Download Booster</th><td>Parallel connections</td></tr>
+        <tr><th>Lucid Mode</th><td>Video enhancement</td></tr>
+      </table>
+    </aside>
+
+    <p class="lead">
+      Privoo includes first-party implementations of functions ordinarily obtained by
+      installing browser extensions. They are part of the application rather than
+      separately published add-ons, and are configured at
+      <code>privoo://extensions</code>. Third-party extensions may also be loaded, with
+      partial API support.
+    </p>
+
+    <nav class="toc">
+      <div class="toc-title">Contents</div>
+      <ol>
+        <li><a href="#rationale">Rationale</a></li>
+        <li><a href="#core">Always-on tools</a></li>
+        <li><a href="#default-on">Enabled by default</a>
+          <ol>
+            <li><a href="#vault">Password Vault</a></li>
+            <li><a href="#ai">Privoo AI</a></li>
+          </ol>
+        </li>
+        <li><a href="#optional">Optional tools</a>
+          <ol>
+            <li><a href="#media">Media Downloader</a></li>
+            <li><a href="#booster">Download Booster</a></li>
+            <li><a href="#lucid">Lucid Mode</a></li>
+          </ol>
+        </li>
+        <li><a href="#identities">Identities and autofill</a></li>
+        <li><a href="#thirdparty">Third-party extensions</a></li>
+        <li><a href="#see-also">See also</a></li>
+      </ol>
+    </nav>
+
+    <h2 id="rationale">Rationale</h2>
+    <p>
+      The conventional way to obtain a password manager, a content blocker or a download
+      utility is to install an extension. Each such extension is an additional party
+      granted, in most cases, permission to read and modify the content of every page the
+      user visits. Extensions have been sold to new owners, compromised through their
+      publishers' accounts, and repurposed after acquisition.
+    </p>
+    <p>
+      Privoo's tools are components of the application. They have no separate publisher
+      and cannot change hands independently of the browser. The stated aim is not to
+      prevent users from installing extensions, which remains supported, but to reduce
+      the number of cases in which doing so is necessary.
+    </p>
+
+    <h2 id="core">Always-on tools</h2>
+    <div class="defs">
+      <div>
+        <dt>Privacy Shield <span class="tag on">Always on</span></dt>
+        <dd>
+          Advertising, tracker and malware blocking, together with the per-page report
+          exposed by the toolbar shield. It is a core component rather than an add-on and
+          has no disable switch on the extensions page; the individual protections it
+          reports are each controlled in Settings. See
+          <a href="privacy.html#shield">Privacy and security: The Privacy Shield</a>.
+        </dd>
+      </div>
+      <div>
+        <dt>Downloads <span class="tag on">Always on</span></dt>
+        <dd>
+          The toolbar download manager, showing live progress, with a full listing at
+          <code>privoo://downloads</code> and a shortcut of <kbd>Ctrl</kbd> <kbd>J</kbd>.
+        </dd>
+      </div>
+    </div>
+
+    <h2 id="default-on">Enabled by default</h2>
+    <div class="defs">
+      <div>
+        <dt>HTTPS-Only Mode <span class="tag">On</span></dt>
+        <dd>Upgrades insecure <code>http://</code> navigations. See <a href="privacy.html#https">Privacy and security: HTTPS upgrading</a>.</dd>
+      </div>
+    </div>
+
+    <h3 id="vault">Password Vault</h3>
+    <p>
+      Saves and autofills credentials, encrypted, on the local device. There is no cloud
+      vault, no master account and no synchronisation.
+    </p>
+    <p>
+      The consequences run in both directions and the project states both: credentials
+      cannot be exposed by the breach of a server that does not exist, and equally they do
+      not propagate to the user's other machines, because no mechanism carries them there.
+      Moving them requires copying the profile directory manually.
+    </p>
+
+    <h3 id="ai">Privoo AI</h3>
+    <p class="hatnote">Main article: <a href="ai.html">Privoo AI</a></p>
+    <p>
+      An assistant available in a side panel or a separate window, with saved
+      conversation history stored locally. It is available at <code>privoo://ai</code>.
+    </p>
+    <p>
+      Privoo does not host a model and does not operate an inference service. The
+      assistant runs against a provider key supplied by the user, or against a local
+      model:
+    </p>
+    <div class="table-wrap">
+      <table>
+        <caption>Supported backends</caption>
+        <thead><tr><th>Backend</th><th>Data handling</th></tr></thead>
+        <tbody>
+          <tr><td>Anthropic</td><td>Requests go to the provider under the user's own key.</td></tr>
+          <tr><td>OpenAI</td><td>As above.</td></tr>
+          <tr><td>Google Gemini</td><td>As above.</td></tr>
+          <tr><td>DeepSeek</td><td>As above.</td></tr>
+          <tr><td>Ollama (local)</td><td>Inference occurs on the user's machine. Nothing leaves the device.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      API keys are stored encrypted. Conversations are not proxied through any
+      infrastructure belonging to Privoo, because none exists.
+    </p>
+
+    <h2 id="optional">Optional tools</h2>
+
+    <h3 id="media">Media Downloader <span class="tag off">Off</span></h3>
+    <p>
+      Saves video or audio from a page to the downloads directory, using
+      <code>yt-dlp</code>. Adds a toolbar button when enabled.
+    </p>
+
+    <h3 id="booster">Download Booster <span class="tag off">Off</span></h3>
+    <p>
+      Splits a large download across several concurrent HTTP range requests and
+      reassembles the file, which is materially faster where a server throttles individual
+      connections.
+    </p>
+    <div class="table-wrap">
+      <table>
+        <caption>Operating parameters</caption>
+        <thead><tr><th>Parameter</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>Minimum file size</td><td>Approximately 8 MB</td></tr>
+          <tr><td>Concurrent chunks</td><td>6</td></tr>
+          <tr><td>Requirement</td><td>Server must support range requests</td></tr>
+          <tr><td>Fallback</td><td>Declines and lets the normal download proceed</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      The server is probed for range support before the accelerated path is used. If the
+      probe fails, or the file is below the threshold, the ordinary download runs
+      unchanged.
+    </p>
+
+    <h3 id="lucid">Lucid Mode <span class="tag off">Off</span></h3>
+    <p>
+      Adds a control to any video which, on hover, exposes a slider adjusting clarity,
+      colour and depth. The effect is a rendering filter applied locally during playback
+      and does not alter the stream being received.
+    </p>
+
+    <div class="defs">
+      <div>
+        <dt>Notes <span class="tag off">Off</span></dt>
+        <dd>A scratchpad in the toolbar. Contents are stored locally.</dd>
+      </div>
+      <div>
+        <dt>Calculator <span class="tag off">Off</span></dt>
+        <dd>A calculator in the toolbar.</dd>
+      </div>
+    </div>
+
+    <h2 id="identities">Identities and autofill</h2>
+    <p>
+      Distinct from the password vault, Privoo stores one or more <b>identities</b>
+      comprising name, address, telephone and email details, managed at
+      <code>privoo://identities</code>.
+    </p>
+    <p>
+      Autofill is <b>opt-in</b>. Filling saved personal details into a web form is
+      something the user should ask for rather than have happen by default, so the
+      right-click item is hidden until <b>Identity autofill</b> is enabled in
+      <b>Settings</b>. Once enabled, a form field can be filled by right-clicking it and
+      selecting <b>Autofill identity</b>.
+    </p>
+    <p>
+      Common fields are matched directly. For unusual field labels that direct matching
+      does not recognise, a local Ollama model may optionally be used to interpret what
+      the field requests. That step runs on the user's machine; identity details are not
+      transmitted to a remote service for interpretation.
+    </p>
+    <p>
+      A related feature, <b>Easy Files</b>, retains a short list of recently uploaded
+      files so that a file can be re-attached without navigating the file picker again.
+    </p>
+
+    <h2 id="thirdparty">Third-party extensions</h2>
+    <p>
+      Extensions can be loaded from <code>privoo://extensions</code>, either as a packaged
+      <code>.crx</code> or <code>.zip</code>, or as an unpacked directory. A packaged
+      extension is unpacked into the configuration directory and loaded from there.
+    </p>
+    <div class="note warn">
+      <span class="label">Partial API support</span>
+      <p>
+        Privoo runs on Electron, which implements a subset of Chrome's extension APIs.
+        Popups and content scripts generally function. Extensions depending on
+        <code>contextMenus</code>, <code>privacy</code>, <code>webNavigation</code> or
+        other advanced APIs may be limited or inert. Full CRX support remains an open
+        roadmap item.
+      </p>
+    </div>
+    <p>
+      For content blocking specifically, Privoo's built-in engine already covers most of
+      what a blocker such as uBlock Origin provides, and running both over the same
+      requests can cause conflicts. Privoo detects recognised third-party content blockers
+      and disengages its own engine on YouTube when one is present, because two blockers
+      competing over the player can leave it in a broken state.
+    </p>
+    <p>
+      The general caution applicable to any browser applies here: an extension can
+      typically read and modify every page visited, so only extensions with a clear reason
+      to be trusted should be installed.
+    </p>
+
+    <div class="btn-row">
+      <a class="lbtn primary" href="https://github.com/sharp4real/privoobrowser/releases/latest">Download Privoo</a>
+      <a class="lbtn" href="https://ollama.com">Ollama (local AI)</a>
+      <a class="lbtn" href="https://github.com/yt-dlp/yt-dlp">yt-dlp</a>
+      <a class="lbtn" href="https://github.com/sharp4real/privoobrowser/issues">Request a tool</a>
+    </div>
+
+    <h2 id="see-also" class="nonum">See also</h2>
+    <ul>
+      <li><a href="privacy.html">Privoo Desktop: Privacy and security</a></li>
+      <li><a href="browsing.html">Privoo Desktop: Browsing</a></li>
+      <li><a href="index.html#f-tools">Privoo Desktop: Built-in tools</a></li>
+    </ul>
+
+    <nav class="pager">
+      <a href="mariana.html"><span>Previous</span><b>&lsaquo; .mariana hosting</b></a>
+      <a class="next" href="browsing.html"><span>Next</span><b>Browsing &rsaquo;</b></a>
+    </nav>
+  </main>
+</div>
+
+<footer class="foot">
+  <span>Privoo is an independent project. No telemetry, no tracking, no data collection.</span>
+  <span>Content describes Privoo 5.0.6 · MIT licensed</span>
+</footer>
+
+<script src="nav.js"></script>
+</body>
+</html>

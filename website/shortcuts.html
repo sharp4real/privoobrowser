@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Privoo Desktop: Keyboard shortcuts</title>
+<meta name="description" content="Complete keyboard shortcut reference for Privoo, plus the privoo:// internal page addresses and address bar scheme handling."/>
+<link rel="icon" href="logo.png"/>
+<script>try{var t=localStorage.getItem('privoo-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;}catch(e){}</script>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="index.html">
+    <img src="logo.png" alt="" width="24" height="24"/>
+    <b>Privoo</b>
+    <span class="ver">reference</span>
+  </a>
+  <div class="topbar-right">
+    <a href="https://github.com/sharp4real/privoobrowser/releases/latest">Download</a>
+    <a href="https://github.com/sharp4real/privoobrowser">Source</a>
+    <a href="https://discord.gg/WweUzF3YCQ">Discord</a>
+    <button class="theme-btn" id="theme-btn" type="button">☾ Dark</button>
+    <button class="menu-btn" id="menu-btn" aria-label="Menu">☰</button>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <h4>Article</h4>
+    <a href="index.html">Privoo Desktop</a>
+    <a href="install.html">Installation</a>
+    <h4>Protection</h4>
+    <a href="privacy.html">Privacy and security</a>
+    <a href="mariana.html">.mariana hosting</a>
+    <h4>Using Privoo Desktop</h4>
+    <a href="tools.html">Built-in tools</a>
+    <a href="ai.html">Privoo AI</a>
+    <a href="browsing.html">Browsing</a>
+    <a href="appearance.html">Appearance</a>
+    <h4>Other products</h4>
+    <a href="android.html">Privoo for Android</a>
+    <a href="coder.html">Privoo Coder</a>
+    <h4>Reference</h4>
+    <a href="shortcuts.html" class="active">Keyboard shortcuts</a>
+    <a href="faq.html">FAQ and troubleshooting</a>
+  </aside>
+
+  <main class="doc">
+    <h1>Privoo Desktop: Keyboard shortcuts</h1>
+    <p class="subtitle">From the Privoo reference. This article covers version 5.0.6.</p>
+    <p class="hatnote">Main article: <a href="index.html">Privoo Desktop</a>. See also <a href="browsing.html">Browsing</a>.</p>
+
+    <p class="lead">
+      On macOS, substitute <kbd>Cmd</kbd> for <kbd>Ctrl</kbd> throughout. Shortcuts are
+      forwarded from page content to the browser interface, so they function while focus
+      is inside a page rather than only on the browser's own controls.
+    </p>
+
+    <nav class="toc">
+      <div class="toc-title">Contents</div>
+      <ol>
+        <li><a href="#tabs">Tabs</a></li>
+        <li><a href="#nav">Navigation</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#zoom">Zoom</a></li>
+        <li><a href="#internal">Internal pages</a></li>
+        <li><a href="#schemes">Address bar schemes</a></li>
+        <li><a href="#see-also">See also</a></li>
+      </ol>
+    </nav>
+
+    <h2 id="tabs">Tabs</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Shortcut</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td><kbd>Ctrl</kbd> <kbd>T</kbd></td><td>New tab</td></tr>
+          <tr><td><kbd>Ctrl</kbd> <kbd>W</kbd></td><td>Close tab</td></tr>
+          <tr><td><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>T</kbd></td><td>Reopen most recently closed tab</td></tr>
+          <tr><td><kbd>Ctrl</kbd> <kbd>Tab</kbd></td><td>Next tab</td></tr>
+          <tr><td><kbd>Ctrl</kbd> <kbd>1</kbd> – <kbd>8</kbd></td><td>Jump to tab by position</td></tr>
+          <tr><td><kbd>Ctrl</kbd> <kbd>9</kbd></td><td>Jump to last tab</td></tr>
+          <tr><td><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>A</kbd></td><td>Search open tabs</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="nav">Navigation</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Shortcut</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td><kbd>Ctrl</kbd> <kbd>L</kbd></td><td>Focus address bar</td></tr>
+          <tr><td><kbd>Ctrl</kbd> <kbd>R</kbd> / <kbd>F5</kbd></td><td>Reload</td></tr>
+          <tr><td><kbd>Alt</kbd> <kbd>&larr;</kbd></td><td>Back</td></tr>
+          <tr><td><kbd>Alt</kbd> <kbd>&rarr;</kbd></td><td>Forward</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="features">Features</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Shortcut</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td><kbd>Ctrl</kbd> <kbd>K</kbd></td><td>Command palette: tabs, history, bookmarks, settings, actions</td></tr>
+          <tr><td><kbd>Ctrl</kbd> <kbd>H</kbd></td><td>History</td></tr>
+          <tr><td><kbd>Ctrl</kbd> <kbd>J</kbd></td><td>Downloads</td></tr>
+          <tr><td><kbd>Ctrl</kbd> <kbd>N</kbd></td><td>New window</td></tr>
+          <tr><td><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>N</kbd></td><td>New incognito window</td></tr>
+          <tr><td><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>E</kbd></td><td>Split view</td></tr>
+          <tr><td><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>R</kbd></td><td>Reader mode</td></tr>
+          <tr><td><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>F</kbd></td><td>Focus mode</td></tr>
+          <tr><td><kbd>F12</kbd></td><td>Developer tools</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="zoom">Zoom</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Shortcut</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td><kbd>Ctrl</kbd> <kbd>+</kbd></td><td>Zoom in</td></tr>
+          <tr><td><kbd>Ctrl</kbd> <kbd>-</kbd></td><td>Zoom out</td></tr>
+          <tr><td><kbd>Ctrl</kbd> <kbd>0</kbd></td><td>Reset zoom</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="internal">Internal pages</h2>
+    <p>
+      Privoo's own pages are served from the <code>privoo://</code> scheme, registered as
+      a privileged, standard and secure scheme so that the pages receive an ordinary
+      origin and behave as normal web documents.
+    </p>
+    <div class="table-wrap">
+      <table>
+        <caption>Internal page addresses</caption>
+        <thead><tr><th>Address</th><th>Page</th></tr></thead>
+        <tbody>
+          <tr><td><code>privoo://newtab</code></td><td>Speed Dial, the new tab page</td></tr>
+          <tr><td><code>privoo://settings</code></td><td>Settings</td></tr>
+          <tr><td><code>privoo://extensions</code></td><td>Built-in and installed tools</td></tr>
+          <tr><td><code>privoo://mariana</code></td><td>Anonymous hosting management</td></tr>
+          <tr><td><code>privoo://identities</code></td><td>Saved identities for autofill</td></tr>
+          <tr><td><code>privoo://history</code></td><td>History</td></tr>
+          <tr><td><code>privoo://bookmarks</code></td><td>Bookmarks</td></tr>
+          <tr><td><code>privoo://downloads</code></td><td>Downloads</td></tr>
+          <tr><td><code>privoo://ai</code></td><td>Privoo AI</td></tr>
+          <tr><td><code>privoo://news</code></td><td>Release notes, rendered locally</td></tr>
+          <tr><td><code>privoo://incognito</code></td><td>Incognito landing page</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="schemes">Address bar schemes</h2>
+    <div class="table-wrap">
+      <table>
+        <caption>Non-standard schemes and suffixes</caption>
+        <thead><tr><th>Input</th><th>Handling</th></tr></thead>
+        <tbody>
+          <tr><td><code>*.onion</code></td><td>Routed over the bundled Tor SOCKS proxy; Tor started on demand.</td></tr>
+          <tr><td><code>*.eth</code></td><td>ENS, via public gateway.</td></tr>
+          <tr><td><code>*.crypto</code>, <code>*.wallet</code>, <code>*.nft</code>, others</td><td>Unstoppable Domains, via public gateway.</td></tr>
+          <tr><td><code>ipfs://</code>, <code>ipns://</code></td><td>Redirected to an IPFS gateway.</td></tr>
+          <tr><td><code>mariana://name.&lt;address&gt;/</code></td><td>Full <a href="mariana.html">.mariana</a> share link.</td></tr>
+          <tr><td><code>name.mariana</code></td><td>Short form; resolves once the full link has been opened once.</td></tr>
+          <tr><td><code>file://</code>, <code>view-source:</code>, <code>about:</code></td><td>Passed through.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="btn-row">
+      <a class="lbtn primary" href="https://github.com/sharp4real/privoobrowser/releases/latest">Download Privoo</a>
+      <a class="lbtn" href="browsing.html">Browsing</a>
+      <a class="lbtn" href="faq.html">Troubleshooting</a>
+    </div>
+
+    <h2 id="see-also" class="nonum">See also</h2>
+    <ul>
+      <li><a href="browsing.html">Privoo Desktop: Browsing</a></li>
+      <li><a href="index.html#a-protocol">Privoo Desktop: Internal protocol</a></li>
+      <li><a href="mariana.html">Privoo Desktop: .mariana hosting</a></li>
+    </ul>
+
+    <nav class="pager">
+      <a href="appearance.html"><span>Previous</span><b>&lsaquo; Appearance</b></a>
+      <a class="next" href="faq.html"><span>Next</span><b>FAQ and troubleshooting &rsaquo;</b></a>
+    </nav>
+  </main>
+</div>
+
+<footer class="foot">
+  <span>Privoo is an independent project. No telemetry, no tracking, no data collection.</span>
+  <span>Content describes Privoo 5.0.6 · MIT licensed</span>
+</footer>
+
+<script src="nav.js"></script>
+</body>
+</html>

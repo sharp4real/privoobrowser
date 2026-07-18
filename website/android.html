@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Privoo for Android</title>
+<meta name="description" content="Privoo for Android is a native Kotlin and Jetpack Compose privacy browser. Closed source, distributed via Proton Drive through the Privoo Discord, with no automatic updates."/>
+<link rel="icon" href="logo.png"/>
+<script>try{var t=localStorage.getItem('privoo-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;}catch(e){}</script>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="index.html">
+    <img src="logo.png" alt="" width="24" height="24"/>
+    <b>Privoo</b>
+    <span class="ver">reference</span>
+  </a>
+  <div class="topbar-right">
+    <a href="https://github.com/sharp4real/privoobrowser/releases/latest">Download</a>
+    <a href="https://github.com/sharp4real/privoobrowser">Source</a>
+    <a href="https://discord.gg/WweUzF3YCQ">Discord</a>
+    <button class="theme-btn" id="theme-btn" type="button">☾ Dark</button>
+    <button class="menu-btn" id="menu-btn" aria-label="Menu">☰</button>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <h4>Article</h4>
+    <a href="index.html">Privoo Desktop</a>
+    <a href="install.html">Installation</a>
+    <h4>Protection</h4>
+    <a href="privacy.html">Privacy and security</a>
+    <a href="mariana.html">.mariana hosting</a>
+    <h4>Using Privoo Desktop</h4>
+    <a href="tools.html">Built-in tools</a>
+    <a href="ai.html">Privoo AI</a>
+    <a href="browsing.html">Browsing</a>
+    <a href="appearance.html">Appearance</a>
+    <h4>Other products</h4>
+    <a href="android.html" class="active">Privoo for Android</a>
+    <a href="coder.html">Privoo Coder</a>
+    <h4>Reference</h4>
+    <a href="shortcuts.html">Keyboard shortcuts</a>
+    <a href="faq.html">FAQ and troubleshooting</a>
+  </aside>
+
+  <main class="doc">
+    <h1>Privoo for Android</h1>
+    <p class="subtitle">From the Privoo reference.</p>
+    <p class="hatnote">This article is about the Android browser. For the desktop browser, see <a href="index.html">Privoo Desktop</a>. For the coding IDE, see <a href="coder.html">Privoo Coder</a>.</p>
+
+    <aside class="infobox">
+      <div class="ib-head"><div class="ib-title">Privoo for Android</div><img src="logo.png" alt="Privoo logo" width="64" height="64"/></div>
+      <table>
+        <tr><th>Developer</th><td>Independent project (<code>sharp4real</code>)</td></tr>
+        <tr><th>Type</th><td>Mobile web browser</td></tr>
+        <tr><th>Written in</th><td>Kotlin</td></tr>
+        <tr><th>UI toolkit</th><td>Jetpack Compose, Material 3</td></tr>
+        <tr><th>Engine</th><td>Android WebView</td></tr>
+        <tr><th>Architecture</th><td>MVVM + Clean Architecture</td></tr>
+        <tr><th>Minimum version</th><td>Android 10 (API 29)</td></tr>
+        <tr><th>Target</th><td>Android 15 (API 35)</td></tr>
+        <tr class="ib-sec"><td colspan="2">Distribution</td></tr>
+        <tr><th>Source model</th><td><b>Closed source</b></td></tr>
+        <tr><th>Availability</th><td>Proton Drive link in the Privoo Discord</td></tr>
+        <tr><th>Automatic updates</th><td><b>None</b></td></tr>
+        <tr><th>App stores</th><td>Not published</td></tr>
+      </table>
+    </aside>
+
+    <p class="lead">
+      <b>Privoo for Android</b> is a native Android web browser built with Kotlin and
+      Jetpack Compose. It reproduces the visual language of
+      <a href="index.html">Privoo Desktop</a>, including the dark canvas, floating
+      rounded toolbar, pill-shaped address bar and ghost mascot home page, but it is a
+      separate application: a native Android build rather than a port of the desktop
+      code, using the Android WebView engine instead of Chromium via Electron.
+    </p>
+    <p>
+      It differs from Privoo Desktop in two respects that matter before installing:
+      it is <b>closed source</b>, and it has <b>no automatic updates</b>. It is
+      distributed as an APK through a Proton Drive link posted in the project's Discord
+      server rather than through Google Play.
+    </p>
+
+    <div class="btn-row">
+      <a class="lbtn primary" href="https://discord.gg/WweUzF3YCQ">Get the download link on Discord</a>
+      <a class="lbtn" href="index.html">Privoo Desktop</a>
+      <a class="lbtn" href="coder.html">Privoo Coder</a>
+    </div>
+
+    <nav class="toc">
+      <div class="toc-title">Contents</div>
+      <ol>
+        <li><a href="#distribution">Distribution and licensing</a></li>
+        <li><a href="#arch">Architecture</a></li>
+        <li><a href="#features">Features</a>
+          <ol>
+            <li><a href="#f-browse">Browsing</a></li>
+            <li><a href="#f-privacy">Privacy</a></li>
+            <li><a href="#f-data">Data</a></li>
+            <li><a href="#f-design">Design</a></li>
+            <li><a href="#f-shield">Privacy Shield and widget</a></li>
+          </ol>
+        </li>
+        <li><a href="#dns">Encrypted DNS</a></li>
+        <li><a href="#scope">Implementation scope</a></li>
+        <li><a href="#compare">Comparison with Privoo Desktop</a></li>
+        <li><a href="#build">Requirements and building</a></li>
+        <li><a href="#see-also">See also</a></li>
+      </ol>
+    </nav>
+
+    <h2 id="distribution">Distribution and licensing</h2>
+    <p>
+      Privoo for Android is <b>closed source</b>. This is a deliberate divergence from
+      Privoo Desktop, which is MIT licensed and publicly readable. The practical
+      consequence should be stated plainly, because it is the same standard this
+      reference applies to Privoo Desktop: the claims made below about the Android
+      application cannot be independently verified by reading its code, and users are
+      being asked to take them on trust in a way that Privoo Desktop does not require.
+    </p>
+    <p>
+      There is also <b>no automatic update mechanism</b>. Privoo Desktop checks the
+      GitHub release feed and updates itself; the Android application does neither.
+      Obtaining a newer version means returning to the Discord server, downloading the
+      current APK from the Proton Drive link, and installing it over the existing app.
+      Users should expect to do this manually, and should not assume an installed copy is
+      current.
+    </p>
+    <div class="table-wrap">
+      <table>
+        <caption>How to obtain it</caption>
+        <thead><tr><th>Step</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr><td>1. Join Discord</td><td>The <a href="https://discord.gg/WweUzF3YCQ">Privoo Discord server</a>.</td></tr>
+          <tr><td>2. Find the link</td><td>The APK is hosted on Proton Drive; the link is posted in the server.</td></tr>
+          <tr><td>3. Install</td><td>Sideload the APK. Android will require permission to install from an unknown source.</td></tr>
+          <tr><td>4. Update</td><td>Manually, by repeating the above. There is no in-app updater.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note warn">
+      <span class="label">Sideloading</span>
+      <p>
+        Because the application is not distributed through Google Play, it is not subject
+        to Play's review process, and installing it requires enabling installation from
+        unknown sources. Only install an APK obtained from the project's own Discord
+        server, and treat any copy found elsewhere as untrusted.
+      </p>
+    </div>
+
+    <h2 id="arch">Architecture</h2>
+    <p>
+      The application is fully native rather than a wrapped web view of the desktop
+      interface. It follows contemporary Android architecture:
+    </p>
+    <div class="table-wrap">
+      <table>
+        <caption>Technology stack</caption>
+        <thead><tr><th>Layer</th><th>Technology</th></tr></thead>
+        <tbody>
+          <tr><td>Language</td><td>Kotlin</td></tr>
+          <tr><td>UI</td><td>Jetpack Compose, Material 3</td></tr>
+          <tr><td>Architecture</td><td>MVVM with Clean Architecture layering</td></tr>
+          <tr><td>Dependency injection</td><td>Hilt</td></tr>
+          <tr><td>Persistence</td><td>Room</td></tr>
+          <tr><td>Settings</td><td>DataStore</td></tr>
+          <tr><td>Navigation</td><td>Navigation Compose</td></tr>
+          <tr><td>Concurrency</td><td>Coroutines with StateFlow</td></tr>
+          <tr><td>Rendering engine</td><td>Android WebView</td></tr>
+          <tr><td>Activity model</td><td>Single activity, edge-to-edge Compose host</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      The codebase is separated into a <code>core</code> layer facing the Android
+      framework (tabs, WebView clients, tracker blocking), a <code>data</code> layer
+      (Room database, DataStore, repositories), a pure <code>domain</code> layer (models
+      and repository interfaces), and a <code>ui</code> presentation layer built from
+      Compose screens and view models.
+    </p>
+    <p>
+      Because the engine is Android's system WebView rather than a bundled Chromium, the
+      browser inherits the rendering behaviour and update cadence of the WebView
+      component on the user's device. This is the root cause of the encrypted DNS
+      limitation described below.
+    </p>
+
+    <h2 id="features">Features</h2>
+    <div class="table-wrap">
+      <table>
+        <caption>Feature summary</caption>
+        <thead><tr><th>Area</th><th>Provided</th></tr></thead>
+        <tbody>
+          <tr><td>Tabs</td><td>Multiple tabs, private tabs, switcher with previews, reopen closed tab</td></tr>
+          <tr><td>Privacy</td><td>Tracker blocking, HTTPS-only, third-party cookie blocking, UA protection</td></tr>
+          <tr><td>Privacy Shield</td><td>Session and lifetime blocked counts, plus a home-screen widget</td></tr>
+          <tr><td>Data</td><td>Room history and bookmarks, JSON import/export, session persistence</td></tr>
+          <tr><td>Downloads</td><td>In-app engine with pause, resume, cancel, live speed and ETA</td></tr>
+          <tr><td>Media</td><td>HTML5 fullscreen video, file uploads</td></tr>
+          <tr><td>Themes</td><td>Light, dark, system, AMOLED, selectable accent</td></tr>
+          <tr><td>Layout</td><td>Optional bottom toolbar position</td></tr>
+          <tr><td>Encrypted DNS</td><td>Deep-links to Android Private DNS</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="f-browse">Browsing</h3>
+    <ul class="plain">
+      <li><b>Multiple tabs</b>, with a Chrome-style switcher showing previews.</li>
+      <li><b>Private tabs</b>, kept separate and never written to storage.</li>
+      <li><b>Reopen closed tab</b>, for the usual mistake.</li>
+      <li><b>Popups open as new tabs</b> rather than being discarded or blocked outright.</li>
+      <li><b>External scheme handoff</b>, so links belonging to other applications open in them.</li>
+      <li><b>HTML5 fullscreen video</b> and <b>file uploads</b>, both of which a bare WebView does not provide without work.</li>
+      <li><b>Permission prompts</b> for camera, microphone and geolocation.</li>
+      <li><b>Downloads</b> and <b>sharing</b> through the system.</li>
+      <li><b>Pull-to-navigate home</b>, a gesture rather than a button.</li>
+    </ul>
+
+    <h3 id="f-privacy">Privacy</h3>
+    <ul class="plain">
+      <li><b>Tracker blocking</b> using a hostname blocklist, applied to requests.</li>
+      <li><b>HTTPS-only upgrading</b> of insecure connections.</li>
+      <li><b>Third-party cookie blocking</b> to limit cross-site correlation.</li>
+      <li><b>Fingerprint protection</b> via User-Agent handling.</li>
+      <li><b>JavaScript and cookie toggles</b>, for users who want them off entirely.</li>
+      <li><b>Private tabs</b> that are never persisted.</li>
+      <li><b>One-tap clearing</b> of history, cookies and cache.</li>
+    </ul>
+    <p>
+      The home page carries the disclaimer <i>"Privacy reduces tracking but is not a
+      security guarantee"</i>. This is consistent with the position taken across the
+      Privoo products, including Privoo Desktop's own documentation: the browser reduces
+      commercial tracking and does not confer anonymity.
+    </p>
+
+    <h3 id="f-data">Data</h3>
+    <ul class="plain">
+      <li><b>History</b> stored in Room, searchable and grouped by date.</li>
+      <li><b>Bookmarks</b> with search, and <b>JSON import and export</b> through the Storage Access Framework, so the data can be moved off the device by the user rather than only by the application.</li>
+      <li><b>Download manager</b> backed by a real in-app engine; see <a href="#scope">Implementation scope</a>.</li>
+      <li><b>Session and tab persistence</b> across launches.</li>
+    </ul>
+    <p>
+      JSON export deserves note given the absence of synchronisation across the Privoo
+      products: it is the mechanism by which bookmarks can be moved between devices at
+      all.
+    </p>
+
+    <h3 id="f-design">Design</h3>
+    <p>
+      The application reproduces the desktop browser's visual language: a dark
+      <code>#16181D</code> canvas, a floating rounded toolbar, a pill-shaped address bar,
+      the ghost mascot home page, and soft glass-like surfaces.
+    </p>
+    <ul class="plain">
+      <li><b>Material 3</b> with light, dark and system themes, implemented through a theme-aware palette exposed as a Compose <code>CompositionLocal</code> rather than hard-coded colours.</li>
+      <li><b>AMOLED mode</b>, for true-black displays.</li>
+      <li><b>Selectable accent colour</b>, mirroring Privoo Desktop's accent behaviour.</li>
+      <li><b>Optional bottom toolbar</b>, which on a phone is the reachable position.</li>
+      <li><b>60fps animations</b>: toolbar press-scale, suggestion transitions, tab open and close, address focus.</li>
+      <li><b>Home page</b> with the logo and a shortcut grid.</li>
+    </ul>
+
+    <h3 id="f-shield">Privacy Shield and widget</h3>
+    <p>
+      A dashboard reports trackers and advertisements blocked, both for the current
+      session and cumulatively, persisted in DataStore. A home-screen widget built with
+      Glance shows the blocked count alongside the local temperature and deep-links into
+      the Privacy Shield when tapped.
+    </p>
+    <p>
+      The temperature is retrieved from the Open-Meteo API, which requires no key, using
+      the device's last known location. It requires coarse-location permission, requested
+      once at launch. Where permission or a recent location fix is unavailable, the widget
+      displays <code>—°</code> rather than a fabricated value, and it refreshes on the
+      system widget period of approximately 30 minutes.
+    </p>
+
+    <h2 id="dns">Encrypted DNS</h2>
+    <p>
+      Android's WebView and its underlying network stack expose <b>no public per-application
+      API for DNS-over-HTTPS</b>. An in-app DoH toggle would therefore not actually route
+      WebView traffic, and would amount to a control that appears to do something while
+      doing nothing.
+    </p>
+    <p>
+      Instead, <b>Settings &rarr; Privacy &rarr; Secure DNS</b> deep-links to Android's own
+      Private DNS screen, which configures strict, hostname-pinned encrypted DNS for the
+      entire device. This is the mechanism that genuinely works on the platform.
+    </p>
+    <div class="note">
+      <span class="label">Difference from Privoo Desktop</span>
+      <p>
+        Privoo Desktop bundles Chromium and can configure the resolver directly, so its
+        encrypted DNS is a browser setting operating in strict mode. On Android the
+        equivalent is an operating-system setting that applies device-wide. See
+        <a href="privacy.html#dns">Privoo Desktop: Encrypted DNS</a>.
+      </p>
+    </div>
+
+    <h2 id="scope">Implementation scope</h2>
+    <p>
+      Several areas are implemented as working foundations rather than exhaustively, and
+      are documented as such rather than being presented as complete:
+    </p>
+    <div class="table-wrap">
+      <table>
+        <caption>Known scope boundaries</caption>
+        <thead><tr><th>Area</th><th>Current state</th></tr></thead>
+        <tbody>
+          <tr><td>Downloads</td><td>A real download engine streams over HTTP(S) to app storage, persists live progress to Room, and supports pause and resume via HTTP <code>Range</code> requests, cancellation, and genuine speed and ETA reporting. Transfers run on an app-scoped coroutine, so they last as long as the process; surviving process death would require a foreground service.</td></tr>
+          <tr><td>Tracker blocking</td><td>A curated hostname blocklist held as a single editable set, chosen for low memory use. It is not a full EasyList engine, unlike Privoo Desktop.</td></tr>
+          <tr><td>Tab reordering</td><td>Supported in the view model. The drag gesture in the tab switcher is not yet wired up.</td></tr>
+          <tr><td>Tab thumbnails</td><td>Modelled in state; capturing live WebView bitmaps into that state remains to be added.</td></tr>
+          <tr><td>Secure DNS</td><td>Deep-links to the operating system's Private DNS screen, for the platform reason described above.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      These are documented limits of an application that compiles and runs as a usable
+      browser, rather than defects.
+    </p>
+
+    <h2 id="compare">Comparison with Privoo Desktop</h2>
+    <div class="table-wrap">
+      <table>
+        <caption>Privoo for Android compared with Privoo Desktop</caption>
+        <thead><tr><th>Aspect</th><th>Privoo for Android</th><th>Privoo Desktop</th></tr></thead>
+        <tbody>
+          <tr><td>Source</td><td>Closed source</td><td>MIT licensed, public</td></tr>
+          <tr><td>Distribution</td><td>APK via Proton Drive, linked in Discord</td><td>GitHub Releases</td></tr>
+          <tr><td>Updates</td><td>Manual only</td><td>Automatic</td></tr>
+          <tr><td>Engine</td><td>Android WebView</td><td>Chromium 148 via Electron</td></tr>
+          <tr><td>Built with</td><td>Kotlin, Jetpack Compose</td><td>JavaScript, HTML, CSS</td></tr>
+          <tr><td>Blocking</td><td>Hostname blocklist</td><td>EasyList, EasyPrivacy, uBlock Origin</td></tr>
+          <tr><td>Encrypted DNS</td><td>Deep-links to OS Private DNS</td><td>In-browser DoH, strict mode</td></tr>
+          <tr><td>Tor and .mariana</td><td>Not available</td><td>Available</td></tr>
+          <tr><td>DRM playback</td><td>System WebView behaviour</td><td>Widevine, VMP-signed</td></tr>
+          <tr><td>Extensions</td><td>Not supported</td><td>Partial third-party support</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="build">Requirements and building</h2>
+    <p>
+      The application is closed source, so building from source is not available to the
+      public. The project's own build requirements are recorded here for completeness:
+    </p>
+    <div class="table-wrap">
+      <table>
+        <caption>Build environment</caption>
+        <thead><tr><th>Tool</th><th>Version</th></tr></thead>
+        <tbody>
+          <tr><td>Android Studio</td><td>Ladybug (2024.2) or newer</td></tr>
+          <tr><td>JDK</td><td>17</td></tr>
+          <tr><td>Android Gradle Plugin</td><td>8.7.x</td></tr>
+          <tr><td>Gradle</td><td>8.11.x</td></tr>
+          <tr><td>Minimum SDK</td><td>29 (Android 10)</td></tr>
+          <tr><td>Target and compile SDK</td><td>35 (Android 15)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="btn-row">
+      <a class="lbtn primary" href="https://discord.gg/WweUzF3YCQ">Join Discord for the APK</a>
+      <a class="lbtn" href="index.html">Privoo Desktop</a>
+      <a class="lbtn" href="coder.html">Privoo Coder</a>
+    </div>
+
+    <h2 id="see-also" class="nonum">See also</h2>
+    <ul>
+      <li><a href="index.html">Privoo Desktop</a></li>
+      <li><a href="coder.html">Privoo Coder</a></li>
+      <li><a href="privacy.html">Privoo Desktop: Privacy and security</a></li>
+    </ul>
+
+    <nav class="pager">
+      <a href="index.html"><span>Previous</span><b>&lsaquo; Privoo Desktop</b></a>
+      <a class="next" href="coder.html"><span>Next</span><b>Privoo Coder &rsaquo;</b></a>
+    </nav>
+  </main>
+</div>
+
+<footer class="foot">
+  <span>Privoo is an independent project. Privoo Desktop collects no telemetry.</span>
+  <span>Privoo for Android is closed source · MIT applies to Privoo Desktop only</span>
+</footer>
+
+<script src="nav.js"></script>
+</body>
+</html>

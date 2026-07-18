@@ -1559,8 +1559,10 @@ async function getSharedBlocker() {
       try { blocker.updateFromDiff({ added: _CRYPTOJACKING_BLOCKLIST }); } catch {}
     }
 
-    blocker.on('request-blocked',    () => { stats.blockedAds++; });
-    blocker.on('request-redirected', () => { stats.blockedAds++; });
+    // NOTE: this library version's onBeforeRequest does not emit
+    // 'request-blocked'/'request-redirected', so those events never fire.
+    // The global block count is tallied off the actual response in the
+    // onBeforeRequest wrapper in setupAdBlocking instead.
     _sharedBlocker = blocker;
     return blocker;
   })();
@@ -1649,14 +1651,20 @@ async function setupAdBlocking(sess) {
       if (details.resourceType === 'mainFrame' && details.webContentsId) {
         pageBlockedCounts.set(details.webContentsId, 0);
       }
-      // Hand off to the real adblock engine, but watch the response so we
-      // can tally per-tab blocks (request-blocked event has no wcId).
+      // Hand off to the real adblock engine, but watch the response so we can
+      // tally blocks. This version of @ghostery/adblocker-electron does NOT
+      // emit the 'request-blocked' / 'request-redirected' events we used to
+      // listen for, so the global stats counter only moves if we count here,
+      // off the actual response. A cancel or a redirect both mean a block.
       blockerOnBeforeRequest(details, (response) => {
-        if (response && response.cancel && details.webContentsId) {
-          pageBlockedCounts.set(
-            details.webContentsId,
-            (pageBlockedCounts.get(details.webContentsId) || 0) + 1
-          );
+        if (response && (response.cancel || response.redirectURL)) {
+          stats.blockedAds++;
+          if (details.webContentsId) {
+            pageBlockedCounts.set(
+              details.webContentsId,
+              (pageBlockedCounts.get(details.webContentsId) || 0) + 1
+            );
+          }
         }
         cb(response);
       });
@@ -3403,27 +3411,28 @@ app.on('web-contents-created', (_event, contents) => {
   // Intercept ytInitialPlayerResponse assigned via inline <script> object literal
   // (bypasses JSON.parse — this is why the first video needed a refresh).
   try {
+    // One helper, used by all three intercept points, so a gap in one can't
+    // let ads through the others. YouTube has added fields over time
+    // (adSlots, server-side inserted placements); strip every known one.
+    window.__privooStripYtAds = function(o){
+      if (!o || typeof o !== 'object') return o;
+      try { if ('adPlacements' in o) o.adPlacements = []; } catch {}
+      try { if ('playerAds'    in o) o.playerAds    = []; } catch {}
+      try { if ('adSlots'      in o) o.adSlots      = []; } catch {}
+      try { if ('serverSideSpecialCaseAdInsertion' in o) o.serverSideSpecialCaseAdInsertion = []; } catch {}
+      try { if ('serverSideInsertedAdPlacements'   in o) o.serverSideInsertedAdPlacements   = []; } catch {}
+      return o;
+    };
     let _ytipr;
     Object.defineProperty(window, 'ytInitialPlayerResponse', {
       get: () => _ytipr,
-      set: v => {
-        if (v && typeof v === 'object') {
-          try { if ('adPlacements' in v) v.adPlacements = []; } catch {}
-          try { if ('playerAds'    in v) v.playerAds    = []; } catch {}
-        }
-        _ytipr = v;
-      },
+      set: v => { _ytipr = window.__privooStripYtAds(v); },
       configurable: true,
     });
   } catch {}
   const _jp = JSON.parse;
   JSON.parse = function(t, ...a) {
-    const r = _jp.call(this, t, ...a);
-    if (r && typeof r === 'object') {
-      try { if ('adPlacements' in r) r.adPlacements = []; } catch {}
-      try { if ('playerAds'    in r) r.playerAds    = []; } catch {}
-    }
-    return r;
+    return window.__privooStripYtAds(_jp.call(this, t, ...a));
   };
   const _f = window.fetch;
   window.fetch = function(input, ...rest) {
@@ -3433,9 +3442,9 @@ app.on('web-contents-created', (_event, contents) => {
       try {
         const body = await res.clone().json();
         let changed = false;
-        if (Array.isArray(body.adPlacements) && body.adPlacements.length) { body.adPlacements = []; changed = true; }
-        if (Array.isArray(body.playerAds)    && body.playerAds.length)    { body.playerAds    = []; changed = true; }
-        if (Array.isArray(body.adSlots)      && body.adSlots.length)      { body.adSlots      = []; changed = true; }
+        for (const k of ['adPlacements','playerAds','adSlots','serverSideSpecialCaseAdInsertion','serverSideInsertedAdPlacements']) {
+          if (Array.isArray(body[k]) && body[k].length) { body[k] = []; changed = true; }
+        }
         // Only hand back a rebuilt response when we actually stripped ads.
         // Re-wrapping every player/next response (e.g. when switching audio
         // track or quality) corrupts it and breaks those features.
@@ -5472,7 +5481,7 @@ ipcMain.handle('identities-set-default',(_e, id) => identitiesStore.setDefault(i
 ipcMain.handle('ollama-status',         () => aiBrowser.detectOllama());
 ipcMain.handle('ollama-resolve-fields', (_e, fields, keys) => {
   const s = settingsStore.load();
-  if (s.identityAutofillEnabled === false) return {};
+  if (s.identityAutofillEnabled !== true) return {};
   return aiBrowser.resolveIdentityFields(fields, keys, s.ollamaModel);
 });
 

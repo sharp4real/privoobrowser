@@ -297,7 +297,9 @@ const DEFAULTS = {
   /** Multi-identity form autofill (name/address/etc, distinct from the
    *  password vault above). Ollama assists field-matching when a local
    *  Ollama server is reachable; heuristics alone otherwise. */
-  identityAutofillEnabled: true,
+  // Opt-in. Autofilling saved personal details into a page is something the
+  // user should ask for, so the right-click item stays hidden until they do.
+  identityAutofillEnabled: false,
   ollamaModel: 'llama3.2',
   easyFilesEnabled: true,
   downloadBoosterEnabled: false, // splits large downloads into parallel range requests
@@ -415,6 +417,17 @@ function load() {
     // changes on upgrade.
     if (!parsed.sidebarMode) {
       cache.sidebarMode = parsed.showSidebar === false ? 'off' : 'on';
+      try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
+    }
+    // Fifth migration wave, again outside the earlier blocks. Identity autofill
+    // shipped defaulting ON, so every profile has `true` persisted whether or
+    // not the user ever wanted it. It is now opt-in, so clear that once for
+    // anyone still sitting on the old default.
+    if (!parsed.identityOptIn1Applied) {
+      if (parsed.identityAutofillEnabled === true) {
+        cache.identityAutofillEnabled = false;
+      }
+      cache.identityOptIn1Applied = true;
       try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
     }
   } catch {

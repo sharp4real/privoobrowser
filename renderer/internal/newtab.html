@@ -923,6 +923,12 @@ body.ntp-wp .wx-card{
 }
 #ntp-news-link[hidden]{display:none;}
 main:has(#q:focus) #ntp-news-link{opacity:0;pointer-events:none;}
+/* When the suggestions dropdown is open it overlays the area just under the
+   search bar, where this link sits. opacity:0 left it painting through /
+   peeking in front of the results, so remove it from layout entirely while
+   suggestions are showing. body.ss-open is set in JS (openSS/closeSS), so
+   this does not depend on :has() being supported. */
+body.ss-open #ntp-news-link{display:none !important;}
 
 /* ── Men's Mental Health Month modal ── */
 #mmhm-overlay{

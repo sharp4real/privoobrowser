@@ -1578,16 +1578,9 @@ body.platform-mac #window-controls { display: none !important; }
 #bookmark-btn { color: var(--muted); }
 #bookmark-btn.active { color: var(--accent); }
 
-/* Shield */
+/* Shield — icon only. The blocked counts are in the panel, not the toolbar. */
 #shield-btn {
   font-family: var(--font);
-}
-#shield-btn #shield-count {
-  font-size: 12px; 
-  font-weight: 600; 
-  line-height: 1.2;
-  font-family: var(--font);
-  letter-spacing: 0;
 }
 
 /* ─── Omnibox ────────────────────────────────────────────────────── */

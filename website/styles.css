@@ -1,0 +1,358 @@
+/* Privoo reference.
+   Encyclopedia skin: white background, black text, Wikipedia's typography
+   (sans body, serif headings with a rule, infobox, contents box, wikitables).
+   Text is the point. Styling stays out of its way.
+   Images are kept to a minimum: the logos and a single screenshot. */
+
+:root{
+  --text:#202122;          /* Wikipedia body text */
+  --muted:#54595d;         /* secondary text */
+  --link:#3366cc;          /* Wikipedia link blue */
+  --visited:#795cb2;       /* visited purple */
+  --border:#a2a9b1;        /* standard border grey */
+  --border-light:#c8ccd1;
+  --bg:#ffffff;
+  --bg-alt:#f8f9fa;        /* infobox / toc background */
+  --bg-head:#eaecf0;       /* table header */
+  --accent:#8b7cf7;        /* Privoo's own accent, used sparingly */
+
+  --serif:"Linux Libertine","Georgia","Times New Roman",Times,serif;
+  --sans:Arial,Helvetica,"Liberation Sans","Nimbus Sans L",sans-serif;
+  --mono:ui-monospace,"Consolas","Liberation Mono",Monaco,monospace;
+
+  --code:#b32424;
+  --shot-bg:#f8f9fa;
+}
+
+/* ── Dark mode ───────────────────────────────────────────────────────────
+   Values follow Wikipedia's night mode rather than inverting the light
+   palette, so contrast stays deliberate. The theme is applied by an inline
+   script in each page's <head> before first paint, so there is no flash.
+   The media query below is the no-JavaScript fallback. */
+:root[data-theme="dark"]{
+  --text:#f8f9fa;
+  --muted:#a2a9b1;
+  --link:#6699ff;
+  --visited:#977dbd;
+  --border:#54595d;
+  --border-light:#404244;
+  --bg:#101418;
+  --bg-alt:#27292d;
+  --bg-head:#2e3136;
+  --code:#fd7f7f;
+  --shot-bg:#27292d;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]):not([data-theme="dark"]){
+    --text:#f8f9fa;
+    --muted:#a2a9b1;
+    --link:#6699ff;
+    --visited:#977dbd;
+    --border:#54595d;
+    --border-light:#404244;
+    --bg:#101418;
+    --bg-alt:#27292d;
+    --bg-head:#2e3136;
+    --code:#fd7f7f;
+    --shot-bg:#27292d;
+    color-scheme:dark;
+  }
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:var(--sans);font-size:14px;line-height:1.6;
+}
+a{color:var(--link);text-decoration:none}
+a:visited{color:var(--visited)}
+a:hover{text-decoration:underline}
+
+/* ── Top bar ─────────────────────────────────────────────────────────── */
+.topbar{
+  border-bottom:1px solid var(--border);background:var(--bg-alt);
+  display:flex;align-items:center;gap:14px;padding:8px 18px;
+}
+.brand{display:flex;align-items:center;gap:8px;color:var(--text);font-size:15px}
+.brand:hover{text-decoration:none}
+.brand b{font-family:var(--serif);font-size:18px;font-weight:normal}
+.brand .ver{font-size:11px;color:var(--muted)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:13px}
+.theme-btn{
+  background:var(--bg);border:1px solid var(--border);color:var(--text);
+  height:28px;padding:0 10px;border-radius:2px;cursor:pointer;
+  font-family:var(--sans);font-size:12px;line-height:1;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.theme-btn:hover{border-color:#72777d}
+.menu-btn{
+  display:none;background:var(--bg);border:1px solid var(--border);
+  color:var(--text);width:30px;height:30px;border-radius:2px;cursor:pointer;
+}
+
+/* ── Shell ───────────────────────────────────────────────────────────── */
+.shell{display:grid;grid-template-columns:190px 1fr;align-items:start}
+.sidebar{
+  position:sticky;top:0;max-height:100vh;overflow-y:auto;
+  border-right:1px solid var(--border-light);
+  padding:16px 10px 30px 16px;background:var(--bg-alt);
+  min-height:100vh;
+}
+.sidebar h4{
+  font-size:11px;font-weight:normal;color:var(--muted);
+  border-bottom:1px solid var(--border-light);
+  margin:14px 0 5px;padding-bottom:2px;
+}
+.sidebar h4:first-child{margin-top:0}
+.sidebar a{display:block;font-size:12.5px;padding:2px 0 2px 6px;line-height:1.5}
+.sidebar a.active{font-weight:bold;color:var(--text)}
+.sidebar a.active:hover{text-decoration:none;cursor:default}
+
+/* ── Article ─────────────────────────────────────────────────────────── */
+.doc{
+  padding:18px 30px 60px;max-width:1100px;
+  counter-reset:sec;
+}
+.doc::after{content:"";display:block;clear:both}
+
+h1{
+  font-family:var(--serif);font-size:28px;font-weight:normal;line-height:1.3;
+  border-bottom:1px solid var(--border);padding-bottom:5px;margin-bottom:4px;
+}
+.subtitle{font-size:12.5px;color:var(--muted);font-style:italic;margin-bottom:14px}
+.hatnote{font-style:italic;font-size:13.5px;color:var(--text);padding-left:26px;margin-bottom:10px}
+.hatnote a{font-style:normal}
+
+h2{
+  font-family:var(--serif);font-size:22px;font-weight:normal;line-height:1.3;
+  border-bottom:1px solid var(--border);padding-bottom:4px;
+  margin:26px 0 12px;
+}
+h2::before{counter-increment:sec;content:counter(sec) " ";color:var(--muted)}
+h2.nonum::before{content:none}
+h3{font-family:var(--sans);font-size:15.5px;font-weight:bold;margin:20px 0 6px}
+h4{font-family:var(--sans);font-size:14px;font-weight:bold;margin:16px 0 5px}
+
+p{margin-bottom:12px}
+.lead{font-size:14.5px}
+blockquote{border-left:3px solid var(--border-light);padding-left:14px;margin:0 0 14px;color:var(--muted)}
+
+ul,ol{margin:0 0 14px 0;padding-left:26px}
+li{margin-bottom:4px}
+
+code{font-family:var(--mono);font-size:12.5px;background:var(--bg-alt);border:1px solid var(--border-light);color:var(--code);padding:1px 4px;border-radius:2px}
+pre{background:var(--bg-alt);border:1px solid var(--border-light);padding:12px 14px;overflow-x:auto;margin-bottom:14px;border-radius:2px}
+pre code{background:none;border:none;color:var(--text);padding:0;font-size:12.5px;line-height:1.6}
+kbd{
+  font-family:var(--sans);font-size:11.5px;font-weight:bold;color:var(--text);
+  background:var(--bg-alt);border:1px solid var(--border);border-bottom-width:2px;
+  border-radius:2px;padding:1px 5px;white-space:nowrap;
+}
+
+/* ── Infobox ─────────────────────────────────────────────────────────── */
+.infobox{
+  float:right;width:23em;max-width:100%;
+  margin:0 0 16px 20px;
+  background:var(--bg-alt);border:1px solid var(--border);
+  font-size:12.5px;line-height:1.5;
+}
+.infobox .ib-head{text-align:center;padding:10px 10px 8px}
+.infobox .ib-head .ib-title{font-family:var(--serif);font-size:16px;margin-bottom:8px}
+.infobox .ib-head img{margin:0 auto 6px;display:block}
+.infobox .ib-head .cap{font-size:11.5px;color:var(--muted)}
+/* table-layout:fixed pins the columns to the box. Without it the table sizes
+   to its min-content, and one unbreakable string (the repository URL) forced
+   the table wider than the infobox, so every row overflowed the right border.
+   overflow-wrap:anywhere lets that URL wrap instead of dictating the width. */
+.infobox table{width:100%;border-collapse:collapse;table-layout:fixed}
+.infobox th,.infobox td{padding:5px 8px;text-align:left;vertical-align:top;border-top:1px solid var(--border-light)}
+.infobox th{width:38%;font-weight:bold;color:var(--text)}
+.infobox td{color:var(--text);overflow-wrap:anywhere}
+.infobox td code{overflow-wrap:anywhere}
+.infobox .ib-sec{
+  background:var(--bg-head);text-align:center;font-weight:bold;
+  padding:4px 8px;border-top:1px solid var(--border-light);font-size:12px;
+}
+
+/* ── Thumbnail figure ────────────────────────────────────────────────── */
+.thumb{
+  border:1px solid var(--border-light);background:var(--bg-alt);
+  padding:4px;margin:4px 0 16px;max-width:100%;
+}
+.thumb img{width:100%;height:auto;display:block;border:1px solid var(--border-light);background:var(--shot-bg)}
+.thumb figcaption{font-size:11.5px;color:var(--muted);padding:5px 3px 1px;line-height:1.45}
+.thumb.right{float:right;width:340px;margin-left:20px}
+
+/* ── Contents box ────────────────────────────────────────────────────── */
+.toc{
+  display:table;min-width:250px;
+  background:var(--bg-alt);border:1px solid var(--border-light);
+  padding:8px 14px 10px;margin:14px 0 18px;font-size:13px;
+}
+.toc .toc-title{text-align:center;font-weight:bold;margin-bottom:5px;font-size:13.5px}
+.toc ol{counter-reset:toc;list-style:none;padding-left:0;margin:0}
+.toc ol ol{counter-reset:toc2;padding-left:16px;margin:3px 0 0}
+.toc li{margin-bottom:2px}
+.toc ol > li::before{counter-increment:toc;content:counter(toc) " ";color:var(--muted)}
+.toc ol ol > li::before{counter-increment:toc2;content:counter(toc) "." counter(toc2) " ";color:var(--muted)}
+
+/* ── Link buttons (MediaWiki OOUI style) ─────────────────────────────── */
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 18px}
+.lbtn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 12px;border-radius:2px;font-size:13px;font-weight:bold;
+  background:var(--bg-alt);color:var(--text);border:1px solid var(--border);
+}
+.lbtn:hover{background:var(--bg);border-color:#72777d;text-decoration:none;color:var(--text)}
+.lbtn:visited{color:var(--text)}
+.lbtn.primary{background:var(--link);color:#fff;border-color:#2a4b8d}
+.lbtn.primary:hover{background:#2a4b8d;color:#fff}
+.lbtn.primary:visited{color:#fff}
+
+/* ── Tables ──────────────────────────────────────────────────────────── */
+.table-wrap{overflow-x:auto;margin-bottom:16px}
+.table-wrap table,table.wikitable{
+  border-collapse:collapse;background:var(--bg-alt);
+  border:1px solid var(--border);font-size:13px;width:100%;min-width:460px;
+}
+.table-wrap th,table.wikitable th{
+  background:var(--bg-head);border:1px solid var(--border);
+  padding:7px 10px;text-align:left;font-weight:bold;vertical-align:top;
+}
+.table-wrap td,table.wikitable td{
+  border:1px solid var(--border);padding:7px 10px;text-align:left;vertical-align:top;
+}
+caption{caption-side:top;text-align:left;font-weight:bold;padding:0 0 5px;font-size:13px}
+
+/* ── Callouts ────────────────────────────────────────────────────────── */
+.note{
+  border:1px solid var(--border-light);border-left:4px solid var(--accent);
+  background:var(--bg-alt);padding:10px 14px;margin:16px 0;font-size:13.5px;
+}
+.note p:last-child{margin-bottom:0}
+.note .label{display:block;font-weight:bold;margin-bottom:3px}
+.note.warn{border-left-color:#fc3}
+
+/* ── Tags ────────────────────────────────────────────────────────────── */
+.tag{
+  display:inline-block;font-size:10.5px;font-weight:bold;
+  padding:1px 6px;border-radius:2px;border:1px solid var(--border-light);
+  background:var(--bg-head);color:var(--muted);vertical-align:middle;
+}
+.tag.on{background:#d5fdf4;border-color:#00af89;color:#14866d}
+.tag.off{background:#f8f9fa;color:#72777d}
+
+/* ── Definition rows ─────────────────────────────────────────────────── */
+.defs{margin:14px 0}
+.defs > div{margin-bottom:12px}
+.defs dt{font-weight:bold;margin-bottom:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.defs dd{padding-left:22px}
+
+/* ── Cards / navigation grid ─────────────────────────────────────────── */
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+.card{display:block;border:1px solid var(--border-light);background:var(--bg-alt);padding:10px 12px}
+.card:hover{background:var(--bg);text-decoration:none}
+.card h3{margin:0 0 2px;font-size:14px;color:var(--link)}
+.card p{font-size:12.5px;margin:0;color:var(--muted);line-height:1.5}
+
+/* ── References ──────────────────────────────────────────────────────── */
+sup.ref{font-size:10px;vertical-align:super;line-height:0}
+.refs{font-size:12.5px;padding-left:26px;color:var(--text)}
+.refs li{margin-bottom:4px}
+.refs code{font-size:11.5px}
+
+/* ── Pager ───────────────────────────────────────────────────────────── */
+.pager{display:flex;gap:10px;margin-top:30px;padding-top:14px;border-top:1px solid var(--border-light);clear:both}
+.pager a{flex:1;border:1px solid var(--border-light);background:var(--bg-alt);padding:8px 12px}
+.pager a:hover{background:var(--bg);text-decoration:none}
+.pager span{display:block;font-size:11px;color:var(--muted)}
+.pager b{font-size:13px}
+.pager .next{text-align:right}
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+.foot{
+  border-top:1px solid var(--border);background:var(--bg-alt);
+  padding:14px 22px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  font-size:12px;color:var(--muted);
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────── */
+
+/* A grid/flex child defaults to min-width:auto, meaning it refuses to shrink
+   below its content's min-content width. One table with min-width:460px was
+   therefore forcing the whole document wider than the phone viewport, and the
+   table wrapper's overflow-x:auto never got a chance to engage. These let the
+   column shrink so wide content scrolls inside its own box instead of pushing
+   the page sideways. */
+.shell{min-width:0}
+.doc{min-width:0;max-width:min(1100px,100%)}
+.table-wrap{max-width:100%}
+.table-wrap table,table.wikitable{max-width:100%}
+pre,.toc,.infobox,.thumb{max-width:100%}
+/* Long unbroken strings (URLs, onion addresses) must not widen the page. */
+.doc p,.doc li,.doc dd,.refs li,td,th{overflow-wrap:break-word}
+
+@media (max-width:1000px){
+  .infobox{float:none;width:100%;max-width:100%;margin:0 0 16px 0}
+}
+
+@media (max-width:860px){
+  .shell{grid-template-columns:1fr}
+  .menu-btn{display:block}
+  .sidebar{
+    display:none;position:static;min-height:0;max-height:none;
+    border-right:none;border-bottom:1px solid var(--border);
+    padding:12px 16px 18px;
+  }
+  .sidebar.open{display:block}
+  /* Comfortable touch targets: 2px padding is a mouse-sized hit area. */
+  .sidebar a{padding:9px 8px;font-size:14px}
+  .sidebar h4{margin:16px 0 4px}
+  .doc{padding:16px 16px 50px}
+  .cards{grid-template-columns:1fr}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+  .toc{width:100%;display:block}
+}
+
+@media (max-width:640px){
+  /* The top bar cannot hold three text links plus two buttons on a phone.
+     Download stays (it is the point of the site); Source and Discord are
+     reachable from every page's link buttons and the footer. */
+  .topbar{padding:8px 12px;gap:10px}
+  .topbar-right{gap:10px}
+  .topbar-right a{display:none}
+  .topbar-right a:first-child{display:inline}
+  .brand .ver{display:none}
+
+  h1{font-size:24px}
+  h2{font-size:19px}
+  h3{font-size:15px}
+  .lead{font-size:15px}
+  body{font-size:15px}          /* 14px is tight on a phone */
+  .hatnote{padding-left:12px}
+  .doc{padding:14px 14px 44px}
+  .defs dd{padding-left:0}
+
+  /* Let narrow tables use the width available instead of forcing a scroll;
+     genuinely wide ones still scroll inside .table-wrap. */
+  .table-wrap table,table.wikitable{min-width:0}
+  .table-wrap{-webkit-overflow-scrolling:touch}
+  th,td{padding:7px 8px}
+
+  /* Wrap shell commands rather than making a phone user scroll sideways to
+     read them. The pre already scrolls, so this is comfort, not correctness. */
+  pre{white-space:pre-wrap;overflow-wrap:anywhere}
+
+  .btn-row{gap:8px}
+  .lbtn{flex:1 1 auto;justify-content:center;min-height:40px}
+  .theme-btn{height:32px;padding:0 9px}
+  .menu-btn{width:34px;height:34px}
+}
+
+@media (max-width:380px){
+  .brand b{font-size:16px}
+  .lbtn{flex:1 1 100%}
+}

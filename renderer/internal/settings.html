@@ -2574,7 +2574,7 @@ async function init() {
   }
 
   // These settings default to ON when unset — treat undefined as true.
-  const DEFAULT_ON = new Set(['restoreTabsOnLaunch', 'autoUpdates', 'adBlocking', 'httpsUpgrade', 'passwordManagerEnabled', 'syncDiscordTheme', 'vibeOverPages', 'identityAutofillEnabled', 'ntpShowGreeting', 'ntpShowAddShortcutBtn', 'cryptojackingProtection', 'easyFilesEnabled']);
+  const DEFAULT_ON = new Set(['restoreTabsOnLaunch', 'autoUpdates', 'adBlocking', 'httpsUpgrade', 'passwordManagerEnabled', 'syncDiscordTheme', 'vibeOverPages', 'ntpShowGreeting', 'ntpShowAddShortcutBtn', 'cryptojackingProtection', 'easyFilesEnabled']);
 
   const ollamaModelInp = $('ollamaModel');
   if (ollamaModelInp) {
@@ -2596,7 +2596,7 @@ async function init() {
   }
   {
     const row = $('ollama-model-row');
-    const enabled = 'identityAutofillEnabled' in currentSettings ? !!currentSettings.identityAutofillEnabled : true;
+    const enabled = !!currentSettings.identityAutofillEnabled;
     if (row) row.style.display = enabled ? '' : 'none';
   }
   for (const id of TOGGLES) {

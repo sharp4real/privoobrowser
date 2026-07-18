@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Privoo Desktop: FAQ and troubleshooting</title>
+<meta name="description" content="Frequently asked questions about Privoo, and fixes for common problems: ad blocking, video playback, DRM, downloads, sign-outs, extensions and .mariana sites."/>
+<link rel="icon" href="logo.png"/>
+<script>try{var t=localStorage.getItem('privoo-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;}catch(e){}</script>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="index.html">
+    <img src="logo.png" alt="" width="24" height="24"/>
+    <b>Privoo</b>
+    <span class="ver">reference</span>
+  </a>
+  <div class="topbar-right">
+    <a href="https://github.com/sharp4real/privoobrowser/releases/latest">Download</a>
+    <a href="https://github.com/sharp4real/privoobrowser">Source</a>
+    <a href="https://discord.gg/WweUzF3YCQ">Discord</a>
+    <button class="theme-btn" id="theme-btn" type="button">☾ Dark</button>
+    <button class="menu-btn" id="menu-btn" aria-label="Menu">☰</button>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <h4>Article</h4>
+    <a href="index.html">Privoo Desktop</a>
+    <a href="install.html">Installation</a>
+    <h4>Protection</h4>
+    <a href="privacy.html">Privacy and security</a>
+    <a href="mariana.html">.mariana hosting</a>
+    <h4>Using Privoo Desktop</h4>
+    <a href="tools.html">Built-in tools</a>
+    <a href="ai.html">Privoo AI</a>
+    <a href="browsing.html">Browsing</a>
+    <a href="appearance.html">Appearance</a>
+    <h4>Other products</h4>
+    <a href="android.html">Privoo for Android</a>
+    <a href="coder.html">Privoo Coder</a>
+    <h4>Reference</h4>
+    <a href="shortcuts.html">Keyboard shortcuts</a>
+    <a href="faq.html" class="active">FAQ and troubleshooting</a>
+  </aside>
+
+  <main class="doc">
+    <h1>Privoo Desktop: FAQ and troubleshooting</h1>
+    <p class="subtitle">From the Privoo reference. This article covers version 5.0.6.</p>
+    <p class="hatnote">Main article: <a href="index.html">Privoo Desktop</a></p>
+
+    <p class="lead">
+      Common questions about the project and its privacy claims, followed by fixes for
+      problems that arise in practice.
+    </p>
+
+    <nav class="toc">
+      <div class="toc-title">Contents</div>
+      <ol>
+        <li><a href="#project">About the project</a></li>
+        <li><a href="#privacy-q">Privacy questions</a></li>
+        <li><a href="#trouble">Troubleshooting</a>
+          <ol>
+            <li><a href="#t-block">Blocking</a></li>
+            <li><a href="#t-media">Video and DRM</a></li>
+            <li><a href="#t-sites">Site behaviour</a></li>
+            <li><a href="#t-mariana">.mariana sites</a></li>
+            <li><a href="#t-misc">Other</a></li>
+          </ol>
+        </li>
+        <li><a href="#help">Getting help</a></li>
+        <li><a href="#see-also">See also</a></li>
+      </ol>
+    </nav>
+
+    <h2 id="project">About the project</h2>
+
+    <h3>How is Privoo funded, if it collects nothing?</h3>
+    <p>
+      It is not funded. Privoo is an independent MIT-licensed project rather than a
+      company with revenue targets. This is the structural reason its privacy defaults can
+      be what they are: there is no advertising business inside the browser that enabling
+      them would damage. The corresponding implication is that it carries the support and
+      continuity characteristics of an independent project, with no support contract and
+      no guarantee of maintenance.
+    </p>
+
+    <h3>Is it genuinely free of telemetry?</h3>
+    <p>
+      Yes, and the claim is verifiable rather than a promise. There is no analytics
+      endpoint, no usage counter and no crash reporter transmitting data. The privacy
+      statistics displayed by the shield are computed and stored locally.
+    </p>
+    <p>
+      Privoo makes two categories of routine outbound request on its own behalf: update
+      checks against the GitHub release feed, and filter-list refreshes. Neither carries a
+      user identifier. The project states these explicitly rather than claiming zero
+      network activity, which would be false.
+    </p>
+
+    <h3>Is it just Chrome with a different theme?</h3>
+    <p>
+      It is built on Chromium, which is the source of its web compatibility. The layer
+      above the engine differs: the blocking engine, the privacy defaults, the interface,
+      the built-in tools, the internal <code>privoo://</code> pages and features such as
+      <a href="mariana.html">.mariana</a> are the project's own work. See
+      <a href="index.html#architecture">Architecture</a>.
+    </p>
+
+    <h3>Why should I trust it?</h3>
+    <p>
+      Preferably, do not: verify it. The source is MIT-licensed and public, and the claims
+      made in this reference correspond to code that can be read. This is the only form of
+      answer to that question with any weight, from any browser.
+    </p>
+
+    <h3>Does it synchronise between devices?</h3>
+    <p>
+      No, by design. There is no account and no synchronisation server, so there is no
+      store of user data to breach, subpoena or monetise. The cost is real and is stated
+      plainly: bookmarks and passwords remain on the machine that created them, and moving
+      them requires copying the profile directory. See
+      <a href="install.html#data">Installation: data storage</a>.
+    </p>
+
+    <h2 id="privacy-q">Privacy questions</h2>
+
+    <h3>If I disable a protection in Settings, does it actually stop?</h3>
+    <p>
+      Yes. The setting is consulted per request, so it stops on the next request rather
+      than at the next restart, and it is not concealed from the shield panel while
+      continuing to run. This was not true before version 5.0.4; see
+      <a href="privacy.html#shield-toggle">Privacy and security: Behaviour when disabled</a>.
+    </p>
+
+    <h3>The shield reports zero on a site with visible advertising.</h3>
+    <p>
+      Three common explanations. The site may carry a per-site exception, visible in the
+      shield panel as <b>Ads blocked on this site</b>. The counter resets on each page
+      load, so a figure from before a refresh is gone. Or the advertising is served
+      first-party from the site's own domain, which no network-layer blocker can remove
+      without breaking the page itself.
+    </p>
+
+    <h3>Does incognito make me anonymous?</h3>
+    <p>
+      No. It prevents local retention after the window closes. The sites visited and the
+      network still observe the connection exactly as usual. This is true of incognito in
+      every browser. For network-level privacy see
+      <a href="privacy.html#tor">Tor, proxies and alternative naming</a>.
+    </p>
+
+    <h3>Is .mariana untraceable?</h3>
+    <p>
+      Tor hidden services are a strong and well-studied anonymity mechanism, and the
+      post-quantum layer is a genuine addition on top of Tor's own encryption. Neither
+      confers invulnerability, and neither helps if identifying information appears on the
+      published page. See
+      <a href="mariana.html#pq-limits">.mariana hosting: Scope and limitations</a>.
+    </p>
+
+    <h3>Do the ENS and IPFS features leak?</h3>
+    <p>
+      They resolve through public gateways, and those gateways observe the request. This
+      is a convenience trade-off and is weaker than running a local resolver or IPFS node.
+      It is documented rather than concealed.
+    </p>
+
+    <h2 id="trouble">Troubleshooting</h2>
+
+    <h3 id="t-block">Blocking</h3>
+    <h4>Ad blocking does not appear to work</h4>
+    <p>
+      Filter lists are compiled at launch, so restart Privoo first, particularly after
+      changing which lists are enabled. Confirm blocking is enabled at
+      <code>privoo://extensions</code>, then open the shield on the page to check for a
+      per-site exception. If a third-party content blocker is also installed, the two can
+      compete over the same requests.
+    </p>
+    <h4>A site is broken and I suspect blocking</h4>
+    <p>
+      Open the shield and disable <b>Ads blocked on this site</b> to test. If that
+      resolves it, the site is worth reporting so a compatibility rule can be considered.
+    </p>
+
+    <h3 id="t-media">Video and DRM</h3>
+    <h4>Video will not play, or the first video is a black frame</h4>
+    <p>
+      Try disabling hardware acceleration in <b>Settings &rarr; Performance</b>. Privoo
+      already works around the common GPU cold-start case in which the first video of a
+      session renders black until refreshed, but a particular driver may still misbehave.
+    </p>
+    <h4>Spotify or Netflix will not play</h4>
+    <p>
+      These require Widevine DRM, which official builds include and sign. A source build
+      without a completed Widevine VMP signing step will run but will not obtain a
+      licence. Use an official release, or check the build output. See
+      <a href="install.html#source">Installation: building from source</a>.
+    </p>
+
+    <h3 id="t-sites">Site behaviour</h3>
+    <h4>A site keeps signing me out</h4>
+    <p>
+      Some services rotate sessions frequently and are sensitive to cookie handling. To
+      test, temporarily disable <b>Block third-party cookies</b>. Historical defects in
+      this area have been fixed, including a main-frame misclassification that stripped
+      first-party login cookies during navigation, and a cookie-flush issue on quit.
+      Persisting cases are treated as genuine bugs and are worth reporting.
+    </p>
+    <h4>A site refuses to load or claims my browser is unsupported</h4>
+    <p>
+      Privoo reports a common Chrome identity precisely to avoid this. If a site still
+      refuses, report it; the User-Agent handling has several layers and a gap in one of
+      them is a bug.
+    </p>
+
+    <h3 id="t-mariana">.mariana sites</h3>
+    <h4>A .mariana link will not open</h4>
+    <p>
+      The most common cause is that the host is not running Privoo, since the site is
+      available only while the host's browser is open. Tor also requires several seconds
+      to bootstrap after a cold start. If a short name was typed that this browser has not
+      seen before, open the full share link once first.
+    </p>
+    <h4>Publishing fails immediately after launching Privoo</h4>
+    <p>
+      Tor's control port is not ready until Tor has bootstrapped. Privoo retries for
+      roughly thirty seconds; if it still fails, confirm Tor is available on the system.
+    </p>
+
+    <h3 id="t-misc">Other</h3>
+    <h4>Downloads are not appearing</h4>
+    <p>
+      Check the download directory in Settings and that Privoo has permission to write to
+      it. <code>privoo://downloads</code> shows live status for transfers in progress.
+    </p>
+    <h4>An extension does not work</h4>
+    <p>
+      Privoo implements a subset of Chrome's extension APIs. Extensions relying on
+      advanced APIs may be inert. See
+      <a href="tools.html#thirdparty">Built-in tools: Third-party extensions</a>.
+    </p>
+    <h4>I want to reset everything</h4>
+    <p>
+      <b>Delete all data</b> in Settings clears all stored state and returns the browser
+      to a fresh install. It cannot be undone and there is no remote copy to restore from.
+    </p>
+    <div class="note warn">
+      <span class="label">Before deleting</span>
+      <p>
+        If any <code>.mariana</code> sites are hosted, deleting all data destroys their
+        private keys. Those addresses cannot be recovered, and links already shared will
+        never resolve again.
+      </p>
+    </div>
+
+    <h2 id="help">Getting help</h2>
+    <div class="table-wrap">
+      <table>
+        <caption>Where to go</caption>
+        <thead><tr><th>Channel</th><th>Use for</th></tr></thead>
+        <tbody>
+          <tr><td><a href="https://github.com/sharp4real/privoobrowser/issues">GitHub Issues</a></td><td>Bugs and feature requests.</td></tr>
+          <tr><td><a href="https://github.com/sharp4real/privoobrowser/discussions">GitHub Discussions</a></td><td>Questions and general discussion.</td></tr>
+          <tr><td><a href="https://discord.gg/WweUzF3YCQ">Discord</a></td><td>Community conversation.</td></tr>
+          <tr><td><a href="https://github.com/sharp4real/privoobrowser">Repository</a></td><td>Reading or contributing code.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      Pull requests are welcome. Fork the repository, branch from <code>main</code>, and
+      describe what changed and why.
+    </p>
+
+    <div class="btn-row">
+      <a class="lbtn primary" href="https://github.com/sharp4real/privoobrowser/issues/new">Report a bug</a>
+      <a class="lbtn" href="https://github.com/sharp4real/privoobrowser/discussions">Ask a question</a>
+      <a class="lbtn" href="https://discord.gg/WweUzF3YCQ">Join Discord</a>
+      <a class="lbtn" href="https://github.com/sharp4real/privoobrowser">Read the source</a>
+    </div>
+
+    <h2 id="see-also" class="nonum">See also</h2>
+    <ul>
+      <li><a href="privacy.html">Privoo Desktop: Privacy and security</a></li>
+      <li><a href="install.html">Privoo Desktop: Installation</a></li>
+      <li><a href="index.html#limitations">Privoo Desktop: Limitations and criticism</a></li>
+    </ul>
+
+    <nav class="pager">
+      <a href="shortcuts.html"><span>Previous</span><b>&lsaquo; Keyboard shortcuts</b></a>
+      <a class="next" href="index.html"><span>Back to</span><b>Privoo Desktop &rsaquo;</b></a>
+    </nav>
+  </main>
+</div>
+
+<footer class="foot">
+  <span>Privoo is an independent project. No telemetry, no tracking, no data collection.</span>
+  <span>Content describes Privoo 5.0.6 · MIT licensed</span>
+</footer>
+
+<script src="nav.js"></script>
+</body>
+</html>
