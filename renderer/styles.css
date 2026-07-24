@@ -1,46 +1,47 @@
 /* ─── Design tokens ─────────────────────────────────────────────────
-   Premium light glassmorphism. One system: soft lavender-tinted whites,
-   translucent floating surfaces, generous radii, layered soft shadows.
+   A quiet, premium studio look: soft neutral surfaces, one confident
+   indigo accent used sparingly, generous radii, layered soft shadows —
+   closer to Linear/Arc than a stock browser skin.
    Every component keys off these — change them here, not per-component. */
 :root {
   /* Typography */
   --font:        "Inter", "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
 
   /* Surfaces */
-  --strip:       #e9e7f4;                    /* window / titlebar wash          */
-  --strip-focus: #dfdcef;
-  --tab-active:  #ffffff;                    /* active pill                     */
+  --strip:       #f3f3f7;                    /* window / titlebar wash          */
+  --strip-focus: #ececf2;
+  --tab-active:  #ffffff;                    /* active tab                      */
   --tab-width:   220px;
-  --tab-hover:   rgba(255,255,255,.65);
+  --tab-hover:   rgba(23,23,31,.045);
   --toolbar:     #ffffff;                    /* main bar + popover surface      */
-  --omni-bg:     #f1f0f7;
-  --omni-hover:  #eceaf4;
+  --omni-bg:     #f1f1f6;
+  --omni-hover:  #e9e9f0;
   --glass:       rgba(255,255,255,.72);      /* frosted panel fill              */
   --glass-blur:  saturate(1.4) blur(18px);
 
   /* Ink */
-  --text:        #26243a;
-  --muted:       #6d6a85;
+  --text:        #17171f;
+  --muted:       #6c6c78;
 
-  /* Lavender accent — buttons, toggles, focus rings, active states */
-  --accent:      #8b7cf7;
-  --accent-hover:#9d90f8;
+  /* Signature indigo accent — buttons, toggles, focus rings, active states */
+  --accent:      #4f46e5;
+  --accent-hover:#6058ea;
   --on-accent:   #ffffff;
-  --accent-soft: rgba(139,124,247,.16);
-  --status-on:   #44415e;
-  --green:       #44415e;
+  --accent-soft: rgba(79,70,229,.13);
+  --status-on:   #26243a;
+  --green:       #26243a;
   --red:         #d93025;
 
   /* Lines & states */
-  --border:      rgba(38,36,58,.10);
-  --hover:       rgba(38,36,58,.06);
+  --border:      rgba(23,23,31,.09);
+  --hover:       rgba(23,23,31,.05);
 
   /* Geometry & elevation */
-  --r-sm:        9px;
-  --r-md:        13px;
-  --r-lg:        18px;
-  --shadow:      0 1px 2px rgba(38,36,58,.05), 0 2px 8px rgba(38,36,58,.06);
-  --panel-shadow:0 24px 60px -18px rgba(38,36,58,.28), 0 4px 16px rgba(38,36,58,.10);
+  --r-sm:        10px;
+  --r-md:        14px;
+  --r-lg:        20px;
+  --shadow:      0 1px 2px rgba(23,23,31,.05), 0 3px 10px rgba(23,23,31,.06);
+  --panel-shadow:0 26px 64px -20px rgba(23,23,31,.30), 0 6px 18px rgba(23,23,31,.10);
 
   /* Motion */
   --ease:        cubic-bezier(.2,.8,.25,1);
@@ -49,45 +50,45 @@
 }
 
 body.dark {
-  --strip:       #1c1b26;
-  --strip-focus: #26242f;
-  --tab-active:  rgba(48,46,62,.95);
-  --tab-hover:   rgba(255,255,255,.07);
-  --toolbar:     #232230;
-  --omni-bg:     rgba(255,255,255,.06);
-  --omni-hover:  rgba(255,255,255,.10);
-  --glass:       rgba(35,34,48,.78);
-  --text:        #eceaf6;
-  --muted:       #a5a2bd;
-  --border:      rgba(255,255,255,.09);
-  --hover:       rgba(255,255,255,.07);
-  --shadow:      0 1px 3px rgba(0,0,0,.38);
-  --panel-shadow:0 24px 60px -14px rgba(0,0,0,.6), 0 4px 14px rgba(0,0,0,.4);
+  --strip:       #17181c;
+  --strip-focus: #1d1e23;
+  --tab-active:  #232429;
+  --tab-hover:   rgba(255,255,255,.06);
+  --toolbar:     #1b1c20;
+  --omni-bg:     rgba(255,255,255,.055);
+  --omni-hover:  rgba(255,255,255,.09);
+  --glass:       rgba(23,24,28,.78);
+  --text:        #f1f1f4;
+  --muted:       #97979f;
+  --border:      rgba(255,255,255,.08);
+  --hover:       rgba(255,255,255,.06);
+  --shadow:      0 1px 3px rgba(0,0,0,.45);
+  --panel-shadow:0 28px 70px -20px rgba(0,0,0,.65), 0 6px 18px rgba(0,0,0,.4);
   /* Accent values are declared once on :root above and shared between
      light/dark. Re-declaring them on body.dark would shadow the JS-set
      custom accent (which lives on documentElement), so we don't. */
-  --status-on:   #e8eaed;
-  --green:       #e8eaed;
+  --status-on:   #f1f1f4;
+  --green:       #f1f1f4;
   color-scheme: dark;
-  background: #202124 !important;
-  color: #e8eaed !important;
+  background: #17181c !important;
+  color: #f1f1f4 !important;
 }
 
 body.dark .strip-btn:hover,
-body.dark .win-ctrl:hover { background: rgba(255,255,255,.08); }
-body.dark .tab:hover:not(.active) { background: rgba(255,255,255,.08); }
-body.dark .tab .tab-close:hover { background: rgba(255,255,255,.12); }
-body.dark #omnibox::placeholder { color: #9aa0a6; }
-body.dark .dl-progress { background: #3c4043; }
-body.dark .menu-item { color: #e8eaed; }
-/* Dark mode — keep button icons bright white, not muted grey. */
-body.dark .tb-btn { color: #e8eaed; }
-body.dark .nav-btn { color: #e8eaed; }
-body.dark #titlebar { background: #202124; }
-body.dark #toolbar { background: #303134; border-bottom-color: #4a4d51; }
-body.dark #bookmarks-bar { background: #303134; border-bottom-color: #4a4d51; }
-body.dark .tab { color: #bdc1c6; }
-body.dark .tab.active { background: #303134; color: #e8eaed; }
+body.dark .win-ctrl:hover { background: rgba(255,255,255,.07); }
+body.dark .tab:hover:not(.active) { background: rgba(255,255,255,.06); }
+body.dark .tab .tab-close:hover { background: rgba(255,255,255,.11); }
+body.dark #omnibox::placeholder { color: #97979f; }
+body.dark .dl-progress { background: #33343a; }
+body.dark .menu-item { color: #f1f1f4; }
+/* Dark mode — keep button icons bright, not muted grey. */
+body.dark .tb-btn { color: #f1f1f4; }
+body.dark .nav-btn { color: #f1f1f4; }
+body.dark #titlebar { background: #17181c; }
+body.dark #toolbar { background: #1b1c20; border-bottom-color: #2a2b31; }
+body.dark #bookmarks-bar { background: #1b1c20; border-bottom-color: #2a2b31; }
+body.dark .tab { color: #a3a3ad; }
+body.dark .tab.active { background: #232429; color: #f1f1f4; }
 
 /* ─── Increase Transparency ─────────────────────────────────────────
    When the user enables "Increase Transparency" in Settings the main
@@ -612,27 +613,29 @@ body.dark .wave-btn.ghost:hover { background: rgba(255,255,255,.07); }
   .theme-vol { width: 100%; }
 }
 
-/* Visible widget surfaces — frosted glass tint over the OS acrylic/vibrancy
-   material. backdrop-filter on titlebar + toolbar blurs the desktop behind
-   them; the rgba fill is a light tint so text stays readable. Low alphas
-   let the blur/colour of the OS material show through clearly. */
+/* Visible widget surfaces — genuine frosted glass over the OS acrylic/
+   vibrancy material. A real blur radius (not a token 3px) so the desktop
+   behind actually reads as frosted, plus a hairline inner highlight for
+   the same sense of depth the Liquid/Acrylic styles already have. */
 body.transparent-ui #titlebar {
-  background: rgba(255,255,255,.14) !important;
-  backdrop-filter: blur(3px) saturate(150%);
-  -webkit-backdrop-filter: blur(3px) saturate(150%);
+  background: rgba(255,255,255,.22) !important;
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.4);
 }
 body.transparent-ui #toolbar {
-  background: rgba(255,255,255,.14) !important;
-  backdrop-filter: blur(3px) saturate(150%);
-  -webkit-backdrop-filter: blur(3px) saturate(150%);
+  background: rgba(255,255,255,.22) !important;
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.4);
 }
 body.transparent-ui #bookmarks-bar {
-  background: rgba(255,255,255,.12) !important;
-  backdrop-filter: blur(3px) saturate(150%);
-  -webkit-backdrop-filter: blur(3px) saturate(150%);
+  background: rgba(255,255,255,.18) !important;
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
 }
 body.transparent-ui .tab.active {
-  background: rgba(0,0,0,.10) !important;
+  background: rgba(255,255,255,.55) !important;
 }
 
 /* ─── Transparency styles (Settings → Layout → Glass style) ───────────────
@@ -657,7 +660,7 @@ body.transparent-ui.tstyle-liquid #omnibox-wrap {
 body.transparent-ui.tstyle-liquid.dark #titlebar,
 body.transparent-ui.tstyle-liquid.dark #toolbar,
 body.transparent-ui.tstyle-liquid.dark #bookmarks-bar {
-  background: rgba(40,42,52,.24) !important;
+  background: rgba(35,36,41,.24) !important;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.14);
 }
 body.transparent-ui.tstyle-liquid.dark #omnibox-wrap {
@@ -725,22 +728,24 @@ body.transparent-ui:not(.dark) .popover       { color: #1f1f1f; }
 body.transparent-ui:not(.dark) .toolbar-popover { color: #1f1f1f; }
 
 body.transparent-ui.dark #titlebar {
-  background: rgba(24,25,29,.22) !important;
-  backdrop-filter: blur(3px) saturate(130%);
-  -webkit-backdrop-filter: blur(3px) saturate(130%);
+  background: rgba(15,16,19,.42) !important;
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
 }
 body.transparent-ui.dark #toolbar {
-  background: rgba(26,27,31,.22) !important;
-  backdrop-filter: blur(3px) saturate(130%);
-  -webkit-backdrop-filter: blur(3px) saturate(130%);
+  background: rgba(17,18,21,.42) !important;
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
 }
 body.transparent-ui.dark #bookmarks-bar {
-  background: rgba(24,25,29,.18) !important;
-  backdrop-filter: blur(3px) saturate(130%);
-  -webkit-backdrop-filter: blur(3px) saturate(130%);
+  background: rgba(15,16,19,.36) !important;
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
 }
 body.transparent-ui.dark .tab.active {
-  background: rgba(255,255,255,.08) !important;
+  background: rgba(255,255,255,.14) !important;
 }
 body.transparent-ui.dark #omnibox-wrap {
   background: rgba(255, 255, 255, .10) !important;
@@ -1965,14 +1970,15 @@ body.dark .si-icon.insecure { background: rgba(242,139,130,.18); color: #f28b82;
   color: var(--accent);
 }
 
-/* Incognito window — a deeper, cooler charcoal than normal so a private
-   window is unmistakable, in the lavender design language. */
-body.incognito { --strip: #141320; --toolbar: #141320; --tab-active: #221f36; --tab-hover: #24213a;
-  --omni-bg: #1c1a2e; --omni-hover: #241f3a; --border: rgba(255,255,255,.08); --hover: #241f3a;
-  --text: #eceaf6; --muted: #a5a2bd; --pv-rail: #100f1a; }
+/* Incognito window — a near-black ink, deeper than normal dark mode, so a
+   private window is unmistakable at a glance. Same neutral family as the
+   rest of the app (no purple-navy cast), just darker. */
+body.incognito { --strip: #0f0f13; --toolbar: #0f0f13; --tab-active: #1c1c22; --tab-hover: rgba(255,255,255,.06);
+  --omni-bg: rgba(255,255,255,.05); --omni-hover: rgba(255,255,255,.08); --border: rgba(255,255,255,.08); --hover: rgba(255,255,255,.06);
+  --text: #f1f1f4; --muted: #97979f; --pv-rail: #0f0f13; }
 body.incognito #titlebar { background: var(--strip); color: var(--text); }
 body.incognito .tab { color: var(--muted); }
-body.incognito .tab.active { background: var(--tab-active); color: var(--text); box-shadow: inset 0 2px 0 var(--accent); }
+body.incognito .tab.active { background: var(--tab-active); color: var(--text); }
 body.incognito #toolbar,
 body.incognito #bookmarks-bar { background: var(--toolbar); border-bottom-color: var(--border); color: var(--text); }
 body.incognito .tb-btn { color: var(--text); }
@@ -2329,17 +2335,17 @@ body.dark .setup-overlay { background: rgba(32, 33, 36, .68); }
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(46% 50% at 22% 22%, rgba(139,124,247,.46), transparent 72%),
-    radial-gradient(42% 46% at 78% 74%, rgba(197,138,247,.36), transparent 72%),
-    radial-gradient(60% 60% at 50% 100%, rgba(139,124,247,.16), transparent 70%);
+    radial-gradient(46% 50% at 22% 22%, rgba(79,70,229,.44), transparent 72%),
+    radial-gradient(42% 46% at 78% 74%, rgba(124,92,247,.34), transparent 72%),
+    radial-gradient(60% 60% at 50% 100%, rgba(79,70,229,.15), transparent 70%);
   background-repeat: no-repeat;
   animation: sw-glow 18s ease-in-out infinite alternate;
 }
 body.dark .setup-overlay::before {
   background:
-    radial-gradient(46% 50% at 22% 22%, rgba(139,124,247,.32), transparent 72%),
-    radial-gradient(42% 46% at 78% 74%, rgba(197,138,247,.26), transparent 72%),
-    radial-gradient(60% 60% at 50% 100%, rgba(139,124,247,.12), transparent 70%);
+    radial-gradient(46% 50% at 22% 22%, rgba(79,70,229,.30), transparent 72%),
+    radial-gradient(42% 46% at 78% 74%, rgba(124,92,247,.24), transparent 72%),
+    radial-gradient(60% 60% at 50% 100%, rgba(79,70,229,.11), transparent 70%);
 }
 @keyframes sw-glow {
   from { background-position: -4% -3%, 4% 3%; }
@@ -2768,7 +2774,7 @@ body.dark .cp-body::-webkit-scrollbar-thumb { background: #5f6368; }
   border: 1px solid var(--border);
 }
 .cp-theme-light { background: linear-gradient(180deg, #ece9f7 0 14px, #ffffff 14px); }
-.cp-theme-dark  { background: linear-gradient(180deg, #1c1b26 0 14px, #2a2938 14px); }
+.cp-theme-dark  { background: linear-gradient(180deg, #202124 0 14px, #303134 14px); }
 
 /* Accent color swatches */
 .cp-accent-row {
@@ -3333,11 +3339,10 @@ body.transparent-ui.dark .app-sidebar {
   justify-content: center;
   position: relative;
   overflow: hidden;
-  transition: background .16s ease,
-              transform .14s cubic-bezier(.34,1.5,.64,1);
+  transition: background .16s ease;
 }
-.sidebar-rail-btn:hover { background: var(--hover); transform: translateY(-1px); }
-.sidebar-rail-btn:active { transform: scale(.9); transition-duration: .05s; }
+.sidebar-rail-btn:hover { background: var(--hover); }
+.sidebar-rail-btn:active { opacity: .8; }
 .sidebar-rail-btn img {
   width: 22px; height: 22px;
   object-fit: contain;
@@ -6409,47 +6414,46 @@ body.ui-round .tab { border-radius: 14px 14px 6px 6px !important; }
    applyAccentTriad()'s JS override landed (or as a bare fallback) got a
    mismatched green tint next to a lavender accent. */
 :root {
-  --accent: #8b7cf7;
-  --accent-hover: #9d90f8;
-  --accent-soft: rgba(139, 124, 247, .15);
+  --accent: #4f46e5;
+  --accent-hover: #6058ea;
+  --accent-soft: rgba(79, 70, 229, .13);
 }
 body.privoo-one {
   --pv-mono: ui-monospace, "Cascadia Code", "SF Mono", "JetBrains Mono", Consolas, monospace;
 }
-/* Light — lavender (matches the rest of the app). This block is applied
+/* Light — soft neutral studio surfaces. This block is applied
    unconditionally (privoo-one is always on) and sits late in the cascade,
-   so it was silently re-defining --strip/--toolbar/--omni-bg back to the
-   old warm-stone skin underneath the JS accent wash, and it owns several
-   properties (--tab-active, --tab-hover, --border, --muted, --text,
-   --pv-rail — the sidebar rail) the JS accent code never touches at all. */
+   so it owns --strip/--toolbar/--omni-bg plus several properties
+   (--tab-active, --tab-hover, --border, --muted, --text, --pv-rail — the
+   sidebar rail) the JS accent code never touches at all. */
 body.privoo-one:not(.dark) {
-  --strip: #f2f1f9;
-  --strip-focus: #ece9f7;
+  --strip: #f3f3f7;
+  --strip-focus: #ececf2;
   --tab-active: #ffffff;
-  --tab-hover: #ece9f7;
+  --tab-hover: rgba(23,23,31,.045);
   --toolbar: #ffffff;
-  --omni-bg: #f4f3fa;
-  --omni-hover: #ece9f7;
-  --text: #26243a;
-  --muted: #6d6a85;
-  --border: rgba(38,36,58,.09);
-  --hover: #ece9f7;
-  --pv-rail: #ece9f7;
+  --omni-bg: #f1f1f6;
+  --omni-hover: #e9e9f0;
+  --text: #17171f;
+  --muted: #6c6c78;
+  --border: rgba(23,23,31,.09);
+  --hover: rgba(23,23,31,.05);
+  --pv-rail: #ececf2;
 }
-/* Dark — matching deep lavender (default). */
+/* Dark — rich graphite, not tinted black. */
 body.privoo-one.dark {
-  --strip: #1c1b26;
-  --strip-focus: #26242f;
-  --tab-active: #2a2938;
-  --tab-hover: #322f45;
-  --toolbar: #1c1b26;
-  --omni-bg: #2a2938;
-  --omni-hover: #322f45;
-  --text: #eceaf6;
-  --muted: #a5a2bd;
-  --border: rgba(255,255,255,.09);
-  --hover: #322f45;
-  --pv-rail: #171622;
+  --strip: #17181c;
+  --strip-focus: #1d1e23;
+  --tab-active: #232429;
+  --tab-hover: rgba(255,255,255,.06);
+  --toolbar: #1b1c20;
+  --omni-bg: rgba(255,255,255,.055);
+  --omni-hover: rgba(255,255,255,.09);
+  --text: #f1f1f4;
+  --muted: #97979f;
+  --border: rgba(255,255,255,.08);
+  --hover: rgba(255,255,255,.06);
+  --pv-rail: #17181c;
 }
 
 /* Chrome surfaces — flat, separated by a single hairline (not shadow). */
@@ -6466,55 +6470,51 @@ body.privoo-one #views-wrap { background: var(--strip); }
 body.privoo-one #views { margin: 0; border-radius: 0; box-shadow: none; }
 body.privoo-one #views webview { border-radius: 0; }
 
-/* ── Centered floating pill tabs; the "+" sits on the same centre line ── */
-body.privoo-one #titlebar { height: 42px; min-height: 42px; align-items: center; }
+/* ── Studio tabs: fully rounded, calm colour changes only — no bounce,
+   no shadow theatrics. Reads as considered, not demoed. ── */
+body.privoo-one #titlebar { height: 44px; min-height: 44px; align-items: center; }
 body.privoo-one #tabs { padding-top: 0; align-items: center; height: 100%; }
-body.privoo-one #tabs-scroll { align-items: center; padding-left: 6px; }
+body.privoo-one #tabs-scroll { align-items: center; padding-left: 10px; }
 body.privoo-one .tab {
   align-self: center;
-  height: 32px;
-  border-radius: 8px;
-  margin: 0 2px;
-  padding: 0 9px 0 12px;
+  height: 34px;
+  border-radius: 10px;
+  margin: 0 3px;
+  padding: 0 9px 0 13px;
   background: transparent;
   color: var(--muted);
-  font-weight: 400;
+  font-weight: 450;
   font-size: 12.5px;
+  transition: background var(--t-fast) ease, color var(--t-fast) ease, opacity .18s ease;
 }
-/* Kill the Chrome "folder" corner curves. */
-body.privoo-one .tab.active::before,
-body.privoo-one .tab.active::after { display: none !important; }
-body.privoo-one .tab:hover:not(.active) { background: var(--tab-hover); color: var(--text); }
-/* Active tab: filled pill with a short pine underline as the indicator. */
+body.privoo-one .tab:hover:not(.active) {
+  background: var(--tab-hover);
+  color: var(--text);
+}
+/* Active tab: a flat, confident fill plus a crisp accent underline —
+   the underline (not a shadow) is what marks "this one is active". */
 body.privoo-one .tab.active {
   background: var(--tab-active);
   color: var(--text);
   position: relative;
 }
 body.privoo-one .tab.active::after {
-  display: block !important;
-  content: ""; position: absolute; left: 12px; right: 12px; bottom: 3px;
-  top: auto; width: auto; height: 2px;
-  background: var(--accent); border-radius: 2px;
-  -webkit-mask: none; mask: none;
+  content: "";
+  position: absolute; left: 10px; right: 10px; bottom: 4px;
+  height: 2px; border-radius: 2px;
+  background: var(--accent);
 }
-/* Grouped + active: show the GROUP's colour, not pine — otherwise the pine
-   marker fully covers the group indicator and you can't tell which group an
-   active tab belongs to. */
 body.privoo-one .tab.grouped.active::after { background: var(--group-color, var(--accent)); }
 /* Close button only on hover / active. */
-body.privoo-one .tab .tab-close { opacity: 0; transition: opacity .12s ease; }
+body.privoo-one .tab .tab-close { opacity: 0; transition: opacity .12s ease; border-radius: 7px; }
 body.privoo-one .tab:hover .tab-close,
 body.privoo-one .tab.active .tab-close { opacity: 1; }
-/* Flat rounded new-tab "+" (circle option still respected). */
+/* Rounded new-tab "+", matching the tabs' radius language. */
 body.privoo-one #new-tab.strip-btn {
-  width: 28px; height: 28px; border-radius: 8px; align-self: center;
-  /* Full shorthand, NOT just margin-left: .strip-btn ships `margin: 0 6px 3px 6px`
-     for its default `align-self: flex-end`, where the 3px bottom margin lifts the
-     button off the baseline. Here the button is centre-aligned, so that same bottom
-     margin shifts it 3px UP instead. Reset all four sides. */
-  margin: 0 6px 0 3px;
+  width: 30px; height: 30px; border-radius: 10px; align-self: center;
+  margin: 0 6px 0 4px;
   display: grid; place-items: center; padding: 0;
+  transition: background var(--t-fast) ease;
 }
 body.privoo-one #new-tab.strip-btn:hover { background: var(--tab-hover); }
 body.privoo-one.newtab-circle #new-tab,
@@ -6523,17 +6523,20 @@ body.privoo-one.newtab-circle #new-tab.strip-btn { border-radius: 50%; width: 28
 /* Toolbar buttons — squared. */
 body.privoo-one .tb-btn.round,
 body.privoo-one .tb-btn { border-radius: 10px; }
+body.privoo-one .tb-btn:hover:not(:disabled) { background: var(--hover); }
 
-/* Menus / popovers / suggestions — flat panels, hairline border, small radius,
-   inset rounded items that light up pine on hover. */
+/* Menus / popovers / suggestions — the same soft studio surface as the
+   rest of the app: generous radius, a theme-aware layered shadow (not a
+   flat black slab), inset rounded items that light up on hover. */
 body.privoo-one #menu,
 body.privoo-one .toolbar-popover,
 body.privoo-one .popover,
 body.privoo-one .context-menu,
 body.privoo-one #suggestions {
-  border-radius: 12px;
+  border-radius: var(--r-lg);
   border: 1px solid var(--border);
-  box-shadow: 0 16px 40px -14px rgba(0,0,0,.55);
+  box-shadow: var(--panel-shadow);
+  background: var(--toolbar);
   overflow: hidden;
 }
 body.privoo-one .context-menu { padding: 5px; }
@@ -6566,7 +6569,7 @@ body.privoo-one .customize-panel button { border-radius: 10px; }
 body.privoo-one .cp-theme-btn { border-radius: 10px; }
 body.privoo-one .cp-theme-swatch { border-radius: 8px; border-color: var(--border); }
 body.privoo-one .cp-theme-light { background: linear-gradient(180deg, #ece9f7 0 14px, #ffffff 14px); }
-body.privoo-one .cp-theme-dark  { background: linear-gradient(180deg, #1c1b26 0 14px, #2a2938 14px); }
+body.privoo-one .cp-theme-dark  { background: linear-gradient(180deg, #202124 0 14px, #303134 14px); }
 
 /* Accent swatches — squared, matching the Settings page swatches. */
 body.privoo-one .cp-accent-swatch { border-radius: 10px; }
@@ -6611,13 +6614,6 @@ body.privoo-one .sb-modal-actions button.primary { color: #10160f; }
 body.privoo-one .bookmark-chip { border-radius: 13px; }
 body.privoo-one .bookmark-chip:hover { background: var(--hover); }
 
-/* ── Toolbar popovers (media player, downloads, shield, menu) — flat, squared,
-   warm, with a clean shadow and pine-hover rows ── */
-body.privoo-one .toolbar-popover {
-  border-radius: 12px; border: 1px solid var(--border);
-  box-shadow: 0 18px 44px -16px rgba(0,0,0,.6);
-}
-body.privoo-one #menu { border-radius: 12px; box-shadow: 0 18px 44px -16px rgba(0,0,0,.6); }
 /* Buttons inside popups. */
 body.privoo-one .toolbar-popover button,
 body.privoo-one .popover button,
@@ -6632,22 +6628,23 @@ body.privoo-one .vpn-select,
 body.privoo-one .vpn-status-line,
 body.privoo-one .vpn-btn { border-radius: 10px; }
 
-/* ── Address bar — flat inset field, mono URL, pine focus border ── */
+/* ── Address bar — flat and quiet at rest, so it belongs to the toolbar
+   rather than floating above it; a crisp border on focus, nothing else. ── */
 body.privoo-one #omnibox-outer { flex: 1; margin: 0 6px; }
 body.privoo-one #omnibox-wrap {
-  height: 33px;
-  border-radius: 10px;
+  height: 38px;
+  border-radius: var(--r-md);
   background: var(--omni-bg);
-  border: 1px solid var(--border);
-  padding: 0 8px 0 11px;
+  border: 1px solid transparent;
+  padding: 0 10px 0 14px;
   box-shadow: none;
-  transition: border-color .14s ease;
+  transition: background .14s ease, border-color .14s ease, box-shadow .14s ease;
 }
-body.privoo-one #omnibox-wrap:hover { border-color: var(--muted); }
+body.privoo-one #omnibox-wrap:hover { background: var(--omni-hover); }
 body.privoo-one #omnibox-wrap:focus-within {
-  border-color: var(--accent);
-  background: var(--omni-bg);
-  box-shadow: none;
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  background: var(--toolbar);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 body.privoo-one #omnibox {
   font-size: 13px;
@@ -6785,13 +6782,14 @@ body.privoo-one input[type="text"],
 body.privoo-one input[type="url"],
 body.privoo-one select { border-radius: 10px; }
 
-/* ── Incognito palette — placed last (and 2-class specific) so it wins over the
-   always-on dark palette. A deeper, cooler charcoal marks the private window
-   without breaking the lavender design language. ── */
+/* ── Incognito palette — placed last (and 2-class specific) so it wins over
+   the always-on dark palette. Near-black ink, same neutral family as the
+   rest of the app, just deeper — marks the private window unmistakably
+   without reviving the old purple-navy look. ── */
 body.privoo-one.incognito {
-  --strip: #141320; --toolbar: #141320; --tab-active: #221f36; --tab-hover: #24213a;
-  --omni-bg: #1c1a2e; --omni-hover: #241f3a; --border: rgba(255,255,255,.08); --hover: #241f3a;
-  --text: #eceaf6; --muted: #a5a2bd; --pv-rail: #100f1a;
+  --strip: #0f0f13; --toolbar: #0f0f13; --tab-active: #1c1c22; --tab-hover: rgba(255,255,255,.06);
+  --omni-bg: rgba(255,255,255,.05); --omni-hover: rgba(255,255,255,.08); --border: rgba(255,255,255,.08); --hover: rgba(255,255,255,.06);
+  --text: #f1f1f4; --muted: #97979f; --pv-rail: #0f0f13;
 }
 /* A slim accent "private" marker line under the toolbar. */
 body.privoo-one.incognito #toolbar { box-shadow: inset 0 -1px 0 var(--accent); }
@@ -6825,18 +6823,18 @@ html:has(body:not(.dark).setup-mode) { background: #eeecf9 !important; }
   overflow: hidden;
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.9),
-    0 0 0 1px rgba(139,124,247,.08),
+    0 0 0 1px rgba(79,70,229,.08),
     0 60px 130px -30px rgba(23,22,31,.55),
     0 16px 44px -18px rgba(23,22,31,.35);
   -webkit-app-region: no-drag;
   animation: sw-frame-in .5s cubic-bezier(.16,.84,.44,1) both;
 }
 body.dark .sw-frame {
-  background: #1c1b26;
+  background: #17181c;
   border-color: rgba(255,255,255,.08);
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.05),
-    0 0 0 1px rgba(139,124,247,.12),
+    0 0 0 1px rgba(79,70,229,.12),
     0 60px 130px -30px rgba(0,0,0,.75),
     0 16px 44px -18px rgba(0,0,0,.5);
 }
@@ -7035,9 +7033,6 @@ body.privoo-one .sw-disc-icon { background: var(--accent-soft); border-color: tr
 
 
 /* ── Sidebar micro-interactions + customize popover + now-playing flyout ── */
-.sidebar-rail-btn { transition: transform .18s cubic-bezier(.34,1.6,.64,1), background var(--t-fast) ease; }
-.sidebar-rail-btn:hover { transform: scale(1.12); }
-.sidebar-rail-btn:active { transform: scale(.94); }
 
 .fp-pop {
   position: fixed; z-index: 14000;
@@ -7146,9 +7141,9 @@ body.dark .sb-cz-sw i { background: rgba(255,255,255,.14); }
   flex-shrink: 0; width: 26px; height: 26px; border: none; border-radius: 50%;
   background: var(--accent); color: var(--on-accent);
   display: flex; align-items: center; justify-content: center; cursor: pointer;
-  transition: transform .15s cubic-bezier(.34,1.6,.64,1), background var(--t-fast) ease;
+  transition: background var(--t-fast) ease;
 }
-.sb-np-btn:hover { transform: scale(1.1); background: var(--accent-hover); }
+.sb-np-btn:hover { background: var(--accent-hover); }
 .sb-np-btn svg { width: 13px; height: 13px; fill: currentColor; }
 
 

@@ -14,15 +14,15 @@ const VTAB_DEFAULT_FAVICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org
 // they update live when the user changes their accent (settings gets a gear,
 // history a clock, etc.). Only the SVG path is stored; the colour is baked in
 // at build time from _pvAccent.
-let _pvAccent = '#8b7cf7';
+let _pvAccent = '#4f46e5';
 let _lucidPrev = null; // tracks Lucid Mode on/off to inject/clean up live on toggle
 function _pvIcon(path) {
-  const col = encodeURIComponent(_pvAccent || '#8b7cf7');
+  const col = encodeURIComponent(_pvAccent || '#4f46e5');
   return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='" + col + "' d='" + encodeURIComponent(path) + "'%3E%3C/path%3E%3C/svg%3E";
 }
 // The pine-shield fallback (shield body in the accent, white check on top).
 function _pvShield() {
-  const col = encodeURIComponent(_pvAccent || '#8b7cf7');
+  const col = encodeURIComponent(_pvAccent || '#4f46e5');
   return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='" + col + "' d='M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z'/%3E%3Cpath fill='%23fff' d='M10.6 15.4 7.4 12.2l1.3-1.3 1.9 1.9 4-4 1.3 1.3z'/%3E%3C/svg%3E";
 }
 const PRIVOO_PAGE_PATHS = {
@@ -229,7 +229,7 @@ const LUCID_MODE_JS = String.raw`(function(){
   star.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2l2.9 6.9L22 9.3l-5.5 4.8L18.2 21 12 17.3 5.8 21l1.7-6.9L2 9.3l7.1-.4z"/></svg>';
   var panel=document.createElement('div'); panel.id='__pl_panel';
   panel.style.cssText='position:fixed;z-index:2147483000;display:none;flex-direction:column;gap:7px;padding:10px 12px;border-radius:11px;background:rgba(18,20,18,.9);color:#fff;font:600 11px/1.2 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);width:186px';
-  panel.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><span>Lucid Mode</span><span id="__pl_v"></span></div><input id="__pl_r" type="range" min="0" max="100" step="1" style="width:100%;accent-color:#8b7cf7">';
+  panel.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><span>Lucid Mode</span><span id="__pl_v"></span></div><input id="__pl_r" type="range" min="0" max="100" step="1" style="width:100%;accent-color:#4f46e5">';
   (document.body||document.documentElement).appendChild(star);
   (document.body||document.documentElement).appendChild(panel);
   var range=panel.querySelector('#__pl_r'), valEl=panel.querySelector('#__pl_v');
@@ -618,10 +618,11 @@ function applyAppSettings() {
   document.body.classList.add('privoo-one');
   document.body.classList.toggle('ui-compact', !!settings.compactMode);
   document.body.classList.toggle('has-vibe', !!settings.vibeEnabled);
-  // Recompute the titlebar/sidebar accent wash for the CURRENT dark/vibe
-  // state — without this, toggling dark mode alone (no accent change) left
-  // the strip using whichever light/dark formula was last computed.
-  if (settings.accentColor) applyAccentTriad(settings.accentColor);
+  // Recompute the accent for the CURRENT dark/light state and theme —
+  // without this, toggling dark mode alone left the accent using whichever
+  // light/dark value was last computed. Only a Theme (ntpWaveEnabled) drives
+  // the accent away from the default indigo.
+  applyAccentTriad(settings.ntpWaveEnabled ? settings.accentColor : null);
   // Confine the ambient vibe gradient to the chrome when the user doesn't want
   // it bleeding over web pages (chrome surface tinting stays regardless).
   document.body.classList.toggle('vibe-chrome-only', settings.vibeOverPages === false);
@@ -664,19 +665,6 @@ function applyAppSettings() {
     engName = 'the web';
   }
   omnibox.placeholder = `Search ${engName} or type a URL`;
-  // Custom accent color from the Customize panel — also derive the matching
-  // hover (slightly lighter) and soft-fill (low alpha) variants so the entire
-  // accent system stays consistent. Without these the hover/focus-ring stayed
-  // blue while the main accent went pink/green/etc.
-  if (settings.accentColor) {
-    applyAccentTriad(settings.accentColor);
-  } else {
-    document.documentElement.style.removeProperty('--accent');
-    document.documentElement.style.removeProperty('--accent-hover');
-    document.documentElement.style.removeProperty('--accent-soft');
-    // Back to the default pine — repaint Privoo favicons to match.
-    if (_pvAccent !== '#8b7cf7') { _pvAccent = '#8b7cf7'; refreshPrivooFavicons(); }
-  }
   // Lucid Mode — apply or remove live on toggle so it takes effect without a
   // page reload (the inject/cleanup scripts are idempotent).
   {
@@ -2035,7 +2023,7 @@ function ensureDisclaimer() {
     }
 
     function fireConfetti() {
-      const colors = ['#8b7cf7', '#c58af7', '#f7c58a', '#8af7c5', '#f78ab0'];
+      const colors = ['#4f46e5', '#c58af7', '#f7c58a', '#8af7c5', '#f78ab0'];
       const layer = document.createElement('div');
       layer.className = 'sw-confetti-layer';
       for (let i = 0; i < 90; i++) {
@@ -3143,7 +3131,7 @@ function privooThemePalette() {
   return WAVE_DEFAULT;
 }
 function privooThemeColors() {
-  const accent = String(settings?.accentColor || '#8ab4f8');
+  const accent = String(settings?.accentColor || '#4f46e5');
   const pal = privooThemePalette();
   // Darkest palette entry → background tint base (kept dark for text contrast).
   let dark = pal[0], lum = Infinity;
@@ -4849,7 +4837,7 @@ document.getElementById('extensions-btn')?.addEventListener('click', (e) => {
 
 // ─── Customize side panel (right-side, opens from menu) ─────────────────────
 const CP_ACCENTS = [
-  { name: 'lavender', value: '#8b7cf7' },  // default
+  { name: 'lavender', value: '#4f46e5' },  // default
   { name: 'blue',     value: '#8ab4f8' },
   { name: 'teal',     value: '#4dd0e1' },
   { name: 'green',    value: '#81c995' },
@@ -4904,15 +4892,18 @@ function applyAccentColor(hex) {
   applyAccentTriad(hex);
 }
 
-// Compute --accent, --accent-hover and --accent-soft together so all UI
-// states (default, hover, focus-ring) stay in the same color family.
-function applyAccentTriad(hex) {
-  if (!hex || typeof hex !== 'string') return;
+// The signature indigo is the default accent — not manually pickable — but
+// selecting a colourful Theme (Settings/Customize → New tab background →
+// Theme) retunes it to that theme's own colour, so the browser actually
+// feels themed rather than always defaulting back to indigo. Chrome
+// surfaces (titlebar/toolbar/omnibox) stay neutral regardless — only
+// buttons, focus rings, links and the active-tab underline use the accent.
+function applyAccentTriad(themeHex) {
+  const isDark = document.body.classList.contains('dark');
+  const fallback = isDark ? '#948ef2' : '#4f46e5';
+  const hex = (themeHex && /^#[0-9a-f]{6}$/i.test(themeHex)) ? themeHex : fallback;
   document.documentElement.style.setProperty('--accent', hex);
-  // Lighten by ~12% for hover (works for accent values that already sit
-  // mid-range like #8ab4f8). For dark accent values this naturally produces
-  // a brighter hover state.
-  const { r, g, b } = hexToRgb(hex) || { r: 138, g: 180, b: 248 };
+  const { r, g, b } = hexToRgb(hex);
   const hover = rgbToHex(
     Math.min(255, Math.round(r + (255 - r) * 0.18)),
     Math.min(255, Math.round(g + (255 - g) * 0.18)),
@@ -4920,22 +4911,10 @@ function applyAccentTriad(hex) {
   );
   document.documentElement.style.setProperty('--accent-hover', hover);
   document.documentElement.style.setProperty('--accent-soft', `rgba(${r},${g},${b},.18)`);
-  // The chosen accent tints the WHOLE chrome — titlebar, sidebar (both
-  // consume --strip), toolbar and omnibox — not just isolated pages, in both
-  // light and dark. Graduated so the strongest wash sits at the top of the
-  // browser and content areas stay legible: strip > toolbar > omnibox.
-  // This unconditionally wins over "Your Vibe"'s own hue math — two
-  // independent systems fighting for the same properties was the actual
-  // bug ("vibe" blocking the accent look on some surfaces but not others).
-  // Accent IS the vibe now; there's only one system.
-  const isDark = document.body.classList.contains('dark');
-  const mix = (pct, darkBase) => isDark
-    ? `color-mix(in srgb, ${hex} ${pct + 10}%, ${darkBase})`
-    : `color-mix(in srgb, ${hex} ${pct}%, #ffffff)`;
-  document.documentElement.style.setProperty('--strip',   mix(11, '#14131c'));
-  document.documentElement.style.setProperty('--toolbar', mix(5,  '#1a1926'));
-  document.documentElement.style.setProperty('--omni-bg', mix(7,  '#20202e'));
-  // Repaint Privoo-page favicons in the new accent.
+  document.documentElement.style.removeProperty('--strip');
+  document.documentElement.style.removeProperty('--toolbar');
+  document.documentElement.style.removeProperty('--omni-bg');
+  // Repaint Privoo-page favicons in the fixed accent.
   if (_pvAccent !== hex) { _pvAccent = hex; if (typeof refreshPrivooFavicons === 'function') refreshPrivooFavicons(); }
 }
 function hexToRgb(hex) {
@@ -5278,8 +5257,8 @@ cpPanel?.querySelectorAll('[data-action]').forEach(el => {
   });
 });
 
-// Apply saved accent on startup so existing user accent persists across launches
-if (settings?.accentColor) applyAccentColor(settings.accentColor);
+// Apply the theme-driven accent on startup, if a Theme is active.
+if (settings?.ntpWaveEnabled && settings?.accentColor) applyAccentColor(settings.accentColor);
 
 // Populate the version chip in the main menu from package.json so the text
 // never drifts out of sync with the actual build. Also: show Privoo News once
@@ -7596,7 +7575,7 @@ function _anyBlockingOverlayOpen() {
       ? { surface: '#2a2b2f', text: '#e8eaed', muted: '#bdc1c6', border: 'rgba(255,255,255,0.14)', hover: 'rgba(255,255,255,0.08)', input: '#202124' }
       : { surface: '#ffffff', text: '#1f1f1f', muted: '#5f6368', border: '#dadce0', hover: '#f1f3f4', input: '#f3f4f6' };
   }
-  const ACCENT = () => cssVar('--accent', '#8ab4f8');
+  const ACCENT = () => cssVar('--accent', '#4f46e5');
 
   // Styled confirmation dialog — replaces the native confirm() so the
   // "are you sure" matches the rest of the UI.
@@ -7640,7 +7619,7 @@ function _anyBlockingOverlayOpen() {
   // colour so they're easy to tell apart.
   const PALETTE = ['#e05c8a','#28b67a','#e08c2c','#9b59b6','#e74c3c','#1abc9c','#f39c12','#5b7fff'];
   function profileColor(id) {
-    if (id === 'default') return cssVar('--accent', '#8ab4f8');
+    if (id === 'default') return cssVar('--accent', '#4f46e5');
     let h = 0;
     for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
     return PALETTE[h % PALETTE.length];

@@ -3,76 +3,67 @@
 <head>
 <meta charset="UTF-8"/>
 <title>New Incognito Tab</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%238b7cf7' d='M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z'/%3E%3Cpath fill='%23fff' d='M10.6 15.4 7.4 12.2l1.3-1.3 1.9 1.9 4-4 1.3 1.3z'/%3E%3C/svg%3E"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23948ef2' d='M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z'/%3E%3Cpath fill='%23fff' d='M10.6 15.4 7.4 12.2l1.3-1.3 1.9 1.9 4-4 1.3 1.3z'/%3E%3C/svg%3E"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:"Inter","Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
 :root{
-  --accent:#8b7cf7; --accent-soft:rgba(139,124,247,.16);
-  --bg:#17161f; --surface:#242332; --text:#eceaf6; --muted:#a5a2bd; --border:rgba(255,255,255,.09);
+  --accent:#948ef2;
+  --bg:#0a0a0d; --text:#f1f1f4; --muted:#87878f; --border:rgba(255,255,255,.08);
 }
-html,body{height:100%;overflow:hidden;user-select:none;position:relative}
+html,body{height:100%;overflow:hidden;user-select:none}
 body{
   background:var(--bg);color:var(--text);
   display:flex;align-items:center;justify-content:center;
 }
 body.transparent{background:transparent;}
-body::before{
-  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:
-    radial-gradient(50% 55% at 15% 0%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 70%),
-    radial-gradient(45% 50% at 100% 100%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 72%);
-}
 
-.wrap{position:relative;z-index:1;width:100%;max-width:500px;padding:40px 28px;text-align:center;}
+.wrap{width:100%;max-width:420px;padding:40px 28px;text-align:center;}
 
-.icon-ring{
-  width:68px;height:68px;margin:0 auto 22px;border-radius:18px;
-  background:linear-gradient(155deg, color-mix(in srgb, var(--accent) 24%, var(--surface)), var(--accent-soft));
-  border:1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
-  box-shadow:0 14px 34px -14px color-mix(in srgb, var(--accent) 50%, transparent);
+.icon{
+  width:40px;height:40px;margin:0 auto 20px;
   display:flex;align-items:center;justify-content:center;
+  color:var(--accent);
 }
-.icon-ring svg{width:32px;height:32px;fill:var(--accent);}
+.icon svg{width:100%;height:100%;fill:currentColor;}
 
-h1{font-size:22px;font-weight:700;letter-spacing:-.02em;margin-bottom:9px;color:var(--text);}
-.lead{font-size:13.5px;line-height:1.65;color:var(--muted);max-width:380px;margin:0 auto 26px;}
+h1{font-size:19px;font-weight:600;letter-spacing:-.01em;margin-bottom:8px;color:var(--text);}
+.lead{font-size:13px;line-height:1.6;color:var(--muted);max-width:340px;margin:0 auto 28px;}
 
-.cols{display:flex;gap:10px;text-align:left;}
-@media(max-width:520px){.cols{flex-direction:column;}}
-.col{
-  flex:1;background:var(--surface);border:1px solid var(--border);
-  border-radius:16px;padding:16px 17px 14px;
-  box-shadow:0 2px 10px rgba(0,0,0,.12);
+/* Plain list — no card boxes, just icon + text rows separated by hairlines. */
+.facts{
+  text-align:left;
+  border-top:1px solid var(--border);
+  margin-bottom:28px;
 }
-.col h2{
-  font-size:12.5px;font-weight:650;color:var(--text);margin-bottom:7px;
-  display:flex;align-items:center;gap:8px;
+.fact{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:13px 2px;
+  border-bottom:1px solid var(--border);
 }
-.col h2 svg{width:16px;height:16px;flex-shrink:0;}
-.col-on h2 svg{fill:var(--accent);}
-.col-off h2 svg{fill:var(--muted);}
-.col p{font-size:11.5px;line-height:1.58;color:var(--muted);}
+.fact svg{width:16px;height:16px;flex-shrink:0;margin-top:1px;fill:var(--muted);}
+.fact.on svg{fill:var(--accent);}
+.fact p{font-size:12.5px;line-height:1.55;color:var(--muted);}
+.fact b{color:var(--text);font-weight:500;}
 
 .search{
-  margin:26px auto 0;max-width:420px;
   display:flex;align-items:center;gap:10px;
-  height:48px;padding:0 16px;border-radius:14px;
-  background:var(--surface);border:1px solid var(--border);cursor:text;
-  box-shadow:0 2px 10px rgba(0,0,0,.12);
-  transition:border-color .14s ease, box-shadow .14s ease;
+  height:44px;padding:0 14px;border-radius:12px;
+  background:rgba(255,255,255,.06);border:1px solid var(--border);cursor:text;
+  transition:border-color .14s ease, background .14s ease;
 }
-.search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft), 0 2px 10px rgba(0,0,0,.12);}
-.search svg{width:17px;height:17px;fill:var(--muted);flex-shrink:0;}
+.search:hover{background:rgba(255,255,255,.08);}
+.search:focus-within{border-color:var(--accent);background:rgba(255,255,255,.08);}
+.search svg{width:16px;height:16px;fill:var(--muted);flex-shrink:0;}
 .search input{
   flex:1;border:none;outline:none;background:transparent;
-  font-size:14px;color:var(--text);user-select:text;
+  font-size:13.5px;color:var(--text);user-select:text;
 }
 .search input::placeholder{color:var(--muted);}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="icon-ring">
+  <div class="icon">
     <svg viewBox="0 0 24 24">
       <path d="M12 2C7.59 2 4 5.59 4 10v11l3.5-3.5 3.5 3.5 3.5-3.5 3.5 3.5V10c0-4.41-3.59-8-8-8zm0 2c3.31 0 6 2.69 6 6v8.09l-1.5-1.5-3.5 3.5-3.5-3.5L8 18.09V10c0-3.31 2.69-6 4-6zm-2 5.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm4 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/>
     </svg>
@@ -81,20 +72,14 @@ h1{font-size:22px;font-weight:700;letter-spacing:-.02em;margin-bottom:9px;color:
   <h1>You're browsing privately</h1>
   <p class="lead">Privoo won't save your history, cookies, or form data once you close this window.</p>
 
-  <div class="cols">
-    <div class="col col-on">
-      <h2>
-        <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 14l-3-3 1.41-1.41L11 12.17l5.59-5.58L18 8l-7 7z"/></svg>
-        Privoo forgets
-      </h2>
-      <p>History, cookies, site data and anything you type in forms — cleared when this window closes.</p>
+  <div class="facts">
+    <div class="fact on">
+      <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 14l-3-3 1.41-1.41L11 12.17l5.59-5.58L18 8l-7 7z"/></svg>
+      <p><b>Cleared on close</b> — history, cookies, site data and anything typed in forms.</p>
     </div>
-    <div class="col col-off">
-      <h2>
-        <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg>
-        Still visible to
-      </h2>
-      <p>The sites you visit, your employer or school, and your internet provider can still see your activity.</p>
+    <div class="fact">
+      <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg>
+      <p><b>Still visible</b> to the sites you visit, your network, and your employer or school.</p>
     </div>
   </div>
 
@@ -114,14 +99,12 @@ h1{font-size:22px;font-weight:700;letter-spacing:-.02em;margin-bottom:9px;color:
     duckduckgo:'https://duckduckgo.com/?q=',
     brave:'https://search.brave.com/search?q=',
   };
-  function applyAccent(hex){if(!hex)return;const r=document.documentElement;r.style.setProperty('--accent',hex);const m=hex.replace('#','').match(/.{2}/g);if(m){const[rv,g,b]=m.map(x=>parseInt(x,16));r.style.setProperty('--accent-soft',`rgba(${rv},${g},${b},.16)`);}}
   api?.getSettings?.().then(d => {
     const s = d?.settings || {};
     const e = s.searchEngine;
     if (e && ENGINES[e]) engineUrl = ENGINES[e];
     if (e === 'custom' && s.customSearchUrl) engineUrl = s.customSearchUrl;
     if (s.increaseTransparency) document.body.classList.add('transparent');
-    applyAccent(s.accentColor);
   }).catch(()=>{});
 
   function toUrl(t){

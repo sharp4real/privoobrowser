@@ -8,14 +8,16 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { min-height: 100%; }
   :root {
-    --accent: #8b7cf7;
-    --accent-hover: #9d90f8;
+    --accent: #4f46e5;
+    --accent-hover: #6058ea;
     --on-accent: #ffffff;
-    --accent-soft: rgba(139,124,247,.16);
+    --accent-soft: rgba(79,70,229,.13);
   }
   body.dark {
-    --on-accent: #202124;
-    --accent-soft: rgba(138,180,248,.18);
+    --accent: #948ef2;
+    --accent-hover: #a29cf5;
+    --on-accent: #14141a;
+    --accent-soft: rgba(148,142,242,.18);
   }
   body {
     font-family: "Inter", "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
@@ -197,7 +199,7 @@
   }
   .accent-swatch:hover { transform: scale(1.15); }
   .accent-swatch.active { border-color: #fff; box-shadow: 0 0 0 2px var(--accent); }
-  body.dark .accent-swatch.active { border-color: #2a2938; }
+  body.dark .accent-swatch.active { border-color: #292a2d; }
   /* Custom-colour swatch — native picker styled as a round swatch with a
      rainbow ring so it reads as "pick your own". */
   .accent-custom {
@@ -273,7 +275,7 @@
     transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
   }
   body.dark .inline-select { background-color: rgba(255,255,255,.06); border-color: rgba(255,255,255,.1); color: #eceaf6;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23a5a2bd' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239aa0a6' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   }
   .inline-select:focus,
   .inline-select.csel-trigger.open { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
@@ -306,7 +308,7 @@
   }
   .csel-list.open { display: block; }
   @keyframes csel-pop { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: none; } }
-  body.dark .csel-list { background: #2a2938; border-color: rgba(255,255,255,.09); }
+  body.dark .csel-list { background: #292a2d; border-color: rgba(255,255,255,.09); }
   .csel-item {
     padding: 8px 12px; border-radius: 9px; font-size: 13px; cursor: default;
     color: #26243a; transition: background .12s ease;
@@ -532,7 +534,7 @@
     overflow: hidden;
     margin-bottom: 16px;
   }
-  body.dark .card { background: #2a2938; border-color: rgba(255,255,255,.08); }
+  body.dark .card { background: #292a2d; border-color: rgba(255,255,255,.08); }
   .row {
     min-height: 52px;
     display: flex;
@@ -636,7 +638,7 @@
   /* Accent fill when on; round knob slides right. */
   input:checked + .slider { background: var(--accent); border-color: var(--accent); }
   input:checked + .slider::before { transform: translateX(18px); }
-  body.dark .slider { background: #45435c; border-color: rgba(255,255,255,.06); }
+  body.dark .slider { background: #5f6368; border-color: rgba(255,255,255,.06); }
   body.dark input:checked + .slider { background: var(--accent); border-color: var(--accent); }
   body.dark input:checked + .slider::before { background: #10160f; }
 
@@ -686,7 +688,7 @@
     display: none;
     align-items: center;
     justify-content: center;
-    background: rgba(0,0,0,.34);
+    background: rgba(17,17,23,.38);
     z-index: 80;
     padding: 20px;
   }
@@ -694,18 +696,24 @@
   .modal {
     width: min(430px, 100%);
     background: #fff;
-    color: #1f1f1f;
-    border-radius: 12px;
-    box-shadow: 0 14px 44px rgba(0,0,0,.28);
+    color: #17171f;
+    border: 1px solid rgba(23,23,31,.08);
+    border-radius: 18px;
+    box-shadow: 0 26px 64px -20px rgba(23,23,31,.30), 0 6px 18px -4px rgba(23,23,31,.14);
     padding: 22px;
+    animation: modal-in .16s cubic-bezier(.2,.8,.25,1) both;
   }
-  body.dark .modal { background: #303134; color: #e8eaed; }
+  @keyframes modal-in {
+    from { opacity: 0; transform: translateY(6px) scale(.98); }
+    to   { opacity: 1; transform: none; }
+  }
+  body.dark .modal { background: #1f2024; color: #f1f1f4; border-color: rgba(255,255,255,.08); }
   body.transparent-ui .modal {
     background: rgba(255,255,255,.72) !important;
     backdrop-filter: blur(28px) saturate(180%);
     -webkit-backdrop-filter: blur(28px) saturate(180%);
   }
-  body.transparent-ui.dark .modal { background: rgba(38,40,46,.72) !important; }
+  body.transparent-ui.dark .modal { background: rgba(31,32,36,.72) !important; }
   .modal h3 { font-size: 18px; font-weight: 500; margin-bottom: 16px; }
   .modal .field { margin-bottom: 14px; }
   .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
@@ -972,9 +980,9 @@
    specificity, which only works because these come later in source order.
    ═══════════════════════════════════════════════════════════════════════════ */
 :root {
-  --accent: #8a63ff;
-  --accent-hover: #9b7bff;
-  --accent-soft: rgba(138, 99, 255, .22);
+  --accent: #4f46e5;
+  --accent-hover: #6058ea;
+  --accent-soft: rgba(79, 70, 229, .13);
   --on-accent: #ffffff;
 }
 body { background: #f2f3f8; }
@@ -997,10 +1005,10 @@ body.dark header { background: #171a24; border-color: transparent; box-shadow: 0
 body:not(.dark) { background: #f2f1f9; }
 body:not(.dark) header { background: #f2f1f9; border-bottom: 1px solid rgba(38,36,58,.08); }
 
-/* Dark — matching deep lavender. */
-body.dark { background: #1c1b26; }
-body.dark header { background: #1c1b26; border-bottom: 1px solid rgba(255,255,255,.08); }
-body.dark .brand span { color: #a5a2bd; }
+/* Dark — Chrome-style neutral grey. */
+body.dark { background: #202124; }
+body.dark header { background: #202124; border-bottom: 1px solid #3c4043; }
+body.dark .brand span { color: #9aa0a6; }
 body.dark nav#nav { background: transparent; }
 
 header input.settings-search { border-radius: 999px; font-size: 13px; background: #f4f3fa; border: 1px solid rgba(38,36,58,.08); }
@@ -1014,14 +1022,14 @@ body.dark header input.settings-search:focus { background: rgba(255,255,255,.1);
 .nav-btn { height: 38px; border-radius: 999px; transition: background .15s ease, color .15s ease, transform .15s cubic-bezier(.34,1.5,.64,1); }
 .nav-btn:hover { transform: translateX(2px); }
 .nav-btn.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; box-shadow: none; }
-body.dark .nav-btn { color: #a5a2bd; }
+body.dark .nav-btn { color: #9aa0a6; }
 body.dark .nav-btn:hover { background: rgba(255,255,255,.07); color: #eceaf6; }
 body.dark .nav-btn.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; box-shadow: none; }
 
 /* Cards — floating white, soft shadow, matches the rest of the app. */
 .card { border-radius: 16px; }
 body:not(.dark) .card { background: rgba(255,255,255,.92); border: 1px solid rgba(38,36,58,.07); box-shadow: 0 2px 10px rgba(38,36,58,.05); }
-body.dark .card { background: #2a2938; border: 1px solid rgba(255,255,255,.08); box-shadow: none; }
+body.dark .card { background: #292a2d; border: 1px solid #3c4043; box-shadow: none; }
 /* One-time "moved to Extensions" notice. */
 .ext-move-notice{
   display:flex;align-items:center;gap:10px;margin-top:12px;padding:11px 14px;
@@ -1042,7 +1050,7 @@ body:not(.dark) .row { border-color: rgba(38,36,58,.08); }
 body.dark .row { border-color: rgba(255,255,255,.08); }
 /* Section headers — uppercase tracked labels. */
 h3.card-subhead { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
-body.dark h3.card-subhead { color: #a5a2bd; }
+body.dark h3.card-subhead { color: #9aa0a6; }
 
 /* Inputs / selects — lavender field tone, matching everywhere else. */
 body:not(.dark) .inline-select,
@@ -1128,10 +1136,6 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
               <div class="desc">Inverts page colours to create a dark look on sites that don't support it natively.</div>
             </div>
             <label class="switch"><input type="checkbox" id="forceDarkMode"><span class="slider"></span></label>
-          </div>
-          <div class="row stack">
-            <div><div class="label">Accent color</div><div class="desc">Used for highlights, active tabs, focus rings, and toggle switches.</div></div>
-            <div id="accent-swatches" class="swatch-row"></div>
           </div>
           <h3 class="card-subhead">Transparency</h3>
           <div class="row">
@@ -1305,13 +1309,18 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
             <div><div class="label">Show quick links</div><div class="desc">Display site shortcut tiles on the new tab page.</div></div>
             <label class="switch"><input type="checkbox" id="ntpShowQuickLinks"><span class="slider"></span></label>
           </div>
+          <div class="row stack">
+            <div><div class="label">Shortcuts</div><div class="desc">The sites shown as quick-link tiles on the new tab page.</div></div>
+            <div id="ql-list" class="filter-lists"></div>
+            <div class="filter-add-row">
+              <input type="text" id="ql-add-name" placeholder="Name (optional)" autocomplete="off" spellcheck="false"/>
+              <input type="url" id="ql-add-url" placeholder="https://example.com" autocomplete="off" spellcheck="false"/>
+              <button type="button" class="filter-add-btn" id="ql-add-btn">Add</button>
+            </div>
+          </div>
           <div class="row">
             <div><div class="label">Show greeting</div><div class="desc">"Good morning / afternoon / evening / night" under the logo, based on the time of day.</div></div>
             <label class="switch"><input type="checkbox" id="ntpShowGreeting"><span class="slider"></span></label>
-          </div>
-          <div class="row">
-            <div><div class="label">Show add-shortcut button</div><div class="desc">The pill button in the top-right corner of the new tab page for adding a shortcut.</div></div>
-            <label class="switch"><input type="checkbox" id="ntpShowAddShortcutBtn"><span class="slider"></span></label>
           </div>
           <div class="row">
             <div><div class="label">Centre sidebar icons</div><div class="desc">Vertically centre the vertical-tabs icon rail, Opera-style.</div></div>
@@ -1968,7 +1977,7 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
 const api = window.privooInternal;
 const TOGGLES = [
   'verticalTabs', 'vtabsIntegrated', 'vtabsSearchPopup', 'searchPopupGlass', 'uiSounds', 'newTabBtnCircle', 'vtabsCenterIcons', 'darkMode', 'forceDarkMode', 'showHomeButton', 'showBookmarksBar',
-  'ntpShowWeather', 'ntpShowClock', 'ntpFocusedSearch', 'ntpShowQuickLinks', 'ntpShowGreeting', 'ntpShowAddShortcutBtn', 'ntpNewsLink', 'ntpWallpaperAnimated', 'cryptojackingProtection', 'easyFilesEnabled', 'clearDataOnExit', 'downloadBoosterEnabled',
+  'ntpShowWeather', 'ntpShowClock', 'ntpFocusedSearch', 'ntpShowQuickLinks', 'ntpShowGreeting', 'ntpNewsLink', 'ntpWallpaperAnimated', 'cryptojackingProtection', 'easyFilesEnabled', 'clearDataOnExit', 'downloadBoosterEnabled',
   'increaseTransparency', 'aeroGradient', 'vibeEnabled', 'vibeOverPages', 'compactMode', 'searchSuggestions',
   'askDownloadPath', 'adBlocking', 'httpsUpgrade', 'httpsUpgradeShowNotice', 'blockThirdPartyCookies',
   'dnsOverHttps', 'adultContentBlocking', 'spoofUserAgent', 'canvasSpoofing', 'webrtcProtection',
@@ -2009,26 +2018,22 @@ function showLongToast(text) {
 function applyTheme(settings = currentSettings) {
   document.body.classList.toggle('dark', !!settings.darkMode);
   document.body.classList.toggle('transparent-ui', !!settings.increaseTransparency);
-  applyAccent(settings.accentColor);
+  applyAccent(settings.ntpWaveEnabled ? settings.accentColor : null);
 }
 
-function applyAccent(hex) {
+// Default accent is the signature indigo (not manually pickable), but a
+// selected Theme retunes it to that theme's colour — matches
+// applyAccentTriad() in renderer.js so Settings previews the real accent.
+function applyAccent(themeHex) {
   const root = document.documentElement;
-  if (!hex) {
-    root.style.removeProperty('--accent');
-    root.style.removeProperty('--accent-hover');
-    root.style.removeProperty('--accent-soft');
-    return;
-  }
+  const fallback = document.body.classList.contains('dark') ? '#948ef2' : '#4f46e5';
+  const hex = (themeHex && /^#[0-9a-f]{6}$/i.test(themeHex)) ? themeHex : fallback;
   root.style.setProperty('--accent', hex);
-  // Derive hover (+12% lighter) and soft (18% alpha) from the chosen color
   const m = hex.replace('#','').match(/.{2}/g);
-  if (m) {
-    const [r,g,b] = m.map(x=>parseInt(x,16));
-    const h = `rgb(${Math.min(255,Math.round(r+(255-r)*.18))},${Math.min(255,Math.round(g+(255-g)*.18))},${Math.min(255,Math.round(b+(255-b)*.18))})`;
-    root.style.setProperty('--accent-hover', h);
-    root.style.setProperty('--accent-soft', `rgba(${r},${g},${b},.18)`);
-  }
+  const [r,g,b] = m.map(x=>parseInt(x,16));
+  const h = `rgb(${Math.min(255,Math.round(r+(255-r)*.18))},${Math.min(255,Math.round(g+(255-g)*.18))},${Math.min(255,Math.round(b+(255-b)*.18))})`;
+  root.style.setProperty('--accent-hover', h);
+  root.style.setProperty('--accent-soft', `rgba(${r},${g},${b},.18)`);
 }
 
 async function savePatch(patch, message = 'Settings saved') {
@@ -2155,6 +2160,7 @@ function updatePathDisplays(settings, downloadPath) {
   }
   syncVibeControls(settings);
   renderFilterLists(settings);
+  renderShortcuts(settings);
   // yt-dlp executable picker removed — the installer auto-downloads + auto-updates.
   if ($('weatherLocation')) $('weatherLocation').value = settings.weatherLocation || '';
   if ($('music-path-display')) {
@@ -2279,6 +2285,60 @@ function addCustomFilterList() {
     if (nameEl) nameEl.value = '';
     urlEl.value = '';
     renderFilterLists(currentSettings);
+  });
+}
+
+// New-tab quick-link shortcuts — managed here now instead of via a button
+// on the new tab page itself.
+function renderShortcuts(settings) {
+  const wrap = $('ql-list');
+  if (!wrap) return;
+  const links = Array.isArray(settings.ntpQuickLinks) ? settings.ntpQuickLinks : [];
+  wrap.innerHTML = '';
+  if (!links.length) {
+    const e = document.createElement('div');
+    e.className = 'filter-lists-empty';
+    e.textContent = 'No shortcuts added yet.';
+    wrap.appendChild(e);
+    return;
+  }
+  links.forEach((l, idx) => {
+    const item = document.createElement('div');
+    item.className = 'filter-list-item';
+    const info = document.createElement('div');
+    info.className = 'fl-info';
+    info.innerHTML = '<div class="fl-name"></div><div class="fl-desc"></div>';
+    info.querySelector('.fl-name').textContent = l.name || l.url;
+    info.querySelector('.fl-desc').textContent = l.url;
+    item.appendChild(info);
+    const del = document.createElement('button');
+    del.type = 'button'; del.className = 'fl-remove'; del.title = 'Remove shortcut';
+    del.innerHTML = _iconTrash();
+    del.addEventListener('click', () => {
+      const next = (currentSettings.ntpQuickLinks || []).slice();
+      next.splice(idx, 1);
+      savePatch({ ntpQuickLinks: next }, 'Shortcut removed').then(() => renderShortcuts(currentSettings));
+    });
+    item.appendChild(del);
+    wrap.appendChild(item);
+  });
+}
+
+function addShortcut() {
+  const nameEl = $('ql-add-name');
+  const urlEl = $('ql-add-url');
+  if (!urlEl) return;
+  let url = (urlEl.value || '').trim();
+  if (!url) { showToast('Enter a URL'); urlEl.focus(); return; }
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  let name = (nameEl?.value || '').trim();
+  if (!name) { try { name = new URL(url).hostname; } catch { name = url; } }
+  const next = (currentSettings.ntpQuickLinks || []).slice();
+  next.push({ name, url });
+  savePatch({ ntpQuickLinks: next }, 'Shortcut added').then(() => {
+    if (nameEl) nameEl.value = '';
+    urlEl.value = '';
+    renderShortcuts(currentSettings);
   });
 }
 
@@ -2517,6 +2577,14 @@ async function init() {
     if (e.key === 'Enter') { e.preventDefault(); addCustomFilterList(); }
   });
 
+  // New-tab shortcuts — add button + Enter-to-add on either field.
+  $('ql-add-btn')?.addEventListener('click', addShortcut);
+  for (const id of ['ql-add-name', 'ql-add-url']) {
+    $(id)?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); addShortcut(); }
+    });
+  }
+
   // Themes gallery + ambient music
   renderThemeGallery(currentSettings);
   if ($('ntpThemeMusic')) {
@@ -2574,7 +2642,7 @@ async function init() {
   }
 
   // These settings default to ON when unset — treat undefined as true.
-  const DEFAULT_ON = new Set(['restoreTabsOnLaunch', 'autoUpdates', 'adBlocking', 'httpsUpgrade', 'passwordManagerEnabled', 'syncDiscordTheme', 'vibeOverPages', 'ntpShowGreeting', 'ntpShowAddShortcutBtn', 'cryptojackingProtection', 'easyFilesEnabled']);
+  const DEFAULT_ON = new Set(['restoreTabsOnLaunch', 'autoUpdates', 'adBlocking', 'httpsUpgrade', 'passwordManagerEnabled', 'syncDiscordTheme', 'vibeOverPages', 'ntpShowGreeting', 'cryptojackingProtection', 'easyFilesEnabled']);
 
   const ollamaModelInp = $('ollamaModel');
   if (ollamaModelInp) {
