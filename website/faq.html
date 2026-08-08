@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<!-- saved from url=(0032)./faq -->
+<html lang="en" data-theme="light"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Privoo Desktop: FAQ and troubleshooting</title>
-<meta name="description" content="Frequently asked questions about Privoo, and fixes for common problems: ad blocking, video playback, DRM, downloads, sign-outs, extensions and .mariana sites."/>
-<link rel="icon" href="logo.png"/>
+<meta name="description" content="Frequently asked questions about Privoo, and fixes for common problems: ad blocking, video playback, DRM, downloads, sign-outs, extensions and .mariana sites.">
+<link rel="icon" href="./logo.png">
 <script>try{var t=localStorage.getItem('privoo-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;}catch(e){}</script>
-<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="./styles.css">
 </head>
 <body>
 
 <header class="topbar">
-  <a class="brand" href="index.html">
-    <img src="logo.png" alt="" width="24" height="24"/>
+  <a class="brand" href="./index.html">
+    <img src="./logo.png" alt="" width="24" height="24">
     <b>Privoo</b>
     <span class="ver">reference</span>
   </a>
@@ -21,7 +21,7 @@
     <a href="https://github.com/sharp4real/privoobrowser/releases/latest">Download</a>
     <a href="https://github.com/sharp4real/privoobrowser">Source</a>
     <a href="https://discord.gg/WweUzF3YCQ">Discord</a>
-    <button class="theme-btn" id="theme-btn" type="button">☾ Dark</button>
+    <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch to dark mode" aria-pressed="false">☾ Dark</button>
     <button class="menu-btn" id="menu-btn" aria-label="Menu">☰</button>
   </div>
 </header>
@@ -29,28 +29,28 @@
 <div class="shell">
   <aside class="sidebar" id="sidebar">
     <h4>Article</h4>
-    <a href="index.html">Privoo Desktop</a>
-    <a href="install.html">Installation</a>
+    <a href="./index.html">Privoo Desktop</a>
+    <a href="./install.html">Installation</a>
     <h4>Protection</h4>
-    <a href="privacy.html">Privacy and security</a>
-    <a href="mariana.html">.mariana hosting</a>
+    <a href="./privacy.html">Privacy and security</a>
+    <a href="./mariana.html">.mariana hosting</a>
     <h4>Using Privoo Desktop</h4>
-    <a href="tools.html">Built-in tools</a>
-    <a href="ai.html">Privoo AI</a>
-    <a href="browsing.html">Browsing</a>
-    <a href="appearance.html">Appearance</a>
+    <a href="./tools.html">Built-in tools</a>
+    <a href="./ai.html">Privoo AI</a>
+    <a href="./browsing.html">Browsing</a>
+    <a href="./appearance.html">Appearance</a>
     <h4>Other products</h4>
-    <a href="android.html">Privoo for Android</a>
-    <a href="coder.html">Privoo Coder</a>
+    <a href="./android.html">Privoo for Android</a>
+    <a href="./coder.html">Privoo Coder</a>
     <h4>Reference</h4>
-    <a href="shortcuts.html">Keyboard shortcuts</a>
-    <a href="faq.html" class="active">FAQ and troubleshooting</a>
+    <a href="./shortcuts.html">Keyboard shortcuts</a>
+    <a href="./faq.html" class="active">FAQ and troubleshooting</a>
   </aside>
 
   <main class="doc">
     <h1>Privoo Desktop: FAQ and troubleshooting</h1>
     <p class="subtitle">From the Privoo reference. This article covers version 5.0.6.</p>
-    <p class="hatnote">Main article: <a href="index.html">Privoo Desktop</a></p>
+    <p class="hatnote">Main article: <a href="./index.html">Privoo Desktop</a></p>
 
     <p class="lead">
       Common questions about the project and its privacy claims, followed by fixes for
@@ -60,19 +60,19 @@
     <nav class="toc">
       <div class="toc-title">Contents</div>
       <ol>
-        <li><a href="#project">About the project</a></li>
-        <li><a href="#privacy-q">Privacy questions</a></li>
-        <li><a href="#trouble">Troubleshooting</a>
+        <li><a href="./faq#project">About the project</a></li>
+        <li><a href="./faq#privacy-q">Privacy questions</a></li>
+        <li><a href="./faq#trouble">Troubleshooting</a>
           <ol>
-            <li><a href="#t-block">Blocking</a></li>
-            <li><a href="#t-media">Video and DRM</a></li>
-            <li><a href="#t-sites">Site behaviour</a></li>
-            <li><a href="#t-mariana">.mariana sites</a></li>
-            <li><a href="#t-misc">Other</a></li>
+            <li><a href="./faq#t-block">Blocking</a></li>
+            <li><a href="./faq#t-media">Video and DRM</a></li>
+            <li><a href="./faq#t-sites">Site behaviour</a></li>
+            <li><a href="./faq#t-mariana">.mariana sites</a></li>
+            <li><a href="./faq#t-misc">Other</a></li>
           </ol>
         </li>
-        <li><a href="#help">Getting help</a></li>
-        <li><a href="#see-also">See also</a></li>
+        <li><a href="./faq#help">Getting help</a></li>
+        <li><a href="./faq#see-also">See also</a></li>
       </ol>
     </nav>
 
@@ -106,8 +106,8 @@
       It is built on Chromium, which is the source of its web compatibility. The layer
       above the engine differs: the blocking engine, the privacy defaults, the interface,
       the built-in tools, the internal <code>privoo://</code> pages and features such as
-      <a href="mariana.html">.mariana</a> are the project's own work. See
-      <a href="index.html#architecture">Architecture</a>.
+      <a href="./mariana.html">.mariana</a> are the project's own work. See
+      <a href="./index.html#architecture">Architecture</a>.
     </p>
 
     <h3>Why should I trust it?</h3>
@@ -123,7 +123,7 @@
       store of user data to breach, subpoena or monetise. The cost is real and is stated
       plainly: bookmarks and passwords remain on the machine that created them, and moving
       them requires copying the profile directory. See
-      <a href="install.html#data">Installation: data storage</a>.
+      <a href="./install.html#data">Installation: data storage</a>.
     </p>
 
     <h2 id="privacy-q">Privacy questions</h2>
@@ -133,7 +133,7 @@
       Yes. The setting is consulted per request, so it stops on the next request rather
       than at the next restart, and it is not concealed from the shield panel while
       continuing to run. This was not true before version 5.0.4; see
-      <a href="privacy.html#shield-toggle">Privacy and security: Behaviour when disabled</a>.
+      <a href="./privacy.html#shield-toggle">Privacy and security: Behaviour when disabled</a>.
     </p>
 
     <h3>The shield reports zero on a site with visible advertising.</h3>
@@ -150,7 +150,7 @@
       No. It prevents local retention after the window closes. The sites visited and the
       network still observe the connection exactly as usual. This is true of incognito in
       every browser. For network-level privacy see
-      <a href="privacy.html#tor">Tor, proxies and alternative naming</a>.
+      <a href="./privacy.html#tor">Tor, proxies and alternative naming</a>.
     </p>
 
     <h3>Is .mariana untraceable?</h3>
@@ -159,7 +159,7 @@
       post-quantum layer is a genuine addition on top of Tor's own encryption. Neither
       confers invulnerability, and neither helps if identifying information appears on the
       published page. See
-      <a href="mariana.html#pq-limits">.mariana hosting: Scope and limitations</a>.
+      <a href="./mariana.html#pq-limits">.mariana hosting: Scope and limitations</a>.
     </p>
 
     <h3>Do the ENS and IPFS features leak?</h3>
@@ -189,7 +189,7 @@
     <h3 id="t-media">Video and DRM</h3>
     <h4>Video will not play, or the first video is a black frame</h4>
     <p>
-      Try disabling hardware acceleration in <b>Settings &rarr; Performance</b>. Privoo
+      Try disabling hardware acceleration in <b>Settings → Performance</b>. Privoo
       already works around the common GPU cold-start case in which the first video of a
       session renders black until refreshed, but a particular driver may still misbehave.
     </p>
@@ -198,7 +198,7 @@
       These require Widevine DRM, which official builds include and sign. A source build
       without a completed Widevine VMP signing step will run but will not obtain a
       licence. Use an official release, or check the build output. See
-      <a href="install.html#source">Installation: building from source</a>.
+      <a href="./install.html#source">Installation: building from source</a>.
     </p>
 
     <h3 id="t-sites">Site behaviour</h3>
@@ -241,7 +241,7 @@
     <p>
       Privoo implements a subset of Chrome's extension APIs. Extensions relying on
       advanced APIs may be inert. See
-      <a href="tools.html#thirdparty">Built-in tools: Third-party extensions</a>.
+      <a href="./tools.html#thirdparty">Built-in tools: Third-party extensions</a>.
     </p>
     <h4>I want to reset everything</h4>
     <p>
@@ -284,14 +284,14 @@
 
     <h2 id="see-also" class="nonum">See also</h2>
     <ul>
-      <li><a href="privacy.html">Privoo Desktop: Privacy and security</a></li>
-      <li><a href="install.html">Privoo Desktop: Installation</a></li>
-      <li><a href="index.html#limitations">Privoo Desktop: Limitations and criticism</a></li>
+      <li><a href="./privacy.html">Privoo Desktop: Privacy and security</a></li>
+      <li><a href="./install.html">Privoo Desktop: Installation</a></li>
+      <li><a href="./index.html#limitations">Privoo Desktop: Limitations and criticism</a></li>
     </ul>
 
     <nav class="pager">
-      <a href="shortcuts.html"><span>Previous</span><b>&lsaquo; Keyboard shortcuts</b></a>
-      <a class="next" href="index.html"><span>Back to</span><b>Privoo Desktop &rsaquo;</b></a>
+      <a href="./shortcuts.html"><span>Previous</span><b>‹ Keyboard shortcuts</b></a>
+      <a class="next" href="./index.html"><span>Back to</span><b>Privoo Desktop ›</b></a>
     </nav>
   </main>
 </div>
@@ -301,6 +301,7 @@
   <span>Content describes Privoo 5.0.6 · MIT licensed</span>
 </footer>
 
-<script src="nav.js"></script>
-</body>
-</html>
+<script src="./nav.js.download"></script>
+
+
+</body></html>

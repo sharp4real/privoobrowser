@@ -1135,6 +1135,10 @@
           <h3 class="card-subhead">Themes</h3>
           <div class="theme-gallery" id="theme-gallery"></div>
           <div class="row">
+            <div><div class="label">Auto-adjust My Vibe to fit theme</div><div class="desc">When you pick a theme, also retune My Vibe's accent glow to match its colours. Off by default — your Vibe setting stays as you left it.</div></div>
+            <label class="switch"><input type="checkbox" id="themeAutoVibe"><span class="slider"></span></label>
+          </div>
+          <div class="row">
             <div><div class="label">Browser sounds</div><div class="desc">Short blips when you open/close tabs, type and click, tuned to the active theme.</div></div>
             <label class="switch"><input type="checkbox" id="uiSounds"><span class="slider"></span></label>
           </div>
@@ -1919,7 +1923,7 @@ const api = window.privooInternal;
 const TOGGLES = [
   'verticalTabs', 'vtabsIntegrated', 'vtabsSearchPopup', 'searchPopupGlass', 'uiSounds', 'newTabBtnCircle', 'vtabsCenterIcons', 'darkMode', 'forceDarkMode', 'showHomeButton', 'showBookmarksBar',
   'ntpShowWeather', 'ntpShowClock', 'ntpFocusedSearch', 'ntpShowQuickLinks', 'ntpShowGreeting', 'ntpNewsLink', 'ntpApplyPrivooBackground', 'ntpWallpaperAnimated', 'cryptojackingProtection', 'easyFilesEnabled', 'clearDataOnExit', 'downloadBoosterEnabled',
-  'increaseTransparency', 'aeroGradient', 'vibeEnabled', 'vibeOverPages', 'compactMode', 'searchSuggestions',
+  'increaseTransparency', 'aeroGradient', 'vibeEnabled', 'vibeOverPages', 'themeAutoVibe', 'compactMode', 'searchSuggestions',
   'askDownloadPath', 'adBlocking', 'httpsUpgrade', 'httpsUpgradeShowNotice', 'blockThirdPartyCookies',
   'dnsOverHttps', 'adultContentBlocking', 'spoofUserAgent', 'canvasSpoofing', 'webrtcProtection',
   'doNotTrack', 'allowGeolocation', 'videoPopOut', 'lucidMode', 'strongerTrackingProtection',
@@ -2072,16 +2076,19 @@ function renderThemeGallery(settings) {
     b.title = p.name;
     b.innerHTML = '<span>' + p.name + '</span>';
     b.addEventListener('click', async () => {
-      await savePatch({
+      const patch = {
         ntpWaveEnabled: true,
         ntpWaveColors: p.colors.slice(),
         ntpThemeStyle: p.style,
         ntpThemeId: p.id,
         ntpWaveAnimate: currentSettings.ntpWaveAnimate !== false,
-        vibeEnabled: _maxSat(p.colors) >= 0.12,   // greyscale (Mono) → no hue glow
-        vibeHue: _hue(_vivid(p.colors)),
         ntpThemeMusic: p.sound,
-      }, p.name + ' theme applied');
+      };
+      if (currentSettings.themeAutoVibe) {
+        patch.vibeEnabled = _maxSat(p.colors) >= 0.12;   // greyscale (Mono) → no hue glow
+        patch.vibeHue = _hue(_vivid(p.colors));
+      }
+      await savePatch(patch, p.name + ' theme applied');
       if ($('ntpThemeMusic')) $('ntpThemeMusic').value = currentSettings.ntpThemeMusic || 'none';
       renderThemeGallery(currentSettings);
     });

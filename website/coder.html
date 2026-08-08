@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<!-- saved from url=(0034)./coder -->
+<html lang="en" data-theme="light"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Privoo Coder</title>
-<meta name="description" content="Privoo Coder is a closed-source AI agent coding IDE built on Electron and Monaco, for Windows. Distributed via Proton Drive to Discord members holding the Contributor role."/>
-<link rel="icon" href="logo.png"/>
+<meta name="description" content="Privoo Coder is a closed-source AI agent coding IDE built on Electron and Monaco, for Windows. Distributed via Proton Drive to Discord members holding the Contributor role.">
+<link rel="icon" href="./logo.png">
 <script>try{var t=localStorage.getItem('privoo-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;}catch(e){}</script>
-<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="./styles.css">
 </head>
 <body>
 
 <header class="topbar">
-  <a class="brand" href="index.html">
-    <img src="logo.png" alt="" width="24" height="24"/>
+  <a class="brand" href="./index.html">
+    <img src="./logo.png" alt="" width="24" height="24">
     <b>Privoo</b>
     <span class="ver">reference</span>
   </a>
@@ -21,7 +21,7 @@
     <a href="https://github.com/sharp4real/privoobrowser/releases/latest">Download</a>
     <a href="https://github.com/sharp4real/privoobrowser">Source</a>
     <a href="https://discord.gg/WweUzF3YCQ">Discord</a>
-    <button class="theme-btn" id="theme-btn" type="button">☾ Dark</button>
+    <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch to dark mode" aria-pressed="false">☾ Dark</button>
     <button class="menu-btn" id="menu-btn" aria-label="Menu">☰</button>
   </div>
 </header>
@@ -29,37 +29,37 @@
 <div class="shell">
   <aside class="sidebar" id="sidebar">
     <h4>Article</h4>
-    <a href="index.html">Privoo Desktop</a>
-    <a href="install.html">Installation</a>
+    <a href="./index.html">Privoo Desktop</a>
+    <a href="./install.html">Installation</a>
     <h4>Protection</h4>
-    <a href="privacy.html">Privacy and security</a>
-    <a href="mariana.html">.mariana hosting</a>
+    <a href="./privacy.html">Privacy and security</a>
+    <a href="./mariana.html">.mariana hosting</a>
     <h4>Using Privoo Desktop</h4>
-    <a href="tools.html">Built-in tools</a>
-    <a href="ai.html">Privoo AI</a>
-    <a href="browsing.html">Browsing</a>
-    <a href="appearance.html">Appearance</a>
+    <a href="./tools.html">Built-in tools</a>
+    <a href="./ai.html">Privoo AI</a>
+    <a href="./browsing.html">Browsing</a>
+    <a href="./appearance.html">Appearance</a>
     <h4>Other products</h4>
-    <a href="android.html">Privoo for Android</a>
-    <a href="coder.html" class="active">Privoo Coder</a>
+    <a href="./android.html">Privoo for Android</a>
+    <a href="./coder.html" class="active">Privoo Coder</a>
     <h4>Reference</h4>
-    <a href="shortcuts.html">Keyboard shortcuts</a>
-    <a href="faq.html">FAQ and troubleshooting</a>
+    <a href="./shortcuts.html">Keyboard shortcuts</a>
+    <a href="./faq.html">FAQ and troubleshooting</a>
   </aside>
 
   <main class="doc">
     <h1>Privoo Coder</h1>
     <p class="subtitle">From the Privoo reference.</p>
-    <p class="hatnote">This article is about the coding IDE. For the desktop browser, see <a href="index.html">Privoo Desktop</a>. For the Android browser, see <a href="android.html">Privoo for Android</a>.</p>
+    <p class="hatnote">This article is about the coding IDE. For the desktop browser, see <a href="./index.html">Privoo Desktop</a>. For the Android browser, see <a href="./android.html">Privoo for Android</a>.</p>
 
     <aside class="infobox">
       <div class="ib-head">
         <div class="ib-title">Privoo Coder</div>
-        <img src="logocoder.png" alt="Privoo Coder logo" width="72" height="72"/>
+        <img src="./logocoder.png" alt="Privoo Coder logo" width="72" height="72">
         <div class="cap">The Privoo Coder logo</div>
       </div>
       <table>
-        <tr><th>Developer</th><td>Independent project (<code>sharp4real</code>)</td></tr>
+        <tbody><tr><th>Developer</th><td>Independent project (<code>sharp4real</code>)</td></tr>
         <tr><th>Type</th><td>AI agent coding IDE</td></tr>
         <tr><th>Framework</th><td>Electron</td></tr>
         <tr><th>Editor</th><td>Monaco (the VS Code engine)</td></tr>
@@ -73,13 +73,13 @@
         <tr><th>Local</th><td>Ollama</td></tr>
         <tr><th>Hosted</th><td>OpenAI, Anthropic</td></tr>
         <tr><th>Keys</th><td>Stored locally, user supplied</td></tr>
-      </table>
+      </tbody></table>
     </aside>
 
     <p class="lead">
       <b>Privoo Coder</b> is an AI agent coding IDE built on Electron, using the Monaco
       editor that also powers Visual Studio Code. It is a separate product from
-      <a href="index.html">Privoo Desktop</a> and shares none of its browser
+      <a href="./index.html">Privoo Desktop</a> and shares none of its browser
       functionality: it is a development environment, not a browser.
     </p>
     <p>
@@ -91,28 +91,28 @@
 
     <div class="btn-row">
       <a class="lbtn primary" href="https://discord.gg/WweUzF3YCQ">Join Discord to request access</a>
-      <a class="lbtn" href="index.html">Privoo Desktop</a>
-      <a class="lbtn" href="android.html">Privoo for Android</a>
+      <a class="lbtn" href="./index.html">Privoo Desktop</a>
+      <a class="lbtn" href="./android.html">Privoo for Android</a>
     </div>
 
     <nav class="toc">
       <div class="toc-title">Contents</div>
       <ol>
-        <li><a href="#access">Access and distribution</a></li>
-        <li><a href="#features">Features</a>
+        <li><a href="./coder#access">Access and distribution</a></li>
+        <li><a href="./coder#features">Features</a>
           <ol>
-            <li><a href="#f-editor">Editor</a></li>
-            <li><a href="#f-ai">AI assistant</a></li>
-            <li><a href="#f-agent">Agent mode</a></li>
-            <li><a href="#f-files">Files and search</a></li>
-            <li><a href="#f-setup">Getting started</a></li>
+            <li><a href="./coder#f-editor">Editor</a></li>
+            <li><a href="./coder#f-ai">AI assistant</a></li>
+            <li><a href="./coder#f-agent">Agent mode</a></li>
+            <li><a href="./coder#f-files">Files and search</a></li>
+            <li><a href="./coder#f-setup">Getting started</a></li>
           </ol>
         </li>
-        <li><a href="#models">Model providers</a></li>
-        <li><a href="#privacy">Privacy and data handling</a></li>
-        <li><a href="#shortcuts">Keyboard shortcuts</a></li>
-        <li><a href="#compare">Relationship to other Privoo products</a></li>
-        <li><a href="#see-also">See also</a></li>
+        <li><a href="./coder#models">Model providers</a></li>
+        <li><a href="./coder#privacy">Privacy and data handling</a></li>
+        <li><a href="./coder#shortcuts">Keyboard shortcuts</a></li>
+        <li><a href="./coder#compare">Relationship to other Privoo products</a></li>
+        <li><a href="./coder#see-also">See also</a></li>
       </ol>
     </nav>
 
@@ -191,7 +191,7 @@
     <ul class="plain">
       <li><b>Streaming responses</b>, so output appears as it is generated rather than after completion.</li>
       <li><b>Markdown and code rendering</b>, so replies containing code are presented as code rather than prose.</li>
-      <li><b>Model selection</b> in the panel itself, per the provider configured; see <a href="#models">Model providers</a>.</li>
+      <li><b>Model selection</b> in the panel itself, per the provider configured; see <a href="./coder#models">Model providers</a>.</li>
       <li><b>Message composition</b> with <kbd>Enter</kbd> to send and <kbd>Shift</kbd> <kbd>Enter</kbd> for a newline.</li>
     </ul>
 
@@ -296,7 +296,7 @@
     <p>
       Privoo Coder shares the Privoo name and visual identity but is otherwise a distinct
       application with different properties. It is not a browser and contains none of the
-      browser's blocking, Tor or <a href="mariana.html">.mariana</a> functionality.
+      browser's blocking, Tor or <a href="./mariana.html">.mariana</a> functionality.
     </p>
     <div class="table-wrap">
       <table>
@@ -316,20 +316,20 @@
 
     <div class="btn-row">
       <a class="lbtn primary" href="https://discord.gg/WweUzF3YCQ">Request access on Discord</a>
-      <a class="lbtn" href="https://ollama.com">Ollama</a>
-      <a class="lbtn" href="index.html">Privoo Desktop</a>
+      <a class="lbtn" href="https://ollama.com/">Ollama</a>
+      <a class="lbtn" href="./index.html">Privoo Desktop</a>
     </div>
 
     <h2 id="see-also" class="nonum">See also</h2>
     <ul>
-      <li><a href="index.html">Privoo Desktop</a></li>
-      <li><a href="android.html">Privoo for Android</a></li>
-      <li><a href="tools.html#ai">Privoo Desktop: Privoo AI</a></li>
+      <li><a href="./index.html">Privoo Desktop</a></li>
+      <li><a href="./android.html">Privoo for Android</a></li>
+      <li><a href="./tools.html#ai">Privoo Desktop: Privoo AI</a></li>
     </ul>
 
     <nav class="pager">
-      <a href="android.html"><span>Previous</span><b>&lsaquo; Privoo for Android</b></a>
-      <a class="next" href="index.html"><span>Back to</span><b>Privoo Desktop &rsaquo;</b></a>
+      <a href="./android.html"><span>Previous</span><b>‹ Privoo for Android</b></a>
+      <a class="next" href="./index.html"><span>Back to</span><b>Privoo Desktop ›</b></a>
     </nav>
   </main>
 </div>
@@ -339,6 +339,7 @@
   <span>Privoo Coder is closed source · MIT applies to Privoo Desktop only</span>
 </footer>
 
-<script src="nav.js"></script>
-</body>
-</html>
+<script src="./nav.js.download"></script>
+
+
+</body></html>

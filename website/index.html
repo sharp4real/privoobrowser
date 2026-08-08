@@ -1,19 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<html lang="en" data-theme="light"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Privoo Desktop</title>
-<meta name="description" content="Privoo Desktop is a free and open-source privacy-focused web browser built on Chromium and Electron, with ad blocking, anti-fingerprinting and anonymous Tor hosting enabled by default."/>
-<link rel="icon" href="logo.png"/>
+<meta name="description" content="Privoo Desktop is a free and open-source privacy-focused web browser built on Chromium and Electron, with ad blocking, anti-fingerprinting and anonymous Tor hosting enabled by default.">
+<link rel="icon" href="./logo.png">
 <script>try{var t=localStorage.getItem('privoo-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;}catch(e){}</script>
-<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="./styles.css">
 </head>
 <body>
 
 <header class="topbar">
-  <a class="brand" href="index.html">
-    <img src="logo.png" alt="" width="24" height="24"/>
+  <a class="brand" href="./index.html">
+    <img src="./logo.png" alt="" width="24" height="24">
     <b>Privoo</b>
     <span class="ver">reference</span>
   </a>
@@ -21,7 +20,7 @@
     <a href="https://github.com/sharp4real/privoobrowser/releases/latest">Download</a>
     <a href="https://github.com/sharp4real/privoobrowser">Source</a>
     <a href="https://discord.gg/WweUzF3YCQ">Discord</a>
-    <button class="theme-btn" id="theme-btn" type="button">☾ Dark</button>
+    <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch to dark mode" aria-pressed="false">☾ Dark</button>
     <button class="menu-btn" id="menu-btn" aria-label="Menu">☰</button>
   </div>
 </header>
@@ -29,37 +28,37 @@
 <div class="shell">
   <aside class="sidebar" id="sidebar">
     <h4>Article</h4>
-    <a href="index.html" class="active">Privoo Desktop</a>
-    <a href="install.html">Installation</a>
+    <a href="./index.html" class="active">Privoo Desktop</a>
+    <a href="./install.html">Installation</a>
     <h4>Protection</h4>
-    <a href="privacy.html">Privacy and security</a>
-    <a href="mariana.html">.mariana hosting</a>
+    <a href="./privacy.html">Privacy and security</a>
+    <a href="./mariana.html">.mariana hosting</a>
     <h4>Using Privoo Desktop</h4>
-    <a href="tools.html">Built-in tools</a>
-    <a href="ai.html">Privoo AI</a>
-    <a href="browsing.html">Browsing</a>
-    <a href="appearance.html">Appearance</a>
+    <a href="./tools.html">Built-in tools</a>
+    <a href="./ai.html">Privoo AI</a>
+    <a href="./browsing.html">Browsing</a>
+    <a href="./appearance.html">Appearance</a>
     <h4>Other products</h4>
-    <a href="android.html">Privoo for Android</a>
-    <a href="coder.html">Privoo Coder</a>
+    <a href="./android.html">Privoo for Android</a>
+    <a href="./coder.html">Privoo Coder</a>
     <h4>Reference</h4>
-    <a href="shortcuts.html">Keyboard shortcuts</a>
-    <a href="faq.html">FAQ and troubleshooting</a>
+    <a href="./shortcuts.html">Keyboard shortcuts</a>
+    <a href="./faq.html">FAQ and troubleshooting</a>
   </aside>
 
   <main class="doc">
     <h1>Privoo Desktop</h1>
     <p class="subtitle">From the Privoo reference. This article covers the browser as of version 5.0.6.</p>
-    <p class="hatnote">This article is about the desktop browser. For the Android browser, see <a href="android.html">Privoo for Android</a>. For the coding IDE, see <a href="coder.html">Privoo Coder</a>.</p>
+    <p class="hatnote">This article is about the desktop browser. For the Android browser, see <a href="./android.html">Privoo for Android</a>. For the coding IDE, see <a href="./coder.html">Privoo Coder</a>.</p>
 
     <aside class="infobox">
       <div class="ib-head">
         <div class="ib-title">Privoo Desktop</div>
-        <img src="logo.png" alt="Privoo logo" width="72" height="72"/>
+        <img src="./logo.png" alt="Privoo logo" width="72" height="72">
         <div class="cap">The Privoo logo</div>
       </div>
       <table>
-        <tr><th>Developer</th><td>Independent project (<code>sharp4real</code>)</td></tr>
+        <tbody><tr><th>Developer</th><td>Independent project (<code>sharp4real</code>)</td></tr>
         <tr><th>Initial release</th><td>23 May 2026; beta v1.00</td></tr>
         <tr><th>Stable release</th><td>5.0.6 / 17 July 2026</td></tr>
         <tr><th>Repository</th><td><a href="https://github.com/sharp4real/privoobrowser">github.com/sharp4real/privoobrowser</a></td></tr>
@@ -76,7 +75,7 @@
         <tr><th>Search engine</th><td>Brave Search</td></tr>
         <tr><th>Telemetry</th><td>None</td></tr>
         <tr><th>User accounts</th><td>None</td></tr>
-      </table>
+      </tbody></table>
     </aside>
 
     <p class="lead">
@@ -92,7 +91,7 @@
       across more than sixty tagged releases. It is maintained as an independent project
       under the MIT license rather than by a company, a fact its documentation cites as
       the reason its privacy defaults are not constrained by an advertising business
-      model.<sup class="ref"><a href="#ref-1">[1]</a></sup>
+      model.<sup class="ref"><a href="./#ref-1">[1]</a></sup>
     </p>
     <p>
       Version 5.0.5 introduced <b>.mariana</b>, a feature that publishes a local folder
@@ -101,9 +100,9 @@
     </p>
     <p>
       Privoo Desktop is one of three applications sharing the Privoo name. The others are
-      <a href="android.html">Privoo for Android</a>, a native mobile browser, and
-      <a href="coder.html">Privoo Coder</a>, a coding IDE. Both are closed source and are
-      distributed differently; see <a href="#family">Privoo product family</a> below.
+      <a href="./android.html">Privoo for Android</a>, a native mobile browser, and
+      <a href="./coder.html">Privoo Coder</a>, a coding IDE. Both are closed source and are
+      distributed differently; see <a href="./#family">Privoo product family</a> below.
       Statements in this article about licensing, telemetry and updates apply to Privoo
       Desktop only.
     </p>
@@ -119,42 +118,42 @@
     <nav class="toc">
       <div class="toc-title">Contents</div>
       <ol>
-        <li><a href="#overview">Overview</a></li>
-        <li><a href="#history">History</a>
+        <li><a href="./#overview">Overview</a></li>
+        <li><a href="./#history">History</a>
           <ol>
-            <li><a href="#history-early">Early releases</a></li>
-            <li><a href="#history-versions">Version history</a></li>
+            <li><a href="./#history-early">Early releases</a></li>
+            <li><a href="./#history-versions">Version history</a></li>
           </ol>
         </li>
-        <li><a href="#defaults">Default configuration</a></li>
-        <li><a href="#features">Features</a>
+        <li><a href="./#defaults">Default configuration</a></li>
+        <li><a href="./#features">Features</a>
           <ol>
-            <li><a href="#f-privacy">Privacy and security</a></li>
-            <li><a href="#f-mariana">Anonymous hosting</a></li>
-            <li><a href="#f-tools">Built-in tools</a></li>
-            <li><a href="#f-browsing">Browsing and interface</a></li>
+            <li><a href="./#f-privacy">Privacy and security</a></li>
+            <li><a href="./#f-mariana">Anonymous hosting</a></li>
+            <li><a href="./#f-tools">Built-in tools</a></li>
+            <li><a href="./#f-browsing">Browsing and interface</a></li>
           </ol>
         </li>
-        <li><a href="#architecture">Architecture</a>
+        <li><a href="./#architecture">Architecture</a>
           <ol>
-            <li><a href="#a-process">Process model</a></li>
-            <li><a href="#a-protocol">Internal protocol</a></li>
-            <li><a href="#a-storage">Data storage</a></li>
+            <li><a href="./#a-process">Process model</a></li>
+            <li><a href="./#a-protocol">Internal protocol</a></li>
+            <li><a href="./#a-storage">Data storage</a></li>
           </ol>
         </li>
-        <li><a href="#privacy-model">Privacy model</a></li>
-        <li><a href="#family">Privoo product family</a></li>
-        <li><a href="#limitations">Limitations and criticism</a></li>
-        <li><a href="#see-also">See also</a></li>
-        <li><a href="#references">References</a></li>
-        <li><a href="#external">External links</a></li>
+        <li><a href="./#privacy-model">Privacy model</a></li>
+        <li><a href="./#family">Privoo product family</a></li>
+        <li><a href="./#limitations">Limitations and criticism</a></li>
+        <li><a href="./#see-also">See also</a></li>
+        <li><a href="./#references">References</a></li>
+        <li><a href="./#external">External links</a></li>
       </ol>
     </nav>
 
     <h2 id="overview">Overview</h2>
 
     <figure class="thumb">
-      <img src="screenshot.png" alt="Privoo Desktop's Speed Dial new tab page, showing the ghost mascot, a greeting and the search field over a wave background." width="1562" height="969"/>
+      <img src="./screenshot.png" alt="Privoo Desktop&#39;s Speed Dial new tab page, showing the ghost mascot, a greeting and the search field over a wave background." width="1562" height="969">
       <figcaption>
         Privoo Desktop 5.0.6 on Windows, showing the Speed Dial new tab page in the
         default dark theme. This is a fresh install with no configuration performed: the
@@ -176,7 +175,7 @@
       indirectly, by the advertising industry, and therefore ship privacy features that
       are switched off, difficult to find, or scoped so as not to affect that revenue.
       Privoo has no advertising revenue, and consequently enables its protections by
-      default.<sup class="ref"><a href="#ref-1">[1]</a></sup>
+      default.<sup class="ref"><a href="./#ref-1">[1]</a></sup>
     </p>
     <p>
       A secondary effect of blocking at the network layer is performance. Requests for
@@ -191,7 +190,7 @@
     <h3 id="history-early">Early releases</h3>
     <p>
       The first commit, labelled <i>Beta v1.00 — initial release</i>, is dated
-      23 May 2026.<sup class="ref"><a href="#ref-2">[2]</a></sup> The earliest releases
+      23 May 2026.<sup class="ref"><a href="./#ref-2">[2]</a></sup> The earliest releases
       were dominated by distribution and update-mechanism problems rather than browser
       features: the 1.0.x series contains repeated fixes to the auto-updater, including
       a stall at 100% completion, a SHA-512 hash mismatch between the built installer and
@@ -236,7 +235,7 @@
     </div>
     <p>
       As of version 5.0.5 the repository contains 180 commits across 66 tagged
-      releases.<sup class="ref"><a href="#ref-2">[2]</a></sup> Releases are built and
+      releases.<sup class="ref"><a href="./#ref-2">[2]</a></sup> Releases are built and
       published automatically by GitHub Actions for Windows, macOS and Linux when a
       version tag is pushed.
     </p>
@@ -244,7 +243,7 @@
     <h2 id="defaults">Default configuration</h2>
     <p>
       The following are active on a new installation with no user configuration. Values
-      are those defined in the browser's settings store.<sup class="ref"><a href="#ref-3">[3]</a></sup>
+      are those defined in the browser's settings store.<sup class="ref"><a href="./#ref-3">[3]</a></sup>
     </p>
     <div class="table-wrap">
       <table>
@@ -270,7 +269,7 @@
     <h2 id="features">Features</h2>
 
     <h3 id="f-privacy">Privacy and security</h3>
-    <p class="hatnote">Main article: <a href="privacy.html">Privacy and security</a></p>
+    <p class="hatnote">Main article: <a href="./privacy.html">Privacy and security</a></p>
     <p>
       Content blocking uses Ghostery's <code>adblocker-electron</code> engine
       (version 2.5.x) with the EasyList, EasyPrivacy and uBlock Origin filter lists,
@@ -296,7 +295,7 @@
     </p>
 
     <h3 id="f-mariana">Anonymous hosting</h3>
-    <p class="hatnote">Main article: <a href="mariana.html">.mariana hosting</a></p>
+    <p class="hatnote">Main article: <a href="./mariana.html">.mariana hosting</a></p>
     <p>
       Introduced in 5.0.5, the <code>.mariana</code> feature publishes a local directory
       as a Tor v3 hidden service. The browser starts a loopback-bound HTTP server for the
@@ -313,7 +312,7 @@
     </p>
 
     <h3 id="f-tools">Built-in tools</h3>
-    <p class="hatnote">Main articles: <a href="tools.html">Built-in tools</a> and <a href="ai.html">Privoo AI</a></p>
+    <p class="hatnote">Main articles: <a href="./tools.html">Built-in tools</a> and <a href="./ai.html">Privoo AI</a></p>
     <p>
       Privoo ships first-party equivalents of commonly installed extensions, on the
       stated reasoning that each third-party extension is an additional party granted
@@ -326,7 +325,7 @@
     </p>
 
     <h3 id="f-browsing">Browsing and interface</h3>
-    <p class="hatnote">Main articles: <a href="browsing.html">Browsing</a> and <a href="appearance.html">Appearance</a></p>
+    <p class="hatnote">Main articles: <a href="./browsing.html">Browsing</a> and <a href="./appearance.html">Appearance</a></p>
     <p>
       The interface provides tab groups, drag-to-reorder tabs, a split view for two
       simultaneous pages, vertical tabs with a collapsible icon rail, isolated browser
@@ -337,12 +336,12 @@
     </p>
 
     <div class="cards">
-      <a class="card" href="privacy.html"><h3>Privacy and security</h3><p>Every protection, what it does, and which setting controls it.</p></a>
-      <a class="card" href="mariana.html"><h3>.mariana hosting</h3><p>Tor hidden services and the post-quantum layer, in detail.</p></a>
-      <a class="card" href="tools.html"><h3>Built-in tools</h3><p>The first-party tools shipped inside the browser.</p></a>
-      <a class="card" href="ai.html"><h3>Privoo AI</h3><p>The built-in assistant: your own key, or a local model via Ollama.</p></a>
-      <a class="card" href="browsing.html"><h3>Browsing</h3><p>Tabs, split view, profiles and the address bar.</p></a>
-      <a class="card" href="appearance.html"><h3>Appearance</h3><p>Accent colour, themes, glass effects and layout.</p></a>
+      <a class="card" href="./privacy.html"><h3>Privacy and security</h3><p>Every protection, what it does, and which setting controls it.</p></a>
+      <a class="card" href="./mariana.html"><h3>.mariana hosting</h3><p>Tor hidden services and the post-quantum layer, in detail.</p></a>
+      <a class="card" href="./tools.html"><h3>Built-in tools</h3><p>The first-party tools shipped inside the browser.</p></a>
+      <a class="card" href="./ai.html"><h3>Privoo AI</h3><p>The built-in assistant: your own key, or a local model via Ollama.</p></a>
+      <a class="card" href="./browsing.html"><h3>Browsing</h3><p>Tabs, split view, profiles and the address bar.</p></a>
+      <a class="card" href="./appearance.html"><h3>Appearance</h3><p>Accent colour, themes, glass effects and layout.</p></a>
     </div>
 
     <h2 id="architecture">Architecture</h2>
@@ -477,8 +476,8 @@
       </p>
     </div>
     <div class="cards">
-      <a class="card" href="android.html"><h3>Privoo for Android</h3><p>Native Kotlin and Jetpack Compose mobile browser. Closed source, sideloaded, no automatic updates.</p></a>
-      <a class="card" href="coder.html"><h3>Privoo Coder</h3><p>AI agent coding IDE on Electron and Monaco. Closed source, Windows, Contributor role required.</p></a>
+      <a class="card" href="./android.html"><h3>Privoo for Android</h3><p>Native Kotlin and Jetpack Compose mobile browser. Closed source, sideloaded, no automatic updates.</p></a>
+      <a class="card" href="./coder.html"><h3>Privoo Coder</h3><p>AI agent coding IDE on Electron and Monaco. Closed source, Windows, Contributor role required.</p></a>
     </div>
 
     <h2 id="limitations">Limitations and criticism</h2>
@@ -489,7 +488,7 @@
       <li><b>Partial extension support.</b> Electron implements a subset of Chrome's extension APIs. Extensions relying on <code>contextMenus</code>, <code>privacy</code>, <code>webNavigation</code> and other advanced APIs may be limited or inert. Full CRX support remains an open roadmap item.</li>
       <li><b>Unnotarised macOS builds.</b> Release builds are produced without Apple notarisation, so Gatekeeper warns on first launch. This follows from the project not holding a paid Apple developer account.</li>
       <li><b>No synchronisation.</b> A deliberate consequence of having no server, but a functional regression relative to mainstream browsers.</li>
-      <li><b>Anonymity scope.</b> The documentation states that no browser makes a user anonymous, and directs users whose threat model involves a state adversary to Tor Browser rather than Privoo.<sup class="ref"><a href="#ref-1">[1]</a></sup></li>
+      <li><b>Anonymity scope.</b> The documentation states that no browser makes a user anonymous, and directs users whose threat model involves a state adversary to Tor Browser rather than Privoo.<sup class="ref"><a href="./#ref-1">[1]</a></sup></li>
       <li><b>Post-quantum layer is bounded.</b> The <code>.mariana</code> post-quantum layer applies only between two Privoo Desktop instances and protects the transport only. The project explicitly declines to describe it as unbreakable.</li>
     </ul>
     <p>
@@ -500,14 +499,14 @@
 
     <h2 id="see-also" class="nonum">See also</h2>
     <ul>
-      <li><a href="privacy.html">Privoo Desktop: Privacy and security</a></li>
-      <li><a href="mariana.html">Privoo Desktop: .mariana hosting</a></li>
-      <li><a href="tools.html">Privoo Desktop: Built-in tools</a></li>
-      <li><a href="ai.html">Privoo Desktop: Privoo AI</a></li>
-      <li><a href="install.html">Privoo Desktop: Installation</a></li>
-      <li><a href="faq.html">Privoo Desktop: FAQ and troubleshooting</a></li>
-      <li><a href="android.html">Privoo for Android</a></li>
-      <li><a href="coder.html">Privoo Coder</a></li>
+      <li><a href="./privacy.html">Privoo Desktop: Privacy and security</a></li>
+      <li><a href="./mariana.html">Privoo Desktop: .mariana hosting</a></li>
+      <li><a href="./tools.html">Privoo Desktop: Built-in tools</a></li>
+      <li><a href="./ai.html">Privoo Desktop: Privoo AI</a></li>
+      <li><a href="./install.html">Privoo Desktop: Installation</a></li>
+      <li><a href="./faq.html">Privoo Desktop: FAQ and troubleshooting</a></li>
+      <li><a href="./android.html">Privoo for Android</a></li>
+      <li><a href="./coder.html">Privoo Coder</a></li>
     </ul>
 
     <h2 id="references" class="nonum">References</h2>
@@ -531,7 +530,7 @@
     </div>
 
     <nav class="pager">
-      <a class="next" href="install.html" style="margin-left:auto"><span>Next article</span><b>Installation &rsaquo;</b></a>
+      <a class="next" href="./install.html" style="margin-left:auto"><span>Next article</span><b>Installation ›</b></a>
     </nav>
   </main>
 </div>
@@ -541,6 +540,7 @@
   <span>Content describes Privoo Desktop 5.0.6 · MIT licensed</span>
 </footer>
 
-<script src="nav.js"></script>
-</body>
-</html>
+<script src="./nav.js.download"></script>
+
+
+</body></html>

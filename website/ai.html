@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<!-- saved from url=(0031)./ai -->
+<html lang="en" data-theme="light"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Privoo Desktop: Privoo AI</title>
-<meta name="description" content="Privoo AI is the assistant built into Privoo Desktop. It runs against your own API key for Anthropic, OpenAI, Gemini or DeepSeek, or entirely locally through Ollama."/>
-<link rel="icon" href="logo.png"/>
+<meta name="description" content="Privoo AI is the assistant built into Privoo Desktop. It runs against your own API key for Anthropic, OpenAI, Gemini or DeepSeek, or entirely locally through Ollama.">
+<link rel="icon" href="./logo.png">
 <script>try{var t=localStorage.getItem('privoo-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;}catch(e){}</script>
-<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="./styles.css">
 </head>
 <body>
 
 <header class="topbar">
-  <a class="brand" href="index.html">
-    <img src="logo.png" alt="" width="24" height="24"/>
+  <a class="brand" href="./index.html">
+    <img src="./logo.png" alt="" width="24" height="24">
     <b>Privoo</b>
     <span class="ver">reference</span>
   </a>
@@ -21,7 +21,7 @@
     <a href="https://github.com/sharp4real/privoobrowser/releases/latest">Download</a>
     <a href="https://github.com/sharp4real/privoobrowser">Source</a>
     <a href="https://discord.gg/WweUzF3YCQ">Discord</a>
-    <button class="theme-btn" id="theme-btn" type="button">☾ Dark</button>
+    <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch to dark mode" aria-pressed="false">☾ Dark</button>
     <button class="menu-btn" id="menu-btn" aria-label="Menu">☰</button>
   </div>
 </header>
@@ -29,33 +29,33 @@
 <div class="shell">
   <aside class="sidebar" id="sidebar">
     <h4>Article</h4>
-    <a href="index.html">Privoo Desktop</a>
-    <a href="install.html">Installation</a>
+    <a href="./index.html">Privoo Desktop</a>
+    <a href="./install.html">Installation</a>
     <h4>Protection</h4>
-    <a href="privacy.html">Privacy and security</a>
-    <a href="mariana.html">.mariana hosting</a>
+    <a href="./privacy.html">Privacy and security</a>
+    <a href="./mariana.html">.mariana hosting</a>
     <h4>Using Privoo Desktop</h4>
-    <a href="tools.html">Built-in tools</a>
-    <a href="ai.html" class="active">Privoo AI</a>
-    <a href="browsing.html">Browsing</a>
-    <a href="appearance.html">Appearance</a>
+    <a href="./tools.html">Built-in tools</a>
+    <a href="./ai.html" class="active">Privoo AI</a>
+    <a href="./browsing.html">Browsing</a>
+    <a href="./appearance.html">Appearance</a>
     <h4>Other products</h4>
-    <a href="android.html">Privoo for Android</a>
-    <a href="coder.html">Privoo Coder</a>
+    <a href="./android.html">Privoo for Android</a>
+    <a href="./coder.html">Privoo Coder</a>
     <h4>Reference</h4>
-    <a href="shortcuts.html">Keyboard shortcuts</a>
-    <a href="faq.html">FAQ and troubleshooting</a>
+    <a href="./shortcuts.html">Keyboard shortcuts</a>
+    <a href="./faq.html">FAQ and troubleshooting</a>
   </aside>
 
   <main class="doc">
     <h1>Privoo Desktop: Privoo AI</h1>
     <p class="subtitle">From the Privoo reference. This article covers version 5.0.6.</p>
-    <p class="hatnote">Main article: <a href="index.html">Privoo Desktop</a>. For the separate AI coding IDE, see <a href="coder.html">Privoo Coder</a>.</p>
+    <p class="hatnote">Main article: <a href="./index.html">Privoo Desktop</a>. For the separate AI coding IDE, see <a href="./coder.html">Privoo Coder</a>.</p>
 
     <aside class="infobox">
       <div class="ib-head"><div class="ib-title">Privoo AI</div><div class="cap">Built-in assistant</div></div>
       <table>
-        <tr><th>Part of</th><td><a href="index.html">Privoo Desktop</a></td></tr>
+        <tbody><tr><th>Part of</th><td><a href="./index.html">Privoo Desktop</a></td></tr>
         <tr><th>Type</th><td>Browser AI assistant</td></tr>
         <tr><th>Internal page</th><td><code>privoo://ai</code></td></tr>
         <tr><th>Default</th><td>Enabled</td></tr>
@@ -70,11 +70,11 @@
         <tr><th>Keys</th><td>User supplied, encrypted at rest</td></tr>
         <tr><th>Key storage</th><td>OS keychain via Electron <code>safeStorage</code></td></tr>
         <tr><th>Chat history</th><td>Local only</td></tr>
-      </table>
+      </tbody></table>
     </aside>
 
     <p class="lead">
-      <b>Privoo AI</b> is the assistant built into <a href="index.html">Privoo Desktop</a>.
+      <b>Privoo AI</b> is the assistant built into <a href="./index.html">Privoo Desktop</a>.
       It is enabled by default and reachable from a toolbar button, a side panel, or its
       own window at <code>privoo://ai</code>. It is not a hosted service: Privoo operates
       no model and no inference infrastructure. The assistant runs against an API key the
@@ -90,31 +90,31 @@
 
     <div class="btn-row">
       <a class="lbtn primary" href="https://github.com/sharp4real/privoobrowser/releases/latest">Download Privoo Desktop</a>
-      <a class="lbtn" href="https://ollama.com">Ollama</a>
-      <a class="lbtn" href="tools.html">Built-in tools</a>
-      <a class="lbtn" href="coder.html">Privoo Coder</a>
+      <a class="lbtn" href="https://ollama.com/">Ollama</a>
+      <a class="lbtn" href="./tools.html">Built-in tools</a>
+      <a class="lbtn" href="./coder.html">Privoo Coder</a>
     </div>
 
     <nav class="toc">
       <div class="toc-title">Contents</div>
       <ol>
-        <li><a href="#interface">Interface</a>
+        <li><a href="./ai#interface">Interface</a>
           <ol>
-            <li><a href="#i-history">Chat history</a></li>
+            <li><a href="./ai#i-history">Chat history</a></li>
           </ol>
         </li>
-        <li><a href="#providers">Providers and models</a></li>
-        <li><a href="#keys">API keys and storage</a></li>
-        <li><a href="#ollama">Running locally with Ollama</a>
+        <li><a href="./ai#providers">Providers and models</a></li>
+        <li><a href="./ai#keys">API keys and storage</a></li>
+        <li><a href="./ai#ollama">Running locally with Ollama</a>
           <ol>
-            <li><a href="#o-network">Network path</a></li>
+            <li><a href="./ai#o-network">Network path</a></li>
           </ol>
         </li>
-        <li><a href="#requests">How requests are made</a></li>
-        <li><a href="#privacy">Privacy model</a></li>
-        <li><a href="#coder-rel">Relationship to Privoo Coder</a></li>
-        <li><a href="#limits">Limitations</a></li>
-        <li><a href="#see-also">See also</a></li>
+        <li><a href="./ai#requests">How requests are made</a></li>
+        <li><a href="./ai#privacy">Privacy model</a></li>
+        <li><a href="./ai#coder-rel">Relationship to Privoo Coder</a></li>
+        <li><a href="./ai#limits">Limitations</a></li>
+        <li><a href="./ai#see-also">See also</a></li>
       </ol>
     </nav>
 
@@ -127,7 +127,7 @@
         <caption>Where the assistant appears</caption>
         <thead><tr><th>Surface</th><th>Description</th></tr></thead>
         <tbody>
-          <tr><td>Toolbar button</td><td>Opens the assistant. Controlled by <b>Settings &rarr; Features</b>, where it can be hidden. Enabled by default.</td></tr>
+          <tr><td>Toolbar button</td><td>Opens the assistant. Controlled by <b>Settings → Features</b>, where it can be hidden. Enabled by default.</td></tr>
           <tr><td>Side panel</td><td>The assistant beside the page, for use while reading.</td></tr>
           <tr><td>Full page</td><td><code>privoo://ai</code>, a two-pane workspace: a chat-history sidebar and the chat column.</td></tr>
           <tr><td>Separate window</td><td>A frameless window with its own minimise and close controls, so the assistant can sit beside other applications rather than inside the browser.</td></tr>
@@ -204,7 +204,7 @@
 
     <h2 id="ollama">Running locally with Ollama</h2>
     <p>
-      <a href="https://ollama.com">Ollama</a> runs a language model on the user's own
+      <a href="https://ollama.com/">Ollama</a> runs a language model on the user's own
       machine. Selecting it as the provider means the assistant works with no API key, no
       account, no per-token cost, and no network transmission of the conversation.
     </p>
@@ -214,7 +214,7 @@
     </p>
     <p>
       Ollama is used elsewhere in the browser for the same reason. The
-      <a href="tools.html#identities">identity autofill</a> feature calls a local model to
+      <a href="./tools.html#identities">identity autofill</a> feature calls a local model to
       interpret unusual form-field labels that direct matching does not recognise, so that
       the user's saved personal details are never sent to a remote service to be
       understood.
@@ -283,7 +283,7 @@
 
     <h2 id="coder-rel">Relationship to Privoo Coder</h2>
     <p>
-      Privoo AI and <a href="coder.html">Privoo Coder</a> are distinct products that share
+      Privoo AI and <a href="./coder.html">Privoo Coder</a> are distinct products that share
       a design principle. Both decline to host a model and both operate against a
       user-supplied key or a local Ollama instance, keeping keys on the machine.
     </p>
@@ -314,16 +314,16 @@
 
     <div class="btn-row">
       <a class="lbtn primary" href="https://github.com/sharp4real/privoobrowser/releases/latest">Download Privoo Desktop</a>
-      <a class="lbtn" href="https://ollama.com">Get Ollama</a>
-      <a class="lbtn" href="tools.html">All built-in tools</a>
+      <a class="lbtn" href="https://ollama.com/">Get Ollama</a>
+      <a class="lbtn" href="./tools.html">All built-in tools</a>
     </div>
 
     <h2 id="see-also" class="nonum">See also</h2>
     <ul>
-      <li><a href="tools.html">Privoo Desktop: Built-in tools</a></li>
-      <li><a href="coder.html">Privoo Coder</a></li>
-      <li><a href="privacy.html">Privoo Desktop: Privacy and security</a></li>
-      <li><a href="index.html#f-tools">Privoo Desktop: Built-in tools overview</a></li>
+      <li><a href="./tools.html">Privoo Desktop: Built-in tools</a></li>
+      <li><a href="./coder.html">Privoo Coder</a></li>
+      <li><a href="./privacy.html">Privoo Desktop: Privacy and security</a></li>
+      <li><a href="./index.html#f-tools">Privoo Desktop: Built-in tools overview</a></li>
     </ul>
 
     <h2 class="nonum">References</h2>
@@ -333,8 +333,8 @@
     </ol>
 
     <nav class="pager">
-      <a href="tools.html"><span>Previous</span><b>&lsaquo; Built-in tools</b></a>
-      <a class="next" href="browsing.html"><span>Next</span><b>Browsing &rsaquo;</b></a>
+      <a href="./tools.html"><span>Previous</span><b>‹ Built-in tools</b></a>
+      <a class="next" href="./browsing.html"><span>Next</span><b>Browsing ›</b></a>
     </nav>
   </main>
 </div>
@@ -344,6 +344,7 @@
   <span>Content describes Privoo Desktop 5.0.6 · MIT licensed</span>
 </footer>
 
-<script src="nav.js"></script>
-</body>
-</html>
+<script src="./nav.js.download"></script>
+
+
+</body></html>

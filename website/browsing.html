@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<!-- saved from url=(0037)./browsing -->
+<html lang="en" data-theme="light"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Privoo Desktop: Browsing</title>
-<meta name="description" content="Reference for Privoo's browsing interface: tabs, tab groups, split view, vertical tabs, the sidebar, profiles, incognito, the command palette, and the address bar."/>
-<link rel="icon" href="logo.png"/>
+<meta name="description" content="Reference for Privoo&#39;s browsing interface: tabs, tab groups, split view, vertical tabs, the sidebar, profiles, incognito, the command palette, and the address bar.">
+<link rel="icon" href="./logo.png">
 <script>try{var t=localStorage.getItem('privoo-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;}catch(e){}</script>
-<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="./styles.css">
 </head>
 <body>
 
 <header class="topbar">
-  <a class="brand" href="index.html">
-    <img src="logo.png" alt="" width="24" height="24"/>
+  <a class="brand" href="./index.html">
+    <img src="./logo.png" alt="" width="24" height="24">
     <b>Privoo</b>
     <span class="ver">reference</span>
   </a>
@@ -21,7 +21,7 @@
     <a href="https://github.com/sharp4real/privoobrowser/releases/latest">Download</a>
     <a href="https://github.com/sharp4real/privoobrowser">Source</a>
     <a href="https://discord.gg/WweUzF3YCQ">Discord</a>
-    <button class="theme-btn" id="theme-btn" type="button">☾ Dark</button>
+    <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch to dark mode" aria-pressed="false">☾ Dark</button>
     <button class="menu-btn" id="menu-btn" aria-label="Menu">☰</button>
   </div>
 </header>
@@ -29,33 +29,33 @@
 <div class="shell">
   <aside class="sidebar" id="sidebar">
     <h4>Article</h4>
-    <a href="index.html">Privoo Desktop</a>
-    <a href="install.html">Installation</a>
+    <a href="./index.html">Privoo Desktop</a>
+    <a href="./install.html">Installation</a>
     <h4>Protection</h4>
-    <a href="privacy.html">Privacy and security</a>
-    <a href="mariana.html">.mariana hosting</a>
+    <a href="./privacy.html">Privacy and security</a>
+    <a href="./mariana.html">.mariana hosting</a>
     <h4>Using Privoo Desktop</h4>
-    <a href="tools.html">Built-in tools</a>
-    <a href="ai.html">Privoo AI</a>
-    <a href="browsing.html" class="active">Browsing</a>
-    <a href="appearance.html">Appearance</a>
+    <a href="./tools.html">Built-in tools</a>
+    <a href="./ai.html">Privoo AI</a>
+    <a href="./browsing.html" class="active">Browsing</a>
+    <a href="./appearance.html">Appearance</a>
     <h4>Other products</h4>
-    <a href="android.html">Privoo for Android</a>
-    <a href="coder.html">Privoo Coder</a>
+    <a href="./android.html">Privoo for Android</a>
+    <a href="./coder.html">Privoo Coder</a>
     <h4>Reference</h4>
-    <a href="shortcuts.html">Keyboard shortcuts</a>
-    <a href="faq.html">FAQ and troubleshooting</a>
+    <a href="./shortcuts.html">Keyboard shortcuts</a>
+    <a href="./faq.html">FAQ and troubleshooting</a>
   </aside>
 
   <main class="doc">
     <h1>Privoo Desktop: Browsing</h1>
     <p class="subtitle">From the Privoo reference. This article covers version 5.0.6.</p>
-    <p class="hatnote">Main article: <a href="index.html">Privoo Desktop</a>. For shortcuts, see <a href="shortcuts.html">Keyboard shortcuts</a>.</p>
+    <p class="hatnote">Main article: <a href="./index.html">Privoo Desktop</a>. For shortcuts, see <a href="./shortcuts.html">Keyboard shortcuts</a>.</p>
 
     <aside class="infobox">
       <div class="ib-head"><div class="ib-title">Interface summary</div></div>
       <table>
-        <tr><th>Tabs</th><td>Drag-reorder, groups, shrink-to-fit</td></tr>
+        <tbody><tr><th>Tabs</th><td>Drag-reorder, groups, shrink-to-fit</td></tr>
         <tr><th>Split view</th><td>Two live pages, one tab pair</td></tr>
         <tr><th>Vertical tabs</th><td>Collapsible panel with search</td></tr>
         <tr><th>Sidebar</th><td>Pinned sites and tools; hover mode</td></tr>
@@ -64,7 +64,7 @@
         <tr><th>Command palette</th><td><kbd>Ctrl</kbd> <kbd>K</kbd></td></tr>
         <tr><th>New tab page</th><td>Speed Dial</td></tr>
         <tr><th>Rendering</th><td>Blink (Chromium 148)</td></tr>
-      </table>
+      </tbody></table>
     </aside>
 
     <p class="lead">
@@ -76,21 +76,21 @@
     <nav class="toc">
       <div class="toc-title">Contents</div>
       <ol>
-        <li><a href="#tabs">Tabs</a>
+        <li><a href="./browsing#tabs">Tabs</a>
           <ol>
-            <li><a href="#groups">Tab groups</a></li>
-            <li><a href="#split">Split view</a></li>
-            <li><a href="#vertical">Vertical tabs</a></li>
+            <li><a href="./browsing#groups">Tab groups</a></li>
+            <li><a href="./browsing#split">Split view</a></li>
+            <li><a href="./browsing#vertical">Vertical tabs</a></li>
           </ol>
         </li>
-        <li><a href="#sidebar-sec">The sidebar</a></li>
-        <li><a href="#profiles">Profiles, guest and incognito</a></li>
-        <li><a href="#palette">Command palette</a></li>
-        <li><a href="#views">Reading and viewing modes</a></li>
-        <li><a href="#address">The address bar</a></li>
-        <li><a href="#speeddial">Speed Dial</a></li>
-        <li><a href="#local">History, bookmarks and downloads</a></li>
-        <li><a href="#see-also">See also</a></li>
+        <li><a href="./browsing#sidebar-sec">The sidebar</a></li>
+        <li><a href="./browsing#profiles">Profiles, guest and incognito</a></li>
+        <li><a href="./browsing#palette">Command palette</a></li>
+        <li><a href="./browsing#views">Reading and viewing modes</a></li>
+        <li><a href="./browsing#address">The address bar</a></li>
+        <li><a href="./browsing#speeddial">Speed Dial</a></li>
+        <li><a href="./browsing#local">History, bookmarks and downloads</a></li>
+        <li><a href="./browsing#see-also">See also</a></li>
       </ol>
     </nav>
 
@@ -147,7 +147,7 @@
       history, extensions and settings. Isolation is at the filesystem level: Chromium's
       entire userData directory is redirected per profile at process start. Two accounts
       on the same site can therefore be signed in simultaneously without interference.
-      See <a href="install.html#data-profiles">Installation: profiles</a>.
+      See <a href="./install.html#data-profiles">Installation: profiles</a>.
     </p>
     <p>
       <b>Guest mode</b> provides a session that retains nothing.
@@ -162,7 +162,7 @@
         Incognito prevents local retention only. It does not conceal the user from the
         sites visited or from the network, in Privoo or in any other browser. For
         network-level privacy, see
-        <a href="privacy.html#tor">Privacy and security: Tor and proxies</a>.
+        <a href="./privacy.html#tor">Privacy and security: Tor and proxies</a>.
       </p>
     </div>
 
@@ -216,7 +216,7 @@
           <tr><td><code>name.eth</code></td><td>ENS name, resolved via a public gateway.</td></tr>
           <tr><td><code>name.crypto</code> and similar</td><td>Unstoppable Domains, via the same gateway.</td></tr>
           <tr><td><code>ipfs://</code>, <code>ipns://</code></td><td>Redirected to an IPFS gateway.</td></tr>
-          <tr><td><code>mariana://…</code></td><td>Anonymous site fetched over Tor. See <a href="mariana.html">.mariana hosting</a>.</td></tr>
+          <tr><td><code>mariana://…</code></td><td>Anonymous site fetched over Tor. See <a href="./mariana.html">.mariana hosting</a>.</td></tr>
           <tr><td><code>name.mariana</code></td><td>Short form; resolves if the full link has been opened previously.</td></tr>
           <tr><td><code>privoo://…</code></td><td>Internal pages.</td></tr>
         </tbody>
@@ -233,7 +233,7 @@
       Backgrounds may be a static image, a video file, or one of several animated themes;
       animation can be disabled entirely. An optional link to <b>Privoo News</b> displays
       release notes rendered from the local build, which issues no network request.
-      See <a href="appearance.html">Appearance</a>.
+      See <a href="./appearance.html">Appearance</a>.
     </p>
 
     <h2 id="local">History, bookmarks and downloads</h2>
@@ -247,20 +247,20 @@
 
     <div class="btn-row">
       <a class="lbtn primary" href="https://github.com/sharp4real/privoobrowser/releases/latest">Download Privoo</a>
-      <a class="lbtn" href="shortcuts.html">Keyboard shortcuts</a>
-      <a class="lbtn" href="appearance.html">Appearance</a>
+      <a class="lbtn" href="./shortcuts.html">Keyboard shortcuts</a>
+      <a class="lbtn" href="./appearance.html">Appearance</a>
     </div>
 
     <h2 id="see-also" class="nonum">See also</h2>
     <ul>
-      <li><a href="appearance.html">Privoo Desktop: Appearance</a></li>
-      <li><a href="shortcuts.html">Privoo Desktop: Keyboard shortcuts</a></li>
-      <li><a href="privacy.html#isolation">Privoo Desktop: Profiles and data isolation</a></li>
+      <li><a href="./appearance.html">Privoo Desktop: Appearance</a></li>
+      <li><a href="./shortcuts.html">Privoo Desktop: Keyboard shortcuts</a></li>
+      <li><a href="./privacy.html#isolation">Privoo Desktop: Profiles and data isolation</a></li>
     </ul>
 
     <nav class="pager">
-      <a href="tools.html"><span>Previous</span><b>&lsaquo; Built-in tools</b></a>
-      <a class="next" href="appearance.html"><span>Next</span><b>Appearance &rsaquo;</b></a>
+      <a href="./tools.html"><span>Previous</span><b>‹ Built-in tools</b></a>
+      <a class="next" href="./appearance.html"><span>Next</span><b>Appearance ›</b></a>
     </nav>
   </main>
 </div>
@@ -270,6 +270,7 @@
   <span>Content describes Privoo 5.0.6 · MIT licensed</span>
 </footer>
 
-<script src="nav.js"></script>
-</body>
-</html>
+<script src="./nav.js.download"></script>
+
+
+</body></html>

@@ -158,6 +158,10 @@ const DEFAULTS = {
   // When false, the ambient vibe gradient is confined to the browser chrome
   // and never bleeds over the web page area. The chrome tinting stays either way.
   vibeOverPages: true,
+  // When true, picking a Theme in Settings also retunes My Vibe's hue/on-off
+  // state to match that theme's colours. Off by default so a manually chosen
+  // Vibe setting isn't silently overwritten by a theme pick.
+  themeAutoVibe: false,
   fontSizeScale: 1,        // 1 = default, 0.9 = small, 1.2 = large
   showBookmarksBar: true,
   showHomeButton: false,

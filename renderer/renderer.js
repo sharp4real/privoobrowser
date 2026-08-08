@@ -26,7 +26,6 @@ function _pvShield() {
   return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='" + col + "' d='M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z'/%3E%3Cpath fill='%23fff' d='M10.6 15.4 7.4 12.2l1.3-1.3 1.9 1.9 4-4 1.3 1.3z'/%3E%3C/svg%3E";
 }
 const PRIVOO_PAGE_PATHS = {
-  newtab:      'M4 5h7v7H4zM13 5h7v7h-7zM4 13h7v6H4zM13 13h7v6h-7z',
   settings:    'M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z',
   history:     'M13 3a9 9 0 1 0 8.94 10h-2.02A7 7 0 1 1 13 5c1.93 0 3.68.78 4.95 2.05L14 11h7V4l-2.64 2.64A8.98 8.98 0 0 0 13 3zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z',
   downloads:   'M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z',
@@ -37,6 +36,7 @@ const PRIVOO_PAGE_PATHS = {
   insecure:    'M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4a3 3 0 0 1 3 3v2h1a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h1V8a3 3 0 0 1 3-3z',
   error:       'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z',
   upgrading:   'M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2zm-8-2a2 2 0 0 1 4 0v2h-4V6z',
+  news:        'M18 11v2h4v-2h-4zm-2 6.61c.96.71 2.21 1.65 3.2 2.39.4-.53.8-1.07 1.2-1.6-.99-.74-2.24-1.68-3.2-2.4-.4.54-.8 1.08-1.2 1.61zM20.4 5.6c-.4-.53-.8-1.07-1.2-1.6-.99.74-2.24 1.68-3.2 2.4.4.53.8 1.07 1.2 1.6.96-.72 2.21-1.65 3.2-2.4zM4 9c-1.1 0-2 .9-2 2v2c0 1.1.9 2 2 2h1v4h2v-4h1l5 3V6L8 9H4zm11.5 3c0-1.33-.58-2.53-1.5-3.35v6.69c.92-.81 1.5-2.01 1.5-3.34z',
 };
 function faviconForPrivooUrl(url) {
   try {
@@ -3276,6 +3276,7 @@ const triggerSuggest = debounce(async (q) => {
 
 const SUG_SEARCH_SVG = `<svg viewBox="0 0 24 24" width="14" height="14"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5 1.49-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg>`;
 const SUG_CLOCK_SVG  = `<svg viewBox="0 0 24 24" width="14" height="14"><path d="M13 3a9 9 0 1 0 2.8 17.5l-1.4-1.4A7 7 0 1 1 19 12h-3l4 4-4 4v-3a9 9 0 0 0-3-17z"/></svg>`;
+const SUG_DOMAIN_RE = /^(?:https?:\/\/)?(?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)+(?:\/\S*)?$/i;
 
 function renderSuggestions(items) {
   if (!items.length) { hideSuggestions(); return; }
@@ -3314,6 +3315,21 @@ function renderSuggestions(items) {
         iconSlot.appendChild(img);
       } else {
         iconSlot.innerHTML = SUG_CLOCK_SVG;
+      }
+    } else if (SUG_DOMAIN_RE.test(it.text.trim())) {
+      // Search-suggest text that looks like a domain (e.g. typing "youtub"
+      // suggested "youtube.com") gets the site's real favicon instead of the
+      // generic magnifying glass, matching Google's navigational suggestions.
+      iconSlot.innerHTML = SUG_SEARCH_SVG;
+      const raw = it.text.trim();
+      const fav = faviconFallbackForUrl(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+      if (fav) {
+        const img = document.createElement('img');
+        img.src = fav;
+        img.width = 16; img.height = 16; img.alt = '';
+        img.referrerPolicy = 'no-referrer';
+        img.addEventListener('error', () => { iconSlot.innerHTML = SUG_SEARCH_SVG; }, { once: true });
+        img.addEventListener('load', () => { iconSlot.innerHTML = ''; iconSlot.appendChild(img); }, { once: true });
       }
     } else {
       iconSlot.innerHTML = SUG_SEARCH_SVG;
@@ -4211,10 +4227,6 @@ const OB_LEAVING_DISMISSED = new Set();
 // True while the Chrome Web Store notice is up for the current visit — reset
 // when the user navigates away, so it shows again on the next visit.
 let obWebStoreActive = false;
-// True while the TikTok sign-in notice is up for the current visit. Unlike the
-// others this one is ALSO gated by a persisted localStorage flag so it only ever
-// shows once (it's advice, not a per-visit nudge).
-let obTikTokActive = false;
 // Hosts where we show a friendly "Are you leaving Privoo?" nudge. Entries
 // without a slash match the bare host (and any subdomain via endsWith).
 // Entries WITH a slash require pathLower to start with the needle — used for
@@ -4354,27 +4366,6 @@ function maybeShowOverlayBanner(url) {
     return;
   }
   obWebStoreActive = false;
-
-  // TikTok sign-in help — shown ONCE, ever (persisted). TikTok blocks logins
-  // from VPN/proxy IPs with "maximum number of attempts reached" because the IP
-  // region won't match the device timezone; the fix is user-side, so surface it
-  // the first time they land on TikTok rather than letting them hit the wall.
-  const isTikTok = bareHost === 'tiktok.com' || bareHost.endsWith('.tiktok.com');
-  if (isTikTok) {
-    let shown = false;
-    try { shown = localStorage.getItem('privoo_tiktok_login_notice_v1') === '1'; } catch {}
-    if (!shown && !obTikTokActive) {
-      obTikTokActive = true;
-      try { localStorage.setItem('privoo_tiktok_login_notice_v1', '1'); } catch {}
-      showOverlayBanner(
-        'Trouble signing in to TikTok?',
-        'TikTok sometimes blocks logins with “maximum number of attempts reached”. If that happens, open Settings → Site fixes → Reset TikTok, then wait a few minutes and try once.',
-        'Got it',
-      );
-    }
-    return; // stay put on TikTok's in-page navigations; don't hide/re-trigger
-  }
-  obTikTokActive = false;
 
   const isRival = !onSearch && RIVAL_BROWSER_HOSTS.some(needle => {
     if (needle.includes('/')) {

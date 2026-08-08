@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<!-- saved from url=(0036)./privacy -->
+<html lang="en" data-theme="light"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Privoo Desktop: Privacy and security</title>
-<meta name="description" content="A complete reference to Privoo's privacy and security architecture: content blocking, HTTPS upgrading, cookie policy, encrypted DNS, fingerprint resistance, Tor routing and the Privacy Shield."/>
-<link rel="icon" href="logo.png"/>
+<meta name="description" content="A complete reference to Privoo&#39;s privacy and security architecture: content blocking, HTTPS upgrading, cookie policy, encrypted DNS, fingerprint resistance, Tor routing and the Privacy Shield.">
+<link rel="icon" href="./logo.png">
 <script>try{var t=localStorage.getItem('privoo-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;}catch(e){}</script>
-<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="./styles.css">
 </head>
 <body>
 
 <header class="topbar">
-  <a class="brand" href="index.html">
-    <img src="logo.png" alt="" width="24" height="24"/>
+  <a class="brand" href="./index.html">
+    <img src="./logo.png" alt="" width="24" height="24">
     <b>Privoo</b>
     <span class="ver">reference</span>
   </a>
@@ -21,7 +21,7 @@
     <a href="https://github.com/sharp4real/privoobrowser/releases/latest">Download</a>
     <a href="https://github.com/sharp4real/privoobrowser">Source</a>
     <a href="https://discord.gg/WweUzF3YCQ">Discord</a>
-    <button class="theme-btn" id="theme-btn" type="button">☾ Dark</button>
+    <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch to dark mode" aria-pressed="false">☾ Dark</button>
     <button class="menu-btn" id="menu-btn" aria-label="Menu">☰</button>
   </div>
 </header>
@@ -29,33 +29,33 @@
 <div class="shell">
   <aside class="sidebar" id="sidebar">
     <h4>Article</h4>
-    <a href="index.html">Privoo Desktop</a>
-    <a href="install.html">Installation</a>
+    <a href="./index.html">Privoo Desktop</a>
+    <a href="./install.html">Installation</a>
     <h4>Protection</h4>
-    <a href="privacy.html" class="active">Privacy and security</a>
-    <a href="mariana.html">.mariana hosting</a>
+    <a href="./privacy.html" class="active">Privacy and security</a>
+    <a href="./mariana.html">.mariana hosting</a>
     <h4>Using Privoo Desktop</h4>
-    <a href="tools.html">Built-in tools</a>
-    <a href="ai.html">Privoo AI</a>
-    <a href="browsing.html">Browsing</a>
-    <a href="appearance.html">Appearance</a>
+    <a href="./tools.html">Built-in tools</a>
+    <a href="./ai.html">Privoo AI</a>
+    <a href="./browsing.html">Browsing</a>
+    <a href="./appearance.html">Appearance</a>
     <h4>Other products</h4>
-    <a href="android.html">Privoo for Android</a>
-    <a href="coder.html">Privoo Coder</a>
+    <a href="./android.html">Privoo for Android</a>
+    <a href="./coder.html">Privoo Coder</a>
     <h4>Reference</h4>
-    <a href="shortcuts.html">Keyboard shortcuts</a>
-    <a href="faq.html">FAQ and troubleshooting</a>
+    <a href="./shortcuts.html">Keyboard shortcuts</a>
+    <a href="./faq.html">FAQ and troubleshooting</a>
   </aside>
 
   <main class="doc">
     <h1>Privoo Desktop: Privacy and security</h1>
     <p class="subtitle">From the Privoo reference. This article covers version 5.0.6.</p>
-    <p class="hatnote">Main article: <a href="index.html">Privoo Desktop</a>. For anonymous publishing, see <a href="mariana.html">.mariana hosting</a>.</p>
+    <p class="hatnote">Main article: <a href="./index.html">Privoo Desktop</a>. For anonymous publishing, see <a href="./mariana.html">.mariana hosting</a>.</p>
 
     <aside class="infobox">
       <div class="ib-head"><div class="ib-title">Protection summary</div></div>
       <table>
-        <tr class="ib-sec"><td colspan="2">Enabled by default</td></tr>
+        <tbody><tr class="ib-sec"><td colspan="2">Enabled by default</td></tr>
         <tr><th>Ad and tracker blocking</th><td>EasyList, EasyPrivacy, uBlock Origin</td></tr>
         <tr><th>Force HTTPS</th><td>Yes</td></tr>
         <tr><th>Third-party cookies</th><td>Blocked</td></tr>
@@ -69,7 +69,7 @@
         <tr><th>Proxy / Tor</th><td>Manual or bundled Tor</td></tr>
         <tr><th>Family filtering</th><td>DNS + navigation layer</td></tr>
         <tr><th>Clear data on exit</th><td>Configurable</td></tr>
-      </table>
+      </tbody></table>
     </aside>
 
     <p class="lead">
@@ -81,36 +81,36 @@
     <nav class="toc">
       <div class="toc-title">Contents</div>
       <ol>
-        <li><a href="#shield">The Privacy Shield</a>
+        <li><a href="./privacy#shield">The Privacy Shield</a>
           <ol>
-            <li><a href="#shield-toggle">Behaviour when disabled</a></li>
-            <li><a href="#shield-persite">Per-site exceptions</a></li>
+            <li><a href="./privacy#shield-toggle">Behaviour when disabled</a></li>
+            <li><a href="./privacy#shield-persite">Per-site exceptions</a></li>
           </ol>
         </li>
-        <li><a href="#blocking">Content blocking</a>
+        <li><a href="./privacy#blocking">Content blocking</a>
           <ol>
-            <li><a href="#blocking-layer">Network-layer enforcement</a></li>
-            <li><a href="#blocking-lists">Filter lists</a></li>
+            <li><a href="./privacy#blocking-layer">Network-layer enforcement</a></li>
+            <li><a href="./privacy#blocking-lists">Filter lists</a></li>
           </ol>
         </li>
-        <li><a href="#https">HTTPS upgrading</a></li>
-        <li><a href="#cookies">Cookie policy</a></li>
-        <li><a href="#dns">Encrypted DNS</a></li>
-        <li><a href="#fingerprint">Fingerprint resistance</a>
+        <li><a href="./privacy#https">HTTPS upgrading</a></li>
+        <li><a href="./privacy#cookies">Cookie policy</a></li>
+        <li><a href="./privacy#dns">Encrypted DNS</a></li>
+        <li><a href="./privacy#fingerprint">Fingerprint resistance</a>
           <ol>
-            <li><a href="#fp-canvas">Canvas noise</a></li>
-            <li><a href="#fp-ua">User-Agent normalisation</a></li>
-            <li><a href="#fp-webrtc">WebRTC</a></li>
+            <li><a href="./privacy#fp-canvas">Canvas noise</a></li>
+            <li><a href="./privacy#fp-ua">User-Agent normalisation</a></li>
+            <li><a href="./privacy#fp-webrtc">WebRTC</a></li>
           </ol>
         </li>
-        <li><a href="#stronger">Stronger tracking protection</a></li>
-        <li><a href="#crypto">Cryptojacking protection</a></li>
-        <li><a href="#tor">Tor, proxies and alternative naming</a></li>
-        <li><a href="#family">Family filtering</a></li>
-        <li><a href="#isolation">Profiles and data isolation</a></li>
-        <li><a href="#passwords">Password storage</a></li>
-        <li><a href="#threat">Threat model</a></li>
-        <li><a href="#see-also">See also</a></li>
+        <li><a href="./privacy#stronger">Stronger tracking protection</a></li>
+        <li><a href="./privacy#crypto">Cryptojacking protection</a></li>
+        <li><a href="./privacy#tor">Tor, proxies and alternative naming</a></li>
+        <li><a href="./privacy#family">Family filtering</a></li>
+        <li><a href="./privacy#isolation">Profiles and data isolation</a></li>
+        <li><a href="./privacy#passwords">Password storage</a></li>
+        <li><a href="./privacy#threat">Threat model</a></li>
+        <li><a href="./privacy#see-also">See also</a></li>
       </ol>
     </nav>
 
@@ -119,7 +119,7 @@
       The shield icon in the toolbar is frequently misunderstood as a single feature with
       a single switch. It is not. <b>The shield is a status display</b> for the six
       independent protections listed beneath it, each of which has its own setting in
-      <b>Settings &rarr; Privacy and security</b>.
+      <b>Settings → Privacy and security</b>.
     </p>
     <p>
       The toolbar carries only the shield icon; the numbers live inside the panel, not on
@@ -201,7 +201,7 @@
     </div>
     <p>
       Any built-in list may be disabled, and arbitrary list URLs may be added, in
-      <b>Settings &rarr; Privacy and security &rarr; Filter lists</b>. Because lists are
+      <b>Settings → Privacy and security → Filter lists</b>. Because lists are
       compiled at launch, changes to the list selection apply after a restart.
     </p>
 
@@ -336,7 +336,7 @@
     <p>
       Traffic may be routed through a manual proxy, specified as a
       <code>socks5://</code> or <code>http://</code> URL, or through a bundled Tor
-      circuit, configured in <b>Settings &rarr; Privacy and security &rarr; Proxy</b>. The
+      circuit, configured in <b>Settings → Privacy and security → Proxy</b>. The
       Tor SOCKS port defaults to <code>127.0.0.1:9100</code>.
     </p>
     <p>
@@ -355,7 +355,7 @@
           <tr><td><code>.eth</code></td><td>ENS name resolved via a public gateway.</td></tr>
           <tr><td><code>.crypto</code>, <code>.wallet</code>, <code>.nft</code>, others</td><td>Unstoppable Domains, via the same gateway.</td></tr>
           <tr><td><code>ipfs://</code>, <code>ipns://</code></td><td>Redirected to an IPFS gateway.</td></tr>
-          <tr><td><code>mariana://</code></td><td>Privoo's own anonymous hosting. See <a href="mariana.html">.mariana hosting</a>.</td></tr>
+          <tr><td><code>mariana://</code></td><td>Privoo's own anonymous hosting. See <a href="./mariana.html">.mariana hosting</a>.</td></tr>
         </tbody>
       </table>
     </div>
@@ -418,24 +418,24 @@
     <p>
       No browser makes a user anonymous. Privoo's own documentation states that a user
       whose adversary is a determined state actor should use Tor Browser, and notes that
-      Privoo will route <code>.onion</code> traffic in the meantime.<sup class="ref"><a href="#ref-1">[1]</a></sup>
+      Privoo will route <code>.onion</code> traffic in the meantime.<sup class="ref"><a href="./privacy#ref-1">[1]</a></sup>
       Incognito mode prevents local retention only; it does not conceal the user from the
       sites visited or from the network.
     </p>
 
     <div class="btn-row">
       <a class="lbtn primary" href="https://github.com/sharp4real/privoobrowser/releases/latest">Download Privoo</a>
-      <a class="lbtn" href="mariana.html">Read: .mariana hosting</a>
+      <a class="lbtn" href="./mariana.html">Read: .mariana hosting</a>
       <a class="lbtn" href="https://github.com/ghostery/adblocker">Ghostery adblocker engine</a>
       <a class="lbtn" href="https://github.com/sharp4real/privoobrowser/issues">Report a tracking bug</a>
     </div>
 
     <h2 id="see-also" class="nonum">See also</h2>
     <ul>
-      <li><a href="mariana.html">Privoo Desktop: .mariana hosting</a></li>
-      <li><a href="tools.html">Privoo Desktop: Built-in tools</a></li>
-      <li><a href="faq.html">Privoo Desktop: FAQ and troubleshooting</a></li>
-      <li><a href="index.html#privacy-model">Privoo Desktop: Privacy model</a></li>
+      <li><a href="./mariana.html">Privoo Desktop: .mariana hosting</a></li>
+      <li><a href="./tools.html">Privoo Desktop: Built-in tools</a></li>
+      <li><a href="./faq.html">Privoo Desktop: FAQ and troubleshooting</a></li>
+      <li><a href="./index.html#privacy-model">Privoo Desktop: Privacy model</a></li>
     </ul>
 
     <h2 class="nonum">References</h2>
@@ -445,8 +445,8 @@
     </ol>
 
     <nav class="pager">
-      <a href="install.html"><span>Previous</span><b>&lsaquo; Installation</b></a>
-      <a class="next" href="mariana.html"><span>Next</span><b>.mariana hosting &rsaquo;</b></a>
+      <a href="./install.html"><span>Previous</span><b>‹ Installation</b></a>
+      <a class="next" href="./mariana.html"><span>Next</span><b>.mariana hosting ›</b></a>
     </nav>
   </main>
 </div>
@@ -456,6 +456,7 @@
   <span>Content describes Privoo 5.0.6 · MIT licensed</span>
 </footer>
 
-<script src="nav.js"></script>
-</body>
-</html>
+<script src="./nav.js.download"></script>
+
+
+</body></html>
