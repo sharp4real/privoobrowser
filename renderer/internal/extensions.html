@@ -63,13 +63,14 @@ body.dark header{background:#202124;border-color:#5f6368;box-shadow:0 4px 14px -
 }
 h1{font-size:18px;font-weight:600;flex:1;line-height:1}
 .header-btn{
-  padding:7px 16px;border-radius:12px;border:1px solid var(--accent);
-  font-size:13px;font-weight:600;color:#10160f;cursor:pointer;background:var(--accent);
-  transition:filter .12s;
+  padding:8px 18px;border-radius:999px;border:1px solid var(--accent);
+  font-size:13px;font-weight:600;color:var(--on-accent);cursor:pointer;background:var(--accent);
+  transition:filter .12s,transform .12s,box-shadow .12s;
   display:flex;align-items:center;gap:6px;
+  box-shadow:0 2px 8px -2px var(--accent-soft);
 }
-.header-btn:hover{filter:brightness(1.06)}
-body.dark .header-btn{color:#10160f;background:var(--accent);border-color:var(--accent)}
+.header-btn:hover{filter:brightness(1.06);transform:translateY(-1px);box-shadow:0 4px 14px -4px var(--accent-soft)}
+body.dark .header-btn{color:var(--on-accent);background:var(--accent);border-color:var(--accent)}
 
 main{max-width:960px;margin:24px auto;padding:0 20px 40px}
 
@@ -91,7 +92,8 @@ body.dark #empty h2,body.dark .ext-name{color:#e8eaed}
 
 /* Section headers ("Built in" / "Your extensions") */
 .section-head{display:flex;align-items:center;gap:10px;margin:4px 0 2px}
-.section-head h2{font-size:15px;font-weight:650;letter-spacing:-.01em;margin:0}
+.section-head h2{font-size:15px;font-weight:650;letter-spacing:-.01em;margin:0;display:flex;align-items:center;gap:8px}
+.section-head h2::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0}
 .section-head-user{margin-top:34px}
 .by-privoo{
   font-size:11px;font-weight:700;letter-spacing:.04em;
@@ -118,12 +120,12 @@ body.dark #builtin-list .ext-card{border-color:var(--accent,#4f46e5)}
   background:#ffffff;border-radius:16px;padding:18px;
   border:1px solid #e3e1ef;display:flex;flex-direction:column;gap:12px;
   box-shadow:0 2px 10px rgba(38,36,58,.04);
-  transition:box-shadow .16s ease,transform .16s cubic-bezier(.2,.8,.25,1);
+  transition:box-shadow .16s ease,transform .16s cubic-bezier(.2,.8,.25,1),border-color .16s ease;
   position:relative;
 }
 body.dark .ext-card{background:#303134;border-color:#5f6368;box-shadow:none}
-.ext-card:hover{box-shadow:0 10px 26px -12px rgba(38,36,58,.18);transform:translateY(-1px)}
-body.dark .ext-card:hover{box-shadow:0 10px 26px -12px rgba(0,0,0,.4);transform:translateY(-1px)}
+.ext-card:hover{box-shadow:0 10px 26px -12px rgba(38,36,58,.18);transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 35%,#e3e1ef)}
+body.dark .ext-card:hover{box-shadow:0 10px 26px -12px rgba(0,0,0,.4);transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 40%,#5f6368)}
 
 /* Compatibility warning shown in the install modal */
 .ext-compat-warn{

@@ -805,7 +805,8 @@ function buildPrivooProtocolHandler() {
     // New-tab wallpaper (image copied into userData)
     const pathNorm = pathname.replace(/\/$/, '') || '/';
     if (host === 'newtab' && pathNorm === '/wallpaper') {
-      const wp = settingsStore.load().ntpWallpaperPath;
+      const s = settingsStore.load();
+      const wp = s.ntpWallpaperPath;
       // Empty string means user explicitly removed wallpaper
       if (wp === '') {
         return new Response('', { status: 404 });
@@ -816,6 +817,23 @@ function buildPrivooProtocolHandler() {
       if (wp && fs.existsSync(wp)) {
         const range = request.headers.get('range');
         return net.fetch(pathToFileURL(wp).toString(), range ? { headers: { range } } : undefined);
+      }
+      // No custom wallpaper set (wp is null/undefined — fresh install or never
+      // configured). Serve the shipped default wallpaper.png, unless the user
+      // turned it off via Settings → Apply Privoo Background.
+      if (s.ntpApplyPrivooBackground === false) {
+        return new Response('', { status: 404 });
+      }
+      const defaultWpCandidates = process.resourcesPath
+        ? [path.join(process.resourcesPath, 'wallpaper.png'), path.join(__dirname, 'wallpaper.png')]
+        : [path.join(__dirname, 'wallpaper.png')];
+      for (const asset of defaultWpCandidates) {
+        if (fs.existsSync(asset)) {
+          try {
+            const data = await fs.promises.readFile(asset);
+            return new Response(data, { headers: { 'content-type': 'image/png' } });
+          } catch { /* try next candidate */ }
+        }
       }
       return new Response('', { status: 404 });
     }
@@ -3199,6 +3217,21 @@ async function startBrowser(opts = {}) {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 }
+
+// Proxy authentication — Privoo VPN's manual-proxy PAC script (buildPacScript
+// / applyProxyToSession above) can only express "PROXY host:port", so any
+// user:pass@ embedded in proxyUrl gets dropped when it's parsed into that
+// directive. A proxy that requires auth challenges with HTTP 407, which
+// Electron surfaces here rather than as a normal page load. Answer it with
+// the credentials the user entered in the Privoo VPN popover (or Settings →
+// Privacy → Proxy, which shares the same proxyUrl).
+app.on('login', (event, _webContents, _details, authInfo, callback) => {
+  if (!authInfo.isProxy) return; // let normal site auth prompts through
+  const s = settingsStore.load();
+  if (s.proxyMode !== 'manual' || !s.vpnProxyUsername) return;
+  event.preventDefault();
+  callback(s.vpnProxyUsername, s.vpnProxyPassword || '');
+});
 
 app.on('web-contents-created', (_event, contents) => {
   contents.setMaxListeners(200);

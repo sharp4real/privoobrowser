@@ -193,7 +193,13 @@ const DEFAULTS = {
   // the attention is on the search input.
   ntpFocusedSearch: false,
   ntpBackground: 'default',
-  ntpWallpaperPath: '',
+  // null = use the shipped default wallpaper (wallpaper.png); '' = user
+  // explicitly removed it via "Remove wallpaper"; anything else = custom path.
+  ntpWallpaperPath: null,
+  // Gates the shipped default wallpaper.png specifically (Settings → Apply
+  // Privoo Background). Has no effect once the user sets their own custom
+  // wallpaper — that always shows regardless of this toggle.
+  ntpApplyPrivooBackground: true,
   ntpWallpaperDim: 0.42,
   ntpDark: false,
   // Starter shortcuts seeded for fresh installs. (Existing users keep their
@@ -228,9 +234,23 @@ const DEFAULTS = {
   showSidebar: true,      // legacy boolean — derived from/kept in sync with sidebarMode below
   sidebarMode: 'on',      // 'on' | 'off' | 'hover' — hover auto-collapses the rail until the cursor nears the edge
   sidebarQuickAccess: true, // pinned Downloads/History/Bookmarks/Settings row at the top of the rail
-  sidebarPanelWidth: 320, // width of the embedded web panel in the sidebar
+  sidebarPanelWidth: 480, // width of the embedded web panel in the sidebar (drag the edge to resize, 180-760px)
   mobileEmulationDevice: 'samsung', // 'samsung' | 'iphone', used by the sidebar web panel and Mobile View
   showAiButton: true,     // AI toolbar button — can be hidden via Settings → Features
+
+  // Privoo VPN — a friendly toolbar front-end for the existing manual-proxy
+  // system below (proxyMode/proxyUrl). Privoo doesn't operate or provide any
+  // proxy servers itself — connecting composes these fields into proxyUrl and
+  // sets proxyMode to 'manual', so it reuses the same session plumbing as the
+  // Settings → Privacy → Proxy control. "Connected" is derived from
+  // proxyMode/proxyUrl directly, not tracked separately, so the two controls
+  // can never disagree about the actual state.
+  vpnTermsAccepted: false,
+  vpnProxyType: 'http',   // 'http' | 'https' | 'socks5'
+  vpnProxyHost: '',
+  vpnProxyPort: '',
+  vpnProxyUsername: '',
+  vpnProxyPassword: '',
   showTranslateButton: false, // Translate toolbar button — off by default, enable in Settings → Features
   verticalTabs: false,    // show tabs in a vertical left panel instead of horizontal strip
   vtabsCollapsed: false,  // vertical tabs panel collapsed to icon-only rail
@@ -246,7 +266,7 @@ const DEFAULTS = {
   ntpThemeStyle: 'aurora',// visual style of the background: aurora | waves | glow | beams | solid
   ntpThemeMusic: 'none',  // per-theme looped soundscape id: none | drift | warm | rain | waves | deep | chime
   ntpThemeMusicVolume: 0.4, // 0..1 volume for the soundscape
-  uiSounds: true,         // play short blips on typing/clicks/tab open+close (uses the active theme's character)
+  uiSounds: false,        // play short blips on typing/clicks/tab open+close (uses the active theme's character)
   uiSoundVolume: 0.7,     // 0..1 volume for the UI blips
   newSearchBarStyle: false, // legacy boolean for the "soft" address bar (superseded by searchBarStyle)
   searchBarStyle: '',     // address-bar appearance: classic | soft | pill | square ('' = derive from newSearchBarStyle)
@@ -271,6 +291,7 @@ const DEFAULTS = {
   updatesToastShown: false,
   discordPromptShown: false,
   thankYouShown: false,    // one-time "Thank you for using Privoo" popup
+  incognitoWelcomeShown: false, // one-time "Welcome to Incognito" intro on the private new-tab page
   androidPromptShown: false, // one-time "Android has released!" popup (v4.0.1 only)
   britainShown: false,     // one-time "Made with care in Britain" popup
   siteVisitCount: 0,       // running count of real website visits — paces one-time popups

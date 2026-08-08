@@ -21,8 +21,8 @@
   }
   body {
     font-family: "Inter", "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
-    background: #f2f1f9;
-    color: #26243a;
+    background: #f1f3f4;
+    color: #202124;
     user-select: none;
   }
   button, input, select { font: inherit; }
@@ -171,11 +171,12 @@
     display: flex;
     align-items: center;
   }
+  .nav-btn { transition: background .15s ease, color .15s ease; }
   .nav-btn:hover { background: #f1f3f4; color: #1f1f1f; }
-  .nav-btn.active { background: #e8eaed; color: #1f1f1f; font-weight: 500; }
+  .nav-btn.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
   body.dark .nav-btn { color: #bdc1c6; }
   body.dark .nav-btn:hover { background: #2a2b2e; color: #e8eaed; }
-  body.dark .nav-btn.active { background: #3c4043; color: #e8eaed; font-weight: 500; }
+  body.dark .nav-btn.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 
   main { flex: 1; min-width: 0; padding: 24px 32px 64px; }
   section { scroll-margin-top: 80px; margin-bottom: 30px; }
@@ -975,9 +976,9 @@
     .pw-secret { display: none; }
   }
 /* ═══════════════════════════════════════════════════════════════════════════
-   Opera-style skin — navy surfaces, purple accent, rounded floating cards.
-   MUST stay at the end of this stylesheet: it re-skins earlier rules of equal
-   specificity, which only works because these come later in source order.
+   Standard Chromium settings look — plain white/grey surfaces, the base
+   rules above already match chrome://settings closely; this block only
+   carries the brand accent variables and small Privoo-specific additions.
    ═══════════════════════════════════════════════════════════════════════════ */
 :root {
   --accent: #4f46e5;
@@ -985,51 +986,6 @@
   --accent-soft: rgba(79, 70, 229, .13);
   --on-accent: #ffffff;
 }
-body { background: #f2f3f8; }
-body.dark { background: #14161f; }
-
-/* Header — navy bar with the red brand dot + rounded search on the right */
-header { border-bottom: none; box-shadow: 0 1px 0 rgba(0,0,0,.06); }
-body.dark header { background: #171a24; border-color: transparent; box-shadow: 0 1px 0 rgba(255,255,255,.05); }
-.brand { display: flex; align-items: center; gap: 11px; }
-.brand::before {
-  content: ""; width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
-  background: radial-gradient(circle at 32% 30%, #ff5b6a, #ff1b2d 60%, #d40f20);
-  box-shadow: 0 2px 8px rgba(255, 27, 45, .35);
-}
-/* ── "Quiet & precise" — warm charcoal shell, pine accent, mono labels ──
-   Matches the browser chrome so Settings feels like the same app. ── */
-:root { --pv-mono: ui-monospace,"Cascadia Code","SF Mono","JetBrains Mono",Consolas,monospace; }
-
-/* Light — lavender canvas (matches the rest of the app). */
-body:not(.dark) { background: #f2f1f9; }
-body:not(.dark) header { background: #f2f1f9; border-bottom: 1px solid rgba(38,36,58,.08); }
-
-/* Dark — Chrome-style neutral grey. */
-body.dark { background: #202124; }
-body.dark header { background: #202124; border-bottom: 1px solid #3c4043; }
-body.dark .brand span { color: #9aa0a6; }
-body.dark nav#nav { background: transparent; }
-
-header input.settings-search { border-radius: 999px; font-size: 13px; background: #f4f3fa; border: 1px solid rgba(38,36,58,.08); }
-header input.settings-search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-body.dark header input.settings-search { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.1); color: #eceaf6; }
-body.dark header input.settings-search:hover { background: rgba(255,255,255,.09); }
-body.dark header input.settings-search:focus { background: rgba(255,255,255,.1); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-
-/* Nav — active item is a filled accent pill, matching the active-state
-   language used everywhere else in the app (tabs, menu items). */
-.nav-btn { height: 38px; border-radius: 999px; transition: background .15s ease, color .15s ease, transform .15s cubic-bezier(.34,1.5,.64,1); }
-.nav-btn:hover { transform: translateX(2px); }
-.nav-btn.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; box-shadow: none; }
-body.dark .nav-btn { color: #9aa0a6; }
-body.dark .nav-btn:hover { background: rgba(255,255,255,.07); color: #eceaf6; }
-body.dark .nav-btn.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; box-shadow: none; }
-
-/* Cards — floating white, soft shadow, matches the rest of the app. */
-.card { border-radius: 16px; }
-body:not(.dark) .card { background: rgba(255,255,255,.92); border: 1px solid rgba(38,36,58,.07); box-shadow: 0 2px 10px rgba(38,36,58,.05); }
-body.dark .card { background: #292a2d; border: 1px solid #3c4043; box-shadow: none; }
 /* One-time "moved to Extensions" notice. */
 .ext-move-notice{
   display:flex;align-items:center;gap:10px;margin-top:12px;padding:11px 14px;
@@ -1046,27 +1002,8 @@ body.dark .card { background: #292a2d; border: 1px solid #3c4043; box-shadow: no
   font-size:14px;padding:2px 6px;border-radius:5px;flex-shrink:0;opacity:.7;
 }
 .ext-move-notice button:hover{opacity:1;background:color-mix(in srgb,var(--accent) 18%,transparent)}
-body:not(.dark) .row { border-color: rgba(38,36,58,.08); }
-body.dark .row { border-color: rgba(255,255,255,.08); }
-/* Section headers — uppercase tracked labels. */
-h3.card-subhead { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
-body.dark h3.card-subhead { color: #9aa0a6; }
 
-/* Inputs / selects — lavender field tone, matching everywhere else. */
-body:not(.dark) .inline-select,
-body:not(.dark) select,
-body:not(.dark) input[type="text"],
-body:not(.dark) input[type="url"],
-body:not(.dark) input[type="number"] { background-color: #f4f3fa; border-color: rgba(38,36,58,.1); color: #26243a; }
-body.dark .inline-select,
-body.dark select,
-body.dark input[type="text"],
-body.dark input[type="url"],
-body.dark input[type="number"] { background-color: rgba(255,255,255,.06); border-color: rgba(255,255,255,.1); color: #eceaf6; }
-body.dark .filter-add-row input { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.1); }
-body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.08); }
-
-/* ── Opera-style icons beside each settings section ──
+/* ── Section icons beside each settings nav item ──
    Rendered as CSS masks so they inherit the nav text colour (muted → purple
    when active). A broken URI just hides the icon; it can't break layout. */
 #nav .nav-btn { gap: 11px; }
@@ -1301,6 +1238,10 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
         <!-- New tab page -->
         <div class="card">
           <h3 class="card-subhead">New tab page</h3>
+          <div class="row">
+            <div><div class="label">Apply Privoo Background</div><div class="desc">Show Privoo's default wallpaper on the new tab page. Turn this off for a plain background, or set your own photo below to override it either way.</div></div>
+            <label class="switch"><input type="checkbox" id="ntpApplyPrivooBackground"><span class="slider"></span></label>
+          </div>
           <div class="row">
             <div><div class="label">Animate Wallpaper</div><div class="desc">A slow, subtle breathing motion on the default wave wallpaper.</div></div>
             <label class="switch"><input type="checkbox" id="ntpWallpaperAnimated"><span class="slider"></span></label>
@@ -1977,7 +1918,7 @@ body.dark .filter-list-item { background: rgba(255,255,255,.04); border-color: r
 const api = window.privooInternal;
 const TOGGLES = [
   'verticalTabs', 'vtabsIntegrated', 'vtabsSearchPopup', 'searchPopupGlass', 'uiSounds', 'newTabBtnCircle', 'vtabsCenterIcons', 'darkMode', 'forceDarkMode', 'showHomeButton', 'showBookmarksBar',
-  'ntpShowWeather', 'ntpShowClock', 'ntpFocusedSearch', 'ntpShowQuickLinks', 'ntpShowGreeting', 'ntpNewsLink', 'ntpWallpaperAnimated', 'cryptojackingProtection', 'easyFilesEnabled', 'clearDataOnExit', 'downloadBoosterEnabled',
+  'ntpShowWeather', 'ntpShowClock', 'ntpFocusedSearch', 'ntpShowQuickLinks', 'ntpShowGreeting', 'ntpNewsLink', 'ntpApplyPrivooBackground', 'ntpWallpaperAnimated', 'cryptojackingProtection', 'easyFilesEnabled', 'clearDataOnExit', 'downloadBoosterEnabled',
   'increaseTransparency', 'aeroGradient', 'vibeEnabled', 'vibeOverPages', 'compactMode', 'searchSuggestions',
   'askDownloadPath', 'adBlocking', 'httpsUpgrade', 'httpsUpgradeShowNotice', 'blockThirdPartyCookies',
   'dnsOverHttps', 'adultContentBlocking', 'spoofUserAgent', 'canvasSpoofing', 'webrtcProtection',
@@ -2018,12 +1959,12 @@ function showLongToast(text) {
 function applyTheme(settings = currentSettings) {
   document.body.classList.toggle('dark', !!settings.darkMode);
   document.body.classList.toggle('transparent-ui', !!settings.increaseTransparency);
-  applyAccent(settings.ntpWaveEnabled ? settings.accentColor : null);
+  applyAccent(settings.accentColor);
 }
 
-// Default accent is the signature indigo (not manually pickable), but a
-// selected Theme retunes it to that theme's colour — matches
-// applyAccentTriad() in renderer.js so Settings previews the real accent.
+// Default accent is the signature indigo unless the user picked a swatch or
+// a Theme retuned it to that theme's colour — matches applyAccentTriad() in
+// renderer.js so Settings previews the real accent.
 function applyAccent(themeHex) {
   const root = document.documentElement;
   const fallback = document.body.classList.contains('dark') ? '#948ef2' : '#4f46e5';

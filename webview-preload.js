@@ -104,6 +104,7 @@ if (location.protocol === 'privoo:') {
     openTab:  (url) => ipcRenderer.sendToHost('open-tab', url),
     // Ask the host shell to open its Customize side panel (NTP "pen" button).
     openCustomizePanel: () => ipcRenderer.sendToHost('open-customize-panel'),
+    openVpnPanel: () => ipcRenderer.sendToHost('open-vpn-panel'),
   });
 }
 

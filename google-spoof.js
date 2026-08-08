@@ -87,6 +87,14 @@ function buildGoogleSpoofScript(opts) {
   var _isEdu = /(^|\\.)bedrocklearning\\.(org|com|co\\.uk)$/i.test(_h)
     || /(^|\\.)sparxmaths\\.(com|uk)$/i.test(_h)
     || /(^|\\.)sparx-learning\\.com$/i.test(_h);
+  // ChatGPT's Sentry/session-replay tooling does its own native-function
+  // detection via Function.prototype.toString(), and stacking our toString/
+  // Performance.now/Canvas/WebGL prototype patches on top of that produced a
+  // "Maximum call stack size exceeded" crash (WeakMap.get -> Object.apply
+  // recursion) on chatgpt.com. No bot-detection benefit is lost: OpenAI
+  // doesn't gate on the embedded-browser signals this spoof targets.
+  var _isChatGPT = /(^|\\.)chatgpt\\.com$/i.test(_h)
+    || /(^|\\.)openai\\.com$/i.test(_h);
   // forcePristine: set by the main process for popups opened by a TikTok/ByteDance
   // page. Those verification windows can open on about:blank (same-origin with the
   // opener) where location.hostname is empty, so the host check above misses them
@@ -96,7 +104,7 @@ function buildGoogleSpoofScript(opts) {
   // Google/Snap/Edu popup: those self-identify by host and keep their own spoof.
   var _forcePristine = ${opts.forcePristine ? 'true' : 'false'} && !_isGoogleAuth && !_isSnap && !_isEdu;
   if (_forcePristine) _isTikTok = true;
-  var _isStrictFp = _isGoogleAuth || _isTikTok || _isSnap || _isEdu;
+  var _isStrictFp = _isGoogleAuth || _isTikTok || _isSnap || _isEdu || _isChatGPT;
 
   function def(obj, prop, val) {
     try {

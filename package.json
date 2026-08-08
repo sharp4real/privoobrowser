@@ -1,6 +1,6 @@
 {
   "name": "privoo-browser",
-  "version": "5.0.7",
+  "version": "5.0.8",
   "description": "Privacy focused browser built on Chromium.",
   "main": "main.js",
   "scripts": {
@@ -77,6 +77,18 @@
       {
         "from": "logo.png",
         "to": "logo.png"
+      },
+      {
+        "from": "wallpaper.png",
+        "to": "wallpaper.png"
+      },
+      {
+        "from": "incognitowallpaper.png",
+        "to": "incognitowallpaper.png"
+      },
+      {
+        "from": "privoovpn.png",
+        "to": "privoovpn.png"
       },
       {
         "from": "logo.ico",

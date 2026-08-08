@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <title>Privoo News</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%234f46e5' d='M12 2l1.9 5.5L19.5 9l-4.6 3.4L16.5 18 12 14.7 7.5 18l1.6-5.6L4.5 9l5.6-1.5z'/%3E%3C/svg%3E"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%234f46e5' d='M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z'/%3E%3C/svg%3E"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:"Inter","Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
 /* Accent vars live ONLY on :root so the inline accent set by JS propagates. */
@@ -31,7 +31,14 @@ html::-webkit-scrollbar-thumb:hover{background:#bdc1c6;background-clip:padding-b
   font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
   color:var(--accent);margin-bottom:10px;
 }
-h1{font-size:26px;font-weight:650;letter-spacing:-.02em;margin-bottom:10px;}
+.brand-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.brand-badge{
+  width:30px;height:30px;border-radius:9px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--accent-soft);color:var(--accent);
+}
+.brand-badge svg{width:17px;height:17px;fill:currentColor;}
+h1{font-size:26px;font-weight:650;letter-spacing:-.02em;margin:0;}
 .lede{font-size:13.5px;line-height:1.6;color:var(--muted);max-width:48ch;margin-bottom:40px;}
 
 /* ── Feed — a plain list, hairline dividers, no card boxes ── */
@@ -63,8 +70,56 @@ h1{font-size:26px;font-weight:650;letter-spacing:-.02em;margin-bottom:10px;}
 
 <main class="wrap">
   <div class="eyebrow" id="ver-text">What's new</div>
-  <h1>Privoo News</h1>
+  <div class="brand-row">
+    <div class="brand-badge"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div>
+    <h1>Privoo News</h1>
+  </div>
   <p class="lede">Every improvement, shipped straight to your browser. Rendered locally from this build — nothing is ever fetched, logged, or tracked.</p>
+
+  <article class="item">
+    <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3zm-1 14-4-4 1.4-1.4L11 13.2l5.6-5.6L18 9l-7 7z"/></svg></div>
+    <div>
+      <div class="kicker">Fixed &middot; 5.0.8</div>
+      <div class="title">Your accent colour actually sticks now</div>
+      <p class="body">Picking a swatch in <b>Settings → Appearance</b> saved correctly but silently did nothing to the browser itself, an old wave-theme check meant only a colourful <b>Theme</b> could change the accent. Manually picked colours now apply immediately, everywhere: the toolbar, tabs, Settings, and Extensions.</p>
+    </div>
+  </article>
+
+  <article class="item">
+    <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z" opacity="0"/><path d="M4 4h7v7H4zm9 0h7v7h-7zM4 13h7v7H4zm9 0h7v7h-7z"/></svg></div>
+    <div>
+      <div class="kicker">New &middot; 5.0.8</div>
+      <div class="title">A default background for the new tab page</div>
+      <p class="body">Privoo now ships with its own default new-tab wallpaper. Turn it off any time in <b>Settings → Appearance → New tab page → Apply Privoo Background</b>, or set your own photo instead, either way it takes priority over the default.</p>
+    </div>
+  </article>
+
+  <article class="item">
+    <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 4h7v7H4zm9 0h7v7h-7zM4 13h7v7H4zm9 0h7v7h-7z"/></svg></div>
+    <div>
+      <div class="kicker">Improved &middot; 5.0.8</div>
+      <div class="title">A wider, more comfortable sidebar panel</div>
+      <p class="body">Sidebar apps (WhatsApp, Spotify, Discord, and the rest) open in a noticeably wider panel by default now. Drag its left edge any time to resize it to whatever width fits your screen.</p>
+    </div>
+  </article>
+
+  <article class="item">
+    <div class="ico"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2zm-3 0H9V6a3 3 0 0 1 6 0z"/></svg></div>
+    <div>
+      <div class="kicker">Changed &middot; 5.0.8</div>
+      <div class="title">Quieter by default</div>
+      <p class="body">UI sounds (typing and click blips) now ship off by default instead of on, turn them back on in <b>Settings → Sounds</b> if you liked them. The new-tab page's shortcut grid is also just called <b>New Tab</b> now.</p>
+    </div>
+  </article>
+
+  <article class="item">
+    <div class="ico"><svg viewBox="0 0 24 24"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11z"/></svg></div>
+    <div>
+      <div class="kicker">Improved &middot; 5.0.8</div>
+      <div class="title">A calmer Extensions page</div>
+      <p class="body">Cleaned up spacing and contrast on <b>privoo://extensions</b>, cards now pick up a soft accent-tinted edge on hover, and the "Add extension" button no longer risks unreadable text if you're using a very dark custom accent colour.</p>
+    </div>
+  </article>
 
   <article class="item">
     <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z"/></svg></div>
@@ -191,7 +246,7 @@ h1{font-size:26px;font-weight:650;letter-spacing:-.02em;margin-bottom:10px;}
   }
   function apply(s){
     document.documentElement.classList.toggle('dark', !!s?.darkMode);
-    applyAccent(s?.ntpWaveEnabled ? s?.accentColor : null);
+    applyAccent(s?.accentColor);
     if (s?.newsSeenVersion) {
       document.getElementById('ver-text').textContent = 'Version ' + s.newsSeenVersion;
     }

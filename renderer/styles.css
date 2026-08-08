@@ -1970,12 +1970,12 @@ body.dark .si-icon.insecure { background: rgba(242,139,130,.18); color: #f28b82;
   color: var(--accent);
 }
 
-/* Incognito window — a near-black ink, deeper than normal dark mode, so a
-   private window is unmistakable at a glance. Same neutral family as the
-   rest of the app (no purple-navy cast), just darker. */
-body.incognito { --strip: #0f0f13; --toolbar: #0f0f13; --tab-active: #1c1c22; --tab-hover: rgba(255,255,255,.06);
-  --omni-bg: rgba(255,255,255,.05); --omni-hover: rgba(255,255,255,.08); --border: rgba(255,255,255,.08); --hover: rgba(255,255,255,.06);
-  --text: #f1f1f4; --muted: #97979f; --pv-rail: #0f0f13; }
+/* Incognito window — a deep purple ink, darker than normal dark mode, so a
+   private window is unmistakable at a glance and matches the purple private
+   new-tab page. */
+body.incognito { --strip: #150e26; --toolbar: #150e26; --tab-active: #251a3f; --tab-hover: rgba(167,139,250,.10);
+  --omni-bg: rgba(167,139,250,.08); --omni-hover: rgba(167,139,250,.13); --border: rgba(167,139,250,.16); --hover: rgba(167,139,250,.08);
+  --text: #f1eefc; --muted: #a89bd4; --pv-rail: #150e26; }
 body.incognito #titlebar { background: var(--strip); color: var(--text); }
 body.incognito .tab { color: var(--muted); }
 body.incognito .tab.active { background: var(--tab-active); color: var(--text); }
@@ -2023,36 +2023,33 @@ body.ui-compact .vtabs-new-btn { height: 28px; }
   position: relative;
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 22px 18px 20px;
-  background:
-    radial-gradient(70% 90% at 15% -10%, var(--accent-soft), transparent 70%),
-    var(--surface);
+  gap: 14px;
+  padding: 18px 18px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
   color: var(--text);
-  overflow: hidden;
 }
 .sp-hero-shield {
   position: relative;
-  width: 52px; height: 52px;
+  width: 44px; height: 44px;
   flex-shrink: 0;
-  border-radius: 15px;
+  border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(155deg, var(--accent), color-mix(in srgb, var(--accent) 60%, #c58af7));
-  box-shadow: 0 10px 26px -8px color-mix(in srgb, var(--accent) 55%, transparent);
+  background: var(--accent-soft);
 }
 .sp-hero-shield > svg {
-  width: 26px; height: 26px;
-  fill: #fff;
+  width: 22px; height: 22px;
+  fill: var(--accent);
 }
 .sp-hero-check {
   position: absolute;
-  width: 12px !important; height: 12px !important;
+  width: 11px !important; height: 11px !important;
   fill: #fff !important;
   filter: none !important;
-  bottom: -3px; right: -3px;
-  background: #34a853;
+  bottom: -2px; right: -2px;
+  background: #22c55e;
   border-radius: 50%;
-  padding: 4px;
+  padding: 3px;
   box-sizing: content-box;
   border: 2px solid var(--surface);
 }
@@ -4201,6 +4198,131 @@ body.dark .vpn-input { background: var(--omni-bg); color: var(--text); }
   font-size: 11px; line-height: 1.5; color: var(--muted);
 }
 .vpn-disclaimer b { color: var(--text); font-weight: 700; }
+
+/* Privoo VPN toolbar popover — distinct classes from the .vpn-btn / .vpn-pop
+   family above (those belong to the Media Downloader popover, which just
+   happens to share the "vpn-" prefix). */
+#vpn-btn { position: relative; }
+.vpn-dot {
+  position: absolute; top: 5px; right: 5px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #22c55e; box-shadow: 0 0 0 2px var(--toolbar);
+}
+.vpn-panel { width: 340px; max-width: min(340px, calc(100vw - 24px)); padding: 0; }
+.vpn-view.hidden { display: none; }
+.vpn-view-body { padding: 16px 18px 18px; }
+.vpn-promo-img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.vpn-intro-title { font-size: 16px; font-weight: 700; letter-spacing: -.01em; margin-bottom: 6px; color: var(--text); }
+.vpn-beta-badge {
+  display: inline-block; vertical-align: middle;
+  font-size: 9.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  color: #b45309; background: rgba(245,158,11,.16);
+  border: 1px solid rgba(245,158,11,.3);
+  border-radius: 999px; padding: 2px 7px; margin-left: 6px;
+}
+body.dark .vpn-beta-badge { color: #fbbf24; background: rgba(245,158,11,.14); border-color: rgba(245,158,11,.28); }
+.vpn-intro-desc, .vpn-form-desc { font-size: 12.5px; line-height: 1.55; color: var(--muted); margin-bottom: 14px; }
+.vpn-terms-row {
+  display: flex; align-items: flex-start; gap: 9px;
+  font-size: 11.5px; line-height: 1.5; color: var(--muted);
+  margin-bottom: 14px; cursor: default;
+}
+.vpn-terms-row input { margin-top: 2px; accent-color: var(--accent); flex-shrink: 0; }
+.vpn-terms-row b { color: var(--text); font-weight: 600; }
+.vpn-btn-primary {
+  width: 100%; height: 38px; border-radius: 12px; border: none;
+  background: var(--accent); color: var(--on-accent, #10160f);
+  font-size: 13px; font-weight: 650; cursor: default;
+  transition: filter .12s ease, opacity .12s ease;
+}
+.vpn-btn-primary:hover { filter: brightness(1.06); }
+.vpn-btn-primary:disabled { opacity: .4; pointer-events: none; }
+.vpn-field-row .vpn-btn-primary { width: auto; flex: 1; }
+.vpn-form-title { font-size: 14px; font-weight: 650; margin-bottom: 6px; color: var(--text); }
+.vpn-config-head { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+.vpn-config-head .vpn-form-title { margin-bottom: 0; }
+.vpn-back-btn {
+  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: none; background: transparent; color: var(--muted); cursor: default;
+  transition: background .12s ease, color .12s ease;
+}
+.vpn-back-btn:hover { background: var(--hover); color: var(--text); }
+.vpn-back-btn svg { fill: currentColor; }
+.vpn-field-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.vpn-field-row select, .vpn-field-row input {
+  height: 34px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--toolbar); color: var(--text);
+  padding: 0 10px; font-size: 12.5px; flex: 1; min-width: 0; outline: none;
+}
+.vpn-field-row select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 26px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235f6368'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-size: 15px 15px;
+  cursor: default;
+  flex: 0 0 90px;
+}
+body.dark .vpn-field-row select {
+  color-scheme: dark;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239aa0a6'><path d='M7 10l5 5 5-5z'/></svg>");
+}
+.vpn-field-row select:focus, .vpn-field-row input:focus { border-color: var(--accent); }
+.vpn-form-err { font-size: 11.5px; color: #ef4444; margin: -2px 0 10px; line-height: 1.4; }
+.vpn-form-err[hidden] { display: none; }
+.vpn-btn-ghost {
+  flex: 1; height: 34px; border-radius: 10px; border: 1px solid var(--border);
+  background: transparent; color: var(--text); font-size: 12.5px; font-weight: 500;
+  cursor: default; transition: background .12s ease;
+}
+.vpn-btn-ghost:hover { background: var(--hover); }
+.vpn-btn-ghost.vpn-btn-danger { color: #ef4444; }
+.vpn-btn-ghost.vpn-btn-danger:hover { background: rgba(239,68,68,.1); }
+
+.vpn-banner-img { display: block; width: 100%; height: auto; }
+
+/* Big centered power indicator — the classic "VPN app" visual anchor.
+   Grey/outline when idle, green + pulsing ring once connected. */
+.vpn-power-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 9px;
+  padding: 20px 0 8px;
+}
+.vpn-power-ring {
+  position: relative;
+  width: 64px; height: 64px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--hover);
+  border: 2px solid var(--border);
+  color: var(--muted);
+  transition: background .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;
+}
+.vpn-power-ring svg { fill: currentColor; position: relative; z-index: 1; }
+.vpn-power-ring.connected {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 6px 20px -4px rgba(34,197,94,.5);
+}
+.vpn-power-pulse {
+  position: absolute; inset: -6px; border-radius: 50%;
+  border: 2px solid rgba(34,197,94,.55);
+  animation: vpn-pulse 1.8s ease-out infinite;
+}
+@keyframes vpn-pulse {
+  0%   { transform: scale(.85); opacity: .9; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .vpn-power-pulse { animation: none; } }
+.vpn-power-label { font-size: 11.5px; font-weight: 650; letter-spacing: .02em; color: var(--muted); }
+.vpn-power-label.connected { color: #22c55e; }
+.vpn-power-addr {
+  font-size: 11.5px; color: var(--muted); margin-top: -3px;
+  font-family: ui-monospace, Consolas, monospace;
+}
 
 /* ── Location — a small, simple popup: power button + location picker ── */
 /* overflow visible so the region dropdown isn't clipped by the small popup. */
@@ -6783,13 +6905,13 @@ body.privoo-one input[type="url"],
 body.privoo-one select { border-radius: 10px; }
 
 /* ── Incognito palette — placed last (and 2-class specific) so it wins over
-   the always-on dark palette. Near-black ink, same neutral family as the
-   rest of the app, just deeper — marks the private window unmistakably
-   without reviving the old purple-navy look. ── */
+   the always-on dark palette. Deep purple ink, darker than normal dark mode,
+   marks the private window unmistakably and matches the purple private
+   new-tab page. ── */
 body.privoo-one.incognito {
-  --strip: #0f0f13; --toolbar: #0f0f13; --tab-active: #1c1c22; --tab-hover: rgba(255,255,255,.06);
-  --omni-bg: rgba(255,255,255,.05); --omni-hover: rgba(255,255,255,.08); --border: rgba(255,255,255,.08); --hover: rgba(255,255,255,.06);
-  --text: #f1f1f4; --muted: #97979f; --pv-rail: #0f0f13;
+  --strip: #150e26; --toolbar: #150e26; --tab-active: #251a3f; --tab-hover: rgba(167,139,250,.10);
+  --omni-bg: rgba(167,139,250,.08); --omni-hover: rgba(167,139,250,.13); --border: rgba(167,139,250,.16); --hover: rgba(167,139,250,.08);
+  --text: #f1eefc; --muted: #a89bd4; --pv-rail: #150e26;
 }
 /* A slim accent "private" marker line under the toolbar. */
 body.privoo-one.incognito #toolbar { box-shadow: inset 0 -1px 0 var(--accent); }
@@ -6818,25 +6940,25 @@ html:has(body:not(.dark).setup-mode) { background: #eeecf9 !important; }
   width: min(760px, calc(100vw - 40px));
   height: min(600px, calc(100vh - 40px));
   background: #fff;
-  border: 1px solid rgba(38,36,58,.07);
-  border-radius: 26px;
+  border: 1px solid rgba(38,36,58,.09);
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.9),
-    0 0 0 1px rgba(79,70,229,.08),
-    0 60px 130px -30px rgba(23,22,31,.55),
-    0 16px 44px -18px rgba(23,22,31,.35);
+  box-shadow: 0 24px 60px -24px rgba(23,22,31,.4);
   -webkit-app-region: no-drag;
   animation: sw-frame-in .5s cubic-bezier(.16,.84,.44,1) both;
 }
 body.dark .sw-frame {
   background: #17181c;
-  border-color: rgba(255,255,255,.08);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.05),
-    0 0 0 1px rgba(79,70,229,.12),
-    0 60px 130px -30px rgba(0,0,0,.75),
-    0 16px 44px -18px rgba(0,0,0,.5);
+  border-color: rgba(255,255,255,.09);
+  box-shadow: 0 24px 60px -24px rgba(0,0,0,.6);
+}
+.sw-frame-simple {
+  width: min(520px, calc(100vw - 40px));
+  height: auto;
+  max-height: min(640px, calc(100vh - 40px));
+}
+.sw-frame-simple .sw-card {
+  overflow-y: auto;
 }
 @keyframes sw-frame-in { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: none; } }
 .sw-side {
@@ -6939,9 +7061,9 @@ body.privoo-one .sw-card {
 .sw-btn:active { transform: scale(.96) !important; }
 .sw-btn.primary {
   background: var(--accent) !important; color: #fff !important; border: none !important;
-  box-shadow: 0 10px 26px -8px color-mix(in srgb, var(--accent) 55%, transparent) !important;
+  box-shadow: none !important;
 }
-.sw-btn.primary:hover { transform: translateY(-1px) !important; filter: brightness(1.07); }
+.sw-btn.primary:hover { filter: brightness(1.07); }
 .sw-btn.ghost:hover { transform: translateY(-1px) !important; }
 /* Buttons + fineprint text warm. */
 .sw-fineprint { color: var(--muted); }

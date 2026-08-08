@@ -57,10 +57,9 @@ function refreshPrivooFavicons() {
   }
   if (typeof renderVtabs === 'function') renderVtabs();
 }
-// New-tab label — "New Incognito Tab" in a private window, "Speed Dial" otherwise
-// (the new-tab page's shortcut grid — same term Opera uses).
+// New-tab label — "Incognito" in a private window, "New Private Tab" otherwise.
 function newTabLabel() {
-  return document.body.classList.contains('incognito') ? 'New Incognito Tab' : 'Speed Dial';
+  return document.body.classList.contains('incognito') ? 'Incognito' : 'New Private Tab';
 }
 
 // ─── Fingerprint spoofing — injected into every real web page ────────────────
@@ -459,6 +458,8 @@ const homeBtn      = document.getElementById('home');
 const newTabBtn    = document.getElementById('new-tab');
 const shieldBtn    = document.getElementById('shield-btn');
 const shieldPanel  = document.getElementById('shield-panel');
+const vpnBtn       = document.getElementById('vpn-btn');
+const vpnPanel     = document.getElementById('vpn-panel');
 const pageShieldBtn     = document.getElementById('page-shield');
 const pageShieldPopover = document.getElementById('page-shield-popover');
 const shieldCount  = document.getElementById('shield-count');
@@ -620,9 +621,10 @@ function applyAppSettings() {
   document.body.classList.toggle('has-vibe', !!settings.vibeEnabled);
   // Recompute the accent for the CURRENT dark/light state and theme —
   // without this, toggling dark mode alone left the accent using whichever
-  // light/dark value was last computed. Only a Theme (ntpWaveEnabled) drives
-  // the accent away from the default indigo.
-  applyAccentTriad(settings.ntpWaveEnabled ? settings.accentColor : null);
+  // light/dark value was last computed. A manually picked accent swatch
+  // always applies; selecting a Theme (ntpWaveEnabled) just sets accentColor
+  // to match its palette, so both paths flow through the same value.
+  applyAccentTriad(settings.accentColor);
   // Confine the ambient vibe gradient to the chrome when the user doesn't want
   // it bleeding over web pages (chrome surface tinting stays regardless).
   document.body.classList.toggle('vibe-chrome-only', settings.vibeOverPages === false);
@@ -765,7 +767,9 @@ let _chromeWpReqId = 0;
 async function applyChromeWallpaper() {
   const full    = !!settings?.ntpWallpaperFullBrowser;
   const wave    = full && !!settings?.ntpWaveEnabled;
-  const hasWp   = settings?.ntpWallpaperPath !== '' && settings?.ntpWallpaperPath != null;
+  const wpPath  = settings?.ntpWallpaperPath;
+  const wantsDefaultBg = settings?.ntpApplyPrivooBackground !== false;
+  const hasWp   = wpPath !== '' && !(wpPath == null && !wantsDefaultBg);
   const on      = full && (wave || hasWp);
   const isVideo = on && !wave && settings?.ntpWallpaperType === 'video';
   const imgEl  = document.getElementById('chrome-wallpaper');
@@ -1283,6 +1287,8 @@ function renderPinnedExtensions() {
 
 function paintToolbarWidgets() {
   if (!settings) return;
+  // Privoo VPN connected dot — kept in sync even while the popover is closed.
+  if (vpnDot) vpnDot.hidden = !vpnIsConnected(settings);
   // Show/hide ytdlp toolbar button based on settings
   if (ytdlpToolbarBtn) ytdlpToolbarBtn.hidden = !settings.showYtdlpToolbar;
   // Show/hide geo toolbar button based on settings
@@ -1950,377 +1956,26 @@ function ensureDisclaimer() {
 
   document.body.classList.add('setup-mode');
   setupOverlay.removeAttribute('hidden');
-
-  // Apply current dark setting so overlay matches any persisted preference
   document.body.classList.toggle('dark', !!settings?.darkMode);
 
   return new Promise((resolve) => {
-    let selectedTheme = settings?.darkMode ? 'dark' : 'light';
-    let selectedProfile = null;
-    let hwaChoice = settings?.hardwareAcceleration === false ? 'off' : 'on';
-
-    // Mark theme card selected
-    document.querySelectorAll('.sw-theme-card').forEach(btn => {
-      btn.classList.toggle('selected', btn.dataset.theme === selectedTheme);
-    });
-    // Mark HWA card selected
-    document.querySelectorAll('.sw-choice-card[data-hwa]').forEach(btn => {
-      btn.classList.toggle('selected', btn.dataset.hwa === hwaChoice);
-    });
-
-    // Directional, animated step transitions — the outgoing step plays a
-    // quick exit, then the incoming step slides in and cascades its contents.
-    const swSteps = [...document.querySelectorAll('.sw-step')];
-    let swCurrent = 0;
-    let swBusy = false;
-    let swTimer = 0;
-
-    // Progress dots are generated, so adding or removing steps needs no
-    // hand-edited dot markup. Every step with a .sw-progress-dots container
-    // gets one dot per dotted step, with its own position marked active.
-    const dotSteps = swSteps.filter((s) => s.querySelector('.sw-progress-dots'));
-    dotSteps.forEach((step, idx) => {
-      const wrap = step.querySelector('.sw-progress-dots');
-      wrap.innerHTML = '';
-      for (let i = 0; i < dotSteps.length; i++) {
-        const d = document.createElement('span');
-        d.className = i === idx ? 'sw-dot active' : 'sw-dot';
-        wrap.appendChild(d);
-      }
-    });
-
-    function goStep(n) {
-      if (n === swCurrent || swBusy) return;
-      const from = swSteps[swCurrent];
-      const to = swSteps[n];
-      if (!from || !to) return;
-      const back = n < swCurrent;
-      swBusy = true;
-      swCurrent = n;
-      // Both cards move at once: the old one lifts away while the new one
-      // slides in — a single continuous cross-slide.
-      from.classList.toggle('sw-back', back);
-      to.classList.toggle('sw-back', back);
-      to.scrollTop = 0;
-      from.classList.add('sw-exit');
-      to.classList.add('active');
-      clearTimeout(swTimer);
-      swTimer = setTimeout(() => {
-        // Only the outgoing card is cleaned up. Removing 'sw-back' from the
-        // incoming card would swap its animation rule and re-trigger the
-        // entrance (the bug on Back) — goStep re-toggles it next time.
-        from.classList.remove('active', 'sw-exit', 'sw-back');
-        swBusy = false;
-      }, 470);
-      // The "Setting up everything…" step runs a timed progress meter, then
-      // advances itself to the final step.
-      if (to.id === 'sw-step-setup') {
-        runSetupProgress(() => goStep(n + 1));
-      }
-      // Done step — build a real recap of what was just chosen, so it's not
-      // the same static blurb every time.
-      if (to.id === 'sw-step-6') { renderSetupRecap(); fireConfetti(); }
-    }
-
-    function fireConfetti() {
-      const colors = ['#4f46e5', '#c58af7', '#f7c58a', '#8af7c5', '#f78ab0'];
-      const layer = document.createElement('div');
-      layer.className = 'sw-confetti-layer';
-      for (let i = 0; i < 90; i++) {
-        const p = document.createElement('span');
-        p.className = 'sw-confetti-piece';
-        p.style.left = Math.random() * 100 + '%';
-        p.style.background = colors[i % colors.length];
-        p.style.animationDelay = (Math.random() * 0.4) + 's';
-        p.style.animationDuration = (2.2 + Math.random() * 1.4) + 's';
-        p.style.setProperty('--drift', (Math.random() * 140 - 70) + 'px');
-        p.style.setProperty('--spin', (Math.random() * 720 - 360) + 'deg');
-        layer.appendChild(p);
-      }
-      document.body.appendChild(layer);
-      setTimeout(() => layer.remove(), 4000);
-    }
-
-    const ENGINE_LABELS = { brave: 'Brave Search', duckduckgo: 'DuckDuckGo', google: 'Google', bing: 'Bing' };
-    function renderSetupRecap() {
-      const el = document.getElementById('sw-recap');
-      if (!el) return;
-      const items = [
-        { label: selectedTheme === 'dark' ? 'Dark theme' : 'Light theme' },
-        { label: ENGINE_LABELS[searchChoice] || searchChoice },
-        { label: hwaChoice === 'on' ? 'GPU Power' : 'Software rendering' },
-      ];
-      if (selectedProfile) items.push({ label: 'Imported from ' + (selectedProfile.browser || 'another browser') });
-      el.innerHTML = items.map((it) =>
-        '<span class="sw-recap-chip">' +
-          '<svg viewBox="0 0 24 24" width="12" height="12"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>' +
-          it.label +
-        '</span>'
-      ).join('');
-    }
-
-    // Simple "Getting Privoo ready" screen — the dots animate on their own
-    // via CSS; this just waits a moment, then advances to Done.
-    function runSetupProgress(done) {
-      setTimeout(done, 3000);
-    }
-
-    // ── Step 1: Branded EU intro — the Start button begins setup ──
-    document.getElementById('sw-1-next').onclick = () => goStep(1);
-
-    // ── Step 2: Terms — checkbox gates the "Agree & continue" button ──
-    const termsCheck = document.getElementById('sw-terms-check');
-    const termsNext  = document.getElementById('sw-2-next');
-    if (termsCheck && termsNext) {
-      termsCheck.addEventListener('change', () => {
-        termsNext.disabled = !termsCheck.checked;
-      });
-    }
-    document.getElementById('sw-2-back').onclick = () => goStep(0);
-    termsNext.onclick = () => {
-      if (!termsCheck?.checked) return;
-      goStep(2);
-    };
-
-    // ── Step 3: Theme — the wizard card itself IS the live preview; a
-    // segmented toggle switches body.dark and crossfades a sun/moon glyph. ──
-    function syncThemeToggleVisual() {
-      const isDark = selectedTheme === 'dark';
-      document.body.classList.toggle('dark', isDark);
-      document.getElementById('sw-theme-thumb')?.classList.toggle('is-dark', isDark);
-      document.getElementById('sw-live-sun')?.classList.toggle('hidden', isDark);
-      document.getElementById('sw-live-moon')?.classList.toggle('hidden', !isDark);
-    }
-    document.querySelectorAll('.sw-theme-card').forEach(btn => {
-      btn.classList.toggle('selected', btn.dataset.theme === selectedTheme);
-      btn.onclick = () => {
-        document.querySelectorAll('.sw-theme-card').forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-        selectedTheme = btn.dataset.theme;
-        syncThemeToggleVisual();
-      };
-    });
-    syncThemeToggleVisual();
-    document.getElementById('sw-3-back').onclick = () => goStep(1);
-    document.getElementById('sw-3-next').onclick = async () => {
-      await saveBrowserSetting({ darkMode: selectedTheme === 'dark' });
-      goStep(3);
-    };
-
-    // ── Step 4: Search engine — a selectable list of engines with real
-    // favicons; the chosen row gets a pine tick. ──
-    let searchChoice = settings?.searchEngine || 'google';
-    document.querySelectorAll('#sw-step-search [data-engine]').forEach(btn => {
-      btn.classList.toggle('selected', btn.dataset.engine === searchChoice);
-      btn.onclick = () => {
-        document.querySelectorAll('#sw-step-search [data-engine]').forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-        searchChoice = btn.dataset.engine;
-      };
-    });
-    document.getElementById('sw-search-back').onclick = () => goStep(2);
-    document.getElementById('sw-search-next').onclick = async () => {
-      await saveBrowserSetting({ searchEngine: searchChoice });
-      goStep(4);
-    };
-
-    // ── Step 5: Hardware acceleration — a single segmented toggle + an
-    // animated speed-bar graphic that goes calm/static in software-only mode. ──
-    const HWA_DESC = {
-      on:  'Recommended — fast video and smooth scrolling using your GPU.',
-      off: 'Use this if videos flicker or pages render with artifacts.',
-    };
-    function syncHwaVisual() {
-      const isOn = hwaChoice === 'on';
-      document.getElementById('sw-hwa-thumb')?.classList.toggle('is-dark', !isOn);
-      document.getElementById('sw-speed-stage')?.classList.toggle('is-eco', !isOn);
-      const descEl = document.getElementById('sw-hwa-desc');
-      if (descEl) descEl.textContent = HWA_DESC[hwaChoice] || '';
-    }
-    document.querySelectorAll('.sw-choice-card[data-hwa]').forEach(btn => {
-      btn.classList.toggle('selected', btn.dataset.hwa === hwaChoice);
-      btn.onclick = () => {
-        document.querySelectorAll('.sw-choice-card[data-hwa]').forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-        hwaChoice = btn.dataset.hwa;
-        syncHwaVisual();
-      };
-    });
-    syncHwaVisual();
-    document.getElementById('sw-4-back').onclick = () => goStep(3);
-    document.getElementById('sw-4-next').onclick = async () => {
-      await saveBrowserSetting({ hardwareAcceleration: hwaChoice === 'on' });
-      goStep(5);
-      loadImportProfiles();
-    };
-
-    // ── Step 5: Import ──
-    async function loadImportProfiles() {
-      const wrap = document.getElementById('sw-profiles-wrap');
-      try {
-        const profiles = await window.privoo.listBrowserProfiles();
-        if (!profiles || !profiles.length) {
-          wrap.innerHTML = '<p class="sw-no-browsers">No other browsers detected on this computer.</p>';
-          document.getElementById('sw-5-import').disabled = true;
-          return;
-        }
-        wrap.innerHTML = '';
-        profiles.forEach(p => {
-          const btn = document.createElement('button');
-          btn.className = 'sw-profile-btn';
-          const label = [p.browser, p.name].filter(Boolean).join(' — ');
-          btn.textContent = label;
-          btn.onclick = () => {
-            document.querySelectorAll('.sw-profile-btn').forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
-            selectedProfile = p;
-            document.getElementById('sw-5-import').disabled = false;
-          };
-          wrap.appendChild(btn);
-        });
-      } catch {
-        wrap.innerHTML = '<p class="sw-no-browsers">Could not detect installed browsers.</p>';
-        document.getElementById('sw-5-import').disabled = true;
-      }
-    }
-
-    document.getElementById('sw-5-back').onclick = () => goStep(4);
-    document.getElementById('sw-5-skip').onclick = () => goStep(6);
-    document.getElementById('sw-5-import').onclick = async () => {
-      const msg = document.getElementById('sw-import-msg');
-      const importBtn = document.getElementById('sw-5-import');
-      importBtn.disabled = true;
-      msg.textContent = 'Importing…';
-      try {
-        const result = await window.privoo.importBrowserData({
-          profilePath: selectedProfile.path,
-          bookmarks: document.getElementById('sw-chk-bookmarks').checked,
-          history: document.getElementById('sw-chk-history').checked,
-        });
-        const bk = result.bookmarksAdded ?? result.bookmarks ?? 0;
-        const hi = result.historyAdded  ?? result.history  ?? 0;
-        msg.textContent = `Done — imported ${bk} bookmark${bk !== 1 ? 's' : ''} and ${hi} history item${hi !== 1 ? 's' : ''}.`;
-        setTimeout(() => goStep(6), 1600);
-      } catch {
-        msg.textContent = 'Import failed. You can try again from Settings → Your data.';
-        setTimeout(() => goStep(6), 2000);
-      }
-    };
-
-    // ── Step 6: Done — advance to the independent-project disclaimer ──
-    document.getElementById('sw-finish').onclick = () => {
-      goStep(swSteps.indexOf(document.getElementById('sw-step-disc')));
-    };
-
-    // ── Step 7: Independent-project disclaimer — checkbox gates the accept btn ──
-    const discCheck  = document.getElementById('sw-disc-check');
+    const discCheck = document.getElementById('sw-disc-check');
     const discAccept = document.getElementById('sw-disc-accept');
-    if (discCheck && discAccept) {
-      discCheck.addEventListener('change', () => {
-        discAccept.disabled = !discCheck.checked;
-      });
-    }
-    async function finishWizard() {
+    discCheck?.addEventListener('change', () => {
+      if (discAccept) discAccept.disabled = !discCheck.checked;
+    });
+    discAccept?.addEventListener('click', async () => {
+      if (!discCheck?.checked) return;
       await saveBrowserSetting({ disclaimerAccepted: true });
       window.privoo.setupFinished?.();
       document.body.classList.remove('setup-mode');
-      setupOverlay.classList.add('sw-closing');
-      fireConfetti();
-      setTimeout(() => {
-        setupOverlay.setAttribute('hidden', '');
-        setupOverlay.classList.remove('sw-closing');
-        // Show Privoo News once, right after first-run setup completes.
-        try { createTab('privoo://news/'); } catch {}
-      }, 320);
+      setupOverlay.setAttribute('hidden', '');
+      try { createTab('privoo://news/'); } catch {}
       resolve();
-    }
-    if (discAccept) {
-      discAccept.onclick = async () => {
-        if (!discCheck?.checked) return;
-        await finishWizard();
-      };
-    }
+    });
   });
 }
 
-// ─── Confetti ───────────────────────────────────────────────────────────────
-// Self-contained canvas burst — no deps. Spawns colourful particles from the
-// bottom-centre that arc upward + outward with gravity, then removes the
-// canvas once everything has fallen below the viewport. Used to celebrate
-// finishing the setup wizard.
-function fireConfetti() {
-  const canvas = document.createElement('canvas');
-  canvas.style.cssText =
-    'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:2147483647;';
-  document.body.appendChild(canvas);
-  const ctx = canvas.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
-  const resize = () => {
-    canvas.width  = Math.round(canvas.clientWidth  * dpr);
-    canvas.height = Math.round(canvas.clientHeight * dpr);
-  };
-  resize();
-  window.addEventListener('resize', resize);
-
-  const COLORS = ['#8ab4f8', '#f48fb1', '#fdd663', '#81c995', '#a78bfa', '#fcad70', '#f28b82'];
-  const W = () => canvas.width, H = () => canvas.height;
-
-  const make = (originX) => ({
-    x: originX,
-    y: H() * 0.95,
-    vx: (Math.random() - 0.5) * 18 * dpr,
-    vy: -(Math.random() * 16 + 14) * dpr,
-    g:  0.35 * dpr,
-    size: (Math.random() * 6 + 4) * dpr,
-    rot: Math.random() * Math.PI * 2,
-    vrot: (Math.random() - 0.5) * 0.35,
-    color: COLORS[(Math.random() * COLORS.length) | 0],
-    shape: Math.random() < 0.5 ? 'rect' : 'circle',
-    life: 0,
-  });
-
-  // Two bursts from left and right of centre for a fuller arc.
-  const parts = [];
-  for (let i = 0; i < 90; i++) parts.push(make(W() * 0.35));
-  for (let i = 0; i < 90; i++) parts.push(make(W() * 0.65));
-
-  let raf = 0;
-  const step = () => {
-    ctx.clearRect(0, 0, W(), H());
-    let alive = 0;
-    for (const p of parts) {
-      p.vy += p.g;
-      p.x  += p.vx;
-      p.y  += p.vy;
-      p.rot += p.vrot;
-      p.life++;
-      // Slight air drag so things don't fly forever.
-      p.vx *= 0.995;
-      if (p.y - p.size < H()) alive++;
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.rot);
-      ctx.fillStyle = p.color;
-      ctx.globalAlpha = Math.max(0, 1 - p.life / 220);
-      if (p.shape === 'rect') {
-        ctx.fillRect(-p.size / 2, -p.size / 3, p.size, p.size / 1.5);
-      } else {
-        ctx.beginPath();
-        ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-    if (alive > 0) {
-      raf = requestAnimationFrame(step);
-    } else {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('resize', resize);
-      canvas.remove();
-    }
-  };
-  raf = requestAnimationFrame(step);
-}
 
 async function saveBrowserSetting(patch) {
   const updated = await window.privoo.setSettings(patch);
@@ -3060,6 +2715,12 @@ function wireWebview(tab) {
     }
     if (e.channel === 'open-customize-panel') {
       openCustomizePanel();
+      return;
+    }
+    if (e.channel === 'open-vpn-panel') {
+      closePopovers();
+      vpnPanel?.classList.remove('hidden');
+      vpnRender(settings);
       return;
     }
     if (e.channel === 'ui-sound') {
@@ -4174,6 +3835,7 @@ function updateSiteInfoPopover(url, isInternal, isSecure, isHttp) {
 
 function closePopovers() {
   shieldPanel.classList.add('hidden');
+  vpnPanel?.classList.add('hidden');
   menuEl.classList.add('hidden');
   hideSuggestions();
   dlPopover?.classList.add('hidden');
@@ -4827,6 +4489,127 @@ shieldBtn.addEventListener('click', (e) => {
   togglePopover(shieldPanel);
   if (!shieldPanel.classList.contains('hidden')) { refreshStats(); paintFeatures(); }
 });
+
+const vpnDot = document.getElementById('vpn-dot');
+function vpnIsConnected(s) {
+  return s?.proxyMode === 'manual' && !!String(s?.proxyUrl || '').trim();
+}
+function vpnIsConfigured(s) {
+  return !!(s?.vpnProxyHost && s?.vpnProxyPort);
+}
+function vpnShowView(name) {
+  for (const id of ['vpn-intro', 'vpn-main', 'vpn-config', 'vpn-status']) {
+    document.getElementById(id)?.classList.toggle('hidden', id !== name);
+  }
+}
+function vpnRender(s) {
+  const connected = vpnIsConnected(s);
+  if (vpnDot) vpnDot.hidden = !connected;
+  if (!s?.vpnTermsAccepted) {
+    vpnShowView('vpn-intro');
+    return;
+  }
+  if (connected) {
+    vpnShowView('vpn-status');
+    const addr = document.getElementById('vpn-status-addr');
+    if (addr) addr.textContent = `${(s.vpnProxyType || 'http').toUpperCase()} · ${s.vpnProxyHost}:${s.vpnProxyPort}`;
+    return;
+  }
+  vpnShowView('vpn-main');
+  const statusText = document.getElementById('vpn-main-status');
+  const connectBtn = document.getElementById('vpn-connect-btn');
+  const configured = vpnIsConfigured(s);
+  if (statusText) {
+    statusText.textContent = configured
+      ? `${(s.vpnProxyType || 'http').toUpperCase()} · ${s.vpnProxyHost}:${s.vpnProxyPort}`
+      : 'No proxy configured yet.';
+  }
+  if (connectBtn) connectBtn.disabled = !configured;
+}
+function vpnFillConfigForm(s) {
+  const typeSel = document.getElementById('vpn-type');
+  const hostInp = document.getElementById('vpn-host');
+  const portInp = document.getElementById('vpn-port');
+  const userInp = document.getElementById('vpn-user');
+  if (typeSel) typeSel.value = s?.vpnProxyType || 'http';
+  if (hostInp) hostInp.value = s?.vpnProxyHost || '';
+  if (portInp) portInp.value = s?.vpnProxyPort || '';
+  if (userInp) userInp.value = s?.vpnProxyUsername || '';
+  const errEl = document.getElementById('vpn-form-err');
+  if (errEl) errEl.hidden = true;
+}
+
+vpnBtn?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  togglePopover(vpnPanel);
+  if (!vpnPanel.classList.contains('hidden')) vpnRender(settings);
+});
+
+document.getElementById('vpn-terms-check')?.addEventListener('change', (e) => {
+  const btn = document.getElementById('vpn-agree-btn');
+  if (btn) btn.disabled = !e.target.checked;
+});
+
+document.getElementById('vpn-agree-btn')?.addEventListener('click', async () => {
+  await saveBrowserSetting({ vpnTermsAccepted: true });
+  vpnRender(settings);
+});
+
+document.getElementById('vpn-configure-btn')?.addEventListener('click', () => {
+  vpnFillConfigForm(settings);
+  vpnShowView('vpn-config');
+});
+
+document.getElementById('vpn-edit-btn')?.addEventListener('click', () => {
+  vpnFillConfigForm(settings);
+  vpnShowView('vpn-config');
+});
+
+document.getElementById('vpn-config-back')?.addEventListener('click', () => vpnRender(settings));
+
+function vpnComposeProxyUrl(type, host, port) {
+  return `${type}://${host}:${port}`;
+}
+
+document.getElementById('vpn-save-btn')?.addEventListener('click', async () => {
+  const type = document.getElementById('vpn-type')?.value || 'http';
+  const host = document.getElementById('vpn-host')?.value.trim() || '';
+  const port = document.getElementById('vpn-port')?.value.trim() || '';
+  const user = document.getElementById('vpn-user')?.value.trim() || '';
+  const pass = document.getElementById('vpn-pass')?.value || '';
+  const errEl = document.getElementById('vpn-form-err');
+  const portNum = Number(port);
+  if (!host || !/^\d{1,5}$/.test(port) || portNum < 1 || portNum > 65535) {
+    if (errEl) { errEl.textContent = 'Enter a valid host and port (1-65535).'; errEl.hidden = false; }
+    return;
+  }
+  if (errEl) errEl.hidden = true;
+  const wasConnected = vpnIsConnected(settings);
+  await saveBrowserSetting({
+    ...(wasConnected ? { proxyMode: 'manual', proxyUrl: vpnComposeProxyUrl(type, host, port) } : {}),
+    vpnProxyType: type,
+    vpnProxyHost: host,
+    vpnProxyPort: port,
+    vpnProxyUsername: user,
+    vpnProxyPassword: pass,
+  });
+  vpnRender(settings);
+});
+
+document.getElementById('vpn-connect-btn')?.addEventListener('click', async () => {
+  if (!vpnIsConfigured(settings)) return;
+  await saveBrowserSetting({
+    proxyMode: 'manual',
+    proxyUrl: vpnComposeProxyUrl(settings.vpnProxyType || 'http', settings.vpnProxyHost, settings.vpnProxyPort),
+  });
+  vpnRender(settings);
+});
+
+document.getElementById('vpn-disconnect-btn')?.addEventListener('click', async () => {
+  await saveBrowserSetting({ proxyMode: 'none' });
+  vpnRender(settings);
+});
+
 menuBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePopover(menuEl); });
 
 // Toolbar extensions button — opens the manager page in a new tab
@@ -5695,6 +5478,9 @@ window.addEventListener('mousedown', (e) => {
   }
   if (shieldPanel && !shieldPanel.classList.contains('hidden')) {
     if (!shieldPanel.contains(t) && !shieldBtn.contains(t)) shieldPanel.classList.add('hidden');
+  }
+  if (vpnPanel && !vpnPanel.classList.contains('hidden')) {
+    if (!vpnPanel.contains(t) && !vpnBtn.contains(t)) vpnPanel.classList.add('hidden');
   }
   if (!suggestEl.contains(t) && t !== omnibox) hideSuggestions();
   if (dlPopover && !dlPopover.classList.contains('hidden') && !t.closest('#dl-anchor')) {

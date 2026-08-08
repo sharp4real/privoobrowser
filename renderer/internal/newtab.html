@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<title>Speed Dial</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%234f46e5' d='M4 5h7v7H4zM13 5h7v7h-7zM4 13h7v6H4zM13 13h7v6h-7z'/%3E%3C/svg%3E"/>
+<title>New Private Tab</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%238b7cf7' d='M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z'/%3E%3Cpath fill='%23fff' d='M10.6 15.4 7.4 12.2l1.3-1.3 1.9 1.9 4-4 1.3 1.3z'/%3E%3C/svg%3E"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:"Inter","Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
 html,body{height:100%;overflow:hidden}
@@ -1485,8 +1485,14 @@ function applyNtpLook(settings) {
   const dim = document.getElementById('ntp-bg-dim');
   const wpPath = settings?.ntpWallpaperPath;
   const isWave = !!settings?.ntpWaveEnabled;
-  // The wave takes precedence over any wallpaper file.
-  const hasWp = !isWave && wpPath !== '' && wpPath !== null && wpPath !== undefined;
+  // The wave takes precedence over any wallpaper file. wpPath === '' means the
+  // user explicitly removed their wallpaper; null/undefined (unset) falls
+  // through to the shipped default wallpaper.png, served by the same URL —
+  // unless the user turned that default off via Settings → Apply Privoo
+  // Background, in which case an unset path means no wallpaper at all. A
+  // real custom path (non-null, non-empty) always shows regardless.
+  const wantsDefaultBg = settings?.ntpApplyPrivooBackground !== false;
+  const hasWp = !isWave && wpPath !== '' && !(wpPath == null && !wantsDefaultBg);
   const dark = !!(settings && settings.darkMode);
 
   // Default = the clean warm dark/light background (no gradient). The glassy
@@ -2002,8 +2008,8 @@ document.getElementById('cw-animate-toggle').addEventListener('click', async () 
   await api.setSettings({ ntpWallpaperAnimated: next });
   const stateEl = document.getElementById('cw-animate-state');
   if (stateEl) stateEl.textContent = next ? 'On' : 'Off';
-  const hasCustomWp = settings?.ntpWallpaperPath !== '' && settings?.ntpWallpaperPath != null;
-  document.body.classList.toggle('ntp-wp-animated', next && !hasCustomWp);
+  const hasWp = settings?.ntpWallpaperPath !== '';
+  document.body.classList.toggle('ntp-wp-animated', next && !hasWp);
 });
 
 const qInput = document.getElementById('q');
