@@ -2577,11 +2577,15 @@ function createWindow(opts = {}) {
   // The Increase-Transparency feature uses backgroundMaterial / vibrancy,
   // which both work on a normal (non-transparent) window and still get
   // DWM-rounded. macOS rounds its own windows.
-  // The OS material backdrop is enabled when the transparency setting is on
-  // OR when this is a first-run window (the setup wizard renders as a
-  // frosted-glass surface and wants the desktop material behind it).
+  // The OS material backdrop is enabled only via the Increase Transparency
+  // setting. The first-run terms/disclaimer screen paints its own fully
+  // opaque background (see .setup-overlay in styles.css), so it never needs
+  // the window itself to be transparent — forcing that for first-run used
+  // to leave a genuinely see-through, glitchy window on systems where the
+  // Windows 11 acrylic material fails to apply (backgroundColor is set to
+  // fully transparent regardless of whether the material actually painted).
   const isFirstRun = !settings.disclaimerAccepted;
-  const wantsTransparency = !!settings.increaseTransparency || isFirstRun;
+  const wantsTransparency = !!settings.increaseTransparency;
   const transparencyOpts = {};
   if (wantsTransparency) {
     if (process.platform === 'win32') {

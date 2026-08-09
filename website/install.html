@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privoo Desktop: Installation</title>
+<meta name="description" content="How to download and install Privoo Desktop on Windows, macOS and Linux, including what the unsigned-build security warnings mean and how to update or uninstall.">
+<link rel="icon" href="./logo.png">
+<script>try{var t=localStorage.getItem('privoo-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;}catch(e){}</script>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="./index.html">
+    <img src="./logo.png" alt="" width="24" height="24">
+    <b>Privoo</b>
+    <span class="ver">reference</span>
+  </a>
+  <div class="topbar-right">
+    <a href="https://github.com/sharp4real/privoobrowser/releases/latest">Download</a>
+    <a href="https://github.com/sharp4real/privoobrowser">Source</a>
+    <a href="https://discord.gg/WweUzF3YCQ">Discord</a>
+    <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch to dark mode" aria-pressed="false">☾ Dark</button>
+    <button class="menu-btn" id="menu-btn" aria-label="Menu">☰</button>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <h4>Article</h4>
+    <a href="./index.html">Privoo Desktop</a>
+    <a href="./install.html" class="active">Installation</a>
+    <h4>Protection</h4>
+    <a href="./privacy.html">Privacy and security</a>
+    <a href="./mariana.html">.mariana hosting</a>
+    <h4>Using Privoo Desktop</h4>
+    <a href="./tools.html">Built-in tools</a>
+    <a href="./ai.html">Privoo AI</a>
+    <a href="./browsing.html">Browsing</a>
+    <a href="./appearance.html">Appearance</a>
+    <h4>Other products</h4>
+    <a href="./android.html">Privoo for Android</a>
+    <a href="./coder.html">Privoo Coder</a>
+    <h4>Reference</h4>
+    <a href="./shortcuts.html">Keyboard shortcuts</a>
+    <a href="./faq.html">FAQ and troubleshooting</a>
+  </aside>
+
+  <main class="doc">
+    <h1>Privoo Desktop: Installation</h1>
+    <p class="subtitle">From the Privoo reference. This article covers version 6.0.0.</p>
+    <p class="hatnote">Main article: <a href="./index.html">Privoo Desktop</a></p>
+
+    <p class="lead">
+      Privoo Desktop is distributed only through GitHub Releases. There is no app store
+      listing on any platform, and the installers are not code-signed, so each operating
+      system shows an unfamiliar-publisher warning the first time you run one. This is
+      expected, and is a direct consequence of the project not holding a paid code-signing
+      certificate rather than any problem with the build itself.
+    </p>
+
+    <nav class="toc">
+      <div class="toc-title">Contents</div>
+      <ol>
+        <li><a href="./install.html#windows">Windows</a></li>
+        <li><a href="./install.html#macos">macOS</a></li>
+        <li><a href="./install.html#linux">Linux</a></li>
+        <li><a href="./install.html#updates">Updating</a></li>
+        <li><a href="./install.html#uninstall">Uninstalling</a></li>
+      </ol>
+    </nav>
+
+    <div class="note warn">
+      <span class="label">Unsigned builds</span>
+      <p>
+        Privoo Desktop is not notarised on macOS and not code-signed on Windows. Both
+        operating systems will warn that the publisher is unrecognised. The steps below
+        cover how to proceed past that warning on each platform.
+      </p>
+    </div>
+
+    <h2 id="windows">Windows</h2>
+    <ol>
+      <li>Download <code>Privoo-Setup-&lt;version&gt;.exe</code> from the <a href="https://github.com/sharp4real/privoobrowser/releases/latest">latest release</a>.</li>
+      <li>Run the installer. Windows SmartScreen will show <b>"Windows protected your PC"</b> because the executable is unsigned. Click <b>More info</b>, then <b>Run anyway</b>.</li>
+      <li>The installer is not a silent one-click install: it lets you choose the installation directory, and creates a desktop shortcut and a Start Menu entry.</li>
+    </ol>
+    <div class="table-wrap">
+      <table>
+        <caption>Windows build details</caption>
+        <thead><tr><th>Property</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>Installer type</td><td>NSIS</td></tr>
+          <tr><td>Architecture</td><td>x64</td></tr>
+          <tr><td>Minimum OS</td><td>Windows 10</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="macos">macOS</h2>
+    <ol>
+      <li>Download the <code>.dmg</code> for your Mac's chip from the <a href="https://github.com/sharp4real/privoobrowser/releases/latest">latest release</a>: the <code>arm64</code> build for Apple Silicon (M1 and later), or the <code>x64</code> build for an Intel Mac.</li>
+      <li>Open the disk image and drag <b>Privoo</b> into <b>Applications</b>.</li>
+      <li>On first launch, Gatekeeper will refuse to open the app because it is not notarised by Apple. <b>Right-click (or Control-click) the app in Applications and choose Open</b>, then confirm <b>Open</b> in the dialog. This only needs to be done once; opening it normally afterward works as expected.</li>
+    </ol>
+    <div class="table-wrap">
+      <table>
+        <caption>macOS build details</caption>
+        <thead><tr><th>Property</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>Package types</td><td>DMG, ZIP</td></tr>
+          <tr><td>Architecture</td><td>x64, arm64 (Apple Silicon)</td></tr>
+          <tr><td>Notarisation</td><td>None</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="linux">Linux</h2>
+    <p>Three package formats are published for x86-64. Use whichever your distribution supports.</p>
+    <div class="table-wrap">
+      <table>
+        <caption>Linux packages</caption>
+        <thead><tr><th>Format</th><th>Typical use</th><th>Run</th></tr></thead>
+        <tbody>
+          <tr><td>AppImage</td><td>Any distribution, no installation required</td><td><code>chmod +x Privoo-*.AppImage &amp;&amp; ./Privoo-*.AppImage</code></td></tr>
+          <tr><td>.deb</td><td>Debian, Ubuntu and derivatives</td><td><code>sudo dpkg -i privoo_*.deb</code></td></tr>
+          <tr><td>.rpm</td><td>Fedora, openSUSE and derivatives</td><td><code>sudo rpm -i privoo-*.rpm</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      Distribution-specific dependency resolution is not handled by these packages; if
+      <code>dpkg</code> or <code>rpm</code> reports missing dependencies, install them with
+      your package manager's dependency-fix command (for example <code>sudo apt --fix-broken install</code>
+      on Debian-based systems) and retry.
+    </p>
+
+    <h2 id="updates">Updating</h2>
+    <p>
+      Automatic updates are enabled by default and check the GitHub release feed
+      periodically. When a newer version is available it downloads in the background and
+      applies on the next restart. This can be turned off in <b>Settings</b>. AppImage,
+      <code>.deb</code> and <code>.rpm</code> Linux packages are not self-updating; a new
+      version must be downloaded and reinstalled manually.
+    </p>
+
+    <h2 id="uninstall">Uninstalling</h2>
+    <div class="table-wrap">
+      <table>
+        <caption>Uninstalling by platform</caption>
+        <thead><tr><th>Platform</th><th>Method</th></tr></thead>
+        <tbody>
+          <tr><td>Windows</td><td><b>Settings → Apps</b>, or run the uninstaller in the install directory</td></tr>
+          <tr><td>macOS</td><td>Drag <b>Privoo.app</b> from Applications to the Trash</td></tr>
+          <tr><td>Linux (.deb)</td><td><code>sudo apt remove privoo-browser</code></td></tr>
+          <tr><td>Linux (.rpm)</td><td><code>sudo rpm -e privoo-browser</code></td></tr>
+          <tr><td>Linux (AppImage)</td><td>Delete the <code>.AppImage</code> file</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      Uninstalling the application does not remove your profile data (history, bookmarks,
+      settings, saved passwords). See <a href="./index.html#a-storage">Data storage</a> in
+      the main article for the configuration directory on each platform, and delete it
+      manually if a clean removal is needed.
+    </p>
+
+    <div class="btn-row">
+      <a class="lbtn primary" href="https://github.com/sharp4real/privoobrowser/releases/latest"><span class="ico">↓</span> Download latest release</a>
+      <a class="lbtn" href="https://github.com/sharp4real/privoobrowser/issues">Report an installation issue</a>
+    </div>
+
+    <nav class="pager">
+      <a href="./index.html"><span>Previous</span><b>‹ Privoo Desktop</b></a>
+      <a class="next" href="./privacy.html"><span>Next</span><b>Privacy and security ›</b></a>
+    </nav>
+  </main>
+</div>
+
+<footer class="foot">
+  <span>Privoo is an independent project. No telemetry, no tracking, no data collection.</span>
+  <span>Content describes Privoo Desktop 6.0.0 · MIT licensed</span>
+</footer>
+
+<script src="./nav.js"></script>
+
+
+</body></html>

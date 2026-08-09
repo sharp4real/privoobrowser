@@ -48,7 +48,7 @@
 
   <main class="doc">
     <h1>Privoo Desktop</h1>
-    <p class="subtitle">From the Privoo reference. This article covers the browser as of version 5.0.6.</p>
+    <p class="subtitle">From the Privoo reference. This article covers the browser as of version 6.0.0.</p>
     <p class="hatnote">This article is about the desktop browser. For the Android browser, see <a href="./android.html">Privoo for Android</a>. For the coding IDE, see <a href="./coder.html">Privoo Coder</a>.</p>
 
     <aside class="infobox">
@@ -60,7 +60,7 @@
       <table>
         <tbody><tr><th>Developer</th><td>Independent project (<code>sharp4real</code>)</td></tr>
         <tr><th>Initial release</th><td>23 May 2026; beta v1.00</td></tr>
-        <tr><th>Stable release</th><td>5.0.6 / 17 July 2026</td></tr>
+        <tr><th>Stable release</th><td>6.0.0 / August 2026</td></tr>
         <tr><th>Repository</th><td><a href="https://github.com/sharp4real/privoobrowser">github.com/sharp4real/privoobrowser</a></td></tr>
         <tr><th>Written in</th><td>JavaScript, HTML, CSS</td></tr>
         <tr><th>Engine</th><td>Blink (Chromium 148), V8</td></tr>
@@ -87,7 +87,7 @@
       synchronisation server, and collects no telemetry.
     </p>
     <p>
-      Development began in May 2026 and the project reached version 5.0.6 by July 2026,
+      Development began in May 2026 and the project reached version 6.0.0 by August 2026,
       across more than sixty tagged releases. It is maintained as an independent project
       under the MIT license rather than by a company, a fact its documentation cites as
       the reason its privacy defaults are not constrained by an advertising business
@@ -153,9 +153,9 @@
     <h2 id="overview">Overview</h2>
 
     <figure class="thumb">
-      <img src="./screenshot.png" alt="Privoo Desktop&#39;s Speed Dial new tab page, showing the ghost mascot, a greeting and the search field over a wave background." width="1562" height="969">
+      <img src="./screenshot.png" alt="Privoo Desktop&#39;s New Tab page, showing the ghost mascot, a greeting and the search field over a wave background." width="1562" height="969">
       <figcaption>
-        Privoo Desktop 5.0.6 on Windows, showing the Speed Dial new tab page in the
+        Privoo Desktop 6.0.0 on Windows, showing the New Tab page in the
         default dark theme. This is a fresh install with no configuration performed: the
         privacy shield sits in the toolbar and the search field already defaults to a
         non-profiling engine.
@@ -230,11 +230,15 @@
           <tr><td>5.0.4</td><td>15 July 2026</td><td>Multi-identity autofill, mobile view, native tray menu, ad-block live-toggle fix.</td></tr>
           <tr><td>5.0.5</td><td>15 July 2026</td><td>.mariana anonymous Tor hosting with a post-quantum layer.</td></tr>
           <tr><td>5.0.6</td><td>17 July 2026</td><td>Identity autofill made opt-in; shield block-count fix; icon-only toolbar shield; YouTube ad-strip and TikTok login fixes; sidebar sites render as desktop.</td></tr>
+          <tr><td>5.0.7</td><td>August 2026</td><td>Full design refresh: a signature indigo accent, redesigned incognito windows, real frosted-glass transparency, a simplified New Tab page.</td></tr>
+          <tr><td>5.0.8</td><td>August 2026</td><td>Privoo VPN introduced (experimental, user-configured proxy tunnel); default wallpapers for New Tab and Incognito; accent-colour picker fixed to apply outside of Themes; simplified first-run screen.</td></tr>
+          <tr><td>5.0.9</td><td>August 2026</td><td>Privoo VPN popup redesign; Shield popup simplified; a Theme no longer overwrites "Your Vibe" unless opted in; assorted UI and search-suggestion fixes.</td></tr>
+          <tr><td>6.0.0</td><td>August 2026</td><td><b>Critical fix:</b> the first-run window could render as a transparent, glitched surface on systems where the Windows 11 acrylic material failed to apply. The first-run screen no longer requests a transparent window at all.</td></tr>
         </tbody>
       </table>
     </div>
     <p>
-      As of version 5.0.5 the repository contains 180 commits across 66 tagged
+      As of version 6.0.0 the repository contains 185 commits across 71 tagged
       releases.<sup class="ref"><a href="./#ref-2">[2]</a></sup> Releases are built and
       published automatically by GitHub Actions for Windows, macOS and Linux when a
       version tag is pushed.
@@ -247,7 +251,7 @@
     </p>
     <div class="table-wrap">
       <table>
-        <caption>Selected defaults in version 5.0.6</caption>
+        <caption>Selected defaults in version 6.0.0</caption>
         <thead><tr><th>Setting</th><th>Value</th><th>Effect</th></tr></thead>
         <tbody>
           <tr><td>Ad and tracker blocking</td><td>Enabled</td><td>EasyList, EasyPrivacy and uBlock Origin rules applied at the network layer</td></tr>
@@ -261,6 +265,8 @@
           <tr><td>Search engine</td><td>Brave Search</td><td>A non-profiling default</td></tr>
           <tr><td>Dark mode</td><td>Enabled</td><td>Light theme available</td></tr>
           <tr><td>Accent colour</td><td><code>#8b7cf7</code></td><td>Lavender; propagates through the whole interface</td></tr>
+          <tr><td>UI sounds</td><td>Disabled</td><td>Typing/click/tab blips; off by default as of 5.0.9</td></tr>
+          <tr><td>Privoo VPN</td><td>Not configured</td><td>Experimental, user-supplied proxy tunnel; requires accepting terms before use</td></tr>
           <tr><td>Automatic updates</td><td>Enabled</td><td>Checked against the GitHub release feed</td></tr>
         </tbody>
       </table>
@@ -331,8 +337,9 @@
       simultaneous pages, vertical tabs with a collapsible icon rail, isolated browser
       profiles, a guest session, incognito windows, a command palette bound to
       <kbd>Ctrl</kbd> <kbd>K</kbd>, reader and focus modes, and mobile device emulation.
-      A configurable new tab page ("Speed Dial") supports image, video and animated
-      backgrounds.
+      A configurable New Tab page supports image, video and animated
+      backgrounds, and the Incognito window has its own dedicated purple palette
+      and wallpaper distinct from normal browsing.
     </p>
 
     <div class="cards">
@@ -384,7 +391,7 @@
         <caption>Internal pages</caption>
         <thead><tr><th>URL</th><th>Page</th></tr></thead>
         <tbody>
-          <tr><td><code>privoo://newtab</code></td><td>Speed Dial (new tab page)</td></tr>
+          <tr><td><code>privoo://newtab</code></td><td>New Tab page</td></tr>
           <tr><td><code>privoo://settings</code></td><td>Settings</td></tr>
           <tr><td><code>privoo://extensions</code></td><td>Built-in and installed tools</td></tr>
           <tr><td><code>privoo://mariana</code></td><td>Anonymous hosting management</td></tr>
@@ -512,8 +519,8 @@
     <h2 id="references" class="nonum">References</h2>
     <ol class="refs">
       <li id="ref-1"><a href="https://github.com/sharp4real/privoobrowser#readme">Privoo Browser README</a>. Project repository. Retrieved 16 July 2026.</li>
-      <li id="ref-2"><a href="https://github.com/sharp4real/privoobrowser/releases">Release history and tags</a>. Project repository. 66 tags, 180 commits as of v5.0.5.</li>
-      <li id="ref-3"><code>settings-store.js</code>, default settings object. Project repository, version 5.0.6.</li>
+      <li id="ref-2"><a href="https://github.com/sharp4real/privoobrowser/releases">Release history and tags</a>. Project repository. 71 tags, 185 commits as of v6.0.0.</li>
+      <li id="ref-3"><code>settings-store.js</code>, default settings object. Project repository, version 6.0.0.</li>
       <li id="ref-4"><a href="https://github.com/ghostery/adblocker">Ghostery adblocker engine</a>, used via <code>@ghostery/adblocker-electron</code> 2.5.x.</li>
       <li id="ref-5"><a href="https://github.com/castlabs/electron-releases">castLabs Electron releases</a>, providing the Widevine-enabled Electron 42.3.3 build.</li>
     </ol>
@@ -537,10 +544,10 @@
 
 <footer class="foot">
   <span>Privoo is an independent project. No telemetry, no tracking, no data collection.</span>
-  <span>Content describes Privoo Desktop 5.0.6 · MIT licensed</span>
+  <span>Content describes Privoo Desktop 6.0.0 · MIT licensed</span>
 </footer>
 
-<script src="./nav.js.download"></script>
+<script src="./nav.js"></script>
 
 
 </body></html>
