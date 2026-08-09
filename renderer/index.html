@@ -1080,10 +1080,29 @@
     const sub        = document.getElementById('upd-sub');
     const restartBtn = document.getElementById('upd-restart-btn');
 
+    let _installTimeout = null;
+    function _resetRestartBtn(msg) {
+      clearTimeout(_installTimeout);
+      _installTimeout = null;
+      restartBtn.disabled = false;
+      restartBtn.textContent = 'Restart & Update';
+      if (msg) sub.textContent = msg;
+    }
     restartBtn.addEventListener('click', () => {
       restartBtn.disabled = true;
       restartBtn.textContent = 'Restarting…';
       window.privoo?.installUpdateNow();
+      // If the app is actually about to quit, this code stops running and
+      // the timeout never fires. If the install silently failed to launch
+      // (a locked-file/antivirus/permission issue), the button re-enables
+      // itself instead of staying stuck disabled forever.
+      clearTimeout(_installTimeout);
+      _installTimeout = setTimeout(() => {
+        _resetRestartBtn('Restart didn’t start the update — try again, or download it manually from the Downloads page.');
+      }, 8000);
+    });
+    window.privoo?.onUpdateInstallFailed?.((msg) => {
+      _resetRestartBtn(msg || 'Could not install the update — try again.');
     });
 
     function showDownloading(ver, pct, speed) {

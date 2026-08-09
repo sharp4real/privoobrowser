@@ -2990,21 +2990,40 @@ autoUpdater.on('error', (err) => {
   setTimeout(() => checkForUpdatesIfEnabled(), 60_000);
 });
 
-ipcMain.on('install-update-now', () => {
+ipcMain.on('install-update-now', (e) => {
   if (process.platform === 'darwin') {
     shell.openExternal('https://github.com/sharp4real/privoobrowser/releases/latest');
     return;
   }
-  if (IS_WIN && _manualInstallerPath && fs.existsSync(_manualInstallerPath)) {
+  if (IS_WIN) {
+    // autoDownload is off on Windows (see the sha512-mismatch note above),
+    // so electron-updater never actually has anything cached to install —
+    // quitAndInstall() below would silently no-op. The manually-downloaded
+    // installer is the only real path on this platform; if it's missing,
+    // report back instead of falling through to a call that does nothing
+    // and leaves the renderer's button stuck disabled forever.
+    if (!_manualInstallerPath || !fs.existsSync(_manualInstallerPath)) {
+      console.warn('Privoo: install-update-now on Windows with no installer downloaded');
+      try { e.sender.send('update-install-failed', 'The update file is missing. Re-checking for updates…'); } catch {}
+      _updateDownloadedInfo = null;
+      checkForUpdatesIfEnabled();
+      return;
+    }
     const { spawn } = require('child_process');
     try {
       spawn(_manualInstallerPath, ['/S', '--force-run'], {
         detached: true,
         stdio: 'ignore',
       }).unref();
-    } catch (e) {
-      console.warn('Privoo: spawn installer failed:', e.message);
-      shell.openPath(_manualInstallerPath);
+    } catch (err) {
+      console.warn('Privoo: spawn installer failed, opening installer manually instead:', err.message);
+      shell.openPath(_manualInstallerPath).then((errMsg) => {
+        if (errMsg) {
+          console.warn('Privoo: openPath also failed:', errMsg);
+          try { e.sender.send('update-install-failed', 'Could not launch the installer automatically. Find it at: ' + _manualInstallerPath); } catch {}
+        }
+      });
+      return;
     }
     setTimeout(() => app.quit(), 400);
     return;
