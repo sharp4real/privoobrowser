@@ -2897,10 +2897,11 @@ body.dark .cp-row input:checked + .slider { background: var(--accent); }
 @media (max-width: 480px) { .sw-facts { grid-template-columns: 1fr; } }
 .sw-terms-agree {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   padding: 10px 4px;
   font-size: 13px;
+  line-height: 1.5;
   color: var(--text);
   cursor: pointer;
   margin-bottom: 8px;
@@ -6333,7 +6334,6 @@ body.transparent-ui.dark .discord-card { background: rgba(32, 34, 40, .88); }
   margin: 0 auto 16px;
   border-radius: 12px;
   width: 46px; height: 46px;
-  filter: drop-shadow(0 6px 14px color-mix(in srgb, var(--accent) 35%, transparent));
 }
 .ty-title {
   font-size: 17px;
@@ -6972,31 +6972,32 @@ body.privoo-one .sw-card {
 }
 .sw-choice-card .sw-choice-ico, .sw-theme-card .sw-choice-ico { color: var(--accent) !important; }
 .sw-choice-card span, .sw-choice-card b { color: inherit; }
-.sw-terms-box { background: var(--omni-bg) !important; border: 1px solid var(--border) !important; border-radius: 16px !important; }
-.sw-btn { border-radius: 999px !important; font-weight: 600 !important; transition: transform .16s cubic-bezier(.34,1.5,.64,1), filter .16s ease, background .16s ease !important; }
-.sw-btn:active { transform: scale(.96) !important; }
+.sw-terms-box { background: var(--omni-bg) !important; border: 1px solid var(--border) !important; border-radius: 12px !important; }
 .sw-btn.primary {
   background: var(--accent) !important; color: #fff !important; border: none !important;
   box-shadow: none !important;
 }
 .sw-btn.primary:hover { filter: brightness(1.07); }
-.sw-btn.ghost:hover { transform: translateY(-1px) !important; }
 /* Buttons + fineprint text warm. */
 .sw-fineprint { color: var(--muted); }
-/* The "I agree" checkbox becomes a squared green toggle — same as Settings. */
+/* The "I agree" checkbox — a plain, ordinary checkbox. This is a legal
+   disclaimer, not a feature toggle, so it shouldn't look like one. */
 .sw-terms-agree input[type="checkbox"] {
   -webkit-appearance: none; appearance: none;
-  width: 40px; height: 22px; border-radius: 10px; flex-shrink: 0;
-  background: #3a3833; border: 1px solid var(--border); position: relative; cursor: pointer; margin: 0;
-  transition: background .18s, border-color .18s;
+  width: 18px; height: 18px; border-radius: 4px; flex-shrink: 0;
+  background: var(--omni-bg); border: 1.5px solid var(--border); position: relative; cursor: pointer; margin: 1px 0 0;
+  transition: background .12s ease, border-color .12s ease;
 }
-body:not(.dark) .sw-terms-agree input[type="checkbox"] { background: #cfccbf; }
-.sw-terms-agree input[type="checkbox"]::after {
-  content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px;
-  border-radius: 8px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .18s, background .18s;
+.sw-terms-agree input[type="checkbox"]:checked {
+  background: var(--accent); border-color: var(--accent);
 }
-.sw-terms-agree input[type="checkbox"]:checked { background: var(--accent); border-color: var(--accent); }
-.sw-terms-agree input[type="checkbox"]:checked::after { transform: translateX(18px); background: #10160f; }
+.sw-terms-agree input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute; left: 5px; top: 1px;
+  width: 5px; height: 9px;
+  border: solid #fff; border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
 
 /* ── Terms step fact tiles — squared, warm, pine icon chip ── */
 .sw-fact-tile { background: var(--omni-bg); border-color: var(--border); border-radius: 10px; }
