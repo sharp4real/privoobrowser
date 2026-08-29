@@ -2,14 +2,13 @@
 
 <img src="logo.png" alt="Privoo Browser" width="96" />
 
-# Privoo Browser
+# Privoo Desktop Browser
 
-**A fast, private browser that works for you — not for advertisers.**
+**A fast, private browser that works for you, not for advertisers.**
 
 Ads and trackers blocked out of the box. No accounts, no sync servers, no telemetry.
 Everything you do stays on your device.
 
-[![Version](https://img.shields.io/badge/version-5.0.6-8b7cf7)](https://github.com/sharp4real/privoobrowser/releases)
 [![License](https://img.shields.io/badge/license-MIT-57a97e)](LICENSE)
 [![Discord](https://img.shields.io/badge/discord-join-57a97e)](https://discord.gg/WweUzF3YCQ)
 
@@ -78,7 +77,7 @@ Third-party `.crx` / unpacked extensions can also be loaded from the same page.
 - **Command Palette** — `Ctrl + K` for everything
 - **History, Bookmarks & Downloads** — searchable, local, yours
 
-### Speed Dial (New Tab)
+### New Tab
 
 - Clean search bar with live suggestions and your engine's icon
 - Optional shortcut tiles, live clock, weather, and privacy stats
@@ -88,7 +87,6 @@ Third-party `.crx` / unpacked extensions can also be loaded from the same page.
 ### Customisation
 
 - **Accent colour** — recolours the entire interface, including page favicons
-- **Themes** — light/dark, transparency & glassmorphism (Mica/Acrylic on Windows, vibrancy on macOS)
 - **Your Vibe** — an ambient hue gradient washed across the UI
 - **Layout** — interface font, corner style, compact mode, font scaling, custom CSS
 - **Search engines** — Google, Bing, DuckDuckGo, Brave, Startpage, Ecosia, Qwant, Yandex, Kagi, or custom
@@ -194,12 +192,6 @@ Selected defaults:
 **Video won't play / black frame** — try disabling hardware acceleration in Settings → Performance. Privoo already works around the common GPU cold-start case automatically.
 
 **Downloads not appearing** — check the download folder in Settings and that Privoo has write permission; `privoo://downloads/` shows live status.
-
----
-
-## Contributing
-
-Pull requests are welcome. Fork the repo, branch off `main`, and open a PR describing what changed and why.
 
 ---
 
