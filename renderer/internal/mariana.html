@@ -8,30 +8,30 @@
 *{box-sizing:border-box;margin:0;padding:0;font-family:"Inter","Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
 html{height:100%;background:transparent}
 body{height:100%;background:#f2f1f9;color:#26243a;user-select:none;display:flex;flex-direction:column}
-body.dark{background:#202124;color:#eceaf6;color-scheme:dark}
+body.dark{background:#1e1e21;color:#eceaf6;color-scheme:dark}
 button,input{font:inherit}
 button{cursor:default;border:none;background:transparent;color:inherit}
-a{color:var(--accent,#4f46e5);text-decoration:none}
+a{color:var(--accent,#ffffff);text-decoration:none}
 
 /* Scrollbar to match the rest of the app */
 html::-webkit-scrollbar{width:12px;height:12px}
-html::-webkit-scrollbar-thumb{background:#dadce0;border-radius:12px;border:3px solid transparent;background-clip:padding-box}
-body.dark html::-webkit-scrollbar-thumb{background:#5f6368;background-clip:padding-box;border:3px solid transparent}
+html::-webkit-scrollbar-thumb{background:#d8d8de;border-radius:12px;border:3px solid transparent;background-clip:padding-box}
+body.dark html::-webkit-scrollbar-thumb{background:#4d4d57;background-clip:padding-box;border:3px solid transparent}
 
 header{
   background:#fff;border-bottom:1px solid #e3e1ef;
   padding:16px 28px;display:flex;align-items:center;gap:12px;
   position:sticky;top:0;z-index:10;flex-shrink:0;flex-wrap:wrap
 }
-body.dark header{background:#202124;border-bottom-color:#5f6368}
+body.dark header{background:#1e1e21;border-bottom-color:#4d4d57}
 h1{font-size:20px;font-weight:500;margin-right:auto;display:flex;align-items:center;gap:9px}
-h1 svg{width:22px;height:22px;fill:var(--accent,#4f46e5)}
+h1 svg{width:22px;height:22px;fill:var(--accent,#ffffff)}
 .tor-badge{
   display:flex;align-items:center;gap:6px;font-size:12px;color:#6d6a85;
   padding:5px 10px;border-radius:999px;background:#ece9f7;white-space:nowrap;flex-shrink:0
 }
-body.dark .tor-badge{background:#303134;color:#9aa0a6}
-.tor-dot{width:7px;height:7px;border-radius:50%;background:#9aa0a6;flex-shrink:0}
+body.dark .tor-badge{background:#37373f;color:#b0b0b8}
+.tor-dot{width:7px;height:7px;border-radius:50%;background:#b0b0b8;flex-shrink:0}
 .tor-badge.on .tor-dot{background:#34a853}
 
 main{flex:1;min-height:0;max-width:800px;margin:0 auto;width:100%;padding:24px 20px 48px;overflow-y:auto}
@@ -41,7 +41,7 @@ main{flex:1;min-height:0;max-width:800px;margin:0 auto;width:100%;padding:24px 2
   background:#fff;border:1px solid #e3e1ef;border-radius:20px;
   padding:22px 24px;margin-bottom:24px;
 }
-body.dark .explain{background:#232231;border-color:#5f6368}
+body.dark .explain{background:#232231;border-color:#4d4d57}
 .explain h2{font-size:15px;font-weight:650;margin-bottom:8px}
 .explain p{font-size:13.5px;line-height:1.65;color:#57546e;margin-bottom:10px}
 body.dark .explain p{color:#b4b1c8}
@@ -51,7 +51,7 @@ body.dark .explain b{color:#eceaf6}
 .pill-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
 .pq-pill{
   display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:600;
-  color:var(--accent,#4f46e5);background:var(--accent-soft,rgba(79,70,229,.16));
+  color:var(--accent,#ffffff);background:var(--accent-soft,rgba(79,70,229,.16));
   padding:6px 12px;border-radius:999px
 }
 .pq-pill svg{width:13px;height:13px;fill:currentColor}
@@ -62,25 +62,25 @@ body.dark .explain b{color:#eceaf6}
   padding:28px 24px;text-align:center;margin-bottom:28px;
   transition:border-color .15s,background .15s;background:#faf9fe
 }
-body.dark .host-box{border-color:#5f6368;background:#232231}
-.host-box.drag{border-color:var(--accent,#4f46e5);background:var(--accent-soft,rgba(79,70,229,.12))}
+body.dark .host-box{border-color:#4d4d57;background:#232231}
+.host-box.drag{border-color:var(--accent,#ffffff);background:var(--accent-soft,rgba(79,70,229,.12))}
 .host-box h3{font-size:15px;font-weight:600;margin-bottom:6px}
 .host-box p{font-size:12.5px;color:#6d6a85;margin-bottom:16px}
-body.dark .host-box p{color:#9aa0a6}
+body.dark .host-box p{color:#b0b0b8}
 .host-controls{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}
 .host-controls input{
   border:1px solid #e3e1ef;border-radius:10px;padding:9px 13px;font-size:13px;
   outline:none;background:#fff;width:200px
 }
-body.dark .host-controls input{background:#202124;border-color:#5f6368;color:#eceaf6}
-.host-controls input:focus{border-color:var(--accent,#4f46e5)}
+body.dark .host-controls input{background:#1e1e21;border-color:#4d4d57;color:#eceaf6}
+.host-controls input:focus{border-color:var(--accent,#ffffff)}
 .btn{
   height:38px;padding:0 18px;border-radius:999px;font-size:13px;font-weight:500;
-  color:#fff;background:var(--accent,#4f46e5);box-shadow:0 2px 8px rgba(79,70,229,.32)
+  color:#fff;background:var(--accent,#ffffff);box-shadow:0 2px 8px rgba(79,70,229,.32)
 }
 .btn:hover{filter:brightness(1.06)}
 .btn.ghost{color:#6d6a85;background:#ece9f7;box-shadow:none}
-body.dark .btn.ghost{background:#303134;color:#9aa0a6}
+body.dark .btn.ghost{background:#37373f;color:#b0b0b8}
 .btn[disabled]{opacity:.5}
 
 .section-label{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8f8ca6;margin:0 0 12px 2px}
@@ -90,11 +90,11 @@ body.dark .section-label{color:#6d6a85}
 .site{
   border:1px solid #e3e1ef;border-radius:16px;background:#fff;padding:16px 18px
 }
-body.dark .site{background:#303134;border-color:#5f6368}
+body.dark .site{background:#37373f;border-color:#4d4d57}
 .site-top{display:flex;align-items:center;gap:11px}
 .site-dot{
   width:38px;height:38px;border-radius:12px;flex-shrink:0;
-  background:var(--accent-soft,rgba(79,70,229,.18));color:var(--accent,#4f46e5);
+  background:var(--accent-soft,rgba(79,70,229,.18));color:var(--accent,#ffffff);
   display:flex;align-items:center;justify-content:center
 }
 .site-dot svg{width:19px;height:19px;fill:currentColor}
@@ -109,7 +109,7 @@ body.dark .state-pill.off{color:#f0916f;background:rgba(217,80,45,.16)}
 .site-actions{display:flex;gap:4px;flex-shrink:0}
 .icon-btn{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#6d6a85}
 .icon-btn:hover{background:rgba(0,0,0,.06)}
-body.dark .icon-btn{color:#9aa0a6}
+body.dark .icon-btn{color:#b0b0b8}
 body.dark .icon-btn:hover{background:rgba(255,255,255,.08)}
 .icon-btn.danger:hover{color:#d9502d;background:rgba(217,80,45,.12)}
 .icon-btn svg{width:16px;height:16px;fill:currentColor}
@@ -118,27 +118,27 @@ body.dark .icon-btn:hover{background:rgba(255,255,255,.08)}
   margin-top:13px;display:flex;align-items:center;gap:8px;
   background:#f6f5fb;border:1px solid #eae8f4;border-radius:11px;padding:8px 8px 8px 13px
 }
-body.dark .share{background:#202124;border-color:#5f6368}
+body.dark .share{background:#1e1e21;border-color:#4d4d57}
 .share code{
   flex:1;min-width:0;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;
   color:#57546e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;user-select:text
 }
 body.dark .share code{color:#b4b1c8}
-.copy-btn{height:30px;padding:0 13px;border-radius:8px;font-size:12px;font-weight:600;color:#fff;background:var(--accent,#4f46e5)}
+.copy-btn{height:30px;padding:0 13px;border-radius:8px;font-size:12px;font-weight:600;color:#fff;background:var(--accent,#ffffff)}
 .copy-btn.done{background:#34a853}
 
 #empty{text-align:center;padding:40px 20px;color:#6d6a85;font-size:13px}
-body.dark #empty{color:#9aa0a6}
+body.dark #empty{color:#b0b0b8}
 
 /* Visit hint */
 .visit{
   margin-top:26px;font-size:12.5px;color:#6d6a85;line-height:1.6;
   background:#faf9fe;border:1px solid #eae8f4;border-radius:14px;padding:14px 16px
 }
-body.dark .visit{background:#232231;border-color:#5f6368;color:#9aa0a6}
+body.dark .visit{background:#232231;border-color:#4d4d57;color:#b0b0b8}
 .visit b{color:#26243a}
 body.dark .visit b{color:#eceaf6}
-code.inline{background:rgba(79,70,229,.14);color:var(--accent,#4f46e5);padding:1px 6px;border-radius:6px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px}
+code.inline{background:rgba(79,70,229,.14);color:var(--accent,#ffffff);padding:1px 6px;border-radius:6px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px}
 
 #toast{
   position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(10px);
@@ -148,6 +148,9 @@ code.inline{background:rgba(79,70,229,.14);color:var(--accent,#4f46e5);padding:1
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 body.dark #toast{background:#eceaf6;color:#26243a}
 </style>
+<!-- Shared finish pass: one palette across every Privoo page. Loads last so
+     it wins on order; the block above still owns this page's layout. -->
+<link rel="stylesheet" href="page-theme.css" />
 </head>
 <body>
 <header>
@@ -198,12 +201,22 @@ body.dark #toast{background:#eceaf6;color:#26243a}
   let pendingFolder = null;
 
   function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  // Mirrors applyAccentTriad() in renderer.js. '#ffffff' is the adaptive
+  // "Mono" accent, not literally white, and --on-accent has to come from the
+  // accent's luminance so a label sitting on it always contrasts.
   function applyAccent(hex){
-    const r=document.documentElement;
-    if(!hex){ r.style.removeProperty('--accent'); r.style.removeProperty('--accent-soft'); return; }
-    r.style.setProperty('--accent',hex);
-    const m=hex.replace('#','').match(/.{2}/g);
-    if(m){ const[rv,g,b]=m.map(x=>parseInt(x,16)); r.style.setProperty('--accent-soft',`rgba(${rv},${g},${b},.16)`); }
+    const r = document.documentElement;
+    const isDark = document.body.classList.contains('dark');
+    let c = (hex && /^#[0-9a-f]{6}$/i.test(hex)) ? hex : (isDark ? '#ffffff' : '#101014');
+    if (c.toLowerCase() === '#ffffff' && !isDark) c = '#101014';
+    r.style.setProperty('--accent', c);
+    const [rv, g, b] = c.replace('#','').match(/.{2}/g).map(x => parseInt(x, 16));
+    const lum = (0.2126*rv + 0.7152*g + 0.0722*b) / 255;
+    const mix = lum > 0.72 ? 0 : 255, k = lum > 0.72 ? 0.12 : 0.18;
+    r.style.setProperty('--accent-hover',
+      `rgb(${Math.round(rv+(mix-rv)*k)},${Math.round(g+(mix-g)*k)},${Math.round(b+(mix-b)*k)})`);
+    r.style.setProperty('--on-accent', lum > 0.6 ? '#1b1b1e' : '#ffffff');
+    r.style.setProperty('--accent-soft', `rgba(${rv},${g},${b},${isDark ? '.16' : '.13'})`);
   }
   let toastTimer=null;
   function toast(msg){

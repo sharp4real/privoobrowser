@@ -7,37 +7,30 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --accent:#8ab4f8; --accent-hover:#a0c2fa; --on-accent:#202124;
+  --accent:#8ab4f8; --accent-hover:#a0c2fa; --on-accent:#1e1e21;
   --accent-soft:rgba(138,180,248,.18);
-  --bg:#f8f9fa; --surface:#fff; --text:#202124; --muted:#5f6368;
-  --border:#e8eaed; --hover:#f1f3f4;
+  --bg:#f8f9fa; --surface:#fff; --text:#1e1e21; --muted:#4d4d57;
+  --border:#ededf0; --hover:#f1f3f4;
 }
 body.dark{
-  --bg:#202124; --surface:#292a2d; --text:#e8eaed; --muted:#9aa0a6;
+  --bg:#1e1e21; --surface:#28282c; --text:#ededf0; --muted:#b0b0b8;
   --border:#3c4043; --hover:#3c4043;
 }
 /* ── Privoo studio palette ── */
 :root{ --accent:#4f46e5; --accent-hover:#6058ea; --accent-soft:rgba(79,70,229,.13);
   --bg:#f3f3f7; --surface:#ffffff; --text:#17171f; --muted:#6c6c78; --border:rgba(23,23,31,.09); --hover:rgba(23,23,31,.05); }
 body.dark{ --accent:#948ef2; --accent-hover:#a29cf5; --accent-soft:rgba(148,142,242,.18);
-  --bg:#17181c; --surface:#1f2024; --text:#f1f1f4; --muted:#97979f; --border:rgba(255,255,255,.08); --hover:rgba(255,255,255,.06); }
+  --bg:#1e1e21; --surface:#28282c; --text:#ededf0; --muted:#b0b0b8; --border:rgba(255,255,255,.08); --hover:rgba(255,255,255,.06); }
 html{height:100%;background:transparent}
 body{height:100%;font-family:"Inter","Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);user-select:none;display:flex;flex-direction:column}
-body.transparent-ui{background:transparent !important;}
-body.transparent-ui main, body.transparent-ui header{background:transparent !important;}
-body.transparent-ui .dl-item{
-  background:rgba(255,255,255,.55);
-  backdrop-filter:blur(10px) saturate(160%); -webkit-backdrop-filter:blur(10px) saturate(160%);
-}
-body.transparent-ui.dark .dl-item{background:rgba(41,42,45,.55);}
 body.dark{color-scheme:dark}
 button,input{font:inherit;cursor:default;background:none;border:none;color:inherit}
 
 ::-webkit-scrollbar{width:12px;height:12px}
 ::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:#dadce0;border-radius:12px;border:3px solid transparent;background-clip:padding-box}
-::-webkit-scrollbar-thumb:hover{background:#bdc1c6;background-clip:padding-box;border:3px solid transparent}
-body.dark ::-webkit-scrollbar-thumb{background:#5f6368;background-clip:padding-box;border:3px solid transparent}
+::-webkit-scrollbar-thumb{background:#d8d8de;border-radius:12px;border:3px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:#b0b0b8;background-clip:padding-box;border:3px solid transparent}
+body.dark ::-webkit-scrollbar-thumb{background:#4d4d57;background-clip:padding-box;border:3px solid transparent}
 
 header{
   background:var(--surface);border-bottom:1px solid var(--border);
@@ -55,7 +48,7 @@ header{
   padding:0 16px 0 38px;font-size:13.5px;outline:none;background:var(--hover);
   color:var(--text);user-select:text;transition:background .15s,border-color .15s,box-shadow .15s;
 }
-#search:focus{background:var(--surface);border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+#search:focus{background:var(--surface);border-color:var(--border-2,var(--border))}
 
 .hdr-btn{
   height:36px;padding:0 16px;border-radius:10px;border:1px solid var(--border);
@@ -79,10 +72,23 @@ main{flex:1;overflow-y:auto;background:var(--bg)}
 
 .dl-item{
   display:flex;align-items:center;gap:16px;
-  padding:14px 12px;border-radius:10px;
-  transition:background .1s;
+  /* The border is always here and merely transparent, so nothing shifts by a
+     pixel when it takes a colour. */
+  padding:13px 13px;border:1px solid transparent;border-radius:12px;
+  transition:background .13s ease, border-color .13s ease, box-shadow .13s ease;
 }
-.dl-item:hover{background:var(--hover)}
+/* A row becomes a card rather than a grey slab. The fill is barely there;
+   the hairline and the shadow are what say "this one", and they say it with
+   an edge, which a flood fill has no way of doing. */
+.dl-item:hover{
+  background:var(--surface);
+  border-color:var(--border);
+  box-shadow:0 1px 2px rgba(0,0,0,.05), 0 6px 18px -12px rgba(0,0,0,.5);
+}
+body.dark .dl-item:hover{
+  background:var(--surface-2);
+  box-shadow:0 1px 2px rgba(0,0,0,.22), 0 8px 22px -14px rgba(0,0,0,.9);
+}
 
 .file-icon{
   width:42px;height:42px;border-radius:10px;flex-shrink:0;
@@ -133,8 +139,18 @@ body.dark .chip-error{background:rgba(197,34,31,.18);color:#f28b82}
 .dl-src{
   font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;margin-top:3px;cursor:pointer;
+  /* The underline is always there and merely invisible. Adding it on hover
+     is a repaint of the whole line; colouring it in is not. */
+  text-decoration:underline;
+  text-decoration-color:transparent;
+  text-underline-offset:2px;
+  transition:color .12s ease, text-decoration-color .12s ease;
 }
-.dl-src:hover{color:var(--accent);text-decoration:underline}
+/* Was var(--accent). Not a contrast fault — applyAccent() below maps the
+   Mono sentinel to ink on a light page — but the accent is the browser's
+   loudest colour and this is a metadata line under a filename. It should not
+   outshout the thing it belongs to. */
+.dl-src:hover{color:var(--text);text-decoration-color:currentColor}
 
 .dl-meta{font-size:11.5px;color:var(--muted);margin-top:3px}
 
@@ -160,10 +176,13 @@ body.dark .dl-act.danger:hover{background:rgba(197,34,31,.15);color:#f28b82}
 }
 .open-btn:hover{background:var(--hover)}
 
-#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#303134;color:#fff;border-radius:12px;padding:10px 18px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .18s;z-index:80;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#37373f;color:#fff;border-radius:12px;padding:10px 18px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .18s;z-index:80;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.3)}
 #toast.show{opacity:1}
-body.dark #toast{background:#e8eaed;color:#202124}
+body.dark #toast{background:#ededf0;color:#1e1e21}
 </style>
+<!-- Shared finish pass: one palette across every Privoo page. Loads last so
+     it wins on order; the block above still owns this page's layout. -->
+<link rel="stylesheet" href="page-theme.css" />
 </head>
 <body>
 
@@ -196,10 +215,30 @@ let query = '';
 
 function applyTheme(s){
   document.body.classList.toggle('dark', !!s?.darkMode);
-  document.body.classList.toggle('transparent-ui', !!s?.increaseTransparency);
   applyAccent(s?.accentColor);
 }
-function applyAccent(hex){const r=document.documentElement;if(!hex){r.style.removeProperty('--accent');r.style.removeProperty('--accent-hover');r.style.removeProperty('--accent-soft');return;}r.style.setProperty('--accent',hex);const m=hex.replace('#','').match(/.{2}/g);if(m){const[rv,g,b]=m.map(x=>parseInt(x,16));const h=`rgb(${Math.min(255,Math.round(rv+(255-rv)*.18))},${Math.min(255,Math.round(g+(255-g)*.18))},${Math.min(255,Math.round(b+(255-b)*.18))})`;r.style.setProperty('--accent-hover',h);r.style.setProperty('--accent-soft',`rgba(${rv},${g},${b},.18)`);} }
+// Mirrors applyAccentTriad() in renderer.js, so this page shows the same
+// accent as the browser around it. Two rules it has to honour:
+//   - '#ffffff' is the adaptive "Mono" accent, not literally white: it means
+//     white on the dark UI and near-black on the light one. Written through
+//     unmapped it painted white on white in light mode.
+//   - --on-accent comes from the accent's own luminance, so a toggle knob or
+//     button label on top of it always contrasts with it.
+function applyAccent(hex){
+  const r = document.documentElement;
+  const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
+  let c = (hex && /^#[0-9a-f]{6}$/i.test(hex)) ? hex : (isDark ? '#ffffff' : '#101014');
+  if (c.toLowerCase() === '#ffffff' && !isDark) c = '#101014';
+  r.style.setProperty('--accent', c);
+  const [rv, g, b] = c.replace('#','').match(/.{2}/g).map(x => parseInt(x, 16));
+  const lum = (0.2126*rv + 0.7152*g + 0.0722*b) / 255;
+  // A near-white accent has no headroom to brighten into, so hover darkens.
+  const mix = lum > 0.72 ? 0 : 255, k = lum > 0.72 ? 0.12 : 0.18;
+  r.style.setProperty('--accent-hover',
+    `rgb(${Math.round(rv+(mix-rv)*k)},${Math.round(g+(mix-g)*k)},${Math.round(b+(mix-b)*k)})`);
+  r.style.setProperty('--on-accent', lum > 0.6 ? '#1b1b1e' : '#ffffff');
+  r.style.setProperty('--accent-soft', `rgba(${rv},${g},${b},${isDark ? '.16' : '.13'})`);
+}
 function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function showToast(t){ const el=document.getElementById('toast'); el.textContent=t; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),1800); }
 

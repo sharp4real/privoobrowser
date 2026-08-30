@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<title>Nothing here — Privoo</title>
+<title>Nothing here. Privoo</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%238b7cf7' d='M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z'/%3E%3Cpath fill='%23fff' d='M10.6 15.4 7.4 12.2l1.3-1.3 1.9 1.9 4-4 1.3 1.3z'/%3E%3C/svg%3E"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:"Inter","Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
@@ -10,20 +10,20 @@
 :root{
   --bg:#f1f3f4;
   --surface:#ffffff;
-  --text:#202124;
-  --muted:#5f6368;
-  --border:#dadce0;
-  --hover:#e8eaed;
+  --text:#1e1e21;
+  --muted:#4d4d57;
+  --border:#d8d8de;
+  --hover:#ededf0;
   --accent:#8ab4f8;
   --accent-hover:#a0c2fa;
-  --on-accent:#202124;
+  --on-accent:#1e1e21;
 }
 body.dark{
-  --bg:#202124;
-  --surface:#303134;
-  --text:#e8eaed;
-  --muted:#9aa0a6;
-  --border:#4a4d51;
+  --bg:#1e1e21;
+  --surface:#37373f;
+  --text:#ededf0;
+  --muted:#b0b0b8;
+  --border:#43434c;
   --hover:#3c4043;
   color-scheme:dark;
 }
@@ -31,7 +31,7 @@ body.dark{
 :root{ --accent:#4f46e5; --accent-hover:#6058ea;
   --bg:#f3f3f7; --surface:#ffffff; --text:#17171f; --muted:#6c6c78; --border:rgba(23,23,31,.09); --hover:rgba(23,23,31,.05); }
 body.dark{ --accent:#948ef2; --accent-hover:#a29cf5;
-  --bg:#17181c; --surface:#1f2024; --text:#f1f1f4; --muted:#97979f; --border:rgba(255,255,255,.08); --hover:rgba(255,255,255,.06); }
+  --bg:#1e1e21; --surface:#28282c; --text:#ededf0; --muted:#b0b0b8; --border:rgba(255,255,255,.08); --hover:rgba(255,255,255,.06); }
 
 html,body{height:100%;background:var(--bg);color:var(--text);user-select:none;}
 
@@ -123,6 +123,9 @@ button.ghost{
 }
 button.ghost:hover{background:var(--hover);color:var(--text)}
 </style>
+<!-- Shared finish pass: one palette across every Privoo page. Loads last so
+     it wins on order; the block above still owns this page's layout. -->
+<link rel="stylesheet" href="page-theme.css" />
 </head>
 <body>
 <div class="page">
@@ -192,7 +195,28 @@ button.ghost:hover{background:var(--hover);color:var(--text)}
   }
 
   // Dark mode + accent
-  function applyAccent(hex){const r=document.documentElement;if(!hex){r.style.removeProperty('--accent');r.style.removeProperty('--accent-hover');r.style.removeProperty('--accent-soft');return;}r.style.setProperty('--accent',hex);const m=hex.replace('#','').match(/.{2}/g);if(m){const[rv,g,b]=m.map(x=>parseInt(x,16));const h=`rgb(${Math.min(255,Math.round(rv+(255-rv)*.18))},${Math.min(255,Math.round(g+(255-g)*.18))},${Math.min(255,Math.round(b+(255-b)*.18))})`;r.style.setProperty('--accent-hover',h);r.style.setProperty('--accent-soft',`rgba(${rv},${g},${b},.18)`);} }
+  // Mirrors applyAccentTriad() in renderer.js, so this page shows the same
+// accent as the browser around it. Two rules it has to honour:
+//   - '#ffffff' is the adaptive "Mono" accent, not literally white: it means
+//     white on the dark UI and near-black on the light one. Written through
+//     unmapped it painted white on white in light mode.
+//   - --on-accent comes from the accent's own luminance, so a toggle knob or
+//     button label on top of it always contrasts with it.
+function applyAccent(hex){
+  const r = document.documentElement;
+  const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
+  let c = (hex && /^#[0-9a-f]{6}$/i.test(hex)) ? hex : (isDark ? '#ffffff' : '#101014');
+  if (c.toLowerCase() === '#ffffff' && !isDark) c = '#101014';
+  r.style.setProperty('--accent', c);
+  const [rv, g, b] = c.replace('#','').match(/.{2}/g).map(x => parseInt(x, 16));
+  const lum = (0.2126*rv + 0.7152*g + 0.0722*b) / 255;
+  // A near-white accent has no headroom to brighten into, so hover darkens.
+  const mix = lum > 0.72 ? 0 : 255, k = lum > 0.72 ? 0.12 : 0.18;
+  r.style.setProperty('--accent-hover',
+    `rgb(${Math.round(rv+(mix-rv)*k)},${Math.round(g+(mix-g)*k)},${Math.round(b+(mix-b)*k)})`);
+  r.style.setProperty('--on-accent', lum > 0.6 ? '#1b1b1e' : '#ffffff');
+  r.style.setProperty('--accent-soft', `rgba(${rv},${g},${b},${isDark ? '.16' : '.13'})`);
+}
   api?.getSettings?.().then(d => {
     document.body.classList.toggle('dark', !!d?.settings?.darkMode);
     applyAccent(d?.settings?.accentColor);

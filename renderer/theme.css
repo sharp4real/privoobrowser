@@ -1,0 +1,2905 @@
+/* ════════════════════════════════════════════════════════════════════════
+   Privoo's chrome finish.
+
+   styles.css defines the palette and every component's structure. This file
+   is the finish pass on top of it: the shapes, weights, spacing and motion
+   that turn a working browser chrome into one that feels deliberate. It
+   loads after styles.css, so it wins on order alone — nothing in here needs
+   !important except where it has to beat an existing !important rule.
+
+   Three rules held throughout:
+
+     1. Depth comes from surface steps first, hairlines second. Two planes
+        that differ by 6% in fill do not also need a border to prove it.
+     2. One radius family. 7 / 10 / 14 / 20, and nothing in between.
+     3. Motion is short and eased out. 130ms for a hover, 220ms for
+        anything that moves in space. Nothing bounces except a press.
+   ════════════════════════════════════════════════════════════════════════ */
+
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  letter-spacing: -.006em;
+}
+
+/* ── Chrome shell ────────────────────────────────────────────────────────
+   The tab strip is one step darker than the toolbar rather than the same
+   colour, which is what lets the active tab connect upward to the strip and
+   the toolbar read as the surface the page hangs from — the arrangement
+   every desktop browser lands on because it makes "which tab am I on"
+   answerable at a glance. No line between them; the fill step is the edge. */
+body.privoo-one #titlebar {
+  border-bottom: none;
+  background: var(--strip);
+}
+body.privoo-one #toolbar {
+  height: 46px;
+  min-height: 46px;
+  padding: 0 8px;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  background: var(--toolbar);
+}
+body.privoo-one #bookmarks-bar {
+  background: var(--toolbar);
+  border-bottom: 1px solid var(--border);
+  padding: 4px 10px;
+}
+
+/* ── Tabs ────────────────────────────────────────────────────────────────
+   Rounded on all four corners and inset from the strip edges, so a tab is
+   an object sitting on the bar rather than a notch cut into it. The active
+   one is the only lit surface up here — that is the whole hierarchy. */
+.tab {
+  height: 32px;
+  align-self: center;
+  border-radius: var(--r-sm);
+  margin: 0 1px;
+  padding: 0 8px 0 11px;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 450;
+  letter-spacing: -.005em;
+  transition: background var(--t-fast) var(--ease),
+              color var(--t-fast) var(--ease),
+              opacity .18s ease;
+}
+.tab:hover:not(.active) { background: var(--tab-hover); color: var(--text); }
+.tab.active,
+body.dark .tab.active,
+body.privoo-one .tab.active {
+  background: var(--tab-active);
+  color: var(--text);
+  font-weight: 500;
+  box-shadow: none;
+}
+body.dark .tab.active { box-shadow: none; }
+
+.tab .tab-title { letter-spacing: -.005em; }
+.tab .favicon { border-radius: 3px; }
+.tab .favicon.spin {
+  border-width: 1.6px;
+  border-color: var(--border-strong);
+  border-top-color: var(--text);
+}
+.tab .tab-close {
+  width: 17px; height: 17px;
+  border-radius: var(--r-xs);
+  color: var(--muted);
+}
+.tab .tab-close:hover,
+body.dark .tab .tab-close:hover { background: var(--active); color: var(--text); transform: none; }
+.tab .tab-close:active { transform: scale(.88); }
+
+/* ── Strip buttons + window controls ─────────────────────────────────── */
+.strip-btn {
+  align-self: center;
+  width: 28px; height: 28px;
+  margin: 0 4px;
+  border-radius: var(--r-xs);
+  color: var(--muted);
+}
+.strip-btn:hover,
+body.dark .strip-btn:hover { background: var(--hover); color: var(--text); }
+
+.win-ctrl { width: 44px; color: var(--muted); transition: background .12s ease, color .12s ease; }
+.win-ctrl:hover,
+body.dark .win-ctrl:hover { background: var(--hover); color: var(--text); }
+.win-ctrl.close:hover { background: #e5484d; color: #fff; }
+
+/* ── Toolbar buttons ─────────────────────────────────────────────────────
+   Squircles, not circles. A row of circles reads as a row of dots; a row of
+   soft squares reads as a toolbar, and the larger hit area is quieter to
+   land on because the hover shape follows the pointer. */
+.tb-btn {
+  min-width: 32px; height: 32px;
+  border-radius: var(--r-xs);
+  color: var(--muted);
+  transition: background var(--t-fast) var(--ease),
+              color var(--t-fast) var(--ease),
+              transform .1s var(--ease);
+}
+.tb-btn.round { border-radius: var(--r-xs); }
+.tb-btn.pill  { border-radius: 999px; }
+.tb-btn:hover:not(:disabled),
+body.dark .tb-btn:hover:not(:disabled) { background: var(--hover); color: var(--text); }
+.tb-btn:active:not(:disabled) { transform: scale(.9); background: var(--active); }
+.tb-btn:disabled { opacity: .28; }
+.tb-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--border-strong); }
+#nav-btns { gap: 1px; }
+.ext-tb-btn { border-radius: var(--r-xs) !important; }
+
+#bookmark-btn.active { color: var(--accent); }
+body.dark #bookmark-btn.active { color: var(--text); }
+
+/* ── Omnibox ─────────────────────────────────────────────────────────────
+   A recessed well: a step *down* from the toolbar, which is how a field
+   reads as somewhere to put something. The hairline catches its edge, and
+   focus is carried by that border plus one clean ring — no glow. */
+#omnibox-outer { margin: 0 6px; }
+#omnibox-wrap,
+body.new-search-bar #omnibox-wrap,
+body.search-pill #omnibox-wrap {
+  height: 34px;
+  padding: 0 6px 0 12px;
+  gap: 8px;
+  border-radius: var(--r-sm);
+  background: var(--omni-bg);
+  /* A hairline at rest, not just on focus: an address bar that only looks
+     like a field once you have already clicked it is the wrong way round. */
+  border: 1px solid var(--border);
+  box-shadow: none;
+  transition: background var(--t-fast) var(--ease),
+              border-color var(--t-fast) var(--ease),
+              box-shadow var(--t-fast) var(--ease);
+}
+body.dark #omnibox-wrap { box-shadow: none; }
+/* No hover state on the address bar either. It spans most of the toolbar,
+   so the pointer is over it on the way to almost everything — and a control
+   that lights up whenever you pass it is not telling you anything. It has a
+   hairline at rest saying it is a field, and it reacts when you click it. */
+#omnibox-wrap:hover,
+body.new-search-bar #omnibox-wrap:hover,
+body.search-pill #omnibox-wrap:hover {
+  background: var(--omni-bg);
+  border-color: var(--border);
+}
+/* Clicking in fires no ring. The field lifts to the hover ground and its
+   hairline firms up — enough to read as live, with the caret doing the rest.
+   This block loads after styles.css, so the accent halo it used to add here
+   was reinstating exactly what styles.css had already turned off. */
+#omnibox-wrap:focus-within,
+body.dark #omnibox-wrap:focus-within,
+body.new-search-bar #omnibox-wrap:focus-within,
+body.new-search-bar.dark #omnibox-wrap:focus-within,
+body.search-pill #omnibox-wrap:focus-within {
+  background: var(--omni-hover);
+  border-color: var(--border-strong);
+  box-shadow: none;
+}
+body.search-pill #omnibox-wrap { border-radius: 999px; }
+#omnibox {
+  font-size: 13px;
+  letter-spacing: -.004em;
+  color: var(--text);
+}
+#omnibox::placeholder,
+body.dark #omnibox::placeholder { color: var(--faint); }
+#omnibox::selection { background: var(--accent); color: var(--on-accent); }
+
+.site-icon { color: var(--muted); }
+.site-icon.secure { color: var(--muted); }
+.zoom-indicator {
+  border-radius: var(--r-xs);
+  background: var(--hover);
+  color: var(--muted);
+  font-size: 11px;
+}
+
+/* ── Suggestions ─────────────────────────────────────────────────────────
+   Detached from the field by a gap so it reads as a surface floating over
+   the page, and rows are tall enough to scan without hunting. */
+#suggestions {
+  margin-top: 6px;
+  padding: 5px;
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  box-shadow: var(--panel-shadow);
+  overflow: hidden;
+}
+/* NOTE the class name. This block used to target `.suggestion` and
+   `.sugg-item`; the renderer emits `.sug-item`, so none of it ever applied
+   and the rows fell back to whatever styles.css had. */
+#suggestions .sug-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  border-radius: var(--r-xs);
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--text);
+  transition: background .1s ease;
+}
+#suggestions .sug-item:hover,
+#suggestions .sug-item.active { background: var(--hover); }
+
+/* Rows are ordinary, readable text. The matched part is bolder, and that
+   is the ONLY difference between it and the rest of the row.
+
+   The version before this set the row in --muted so the match could stand
+   out against it. That reads fine on a search suggestion, where the query
+   is a literal prefix — and fails completely on a history row, whose label
+   is the page title and usually contains nothing you typed. No match, no
+   ink, and the row rendered entirely grey. Half the list looked disabled.
+
+   Emphasis is added to one part. It is never taken away from the rest. */
+#suggestions .sug-title { color: var(--text); font-weight: 400; }
+#suggestions .sug-title b { font-weight: 620; }
+#suggestions .sug-url { color: var(--muted); font-size: 11.5px; margin-top: 1px; }
+#suggestions .sug-url b { font-weight: 620; }
+
+/* ── Popovers, menus, dialogs ────────────────────────────────────────────
+   All raised chrome shares one recipe: surface-1 fill, hairline, panel
+   shadow, 14px radius, 5px of padding so the first and last row have room
+   to show their own hover shape inside the container. */
+.toolbar-popover,
+.menu,
+#context-menu,
+.ctx-menu,
+.sb-modal-card,
+.search-popup-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--panel-shadow);
+  color: var(--text);
+}
+.toolbar-popover { padding: 5px; }
+.menu-item,
+.ctx-item,
+body.dark .menu-item {
+  border-radius: var(--r-xs);
+  color: var(--text);
+  font-size: 13px;
+  transition: background .1s ease;
+}
+.menu-item:hover,
+.ctx-item:hover { background: var(--hover); }
+.menu-sep,
+.ctx-sep { background: var(--border); }
+
+.toolbar-popover-head {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.linkish { color: var(--accent); }
+body.dark .linkish { color: var(--text); opacity: .8; }
+body.dark .linkish:hover { opacity: 1; }
+
+/* ── The app menu ────────────────────────────────────────────────────
+   It anchors to the last button in the toolbar, so at right:0 it sat flush
+   against the window edge with its right corners cut off by the frame.
+   Inset it, give it the raised surface, and let the shortcut column recede. */
+.popover, #menu {
+  right: 6px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--panel-shadow);
+  animation: pop-in .18s var(--ease-out);
+}
+#menu { padding: 5px; min-width: 252px; }
+.menu-item { padding: 7px 10px; border-radius: var(--r-xs); font-size: 13px; }
+.menu-item:active { background: var(--active); }
+.menu-item .kbd { color: var(--faint); opacity: 1; font-size: 10.5px; }
+#menu hr { border-top-color: var(--border); opacity: 1; margin: 5px 8px; }
+.menu-ver { color: var(--faint); opacity: 1; padding: 6px 11px 4px; }
+.beta-tag {
+  background: var(--hover);
+  color: var(--faint);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .06em;
+}
+
+/* ── Bookmarks bar ───────────────────────────────────────────────────── */
+.bookmark-chip {
+  height: 25px;
+  border-radius: var(--r-xs);
+  font-size: 12px;
+  color: var(--muted);
+}
+.bookmark-chip:hover { background: var(--hover); color: var(--text); }
+.bookmark-fav, .bookmark-dot { background: var(--hover); border-radius: 4px; }
+
+/* ── Sidebar rail ────────────────────────────────────────────────────
+   The rail is chrome, so it takes the toolbar's surface rather than the
+   window floor — otherwise it merges into the page and reads as a dead
+   margin down the left edge instead of a bar you can put things in. */
+.app-sidebar {
+  background: var(--pv-rail);
+  border-right: 1px solid var(--border);
+}
+.sidebar-rail > * {
+  border-radius: var(--r-sm);
+  transition: background var(--t-fast) var(--ease), transform .12s var(--ease-out);
+}
+.sidebar-rail > *:hover { background: var(--hover); }
+.sidebar-rail > *:active { transform: scale(.92); }
+#sidebar-add { border-radius: var(--r-sm); color: var(--faint); }
+#sidebar-add:hover { background: var(--hover); color: var(--text); }
+
+/* ── Controls: switches, segments, inputs ────────────────────────────────
+   The switch is the one place the accent has to carry meaning on its own,
+   so its off state is a plain neutral well and its on state is solid
+   accent — no gradient, no glow, nothing to read past. */
+.switch .slider {
+  background: var(--active);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  transition: background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+}
+/* The track keeps a hairline mixed from the page's ink, and the knob takes
+   --on-accent rather than a fixed white. Between them, no accent colour can
+   make a switch disappear into the surface behind it — which is what a white
+   accent on a white card used to do. */
+.switch input:checked + .slider {
+  background: var(--accent);
+  border-color: color-mix(in srgb, var(--text) 22%, var(--accent));
+}
+.switch .slider::before {
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,.35);
+  transition: transform var(--t-med) var(--ease-out), background var(--t-fast) var(--ease);
+}
+.switch input:checked + .slider::before { background: var(--on-accent); }
+body.dark .switch .slider::before { background: var(--text); }
+body.dark .switch input:checked + .slider::before { background: var(--on-accent); }
+
+input[type="text"], input[type="password"], input[type="search"], select, textarea {
+  font-family: inherit;
+  color: var(--text);
+}
+.vpn-input, .vpn-select, .sb-field input, #emoji-search {
+  /* background-COLOR. As the shorthand this also reset background-image,
+     -repeat, -position and -size — and this file loads after styles.css,
+     where .vpn-select sets those four up for its chevron. The arrow kept its
+     picture and lost its placement, so it tiled down the whole control. */
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  transition: border-color var(--t-fast) ease, box-shadow var(--t-fast) ease;
+}
+.vpn-input:focus, .vpn-select:focus, .sb-field input:focus, #emoji-search:focus {
+  outline: none;
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+button.primary, .vpn-btn.primary, .sw-btn.primary, .ai-gbtn-primary, #sb-save.primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  border: none;
+  border-radius: var(--r-sm);
+  font-weight: 550;
+  transition: background var(--t-fast) ease, transform .1s ease;
+}
+button.primary:hover, .vpn-btn.primary:hover, .sw-btn.primary:hover,
+.ai-gbtn-primary:hover, #sb-save.primary:hover { background: var(--accent-hover); }
+button.primary:active, .vpn-btn.primary:active, .sw-btn.primary:active { transform: scale(.98); }
+.vpn-btn.secondary, .ai-gbtn, #sb-cancel {
+  background: var(--hover);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+}
+.vpn-btn.secondary:hover, .ai-gbtn:hover, #sb-cancel:hover { background: var(--active); }
+
+/* ── Customize panel ──────────────────────────────────────────────────
+   A settings panel is a list of rows, and a list of rows only reads as one
+   if the rows are the same height and far enough apart to be separate
+   things. This one had 40px switch rows next to link rows with no height at
+   all, so "All settings" and "Extensions" sat on top of each other.
+
+   So: every row is 44px, every section is a card of rows, and the gap
+   between sections does the work a border used to. */
+.customize-panel,
+body.dark .customize-panel {
+  width: 340px;
+  background: var(--strip);
+  border-left: 1px solid var(--border);
+  box-shadow: none;
+}
+.cp-header, body.dark .cp-header {
+  background: var(--strip);
+  border-bottom: 1px solid var(--border);
+  min-height: 48px;
+  padding: 0 8px 0 16px;
+}
+.cp-header h2 { font-size: 14px; font-weight: 600; letter-spacing: -.012em; }
+.cp-iconbtn {
+  width: 30px; height: 30px;
+  border-radius: var(--r-xs);
+  color: var(--muted);
+}
+.cp-iconbtn:hover { background: var(--hover); color: var(--text); }
+
+.cp-body { padding: 14px 14px 20px; display: flex; flex-direction: column; gap: 12px; }
+
+/* Each section is a raised card, so the panel reads as a stack of groups
+   rather than one long ruled list.
+
+   The card sets the inset for everything in it — 12px on all four sides —
+   and no block inside adds padding of its own. That is what makes every card
+   the same shape; before this, each kind of content brought its own bottom
+   padding and the cards ended up visibly different heights below their last
+   row. */
+.cp-section {
+  padding: 12px;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+}
+/* A row is full-bleed inside the card: its hairline should reach both edges,
+   so it cancels the card's side padding and puts it back as its own. */
+.cp-section > .cp-row,
+.cp-section > .cp-link-row {
+  margin-left: -12px;
+  margin-right: -12px;
+  padding-left: 12px;
+  padding-right: 12px;
+  width: calc(100% + 24px);
+}
+.cp-section-title {
+  margin: 0 0 8px;
+  padding: 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .085em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+/* The first row under a title needs no hairline — the title is the divider.
+   Rows are flush to the card edges, so the last one should not leave a gap
+   under itself either. */
+.cp-section > .cp-row:last-child,
+.cp-section > .cp-link-row:last-child { margin-bottom: -12px; }
+.cp-section > .cp-section-title + .cp-row,
+.cp-section > .cp-section-title + .cp-link-row { border-top: none; }
+/* The links group needs no heading — two rows and a chevron say enough. */
+.cp-section-links { padding: 12px; }
+
+.cp-sub-label {
+  margin: 14px 0 8px;
+  padding: 0 2px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* One row height for everything in the panel. */
+.cp-row,
+.cp-link-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 2px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--text);
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  font-family: inherit;
+}
+/* A hairline between rows inside a card, never above the first one. */
+.cp-row + .cp-row,
+.cp-row + .cp-link-row,
+.cp-link-row + .cp-link-row,
+.cp-link-row + .cp-row { border-top: 1px solid var(--border); }
+
+.cp-row-stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 9px;
+  padding-top: 12px;
+  padding-bottom: 13px;
+}
+/* Two lines of text need more room than one — 44px is the height of a label
+   and a switch, not of a label, a description and a switch. */
+.cp-row:has(.cp-row-text small) { min-height: 54px; padding-top: 9px; padding-bottom: 9px; }
+/* A row with a second line of explanation. The two lines were the problem in
+   the old "More" section — they need real leading between them, not none. */
+.cp-row-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.cp-row-text small {
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.cp-link-row {
+  border-radius: var(--r-xs);
+  cursor: pointer;
+  transition: color .1s ease;
+}
+.cp-link-row:hover { background: none; color: var(--text); }
+.cp-link-row:hover .cp-chevron { color: var(--text); transform: translateX(2px); }
+.cp-chevron {
+  color: var(--faint);
+  font-size: 17px;
+  line-height: 1;
+  transition: transform .14s var(--ease-out), color .14s ease;
+}
+
+/* Theme cards */
+.cp-theme-row { display: flex; gap: 10px; }
+.cp-theme-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color var(--t-fast) ease, background var(--t-fast) ease, color var(--t-fast) ease;
+}
+.cp-theme-btn:hover { background: var(--hover); }
+.cp-theme-btn.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+  color: var(--text);
+  font-weight: 500;
+}
+.cp-theme-swatch { border-radius: var(--r-xs); border: 1px solid var(--border); }
+
+/* Accent swatches — flat chips, one ring on the active one. */
+.cp-accent-row { display: flex; flex-wrap: wrap; gap: 9px; }
+.cp-accent-swatch,
+body.privoo-one .cp-accent-swatch {
+  width: 26px; height: 26px;
+  border-radius: var(--r-xs);
+  background: var(--accent-color);
+  border: 1px solid var(--border);
+  transition: transform .12s var(--ease-out), box-shadow .12s ease;
+}
+.cp-accent-swatch:hover { transform: scale(1.1); }
+.cp-accent-swatch.active,
+body.privoo-one .cp-accent-swatch.active {
+  box-shadow: 0 0 0 2px var(--surface-1), 0 0 0 3.5px var(--accent-color);
+}
+.cp-accent-swatch.active::after,
+body.privoo-one .cp-accent-swatch.active::after { content: none; }
+/* Mono is white on black and near-black on white, so a flat chip of its
+   stored value disappears in one of the two modes. Split it. */
+.cp-accent-swatch.is-mono { background: linear-gradient(135deg, #fff 0 50%, #101014 50% 100%); }
+.cp-accent-swatch.is-mono.active,
+body.privoo-one .cp-accent-swatch.is-mono.active {
+  box-shadow: 0 0 0 2px var(--surface-1), 0 0 0 3.5px var(--accent);
+}
+
+/* The wallpaper gallery lives in Settings now (Appearance -> Wallpaper),
+   where sixteen previews have room to be previews. What used to be a grid
+   crammed into this 356px column is a single link across to it. */
+
+.cp-seg {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.cp-seg-btn {
+  flex: 1;
+  padding: 5px 10px;
+  border-radius: var(--r-xs);
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background .12s ease, color .12s ease;
+}
+.cp-seg-btn:hover { color: var(--text); }
+.cp-seg-btn.active { background: var(--accent); color: var(--on-accent); }
+
+/* ── Scrollbars ──────────────────────────────────────────────────────────
+   Thin, thumb-only, and invisible until the surface is hovered. A permanent
+   grey gutter down the side of every panel is the single loudest piece of
+   default chrome in an app like this. */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: transparent;
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+:hover::-webkit-scrollbar-thumb { background: var(--active); background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); background-clip: content-box; }
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* ── Focus ───────────────────────────────────────────────────────────────
+   Keyboard users get a real ring everywhere; pointer users never see it. */
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-radius: var(--r-xs);
+}
+
+/* ── Selection ───────────────────────────────────────────────────────── */
+::selection { background: var(--accent); color: var(--on-accent); }
+
+/* ── Wallpaper-backed chrome ─────────────────────────────────────────────
+   When the wallpaper stretches behind the whole window, the bars become
+   glass over it. The dark tint is deliberately heavy: chrome that is only
+   faintly darker than a photograph is chrome you cannot read. */
+body.wallpaper-chrome #titlebar,
+body.wallpaper-chrome #toolbar,
+body.wallpaper-chrome #bookmarks-bar {
+  background: rgba(255,255,255,.55) !important;
+  backdrop-filter: blur(26px) saturate(150%);
+  -webkit-backdrop-filter: blur(26px) saturate(150%);
+  border-bottom-color: rgba(255,255,255,.18);
+}
+body.wallpaper-chrome.dark #titlebar,
+body.wallpaper-chrome.dark #toolbar,
+body.wallpaper-chrome.dark #bookmarks-bar {
+  background: rgba(0,0,0,.58) !important;
+  border-bottom-color: rgba(255,255,255,.08);
+}
+body.wallpaper-chrome.dark #omnibox-wrap {
+  background: rgba(255,255,255,.09);
+  border-color: rgba(255,255,255,.14);
+}
+body.wallpaper-chrome.dark #omnibox-wrap:hover { background: rgba(255,255,255,.14); }
+/* The active tab has to hold its own against an arbitrary image, so over a
+   wallpaper it gets a stronger lift and a rim rather than the quiet fill
+   step that is enough on a flat black strip. */
+body.wallpaper-chrome.dark .tab.active {
+  background: rgba(255,255,255,.16);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.14);
+}
+body.wallpaper-chrome:not(.dark) .tab.active { background: rgba(255,255,255,.8); }
+/* The shortcut rail is chrome too — leaving it opaque cut a black stripe
+   down the side of an otherwise edge-to-edge image. */
+body.wallpaper-chrome .app-sidebar,
+body.wallpaper-chrome.dark .app-sidebar {
+  background: rgba(0,0,0,.42);
+  backdrop-filter: blur(26px) saturate(150%);
+  -webkit-backdrop-filter: blur(26px) saturate(150%);
+  border-right-color: rgba(255,255,255,.08);
+}
+body.wallpaper-chrome:not(.dark) .app-sidebar { background: rgba(255,255,255,.5); }
+/* Popovers and the Customize panel overlap the page, so they get a solid
+   surface rather than a blurred one — see the search popup above for why a
+   backdrop-filter stacked over a <webview> paints nothing. The bars along the
+   top of the window are a different case: they never overlap it, so their
+   blur is real and stays. */
+body.wallpaper-chrome.dark .toolbar-popover,
+body.wallpaper-chrome.dark .customize-panel {
+  background: var(--surface-1);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* ── Setup / first-run ───────────────────────────────────────────────────
+   The first screen anyone sees is currently the least designed one. Same
+   card recipe as every other raised surface, on the same black. */
+body.dark .sw-frame,
+.sw-frame {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--panel-shadow);
+}
+.sw-headline { font-size: 24px; font-weight: 620; letter-spacing: -.022em; }
+.sw-sub { color: var(--muted); font-size: 13.5px; }
+.sw-terms-box {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+body.dark .sw-disc-para { border-color: var(--border); }
+.sw-btn.primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-radius: var(--r-sm);
+  font-weight: 550;
+}
+/* Disabled is expressed as colour, not opacity, and on purpose: the step's
+   entrance animation (sw-fade-rise, fill-mode:both) holds opacity:1 after it
+   finishes, and a finished animation's value outranks any normal author
+   declaration — so `opacity:.4` on this button silently did nothing and the
+   greyed-out state read as fully enabled. The !important is to beat the
+   equally-!important `background: var(--accent)` in styles.css. */
+.sw-btn.primary:disabled {
+  background: var(--hover) !important;
+  color: var(--faint) !important;
+  box-shadow: none !important;
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .cp-link-row:hover,
+  .sidebar-rail > *:hover { transform: none; }
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   Transparency
+   Two separate things are called "transparent" in this app and they have to
+   agree: Transparent Mode (the window is glass over the desktop) and the
+   vertical-tabs search popup. In both, the rule is the same — a surface is
+   made of BLUR plus a thin wash of light, never of opacity. A panel at 86%
+   fill is not translucent, it is an opaque panel that happens to be slightly
+   see-through, and it reads as a mistake next to a real glass one.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── Active tab ──────────────────────────────────────────────────────
+   In transparent mode the strip is glass, so the active tab is a brighter
+   patch OF that glass rather than a solid chip sitting on top of it. It was
+   .86 opaque before, which punched a grey rectangle through the effect. */
+/* DARKER, and only slightly. On glass, a lighter patch reads as a highlight
+   floating on top of the strip; a darker one reads as a recess the page is
+   showing through, which is what an active tab is.
+
+   The value matters as much as the direction. At .26 over a panel at .42 the
+   two stack to roughly 57% — a solid block in a mode whose entire point is
+   that you can see through it. A tenth of black tints the row without
+   closing it, and the inset hairline carries the rest. */
+body.semi-transparent.dark:not(.wallpaper-chrome) .tab.active,
+body.semi-transparent.dark.vertical-tabs .vtab.active {
+  background: rgba(0,0,0,.13);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+body.semi-transparent:not(.dark):not(.wallpaper-chrome) .tab.active,
+body.semi-transparent:not(.dark).vertical-tabs .vtab.active {
+  background: rgba(0,0,0,.07);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.04);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+/* Hover, on glass, is half of that again — enough to follow the pointer,
+   not enough to be mistaken for the row you are on. */
+body.semi-transparent.vertical-tabs .vtab:hover:not(.active) { background: rgba(0,0,0,.06); }
+body.semi-transparent:not(.dark).vertical-tabs .vtab:hover:not(.active) { background: rgba(0,0,0,.035); }
+body.semi-transparent .tab:hover:not(.active) { background: rgba(255,255,255,.07); }
+
+/* ── Search popup (Ctrl+K / New Tab in vertical-tabs mode) ────────────
+   One card, one blur, one hairline. The input inside it is text on glass —
+   it has no fill, no border and no ring of its own, because the card IS the
+   field as far as the eye is concerned. */
+.search-popup { background: rgba(10,10,14,.28); }
+.search-popup-card {
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  box-shadow: 0 24px 64px -18px rgba(0,0,0,.55);
+}
+#search-popup-input,
+body.sp-glass #search-popup-input,
+body.sp-no-glass #search-popup-input {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  height: auto;
+  line-height: normal;
+  color: var(--text);
+}
+#search-popup-input:focus,
+#search-popup-input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Glass on.
+   NO backdrop-filter on the card, and that is the whole fix. A <webview> is
+   its own compositing surface, and an element with backdrop-filter stacked
+   over one renders as though its own background were never painted — you
+   could read the page straight through the search field. That is what made
+   this popup look broken rather than glassy.
+   So the effect is built the other way round: the scrim carries the
+   translucency, the card is a real surface on top of it. Over Transparent
+   Mode the scrim is what the desktop reads through, so it stays genuinely
+   see-through rather than being a sheet of near-black. */
+body.sp-glass .search-popup { background: rgba(8,9,12,.42); }
+body.sp-glass .search-popup-card {
+  background: rgba(250,250,252,.97);
+  border-color: rgba(255,255,255,.8);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+body.sp-glass.dark .search-popup-card {
+  background: rgba(46,46,53,.97);
+  border-color: rgba(255,255,255,.14);
+}
+
+/* Transparent Mode: the window itself is glass, so the scrim thins out and
+   lets the desktop keep showing through around the card. The card does not —
+   a search field you can see your wallpaper through is not a search field. */
+body.semi-transparent .search-popup,
+body.semi-transparent.sp-glass .search-popup { background: rgba(8,9,12,.3); }
+body.semi-transparent.sp-glass .search-popup-card { background: rgba(250,250,252,.94); }
+body.semi-transparent.sp-glass.dark .search-popup-card { background: rgba(46,46,53,.94); }
+body.sp-glass .search-popup-suggestions { border-top-color: rgba(0,0,0,.08); }
+body.sp-glass.dark .search-popup-suggestions { border-top-color: rgba(255,255,255,.10); }
+
+/* Glass off — solid, on the same surface as every other panel. */
+body.sp-no-glass .search-popup { background: rgba(10,10,14,.2); }
+body.sp-no-glass .search-popup-card,
+body.sp-no-glass.dark .search-popup-card {
+  background: var(--surface-1) !important;
+  border-color: var(--border);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.sp-sug-item { border-radius: var(--r-xs); padding: 9px 14px; }
+.sp-sug-item.active,
+.sp-sug-item:hover { background: var(--hover); }
+body.sp-glass .sp-sug-item.active,
+body.sp-glass .sp-sug-item:hover { background: rgba(0,0,0,.07); }
+body.sp-glass.dark .sp-sug-item.active,
+body.sp-glass.dark .sp-sug-item:hover { background: rgba(255,255,255,.10); }
+.search-popup-suggestions::-webkit-scrollbar-thumb { background: var(--active); background-clip: content-box; }
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   Tab reactions
+
+   An emoji pinned to a tab. It does nothing except be visible, which is the
+   whole point: twenty tabs that all read "Google Docs" are unnavigable, and
+   one of them with a red dot on it is not.
+
+   The badge is always visible once set. The button that adds one only
+   appears on hover, and only on a tab wide enough to spare the room — on a
+   crowded strip the tabs shrink and the context menu is the way in.
+   ════════════════════════════════════════════════════════════════════════ */
+.tab-reaction {
+  flex: 0 0 auto;
+  font-size: 12px;
+  line-height: 1;
+  margin-left: 1px;
+  /* Emoji have their own colour; the tab's muted text colour must not tint
+     them, and a system emoji font keeps them from falling back to outlines. */
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  pointer-events: none;
+}
+.tab-reaction[hidden] { display: none; }
+
+.tab-react-btn {
+  flex: 0 0 auto;
+  width: 17px; height: 17px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-xs);
+  color: var(--faint);
+  cursor: default;
+  transition: background .1s ease, color .1s ease;
+}
+.tab-react-btn:hover { background: var(--active); color: var(--text); }
+/* The strip has a blanket `svg { fill: currentColor }`, which turned this
+   outlined face into a solid disc. Say what the shape actually is. */
+.tab-react-btn svg { fill: none !important; stroke: currentColor; }
+.tab-react-btn svg circle[fill] { fill: currentColor !important; stroke: none; }
+/* Only on hover, and never on a tab too narrow to hold it — the title is
+   worth more than the affordance when space is short. */
+.tab:hover .tab-react-btn { display: flex; }
+.tab.pinned .tab-react-btn,
+body.ui-compact .tab-react-btn { display: none !important; }
+.tab.pinned .tab-reaction { position: absolute; right: 2px; bottom: 2px; font-size: 10px; }
+.tab.pinned { position: relative; }
+
+.vtab-reaction {
+  flex: 0 0 auto;
+  font-size: 12px;
+  line-height: 1;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  pointer-events: none;
+}
+.vtab-reaction[hidden] { display: none; }
+
+/* An invisible sheet over the whole window, one layer under the strip.
+   Without it, clicking on the page would not dismiss the strip at all: a
+   <webview> is a separate surface and swallows the event rather than letting
+   it bubble to this document. */
+.reaction-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 5999;
+  background: transparent;
+}
+
+/* The quick strip. Eight reactions and a "+", on the same raised surface as
+   every other popover. */
+.reaction-bar {
+  position: fixed;
+  z-index: 6000;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 5px;
+  border-radius: 999px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  box-shadow: var(--panel-shadow);
+  animation: pop-in .14s var(--ease-out);
+}
+.reaction-chip {
+  width: 30px; height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 16px;
+  line-height: 1;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  color: var(--text);
+  cursor: default;
+  transition: background .1s ease, transform .12s var(--ease-out);
+}
+.reaction-chip:hover { background: var(--hover); transform: scale(1.15); }
+.reaction-chip.active { background: var(--active); }
+.reaction-more { font-size: 18px; font-weight: 400; color: var(--muted); }
+.reaction-clear { color: var(--muted); }
+.reaction-clear:hover { color: var(--red); }
+
+/* ════════════════════════════════════════════════════════════════════════
+   Tab islands
+
+   A group of tabs drawn as ONE tinted capsule rather than a label followed
+   by a row of separate chips. That is the entire difference between a tab
+   group and a tab island: the island makes "these five belong together"
+   readable at a glance, without having to trace a label to its tabs.
+
+   No wrapper element — the strip's sizing and drag-and-drop both depend on
+   tabs being direct children. The capsule is made from the chip capping the
+   left end, the last tab capping the right, and square edges in between.
+   ════════════════════════════════════════════════════════════════════════ */
+body.privoo-one .tab-group-chip,
+.tab-group-chip {
+  height: 32px;
+  align-self: center;
+  margin: 0 0 0 6px;
+  padding: 0 9px 0 11px;
+  border-radius: var(--r-sm) 0 0 var(--r-sm);
+  background: var(--group-tint);
+  font-size: 11.5px;
+  font-weight: 550;
+  gap: 6px;
+}
+body.privoo-one .tab-group-chip:hover,
+.tab-group-chip:hover { background: color-mix(in srgb, var(--group-color) 36%, transparent); }
+.tab-group-chip .tg-dot { width: 7px; height: 7px; }
+
+body.privoo-one .tab.grouped,
+.tab.grouped {
+  background: var(--group-tint);
+  border-radius: 0;
+  margin: 0;
+}
+body.privoo-one .tab.grouped:hover:not(.active),
+.tab.grouped:hover:not(.active) {
+  background: color-mix(in srgb, var(--group-color) 34%, transparent);
+}
+/* The active tab inside an island still reads as the active tab — it lifts
+   to the normal active fill, but keeps a rim of the island's colour so it
+   does not look like it fell out of the group. */
+body.privoo-one .tab.grouped.active,
+body.dark .tab.grouped.active,
+.tab.grouped.active {
+  background: var(--tab-active);
+  box-shadow: inset 0 0 0 1.5px var(--group-color);
+  border-radius: var(--r-xs);
+  margin: 0 2px;
+}
+/* The underline under an active grouped tab is now redundant — the rim says
+   the same thing without cutting across the tab's own shape. */
+body.privoo-one .tab.grouped.active::after { content: none; }
+/* Only the far end of the run is rounded, so the island closes cleanly. */
+body.privoo-one .tab.grouped.island-last,
+.tab.grouped.island-last { border-radius: 0 var(--r-sm) var(--r-sm) 0; margin-right: 6px; }
+body.privoo-one .tab.grouped.island-last.active,
+.tab.grouped.island-last.active { border-radius: var(--r-xs); margin-right: 8px; }
+
+/* Vertical tabs: the island is a vertical capsule instead of a horizontal
+   one, marked by a coloured spine down its left edge. */
+.vtab-grouped {
+  background: var(--group-tint, transparent);
+  border-radius: 0;
+}
+.vtab-grouped::before {
+  left: 0;
+  width: 3px;
+  border-radius: 0;
+  background: var(--vtab-group-color, var(--border));
+}
+.vtab-group-header {
+  padding-left: var(--vt-inset);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   Music player picker
+
+   A list of brand logos is a hard thing to style, because every row already
+   carries a strong colour of its own. So the panel gives them nothing to
+   compete with: no accent fill on the selected row, no coloured hover, just
+   a neutral surface and a tick. The logos are the only colour in it.
+   ════════════════════════════════════════════════════════════════════════ */
+.music-pick {
+  width: 268px;
+  padding: 8px;
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  box-shadow: var(--panel-shadow);
+  animation: pop-in .16s var(--ease-out);
+}
+body.dark .music-pick { box-shadow: var(--panel-shadow); }
+.music-pick-head {
+  margin: 0;
+  padding: 8px 10px 2px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .085em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.music-pick-sub {
+  padding: 0 10px 8px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.music-pick-grid { gap: 1px; }
+.music-pick-item {
+  gap: 11px;
+  min-height: 42px;
+  padding: 0 10px;
+  border-radius: var(--r-xs);
+  font-size: 13px;
+  font-weight: 450;
+  color: var(--text);
+  transition: background var(--t-fast) ease;
+}
+.music-pick-item:hover { background: var(--hover); }
+/* Selected is a tick and a slightly firmer weight — not an accent wash. */
+.music-pick-item.active {
+  background: transparent;
+  color: var(--text);
+  font-weight: 550;
+}
+.music-pick-item.active:hover { background: var(--hover); }
+.music-pick-ico { width: 24px; height: 24px; }
+.music-pick-ico svg { width: 24px; height: 24px; border-radius: 7px; }
+.music-pick-name { flex: 1; }
+.music-pick-tick {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  color: var(--accent);
+  opacity: 0;
+}
+.music-pick-item.active .music-pick-tick { opacity: 1; }
+
+/* The switcher button in the music panel's header. */
+.sidebar-music-switch {
+  height: 30px;
+  padding: 0 10px;
+  gap: 8px;
+  border-radius: var(--r-xs);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text);
+}
+.sidebar-music-switch:hover { background: var(--hover); }
+.sb-ms-ico, .sb-ms-ico svg { width: 17px; height: 17px; border-radius: 5px; }
+.sb-ms-caret { opacity: .55; }
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   Downloads popover
+
+   The list used to carry two labelled buttons on every row, so five
+   downloads read as ten buttons with some filenames between them. The
+   filename is the content; the actions are icons, and only while you are
+   pointing at the row you want.
+   ════════════════════════════════════════════════════════════════════════ */
+#dl-popover { min-width: 340px; padding: 5px; }
+#dl-popover .toolbar-popover-head {
+  padding: 9px 10px 7px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dl-pop-row {
+  gap: 12px;
+  padding: 9px 10px;
+  border-radius: var(--r-xs);
+  transition: background .1s ease;
+}
+.dl-pop-row + .dl-pop-row { margin-top: 1px; }
+.dl-pop-row.is-openable { cursor: default; }
+.dl-pop-row:hover { background: var(--hover); }
+
+.dl-pop-icon {
+  width: 34px; height: 34px;
+  border-radius: var(--r-sm);
+  box-shadow: none;
+}
+.dl-pop-icon.has-real-icon {
+  background: var(--surface-2) !important;
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.dl-pop-name { font-size: 12.5px; font-weight: 500; color: var(--text); }
+.dl-pop-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.dl-pop-row.is-failed .dl-pop-meta { color: var(--red); }
+
+/* Progress lives on the row itself rather than in a separate tray, so a
+   running download is visible from wherever you opened this. */
+.dl-pop-bar {
+  height: 3px;
+  margin-top: 7px;
+  border-radius: 999px;
+  background: var(--active);
+  overflow: hidden;
+}
+.dl-pop-bar-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  transition: width .25s var(--ease);
+}
+/* No known total means no honest percentage — so it loops instead. */
+.dl-pop-bar.is-indeterminate .dl-pop-bar-fill {
+  width: 35%;
+  animation: dl-indet 1.1s var(--ease) infinite;
+}
+@keyframes dl-indet {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(320%); }
+}
+
+.dl-pop-actions { gap: 2px; opacity: 0; transition: opacity .12s ease; }
+.dl-pop-row:hover .dl-pop-actions,
+.dl-pop-row:focus-within .dl-pop-actions { opacity: 1; }
+/* A download in flight keeps its cancel button visible: hiding the only way
+   to stop something that is happening right now is not a tidiness win. */
+.dl-pop-row.is-progressing .dl-pop-actions { opacity: 1; }
+
+.dl-pop-action-btn,
+.dl-pop-actions button {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 28px; height: 28px;
+  padding: 0 !important;
+  border: none;
+  border-radius: var(--r-xs);
+  background: transparent;
+  color: var(--muted);
+  transition: background .1s ease, color .1s ease;
+}
+.dl-pop-action-btn:hover,
+.dl-pop-actions button:hover { background: var(--active); color: var(--text); }
+.dl-pop-action-btn svg,
+body.dark .dl-pop-action-btn svg { opacity: 1; }
+
+.dl-pop-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 30px 16px 32px;
+  text-align: center;
+  color: var(--faint);
+}
+.dl-pop-empty b { font-size: 13px; font-weight: 550; color: var(--muted); }
+.dl-pop-empty span { font-size: 11.5px; color: var(--faint); max-width: 200px; line-height: 1.4; }
+
+/* ── Customize panel, second pass ──────────────────────────────────────
+   Small things that only show up once the layout is right: the accent row
+   needed a fixed grid so nine swatches do not wrap into a ragged second
+   line, the description under a switch needed room to breathe next to it,
+   and the theme cards needed a real preview rather than a flat block. */
+.cp-accent-row {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 7px;
+}
+.cp-accent-swatch,
+body.privoo-one .cp-accent-swatch {
+  width: 100%;
+  aspect-ratio: 1;
+  height: auto;
+}
+/* A row whose label wraps must not shove the switch off the edge. */
+.cp-row-text { flex: 1; padding-right: 4px; }
+.cp-row .switch { flex-shrink: 0; }
+
+/* The theme cards get a miniature of the thing they switch to — a strip, a
+   toolbar and a page — instead of a plain colour block. */
+.cp-theme-swatch {
+  height: 50px;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r-xs);
+}
+.cp-theme-swatch::before {
+  content: '';
+  position: absolute;
+  left: 7px; right: 7px; top: 13px;
+  height: 6px;
+  border-radius: 3px;
+  background: currentColor;
+  opacity: .34;
+}
+.cp-theme-swatch::after {
+  content: '';
+  position: absolute;
+  left: 7px; right: 7px; top: 24px; bottom: 7px;
+  border-radius: 4px;
+  background: currentColor;
+  opacity: .13;
+}
+.cp-theme-light { background: #ebebef; color: #101014; }
+.cp-theme-dark  { background: #202024; color: #ffffff; }
+body.privoo-one .cp-theme-light { background: #ebebef; }
+body.privoo-one .cp-theme-dark  { background: #202024; }
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   New tab section + wallpaper chooser
+
+   The section used to be a switch and a link, which described the background
+   without ever showing it. It leads with a thumbnail of the actual thing now,
+   drawn as a miniature browser window so it is obvious what the picture is
+   the background OF.
+   ════════════════════════════════════════════════════════════════════════ */
+.cp-wp-preview {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  margin: 0 0 10px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.cp-wp-preview-art {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+}
+/* No wallpaper set: a plain surface, the same one the new tab actually uses. */
+.cp-wp-preview-art.is-empty { background: var(--surface-2); }
+/* Random photos. A neutral wash, not a colour: this stands in for "some
+   photograph", and a purple-to-pink gradient claims a mood the actual photo
+   will not have. Grey says "an image goes here" and nothing more. */
+.cp-wp-preview-art.is-random {
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--text) 26%, transparent) 0%,
+      color-mix(in srgb, var(--text) 12%, transparent) 52%,
+      color-mix(in srgb, var(--text) 22%, transparent) 100%);
+}
+.cp-wp-preview-art.is-video::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 0; height: 0;
+  transform: translate(-38%, -50%);
+  border-left: 13px solid rgba(255,255,255,.9);
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  filter: drop-shadow(0 1px 4px rgba(0,0,0,.5));
+}
+/* Three grey bars for the chrome: enough to read as a window, and it costs
+   nothing to draw. */
+.cp-wp-preview-chrome {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  background: color-mix(in srgb, var(--strip) 82%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.cp-wp-preview-chrome span {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border-strong);
+}
+.cp-wp-preview-chrome span:nth-child(1) { width: 26px; }
+.cp-wp-preview-chrome span:nth-child(2) { width: 20px; opacity: .6; }
+.cp-wp-preview-chrome span:nth-child(3) { flex: 1; opacity: .35; }
+.cp-wp-preview-label {
+  position: absolute;
+  left: 8px; bottom: 8px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 550;
+  color: #fff;
+  background: rgba(0,0,0,.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ── The chooser sheet ───────────────────────────────────────────────── */
+.wp-chooser {
+  position: fixed;
+  inset: 0;
+  z-index: 9500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.wp-chooser.hidden { display: none; }
+.wp-chooser-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(8,9,12,.46);
+  animation: sp-fade .18s ease backwards;
+}
+.wp-chooser-card {
+  position: relative;
+  width: min(430px, 100%);
+  padding: 22px;
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  box-shadow: var(--panel-shadow);
+  animation: pop-in .2s var(--ease-out);
+}
+.wp-chooser-card h2 {
+  font-size: 17px;
+  font-weight: 620;
+  letter-spacing: -.018em;
+  margin: 0 0 3px;
+  color: var(--text);
+}
+.wp-chooser-sub {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin: 0 0 16px;
+}
+
+.wp-opt {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  text-align: left;
+  cursor: default;
+  transition: background var(--t-fast) ease, border-color var(--t-fast) ease;
+}
+.wp-opt:hover { background: var(--hover); border-color: var(--border-strong); }
+.wp-opt:active { background: var(--active); }
+.wp-opt-ico {
+  flex-shrink: 0;
+  width: 38px; height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--text);
+}
+.wp-opt-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.wp-opt-text b { font-size: 13.5px; font-weight: 550; }
+.wp-opt-text small { font-size: 11.5px; line-height: 1.4; color: var(--muted); }
+.wp-opt-state {
+  flex-shrink: 0;
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--on-accent);
+  background: var(--accent);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+.wp-opt-state[hidden] { display: none; }
+
+.wp-chooser-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.wp-opt-quiet {
+  border-color: transparent;
+  padding: 10px 12px;
+  margin: 0;
+}
+.wp-opt-quiet .wp-opt-text b { font-weight: 450; color: var(--muted); }
+.wp-opt-quiet:hover .wp-opt-text b { color: var(--text); }
+.wp-chooser-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: var(--r-xs);
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: default;
+  transition: color .12s ease;
+}
+.wp-chooser-link:hover { color: var(--text); }
+.wp-chooser-link:hover .cp-chevron { transform: translateX(2px); color: var(--text); }
+
+/* ── Tab search popup ────────────────────────────────────────────────
+   Same surface and rhythm as every other overlay in the app. */
+.ts-box {
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  box-shadow: var(--panel-shadow);
+}
+.ts-search { padding: 15px 18px; gap: 12px; }
+#ts-input { font-size: 15px; }
+.ts-list { padding: 5px; }
+.ts-item { border-radius: var(--r-xs); padding: 9px 12px; }
+.ts-item.sel { background: var(--active); }
+.ts-item.sel::before { left: 4px; background: var(--accent); }
+.ts-foot { padding: 10px 16px; }
+.ts-foot kbd {
+  background: var(--surface-2);
+  border-color: var(--border);
+  border-radius: 5px;
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   Privoo AI — the side panel
+
+   Three things were wrong with it, and they are the same three things that
+   are wrong with most chat UIs bolted into an app:
+
+     1. The user's message was an accent-filled bubble WITH a shadow and an
+        avatar. Against a white or bright accent that is a glowing lozenge
+        with unreadable text on it; against any accent it is the loudest
+        thing on screen, and it is the part you already know the contents of.
+     2. The assistant's reply — the part you are actually reading — had no
+        surface at all, so a long answer ran into the composer below it.
+     3. The composer had a focus ring in the accent, so clicking the one
+        control in the panel flashed a bright ring in your peripheral vision.
+
+   So: the reply is the page, the question is a quiet inset above it, and
+   nothing here is accent-coloured except the send button.
+   ════════════════════════════════════════════════════════════════════════ */
+
+#ai-panel {
+  background: var(--strip);
+  border-left: 1px solid var(--border);
+}
+.ai-panel-header {
+  height: 46px;
+  padding: 0 8px 0 12px;
+  gap: 6px;
+  background: var(--strip);
+  border-bottom: 1px solid var(--border);
+}
+.ai-panel-title { font-size: 13px; font-weight: 600; letter-spacing: -.01em; }
+.ai-hdr-btn {
+  width: 30px; height: 30px;
+  border-radius: var(--r-xs);
+  color: var(--muted);
+  transition: background .12s ease, color .12s ease;
+}
+.ai-hdr-btn:hover { background: var(--hover); color: var(--text); }
+
+/* ── Chats rail ──────────────────────────────────────────────────────── */
+.ai-sidebar {
+  background: var(--strip);
+  border-right: 1px solid var(--border);
+  padding: 8px;
+  gap: 2px;
+}
+.ai-side-new {
+  display: flex; align-items: center; gap: 9px;
+  height: 36px; padding: 0 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  background: transparent;
+  color: var(--text);
+  font-size: 12.5px; font-weight: 500;
+  transition: background .12s ease;
+}
+.ai-side-new:hover { background: var(--hover); }
+.ai-side-label {
+  padding: 14px 11px 6px;
+  font-size: 10px; font-weight: 600; letter-spacing: .085em;
+  text-transform: uppercase; color: var(--faint);
+}
+.ai-history-list .ai-hist-item,
+.ai-hist-item {
+  min-height: 34px;
+  padding: 0 11px;
+  border-radius: var(--r-xs);
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.ai-hist-item:hover { background: var(--hover); color: var(--text); }
+.ai-hist-item.active { background: var(--active); color: var(--text); font-weight: 500; }
+
+/* ── Status strip ────────────────────────────────────────────────────── */
+.ai-bar {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--toolbar);
+}
+.ai-pill {
+  border-radius: 999px;
+  font-size: 11.5px;
+  padding: 4px 11px;
+  background: var(--hover);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+.ai-bar-btn {
+  border-radius: var(--r-xs);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-size: 12px; font-weight: 500;
+  padding: 5px 11px;
+}
+.ai-bar-btn:hover { background: var(--hover); }
+
+/* ── Conversation ────────────────────────────────────────────────────── */
+.ai-chat-area { background: var(--toolbar); }
+.ai-chat-inner { padding: 20px 18px 12px; gap: 22px; }
+
+/* The question: a quiet inset, right-aligned, no avatar, no shadow, no
+   accent. You wrote it — it does not need to shout. */
+.ai-msg.ai-user { flex-direction: column; align-items: flex-end; gap: 4px; }
+.ai-msg.ai-user .ai-av { display: none; }
+.ai-msg.ai-user .ai-bubble,
+body.dark .ai-msg.ai-user .ai-bubble {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 450;
+  border-radius: var(--r-md);
+  box-shadow: none;
+  padding: 9px 13px;
+  max-width: 88%;
+}
+
+/* The answer is the page. It gets the full width and the reading size. */
+.ai-msg.ai-assistant { flex-direction: column; gap: 7px; }
+.ai-msg.ai-assistant .ai-av {
+  width: 20px; height: 20px;
+  border-radius: 6px;
+}
+.ai-msg.ai-assistant .ai-bubble,
+body.dark .ai-msg.ai-assistant .ai-bubble {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--text);
+  padding: 0;
+  max-width: 100%;
+}
+.ai-msg.ai-err .ai-bubble {
+  background: rgba(248,113,113,.1);
+  border: 1px solid rgba(248,113,113,.3);
+  color: var(--red);
+  border-radius: var(--r-sm);
+}
+.ai-bubble .ai-code {
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.ai-bubble .ai-ic {
+  border-radius: 5px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+/* ── Composer ────────────────────────────────────────────────────────── */
+.ai-composer {
+  padding: 12px 14px 14px;
+  background: var(--toolbar);
+  border-top: 1px solid var(--border);
+}
+.ai-composer-box {
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  padding: 7px 7px 7px 14px;
+  box-shadow: none;
+  transition: border-color .14s ease;
+}
+/* A hairline getting firmer, not a coloured ring. */
+.ai-composer-box:focus-within {
+  border-color: var(--border-strong);
+  box-shadow: none;
+}
+.ai-composer-box.dropping {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+#ai-input {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text);
+}
+#ai-send {
+  width: 30px; height: 30px;
+  border-radius: var(--r-xs);
+  background: var(--accent);
+  color: var(--on-accent);
+  border: none;
+  flex-shrink: 0;
+  align-self: flex-end;
+  transition: opacity .12s ease, transform .12s var(--ease-out);
+}
+#ai-send:hover { opacity: .88; }
+#ai-send:active { transform: scale(.92); }
+#ai-send:disabled { background: var(--active); color: var(--faint); }
+.ai-attach-btn { border-radius: var(--r-xs); }
+.ai-foot {
+  margin-top: 9px;
+  font-size: 11px;
+  color: var(--faint);
+  text-align: center;
+}
+
+/* ── Setup sheet ─────────────────────────────────────────────────────── */
+.ai-gate { background: rgba(8,9,12,.5); }
+.ai-gate-card {
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  box-shadow: var(--panel-shadow);
+  padding: 22px;
+}
+.ai-gate-card h3 { font-size: 17px; font-weight: 620; letter-spacing: -.018em; }
+.ai-gate-sub { font-size: 12.5px; color: var(--muted); }
+.ai-warn {
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 11.5px;
+}
+.ai-field label { font-size: 11.5px; font-weight: 550; color: var(--muted); }
+.ai-field input, .ai-field select {
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background-color: var(--surface-2);
+  color: var(--text);
+  min-height: 36px;
+}
+.ai-hint { font-size: 11.5px; color: var(--faint); }
+.ai-gbtn {
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-weight: 500;
+}
+.ai-gbtn:hover { background: var(--hover); }
+.ai-gbtn-primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: transparent;
+}
+.ai-gbtn-primary:hover { background: var(--accent-hover); }
+
+
+/* ── Privoo AI panel: the empty state ────────────────────────────────
+   The first thing you see, and it was a small logo over four grey pills
+   adrift in a tall empty column. Same treatment as the full window, at panel
+   scale: the headline sits where the first answer will, and the suggestions
+   are cards you can aim at rather than tags you have to read. */
+.ai-empty { padding: 28px 16px; gap: 0; }
+.ai-empty-mark {
+  width: 48px; height: 48px;
+  border-radius: 15px;
+  margin-bottom: 16px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 22px -12px rgba(0,0,0,.45);
+  padding: 9px;
+}
+.ai-empty h3 {
+  font-size: 18px; font-weight: 620; letter-spacing: -.022em;
+  color: var(--text); margin-bottom: 8px;
+}
+.ai-empty p {
+  font-size: 12.5px; line-height: 1.55; color: var(--muted);
+  max-width: 34ch; margin-bottom: 20px;
+}
+.ai-chips {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  width: 100%;
+  margin-top: 0;
+}
+.ai-chip {
+  padding: 11px 14px;
+  border-radius: var(--r-sm);
+  font-size: 12.5px; font-weight: 450;
+  text-align: left;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  color: var(--text);
+  transition: border-color .13s ease, transform .13s var(--ease-out);
+}
+.ai-chip:hover { border-color: var(--border-strong); color: var(--text); transform: translateY(-1px); }
+.ai-chip:active { transform: none; }
+@media (prefers-reduced-motion: reduce) { .ai-chip:hover { transform: none; } }
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   Paste protection
+
+   A warning, not an error. The default action is to back out, and the way
+   through is a single deliberately-red button — but it IS there, because a
+   warning you cannot dismiss is one people route around entirely.
+   ════════════════════════════════════════════════════════════════════════ */
+.paste-warn {
+  position: fixed;
+  inset: 0;
+  z-index: 9600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.paste-warn.hidden { display: none; }
+.paste-warn-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(8,9,12,.5);
+  animation: sp-fade .18s ease backwards;
+}
+.paste-warn-card {
+  position: relative;
+  width: min(420px, 100%);
+  padding: 24px;
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  box-shadow: var(--panel-shadow);
+  animation: pop-in .2s var(--ease-out);
+  text-align: center;
+}
+.paste-warn-ico {
+  width: 46px; height: 46px;
+  margin: 0 auto 16px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(251,146,60,.14);
+  color: #fb923c;
+}
+.paste-warn-card h2 {
+  font-size: 17px; font-weight: 620; letter-spacing: -.018em;
+  margin: 0 0 7px; color: var(--text);
+}
+.paste-warn-sub {
+  font-size: 13px; line-height: 1.55; color: var(--muted);
+  margin: 0 0 14px;
+}
+/* The URL in full, wrapping, in a monospace face. The whole point is that
+   you can read where it actually goes — truncating it would defeat the
+   warning. */
+.paste-warn-url {
+  font-family: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  margin-bottom: 18px;
+  text-align: left;
+  word-break: break-all;
+  max-height: 84px;
+  overflow-y: auto;
+  user-select: text;
+}
+.paste-warn-actions { display: flex; gap: 8px; }
+.paste-warn-btn {
+  flex: 1;
+  min-height: 38px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--hover);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 550;
+  cursor: default;
+  transition: background .12s ease;
+}
+.paste-warn-btn:hover { background: var(--active); }
+/* Going ahead is the quiet option, not the primary one. */
+.paste-warn-btn.danger {
+  background: transparent;
+  color: #f87171;
+  border-color: rgba(248,113,113,.35);
+  font-weight: 450;
+}
+.paste-warn-btn.danger:hover { background: rgba(248,113,113,.12); }
+.paste-warn-off {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 6px;
+  border: none;
+  background: transparent;
+  color: var(--faint);
+  font-family: inherit;
+  font-size: 11.5px;
+  cursor: default;
+  transition: color .12s ease;
+}
+.paste-warn-off:hover { color: var(--muted); text-decoration: underline; }
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   Taller tabs
+   ────────────────────────────────────────────────────────────────────────
+   32px was tight: at that height a favicon, a title and a close button have
+   no air between them and the strip reads as a toolbar with text in it.
+   36px is the height Chrome and Edge both land on, and it gives the tab room
+   to be an object rather than a label.
+
+   The strip grows with it — otherwise the tab just loses its margins — and
+   the two buttons that live beside the tabs grow to match, so nothing in the
+   row is a different size from anything else.
+
+   These rules are last in the file, so they beat the several per-variant
+   heights scattered through styles.css (Zen at 28px, the compact block at
+   31px, the base at 32px) without having to find and edit each one.
+   ════════════════════════════════════════════════════════════════════════ */
+#titlebar,
+body.privoo-one #titlebar {
+  height: 48px;
+  min-height: 48px;
+}
+.tab,
+body.privoo-one .tab {
+  height: 36px;
+  font-size: 12.5px;
+}
+#new-tab, #tab-search-btn,
+body.privoo-one #new-tab, body.privoo-one #tab-search-btn {
+  width: 32px;
+  height: 32px;
+}
+
+/* Vertical tabs are a list of .vtab rows, not a strip of .tab ones, so none
+   of the above applies there. The titlebar in that mode holds only the window
+   controls and stays short. */
+body.vertical-tabs #titlebar { height: 40px; min-height: 40px; }
+
+/* ════════════════════════════════════════════════════════════════════════
+   Tab hover preview
+
+   Rest on a tab and a thumbnail of that page appears under it. The card is
+   the page first and the text second: the picture is what tells nine
+   identically-titled tabs apart, so it gets the space and the title sits
+   under it as a caption.
+
+   pointer-events: none is load-bearing. The card sits directly below the tab
+   you are pointing at, which is exactly where the pointer travels on its way
+   to clicking that tab — if it could take a click, it would eat the one you
+   meant for the tab.
+   ════════════════════════════════════════════════════════════════════════ */
+.tab-preview {
+  position: fixed;
+  z-index: 8000;
+  width: 260px;
+  pointer-events: none;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--panel-shadow);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity .13s var(--ease-out), transform .13s var(--ease-out);
+}
+.tab-preview.is-in { opacity: 1; transform: none; }
+.tab-preview[hidden] { display: none; }
+
+/* 16:10 — close enough to a browser viewport that pages look like themselves,
+   and short enough that the card does not become the window. The box keeps
+   its height whether the shot has arrived or not, so the card does not resize
+   under the pointer when the capture lands. */
+.tab-preview-shot {
+  position: relative;
+  height: 162px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.tab-preview-shot img {
+  width: 100%;
+  height: 100%;
+  /* Top-anchored cover: a page is read from the top, so that is the part of
+     it worth showing. "contain" would letterbox every capture. */
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+}
+.tab-preview-shot img[hidden] { display: none; }
+/* Shown for a tab that has never painted — a background tab restored from the
+   last session, or one still loading. */
+.tab-preview-fallback { color: var(--faint); display: flex; }
+.tab-preview-fallback[hidden] { display: none; }
+
+.tab-preview-meta { padding: 8px 11px 9px; }
+.tab-preview-title {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.35;
+  /* Two lines, then ellipsis. One line truncates too many real titles right
+     where they start to differ, which is the opposite of the point. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.tab-preview-host {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tab-preview-host[hidden] { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-preview { transition: none; }
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   The one-time note
+
+   Centred along the very bottom of the window, in the smallest grey the
+   palette has. Everything about it is chosen to stay out of the way: no
+   surface, no border, no shadow, nothing to click. It overlays the page
+   rather than displacing it, so nothing on screen moves when it arrives or
+   when it leaves.
+
+   The fade out is slower than the fade in. Something appearing wants to be
+   noticed; something leaving should not pull the eye back to itself.
+   ════════════════════════════════════════════════════════════════════════ */
+.chrome-note {
+  position: fixed;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%) translateY(6px);
+  z-index: 7000;
+  max-width: min(620px, calc(100vw - 48px));
+  padding: 0 14px;
+  text-align: center;
+  font-size: 11.5px;
+  line-height: 1.5;
+  letter-spacing: .002em;
+  color: var(--faint);
+  /* It sits over the page, and there is nothing on it to interact with. */
+  pointer-events: none;
+  user-select: none;
+  opacity: 0;
+  /* Out is 600ms, in is 320ms — see the note above. */
+  transition: opacity .6s ease, transform .6s ease;
+}
+.chrome-note[hidden] { display: none; }
+/* A long sentence in a narrow window has to be allowed to break, or the last
+   word runs off the edge and reads as truncated. */
+.chrome-note { overflow-wrap: anywhere; }
+
+/* The pill variant. The memorial is a line of footer text because that is
+   the register it wants; a statement about what the browser is doing is a
+   status, and a status reads as a chip. Same element, same queue, same
+   corner — it just knows which of the two it is currently holding. */
+.chrome-note.pill {
+  padding: 8px 16px;
+  border-radius: 999px;
+  max-width: calc(100vw - 40px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 500;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .1);
+}
+/* Sits on the text baseline rather than beside it, so it reads as the end of
+   the sentence rather than as an icon someone attached to it. */
+.note-heart {
+  width: 11px;
+  height: 11px;
+  display: inline-block;
+  vertical-align: -1px;
+  margin-left: 1px;
+  fill: #d1707a;
+  opacity: .85;
+}
+.chrome-note.is-in {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  transition: opacity .32s ease, transform .32s var(--ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  .chrome-note, .chrome-note.is-in { transition: none; transform: translateX(-50%); }
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   The tab-search popup, clear of the tabs
+
+   The card stays CENTRED — that is where a search overlay belongs, and it
+   is what it always did. The only thing that changes with vertical tabs on
+   is which box it is centred in: showSearchPopup() writes inline padding
+   from contentAreaPadding(), so the box is the page area rather than the
+   whole window, and the card lands in the middle of the page instead of
+   the middle of the window with the panel underneath it.
+
+   (An earlier pass here pinned the card to the top-left of that box. That
+   was a misreading of "next to the tabs" — it meant do not cover them, not
+   move it into the corner.)
+   ════════════════════════════════════════════════════════════════════════ */
+/* THE DIM STOPS AT THE PANEL. background-clip: content-box paints the scrim
+   inside the padding box only, and that box is exactly the page area — so
+   the tab list stays lit and legible while you search it, instead of being
+   greyed out under the thing searching it. */
+body.vertical-tabs .search-popup,
+body.vertical-tabs.sp-glass .search-popup,
+body.vertical-tabs.sp-no-glass .search-popup {
+  background-clip: content-box;
+  /* Centred, as everywhere else. Restated because a previous version of this
+     block set flex-start and this is the rule that has to undo it. */
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 0;
+}
+/* The base card has margin-bottom:14vh to lift it off centre in a full
+   window. Inside the page area there is much less height to play with, so
+   it sits properly centred. */
+body.vertical-tabs .search-popup-card {
+  margin-bottom: 0;
+  max-height: calc(100% - 24px);
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   Vertical tabs — the toolbar starts where the content does
+
+   The indent itself is NOT set here. syncVtabsToolbarIndent() in renderer.js
+   measures the panel's right edge against the toolbar's left edge and writes
+   an inline padding-left, because:
+
+     - `body.privoo-one #toolbar { padding: 0 8px }` above is a shorthand and
+       more specific than anything scoped to .vertical-tabs alone, so a rule
+       here has to win a fight it kept losing; an inline style has no fight.
+     - a calc() off a mirrored width assumes the toolbar and the panel share
+       an x origin. Measuring both edges assumes nothing.
+
+   All this file contributes is the easing, so the indent animates when the
+   panel collapses instead of jumping. */
+body.vertical-tabs #toolbar,
+body.vertical-tabs #bookmarks-bar {
+  transition: padding-left .22s cubic-bezier(.4,0,.2,1);
+}
+@media (prefers-reduced-motion: reduce) {
+  body.vertical-tabs #toolbar,
+  body.vertical-tabs #bookmarks-bar { transition: none; }
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   The new tab has no background of its own, with vertical tabs on
+
+   The page stops painting (body.ntp-see-through, set from the verticalTabs
+   setting) and these two take over: the <webview> element's own background,
+   and #views behind it. Both become the toolbar colour, so the new tab is
+   continuous with the panel beside it and the bar above it instead of being
+   a separate slab of a slightly different grey.
+
+   Scoped to .is-ntp. A real web page keeps its opaque white/dark backing —
+   without it you would see the chrome through the gaps in every site that
+   does not set its own background.
+   ════════════════════════════════════════════════════════════════════════ */
+body.vertical-tabs #views:has(webview.is-ntp:not(.inactive)),
+body.vertical-tabs.dark #views:has(webview.is-ntp:not(.inactive)) {
+  background: var(--toolbar);
+}
+body.vertical-tabs #views webview.is-ntp,
+body.vertical-tabs.dark #views webview.is-ntp {
+  background: var(--toolbar);
+}
+/* .first-paint carries !important, so the flash-guard colour has to be
+   beaten explicitly or the new tab shows the old slab for a frame. */
+body.vertical-tabs #views webview.is-ntp.first-paint,
+body.vertical-tabs.dark #views webview.is-ntp.first-paint {
+  background: var(--toolbar) !important;
+}
+
+
+
+/* ── An empty window ──────────────────────────────────────────────────
+   With vertical tabs on, every tab closed is a normal resting state — the
+   search popup is how you open the next one. Nothing should paint a
+   page-coloured slab where there is no page. In Transparent Mode that means
+   the window really is see-through; otherwise it falls back to the chrome
+   colour so the empty area reads as part of the browser, not a hole.
+
+   !important on both: styles.css sets
+   `body.semi-transparent #views { background: #ffffff !important }`, and an
+   !important declaration is only beaten by another one. */
+body.no-tabs #views { background: var(--toolbar) !important; }
+body.semi-transparent.no-tabs #views,
+body.semi-transparent.no-tabs.dark #views { background: transparent !important; }
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   THE VERTICAL TABS PANEL
+
+   One block. It owns every measurement in the panel, and it is the last
+   thing in the last stylesheet, so it is the one that wins.
+
+   It replaces five separate passes that had accumulated here — each a patch
+   on the one before it. Between them .vtabs-header was defined five times
+   across the two files, .vtabs-list three times and .vtab three times, and
+   which value applied depended on which rule happened to be last for that
+   particular property. That is why nothing lined up: the paddings were not
+   wrong so much as unrelated to each other.
+
+   ── The one idea ──────────────────────────────────────────────────────
+   Every row in the panel is the same height and starts on the same vertical
+   line. A sidebar reads as tidy when its icons form a single column down the
+   left; everything below follows from that.
+
+       │← 8px →│← 10px →│
+       ├───────┼────────┼───────────────────────
+       │       │  ICON  │  label
+       │  panel│        │
+       │  inset│  every icon in the panel — the collapse chevron, a space,
+       │       │  a favicon, the +, the footer glyphs — has its left edge
+       │       │  here. Nothing is centred, nothing is special-cased.
+
+   --vt-pad is the panel's inset; --vt-lead is the distance from a row's own
+   left edge to its icon. A row spans the full width inside --vt-pad, so its
+   hover fill reaches both edges, and its icon lands at --vt-pad + --vt-lead.
+   Change either number and the whole panel moves together.
+   ════════════════════════════════════════════════════════════════════════ */
+
+body.vertical-tabs {
+  --vt-pad: 8px;      /* panel inset, all four sides                    */
+  --vt-lead: 10px;    /* row edge -> icon: the column everything sits on */
+  --vt-row: 38px;     /* every row, everywhere                          */
+  --vt-gap: 10px;     /* icon -> text                                   */
+  --vt-icon: 17px;    /* every glyph and favicon                        */
+}
+
+/* ── The panel ────────────────────────────────────────────────────────── */
+body.vertical-tabs #vtabs-panel {
+  display: flex;
+  flex-direction: column;
+  padding: var(--vt-pad) 0;
+  box-shadow: 1px 0 0 var(--border);
+  border-right: none;
+  overflow: clip;
+}
+/* The fill is separate, and scoped OUT of Transparent Mode. It used to be in
+   the rule above, where it set an opaque --strip that only lost to the glass
+   rule on the technicality that one was an !important longhand and this was
+   a shorthand. Two rules disagreeing and the right one winning by accident is
+   the same bug as the wrong one winning. */
+body.vertical-tabs:not(.semi-transparent) #vtabs-panel { background: var(--strip); }
+
+/* Anything that holds rows gets the same inset, so every row in the panel is
+   the same width and starts at the same x. This is the whole alignment. */
+body.vertical-tabs .vtabs-header,
+body.vertical-tabs .vtabs-list {
+  padding-left: var(--vt-pad);
+  padding-right: var(--vt-pad);
+}
+
+/* ── One row ──────────────────────────────────────────────────────────
+   .vtab, the new-tab button, the footer buttons and a space all share this
+   geometry. They differ in what they contain, not in where they sit. */
+body.vertical-tabs .vtab,
+body.vertical-tabs .vtabs-new-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--vt-gap);
+  width: 100%;
+  height: var(--vt-row);
+  min-height: var(--vt-row);
+  margin: 0;
+  padding: 0 6px 0 var(--vt-lead);
+  border: none;
+  border-radius: var(--r-xs);
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 450;
+  text-align: left;
+  cursor: default;
+  opacity: 1;
+  transition: background .12s ease, color .12s ease;
+}
+body.vertical-tabs .vtab:hover,
+body.vertical-tabs .vtabs-new-btn:hover { background: var(--hover); color: var(--text); }
+
+body.vertical-tabs .vtab.active,
+body.vertical-tabs.dark .vtab.active {
+  background: var(--active);
+  color: var(--text);
+  font-weight: 500;
+  box-shadow: none;
+}
+
+/* Icons: one size, one column, never shrinking. */
+body.vertical-tabs .vtab-favicon,
+body.vertical-tabs .vtabs-new-icon {
+  width: var(--vt-icon);
+  height: var(--vt-icon);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  line-height: 1;
+}
+body.vertical-tabs .vtab-title,
+body.vertical-tabs .vtabs-new-label {
+  font-size: 13px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Header: two icon buttons, right-aligned ──────────────────────────── */
+body.vertical-tabs .vtabs-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  height: var(--vt-row);
+  min-height: var(--vt-row);
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+body.vertical-tabs .vtabs-collapse-btn {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--r-xs);
+  background: transparent;
+  color: var(--faint);
+  opacity: 1;
+  cursor: default;
+  transition: background .12s ease, color .12s ease;
+}
+body.vertical-tabs .vtabs-collapse-btn:hover { background: var(--hover); color: var(--text); }
+body.vertical-tabs .vtabs-header-title { display: none; }
+
+/* ── New tab ──────────────────────────────────────────────────────────
+   The only row that is a direct child of the panel rather than sitting
+   inside a padded container, so it has to carry the panel inset itself as a
+   margin. Without this its icon landed at --vt-lead (10px) while every other
+   icon in the panel was at --vt-pad + --vt-lead (18px) — an 8px step in the
+   middle of the column, which is exactly the kind of thing that makes a
+   sidebar look untidy without it being obvious why. */
+body.vertical-tabs .vtabs-new-btn {
+  flex-shrink: 0;
+  width: calc(100% - var(--vt-pad) * 2);
+  margin: 0 var(--vt-pad) 2px;
+}
+
+/* ── The list ─────────────────────────────────────────────────────────── */
+body.vertical-tabs .vtabs-list {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-top: 0;
+  padding-bottom: 4px;
+}
+body.vertical-tabs .vtabs-list::-webkit-scrollbar { width: 3px; }
+body.vertical-tabs .vtabs-list::-webkit-scrollbar-thumb { background: transparent; border-radius: 2px; }
+body.vertical-tabs .vtabs-list:hover::-webkit-scrollbar-thumb { background: var(--border-strong); }
+
+/* A section heading sits on the same line as the icons under it, so the
+   column does not break where the heading is. */
+body.vertical-tabs .vtabs-section-label {
+  padding: 10px var(--vt-lead) 4px;
+  margin: 0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--faint);
+  opacity: 1;
+  flex-shrink: 0;
+}
+body.vertical-tabs .vtabs-list > .vtabs-section-label:first-child { padding-top: 2px; }
+/* The label IS the divider. Both was two lines for one boundary. */
+body.vertical-tabs .vtabs-section-divider { display: none; }
+
+/* Close: always occupies its slot so revealing it moves nothing. */
+body.vertical-tabs .vtab-close {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: var(--r-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  opacity: 0;
+  visibility: visible;
+  transition: opacity .11s ease, background .11s ease, color .11s ease;
+}
+body.vertical-tabs .vtab:hover .vtab-close,
+body.vertical-tabs .vtab.active .vtab-close { opacity: .6; }
+body.vertical-tabs .vtab-close:hover { opacity: 1; background: var(--hover); color: var(--text); }
+
+/* ── The drag edge ────────────────────────────────────────────────────── */
+body.vertical-tabs .vtabs-resize:hover::after,
+body.vertical-tabs .vtabs-resize.dragging::after {
+  background: var(--border-strong);
+  opacity: 1;
+}
+
+/* ── A sleeping tab ───────────────────────────────────────────────────── */
+body.vertical-tabs .vtab.snoozed .vtab-title { opacity: .55; }
+body.vertical-tabs .vtab.snoozed .vtab-favicon { filter: grayscale(1); opacity: .5; }
+body.vertical-tabs .vtab.snoozed:hover .vtab-title { opacity: .85; }
+body.vertical-tabs .vtab.snoozed:hover .vtab-favicon { filter: none; opacity: .85; }
+
+/* ════════════════════════════════════════════════════════════════════════
+   COLLAPSED
+
+   One centred column, the same --vt-row rhythm. Every row becomes a square:
+   the icon it already had, centred, and nothing else. The header stacks
+   rather than sitting side by side — two 28px buttons do not fit across a
+   52px rail, and when they overflowed it was the collapse button that got
+   clipped, which is the only way back out.
+   ════════════════════════════════════════════════════════════════════════ */
+body.vtabs-collapsed #vtabs-panel { width: 52px !important; padding: var(--vt-pad) 0; }
+
+body.vtabs-collapsed .vtabs-header,
+body.vtabs-collapsed .vtabs-list {
+  padding-left: 0;
+  padding-right: 0;
+  align-items: center;
+}
+body.vtabs-collapsed .vtabs-header {
+  flex-direction: column;
+  height: auto;
+  min-height: 0;
+  gap: 2px;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+body.vtabs-collapsed .vtab,
+body.vtabs-collapsed .vtabs-new-btn {
+  width: 36px;
+  margin: 0 auto;
+  padding: 0;
+  justify-content: center;
+  gap: 0;
+}
+body.vtabs-collapsed .vtab-title,
+body.vtabs-collapsed .vtabs-new-label,
+body.vtabs-collapsed .vtab-close,
+body.vtabs-collapsed .vtabs-section-label { display: none !important; }
+/* Nothing to resize at 52px, and dragging it still wrote a width that the
+   panel would snap to on expanding. */
+body.vtabs-collapsed .vtabs-resize { pointer-events: none; }
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   Transparency, the parts that were still opaque
+
+   Turning on Transparent Mode made the chrome glass and left three things
+   painting solid over it: the tab rows in the vertical panel, the AI panel,
+   and the panel's own surface behind them. A window that is glass except
+   for a solid column down one side is not a translucent window.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* The rows themselves have no fill at rest — the panel behind them is the
+   glass, and a row only paints when you are pointing at it or it is the one
+   you are on. */
+body.semi-transparent.vertical-tabs .vtab { background: transparent; }
+body.semi-transparent.vertical-tabs .vtabs-new-btn { background: transparent; }
+body.semi-transparent.vertical-tabs .vtabs-new-btn:hover { background: rgba(255,255,255,.08); }
+body.semi-transparent:not(.dark).vertical-tabs .vtabs-new-btn:hover { background: rgba(0,0,0,.05); }
+
+/* The AI panel is chrome, so it is glass like the rest of the chrome. Its
+   own hairline stays — the boundary between it and the page is the one edge
+   in the window that still has to be legible. */
+body.semi-transparent #ai-panel {
+  background: rgba(255,255,255,.44);
+  backdrop-filter: saturate(1.4) blur(20px);
+  -webkit-backdrop-filter: saturate(1.4) blur(20px);
+}
+body.semi-transparent.dark #ai-panel {
+  background: rgba(26,26,26,.44);
+}
+/* Its inner surfaces step off the glass rather than repainting it opaque. */
+body.semi-transparent #ai-panel .ai-composer-box,
+body.semi-transparent #ai-panel .ai-msg .bubble { background: rgba(255,255,255,.10); }
+body.semi-transparent:not(.dark) #ai-panel .ai-composer-box,
+body.semi-transparent:not(.dark) #ai-panel .ai-msg .bubble { background: rgba(255,255,255,.55); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Transparency: the panel is the same glass as the toolbar
+   ═══════════════════════════════════════════════════════════════════ */
+body.semi-transparent:not(.wallpaper-chrome) #vtabs-panel,
+body.semi-transparent.vertical-tabs:not(.wallpaper-chrome) #vtabs-panel {
+  background-color: rgba(255,255,255,.42) !important;
+  background-image: none !important;
+  backdrop-filter: saturate(1.6) blur(20px);
+  -webkit-backdrop-filter: saturate(1.6) blur(20px);
+  box-shadow: 1px 0 0 rgba(0,0,0,.06);
+}
+body.semi-transparent.dark:not(.wallpaper-chrome) #vtabs-panel,
+body.semi-transparent.dark.vertical-tabs:not(.wallpaper-chrome) #vtabs-panel {
+  background-color: rgba(26,26,26,.42) !important;
+  box-shadow: 1px 0 0 rgba(255,255,255,.06);
+}
+
+/* ── The search popup's glass switch has to DO something ─────────────
+   Glass on was rgba(46,46,53,.97) — 97% opaque, which is the same card
+   as glass off. The setting looked broken because the two states were
+   visually identical. On is now genuinely see-through with a blur; off
+   stays solid. */
+body.sp-glass .search-popup-card {
+  background: rgba(250,250,252,.66) !important;
+  backdrop-filter: saturate(1.7) blur(26px);
+  -webkit-backdrop-filter: saturate(1.7) blur(26px);
+  border: 1px solid rgba(255,255,255,.5);
+}
+body.sp-glass.dark .search-popup-card {
+  background: rgba(38,38,44,.62) !important;
+  border-color: rgba(255,255,255,.12);
+}
+body.sp-no-glass .search-popup-card,
+body.sp-no-glass.dark .search-popup-card {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* ── The popup sits above the geometric centre ───────────────────────
+   A dialog centred by arithmetic reads as low, because the eye puts the
+   centre of a frame slightly above its middle. The base card lifts
+   itself 14vh for exactly this reason; the vertical-tabs override set it
+   to 0 and took the lift away. It is smaller here — the page area is
+   shorter than the window — but it is not nothing. */
+body.vertical-tabs .search-popup-card { margin-bottom: 9vh; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Easy Files — the recent-files strip
+
+   Docked along the bottom of the window, across the content area, with
+   the files as cards in a row. See the note in showFilePickerPopover().
+   ═══════════════════════════════════════════════════════════════════ */
+.fp-pop {
+  position: fixed;
+  left: 0; right: 0; bottom: 0; top: auto;
+  width: auto; max-width: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border: none;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--surface-1);
+  box-shadow: 0 -12px 32px -18px rgba(0,0,0,.45);
+  animation: fp-dock-in .2s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes fp-dock-in { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .fp-pop { animation: none; } }
+
+.fp-head { display: flex; flex-direction: column; gap: 1px; flex-shrink: 0; padding-right: 4px; }
+.fp-title { font-size: 12.5px; font-weight: 600; color: var(--text); }
+.fp-hint { font-size: 11px; color: var(--faint); white-space: nowrap; }
+
+/* The row scrolls sideways if it has to, but the cap in the renderer
+   means it usually does not. */
+.fp-row {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px 0;
+}
+.fp-row::-webkit-scrollbar { height: 0; }
+
+/* A card, not a list row: icon on the left, name over its size and age. */
+.fp-pop .fp-item {
+  flex: 0 0 auto;
+  width: 190px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  text-align: left;
+  transition: border-color .12s ease, background .12s ease;
+}
+.fp-pop .fp-item:hover { background: var(--hover); border-color: var(--border-strong); }
+.fp-pop .fp-item-main { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.fp-pop .fp-item-name { font-size: 12.5px; font-weight: 450; }
+.fp-pop .fp-item-meta { font-size: 11px; color: var(--faint); }
+.fp-empty { flex: 1; padding: 10px 0; text-align: left; color: var(--faint); font-size: 12.5px; }
+
+/* The way out to the real dialog. Quiet, but it is the one thing here
+   that always works, so it never scrolls away with the row. */
+.fp-browse {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 500;
+  transition: background .12s ease, border-color .12s ease;
+}
+.fp-browse:hover { background: var(--hover); border-color: var(--border-strong); }
+
+/* With vertical tabs on, the strip starts where the page does — it
+   belongs to the page it is uploading from, not to the tab list. */
+body.vertical-tabs .fp-pop { left: var(--vtabs-w, 0px); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Loading a tab
+
+   The favicon steps aside and a ring takes its place, in the same 16px
+   box, so nothing in the row moves. Both tab shapes use this: the
+   vertical one used to be an <img>, which meant the ring was drawn
+   AROUND the site icon and the icon itself rotated.
+
+   The swap crossfades rather than cutting, because a page that loads in
+   80ms would otherwise flash a spinner for two frames and look like a
+   glitch. The fade in is slower than the fade out for the same reason —
+   a quick load never gets far enough into it to be seen.
+   ═══════════════════════════════════════════════════════════════════ */
+.tab .favicon,
+.vtab-favicon {
+  transition: opacity .12s ease;
+}
+/* Two ways in, because the two shapes track it differently: the strip
+   sets .spin on the icon directly, and the vertical list sets .loading on
+   the row so renderVtabs() can re-derive it after rebuilding the row. */
+.tab .favicon.spin,
+.tab.loading .favicon,
+.vtab-favicon.spin,
+.vtab.loading .vtab-favicon {
+  /* The icon itself is gone — this element is now just the ring. */
+  background-image: none !important;
+  border-radius: 50%;
+  border: 1.6px solid var(--border-strong);
+  border-top-color: var(--text);
+  animation: _spin .55s linear infinite, fav-ring-in .22s ease both;
+  box-sizing: border-box;
+}
+@keyframes fav-ring-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* The vertical row is 17px, so its ring matches rather than being the
+   13px it was — a smaller circle in the same slot looked like a
+   different control. */
+.vtab-favicon.spin,
+.vtab.loading .vtab-favicon { width: var(--vt-icon, 17px); height: var(--vt-icon, 17px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .tab .favicon.spin,
+  .tab.loading .favicon,
+  .vtab-favicon.spin,
+  .vtab.loading .vtab-favicon { animation: _spin 1.6s linear infinite; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Vision assistance
+
+   Settings, Accessibility. Everything here is off unless asked for.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Interface scale ─────────────────────────────────────────────────
+   Scales the chrome only. The page has its own zoom, and scaling both
+   from one control means you can never make the toolbar bigger without
+   also making the page bigger, which is usually not what is wanted. */
+body.vision-scaled #titlebar,
+body.vision-scaled #toolbar,
+body.vision-scaled #bookmarks-bar,
+body.vision-scaled #vtabs-panel,
+body.vision-scaled .app-sidebar {
+  zoom: var(--ui-scale, 1);
+}
+
+/* ── Higher contrast ─────────────────────────────────────────────────
+   Muted greys go to full ink and every hairline gets darker. The
+   palette is built from tokens, so this is a token override rather than
+   a list of components. */
+body.vision-contrast {
+  --muted: var(--text);
+  --faint: var(--text);
+  --border: color-mix(in srgb, var(--text) 42%, transparent);
+  --border-strong: color-mix(in srgb, var(--text) 68%, transparent);
+  --hover: color-mix(in srgb, var(--text) 14%, transparent);
+  --active: color-mix(in srgb, var(--text) 22%, transparent);
+}
+/* Translucency and high contrast are opposites. Turning one on turns the
+   other off rather than layering a wash over text you asked to be
+   readable. */
+body.vision-contrast #titlebar,
+body.vision-contrast #toolbar,
+body.vision-contrast #bookmarks-bar,
+body.vision-contrast #vtabs-panel {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+body.vision-contrast.semi-transparent #toolbar,
+body.vision-contrast.semi-transparent #titlebar { background-color: var(--toolbar) !important; }
+body.vision-contrast.semi-transparent #vtabs-panel { background-color: var(--strip) !important; }
+
+/* ── Heavier text ────────────────────────────────────────────────────
+   Weight, not size. A partially sighted reader is often better served
+   by a thicker stroke than a larger one, and the two are separate
+   switches so they can be used apart. */
+body.vision-bold,
+body.vision-bold .tab,
+body.vision-bold .vtab,
+body.vision-bold #omnibox,
+body.vision-bold .menu-item,
+body.vision-bold .sug-item,
+body.vision-bold button { font-weight: 600; }
+body.vision-bold .tab.active,
+body.vision-bold .vtab.active { font-weight: 700; }
+
+/* ── Focus, always visible ───────────────────────────────────────────
+   :focus-visible only shows for keyboard navigation, which is right for
+   most people and wrong if you cannot easily see where you have
+   clicked. This shows the ring for every focus, pointer included. */
+body.vision-focus *:focus {
+  outline: 3px solid var(--accent) !important;
+  outline-offset: 2px !important;
+  border-radius: 4px;
+}
+
+/* ── No motion ───────────────────────────────────────────────────────
+   Separate from the OS prefers-reduced-motion setting, because someone
+   may want the browser still without turning motion off system wide. */
+body.vision-still *,
+body.vision-still *::before,
+body.vision-still *::after {
+  animation-duration: 0.001s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001s !important;
+  scroll-behavior: auto !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Night light
+
+   Over everything, guest pages included, and inert to the pointer.
+   mix-blend-mode: multiply is what makes this a warming rather than a
+   tinting: black stays black and the blues come down out of the rest.
+   A flat orange at 30% would wash the whole picture grey instead.
+   ═══════════════════════════════════════════════════════════════════ */
+#night-light {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  background: #ff9b3d;
+  mix-blend-mode: multiply;
+  opacity: 0;
+  transition: opacity .6s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Distance breaks
+
+   A card in the corner, never a modal. The point is to suggest looking
+   away, and something that blocks the page in order to say so has
+   misunderstood its own advice: it would be interrupting work to
+   recommend a rest, and people switch off anything that does that twice.
+   ═══════════════════════════════════════════════════════════════════ */
+#eye-break {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 2147482000;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 13px 14px 13px 13px;
+  max-width: 330px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 18px 44px -14px rgba(0,0,0,.45), 0 3px 12px rgba(0,0,0,.16);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity .22s ease, transform .22s cubic-bezier(.2,.8,.25,1);
+}
+#eye-break.in { opacity: 1; transform: none; }
+
+/* The ring is the twenty seconds. It is the only moving thing on the
+   card, and it doubles as the reason to keep looking away. */
+.eb-ring { position: relative; width: 40px; height: 40px; flex-shrink: 0; }
+.eb-ring svg { width: 40px; height: 40px; transform: rotate(-90deg); }
+.eb-ring circle { fill: none; stroke-width: 3; }
+.eb-track { stroke: var(--border); }
+.eb-fill {
+  stroke: var(--accent);
+  stroke-linecap: round;
+  stroke-dasharray: 107;
+  stroke-dashoffset: 0;
+}
+#eb-count {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  font-size: 12px; font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.eb-text { min-width: 0; }
+.eb-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.eb-sub { font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.35; }
+
+.eb-close {
+  width: 26px; height: 26px; flex-shrink: 0;
+  display: grid; place-items: center;
+  border: none; border-radius: 8px;
+  background: transparent; color: var(--muted);
+  cursor: pointer;
+}
+.eb-close:hover { background: var(--hover); color: var(--text); }
+.eb-close svg { width: 13px; height: 13px; fill: currentColor; }
+
+/* "Stop interface animation" covers this too: the ring stops sweeping and
+   the number counts down on its own. */
+body.vision-still .eb-fill { transition: none !important; }
+
+/* ── The built-in profile’s stand-in picture ─────────────────────────
+   Full bleed inside the disc. A small figure floating in a large circle
+   reads as a missing icon; one that fills it reads as a picture. */
+.pp-person {
+  width: 100%;
+  height: 100%;
+  display: block;
+  fill: #fff;
+  opacity: .93;
+}
+
+/* ── Checkboxes ──────────────────────────────────────────────────────
+   Drawn rather than native. `accent-color` hands the tick to the engine,
+   and the engine draws it white — which on the default Mono accent, which
+   is #ffffff in dark mode, is a white tick on a white box.
+
+   --on-accent is computed from the accent's own luminance, so the tick is
+   ink on a light accent and white on a dark one, and there is no accent
+   anybody can pick that makes it disappear. */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin: 0;
+  display: inline-grid;
+  place-content: center;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 5px;
+  background: transparent;
+  cursor: pointer;
+  transition: background .12s ease, border-color .12s ease;
+}
+input[type="checkbox"]:hover { border-color: var(--text); }
+input[type="checkbox"]::before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  background: var(--on-accent, #fff);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M3.2 8.4l3.1 3.1 6.5-6.9' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 14px 14px no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M3.2 8.4l3.1 3.1 6.5-6.9' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 14px 14px no-repeat;
+  transform: scale(0);
+  transition: transform .13s cubic-bezier(.2,.8,.25,1);
+}
+input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: color-mix(in srgb, var(--text) 26%, var(--accent));
+}
+input[type="checkbox"]:checked::before { transform: scale(1); }
+input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+input[type="checkbox"]:disabled { opacity: .5; cursor: default; }

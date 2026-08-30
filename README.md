@@ -42,6 +42,8 @@ opt out of.
 | **DNS-over-HTTPS** | Encrypted DNS via Cloudflare, AdGuard, Quad9, NextDNS, Google or a custom resolver |
 | **Fingerprint Protection** | Canvas noise (deterministic per-origin), User-Agent normalisation, WebRTC IP-leak protection |
 | **Do Not Track & Global Privacy Control** | Sends both privacy signals with requests |
+| **Paste Protection** | Checks a link you paste into the address bar for the tricks that make an address read as one site while pointing at another — a name hidden before an `@`, characters that only look like letters, a well-known brand on somebody else's domain |
+| **Pop-up Blocking** | A page may only open a window if you just interacted with it. Links, sign-in popups and downloads all follow a click, so they still work; pop-unders and timed ad redirects do not |
 | **Tracking-Param Stripping** | Removes `utm_*`, `fbclid`, `gclid` and friends; minimises the `Referer` header |
 | **Proxy & Tor** | Route traffic through a manual proxy or a bundled Tor circuit |
 | **Profiles & Guest Mode** | Fully isolated browsing identities, plus a no-history guest session |
@@ -69,6 +71,9 @@ Third-party `.crx` / unpacked extensions can also be loaded from the same page.
 ### Browsing
 
 - **Tabs** — drag-to-reorder, tab groups, and Chrome-style shrink-to-fit sizing
+- **Tab previews** — rest on a tab to see a thumbnail of that page underneath it, for when nine tabs on one site all have the same title
+- **Tab reactions** — pin an emoji to a tab so one of twenty identical tabs is findable at a glance
+- **Tab islands** — tabs from the same site group themselves visually, without becoming a formal tab group
 - **Vertical Tabs** — collapsible side panel, icon rail, integrated toolbar, Spotlight-style search
 - **Split View** — two pages side by side; drag a tab onto either half of the page to split instantly
 - **Privoo AI** — inline panel or full window, backed by *your* key (Anthropic, OpenAI, Gemini, DeepSeek, or a local Ollama model), with a chat-history sidebar
@@ -81,12 +86,25 @@ Third-party `.crx` / unpacked extensions can also be loaded from the same page.
 
 - Clean search bar with live suggestions and your engine's icon
 - Optional shortcut tiles, live clock, weather, and privacy stats
-- Custom wallpapers (image or live video) and curated animated themes
+- **Random wallpaper** — a different freely licensed photograph behind every new
+  tab, credited to its photographer in the corner. A batch is fetched once an
+  hour and shared across tabs, so ten new tabs is one download. Off by default;
+  a fresh new tab is a plain surface until you turn it on or pick your own image
 - Optional **Privoo News** link — release notes rendered locally, never fetched
 
 ### Customisation
 
-- **Accent colour** — recolours the entire interface, including page favicons
+- **Dark mode** — a comfortable neutral grey, not pure black: the tab strip,
+  toolbar, panels and page area each sit on their own step of one scale, so the
+  window reads as a frame around a page instead of a single flat slab
+- **Accent colour** — recolours the entire interface, including page favicons.
+  The default *Mono* accent is adaptive: white on the dark UI, ink on the light one
+- **Wallpapers** — Settings → Appearance → Wallpaper. Random photos, or your own
+  image or looping video. "Stretch over the whole browser" runs it behind the
+  tab strip and toolbar too, which then go frosted glass over it
+- **Themes** — light/dark, transparency & glassmorphism (Mica/Acrylic on Windows, vibrancy on macOS).
+  Preset themes are drawn from their own palettes as gradients, so there is no
+  image set to download, ship, or fail to load
 - **Your Vibe** — an ambient hue gradient washed across the UI
 - **Layout** — interface font, corner style, compact mode, font scaling, custom CSS
 - **Search engines** — Google, Bing, DuckDuckGo, Brave, Startpage, Ecosia, Qwant, Yandex, Kagi, or custom
@@ -138,13 +156,19 @@ privoo/
 ├── download-store.js       # Download tracking
 ├── password-store.js       # Encrypted password vault
 ├── ai.js                   # Privoo AI backend (provider proxy + key encryption)
+├── ai-files.js             # Local text extraction for AI attachments
+├── ai-ocr.js               # Local OCR for image attachments
 ├── ytdlp.js                # Media download engine
 ├── blocklist.js            # Built-in fallback host blocklist
+├── privoo-protection.js    # Malware / phishing navigation checks
+├── extension-*.js          # Third-party extension host, shims and compat layer
 └── renderer/
     ├── index.html          # Browser UI shell
     ├── renderer.js         # Tabs, toolbar, panels, injections
-    ├── styles.css          # Interface styles
+    ├── styles.css          # Interface styles — palette + component structure
+    ├── theme.css           # Finish pass over styles.css (shape, spacing, motion)
     └── internal/           # privoo:// pages
+        ├── page-theme.css  # Shared palette for every internal page
         ├── newtab.html     · settings.html   · ai.html
         ├── news.html       · downloads.html  · history.html
         ├── bookmarks.html  · extensions.html · incognito.html
@@ -168,7 +192,7 @@ Selected defaults:
 
 ```json
 {
-  "searchEngine": "brave",
+  "searchEngine": "google",
   "adBlocking": true,
   "httpsUpgrade": true,
   "blockThirdPartyCookies": true,
@@ -177,11 +201,18 @@ Selected defaults:
   "canvasSpoofing": true,
   "webrtcProtection": true,
   "doNotTrack": true,
-  "accentColor": "#57a97e",
+  "pasteProtection": true,
+  "popupBlocking": true,
+  "tabHoverPreview": true,
+  "accentColor": "#ffffff",
   "darkMode": true,
   "autoUpdates": true
 }
 ```
+
+`"accentColor": "#ffffff"` is the adaptive **Mono** accent rather than literal
+white — it resolves to white on the dark interface and to ink on the light one.
+Any other hex is used as given.
 
 ---
 
@@ -192,6 +223,8 @@ Selected defaults:
 **Video won't play / black frame** — try disabling hardware acceleration in Settings → Performance. Privoo already works around the common GPU cold-start case automatically.
 
 **Downloads not appearing** — check the download folder in Settings and that Privoo has write permission; `privoo://downloads/` shows live status.
+
+---
 
 ---
 

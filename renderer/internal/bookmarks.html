@@ -8,32 +8,23 @@
 *{box-sizing:border-box;margin:0;padding:0;font-family:"Inter","Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
 html{height:100%;background:transparent}
 body{height:100%;background:#f8f9fa;color:#1f1f1f;user-select:none;display:flex;flex-direction:column}
-body.dark{background:#202124;color:#e8eaed;color-scheme:dark}
+body.dark{background:#1e1e21;color:#ededf0;color-scheme:dark}
 /* ── Privoo studio palette ── */
 body{background:#f3f3f7 !important;color:#17171f}
-body.dark{background:#17181c !important;color:#f1f1f4}
+body.dark{background:#1e1e21 !important;color:#ededf0}
 header{background:#ffffff !important;border-bottom-color:rgba(23,23,31,.09) !important}
-body.dark header{background:#17181c !important;border-bottom-color:rgba(255,255,255,.08) !important}
+body.dark header{background:#1e1e21 !important;border-bottom-color:rgba(255,255,255,.08) !important}
 .bm-card{background:#ffffff !important;border-color:rgba(23,23,31,.09) !important}
-body.dark .bm-card{background:#1f2024 !important;border-color:rgba(255,255,255,.08) !important}
-/* Increase Transparency — drop opaque fills so the OS material shows. */
-body.transparent-ui{background:transparent !important;}
-body.transparent-ui header,body.transparent-ui main{background:transparent !important;}
-body.transparent-ui .bm-card{
-  background:rgba(255,255,255,.55) !important;
-  backdrop-filter:blur(10px) saturate(160%);
-  -webkit-backdrop-filter:blur(10px) saturate(160%);
-}
-body.transparent-ui.dark .bm-card{background:rgba(41,42,45,.55) !important;}
+body.dark .bm-card{background:#28282c !important;border-color:rgba(255,255,255,.08) !important}
 button,input{font:inherit}
 button{cursor:default;border:none;background:transparent;color:inherit}
 
 header{
-  background:#fff;border-bottom:1px solid #dadce0;
+  background:#fff;border-bottom:1px solid #d8d8de;
   padding:16px 28px;display:flex;align-items:center;gap:12px;
   position:sticky;top:0;z-index:10;flex-shrink:0;flex-wrap:wrap
 }
-body.dark header{background:#303134;border-color:#4a4d51}
+body.dark header{background:#37373f;border-color:#43434c}
 h1{font-size:20px;font-weight:500;margin-right:auto}
 #search{
   border:1px solid #dfe1e5;border-radius:10px;
@@ -41,44 +32,44 @@ h1{font-size:20px;font-weight:500;margin-right:auto}
   width:260px;height:34px;user-select:text
 }
 #search:focus{border-color:#3c4043;background:#fff}
-body.dark #search{background:#202124;border-color:#5f6368;color:#e8eaed}
+body.dark #search{background:#1e1e21;border-color:#4d4d57;color:#ededf0}
 .toolbar-btn{
-  height:32px;padding:0 14px;border-radius:10px;border:1px solid #dadce0;
+  height:32px;padding:0 14px;border-radius:10px;border:1px solid #d8d8de;
   font-size:13px;color:#1f1f1f;background:#fff
 }
 .toolbar-btn:hover{background:#f1f3f4}
 .toolbar-btn.danger{color:#d93025}
-body.dark .toolbar-btn{background:#303134;border-color:#5f6368;color:#e8eaed}
+body.dark .toolbar-btn{background:#37373f;border-color:#4d4d57;color:#ededf0}
 body.dark .toolbar-btn.danger{color:#f28b82}
 
 main{flex:1;min-height:0;max-width:900px;margin:0 auto;width:100%;padding:20px 20px 32px;overflow-y:auto;background:inherit}
-#empty{text-align:center;padding:80px 20px;color:#5f6368}
-body.dark #empty{color:#bdc1c6}
-#empty svg{width:64px;height:64px;fill:#dadce0;margin-bottom:16px}
+#empty{text-align:center;padding:80px 20px;color:#4d4d57}
+body.dark #empty{color:#b0b0b8}
+#empty svg{width:64px;height:64px;fill:#d8d8de;margin-bottom:16px}
 #empty h2{font-size:18px;font-weight:400;margin-bottom:8px;color:#3c4043}
-body.dark #empty svg{fill:#5f6368}
-body.dark #empty h2{color:#e8eaed}
+body.dark #empty svg{fill:#4d4d57}
+body.dark #empty h2{color:#ededf0}
 
 #list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
 
 .bm-card{
   display:flex;align-items:center;gap:10px;
   padding:11px 14px;border-radius:10px;cursor:default;
-  border:1px solid #e8eaed;background:#fff;
+  border:1px solid #ededf0;background:#fff;
   transition:background .1s,border-color .1s
 }
-.bm-card:hover{background:#f8f9fa;border-color:#dadce0}
-body.dark .bm-card{background:#303134;border-color:#4a4d51}
+.bm-card:hover{background:#f8f9fa;border-color:#d8d8de}
+body.dark .bm-card{background:#37373f;border-color:#43434c}
 body.dark .bm-card:hover{background:#3c4043}
 
 .bm-dot{
   width:28px;height:28px;border-radius:12px;
-  background:#e8eaed;color:#3c4043;
+  background:#ededf0;color:#3c4043;
   display:flex;align-items:center;justify-content:center;
   font-size:11px;font-weight:700;flex-shrink:0;
   overflow:hidden;position:relative;
 }
-body.dark .bm-dot{background:#4a4d51;color:#e8eaed}
+body.dark .bm-dot{background:#43434c;color:#ededf0}
 .bm-dot img{
   width:16px;height:16px;object-fit:contain;
   position:absolute;display:none;
@@ -88,18 +79,21 @@ body.dark .bm-dot{background:#4a4d51;color:#e8eaed}
 
 .bm-info{flex:1;min-width:0}
 .bm-name{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bm-url{font-size:11.5px;color:#5f6368;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
-body.dark .bm-url{color:#9aa0a6}
+.bm-url{font-size:11.5px;color:#4d4d57;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+body.dark .bm-url{color:#b0b0b8}
 
 .bm-del{
   width:26px;height:26px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
-  color:#9aa0a6;opacity:0;transition:opacity .1s;flex-shrink:0
+  color:#b0b0b8;opacity:0;transition:opacity .1s;flex-shrink:0
 }
 .bm-card:hover .bm-del{opacity:1}
 .bm-del:hover{background:rgba(0,0,0,.08);color:#d93025}
 body.dark .bm-del:hover{background:rgba(255,255,255,.08);color:#f28b82}
 </style>
+<!-- Shared finish pass: one palette across every Privoo page. Loads last so
+     it wins on order; the block above still owns this page's layout. -->
+<link rel="stylesheet" href="page-theme.css" />
 </head>
 <body>
 <header>
@@ -128,12 +122,32 @@ body.dark .bm-del:hover{background:rgba(255,255,255,.08);color:#f28b82}
     const settings = r?.settings || r;
     bookmarks = Array.isArray(settings?.bookmarks) ? settings.bookmarks : [];
     document.body.classList.toggle('dark', !!settings?.darkMode);
-    document.body.classList.toggle('transparent-ui', !!settings?.increaseTransparency);
     applyAccent(settings?.accentColor);
     render(bookmarks);
   }
 
-  function applyAccent(hex){const r=document.documentElement;if(!hex){r.style.removeProperty('--accent');r.style.removeProperty('--accent-hover');r.style.removeProperty('--accent-soft');return;}r.style.setProperty('--accent',hex);const m=hex.replace('#','').match(/.{2}/g);if(m){const[rv,g,b]=m.map(x=>parseInt(x,16));const h=`rgb(${Math.min(255,Math.round(rv+(255-rv)*.18))},${Math.min(255,Math.round(g+(255-g)*.18))},${Math.min(255,Math.round(b+(255-b)*.18))})`;r.style.setProperty('--accent-hover',h);r.style.setProperty('--accent-soft',`rgba(${rv},${g},${b},.18)`);} }
+  // Mirrors applyAccentTriad() in renderer.js, so this page shows the same
+// accent as the browser around it. Two rules it has to honour:
+//   - '#ffffff' is the adaptive "Mono" accent, not literally white: it means
+//     white on the dark UI and near-black on the light one. Written through
+//     unmapped it painted white on white in light mode.
+//   - --on-accent comes from the accent's own luminance, so a toggle knob or
+//     button label on top of it always contrasts with it.
+function applyAccent(hex){
+  const r = document.documentElement;
+  const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
+  let c = (hex && /^#[0-9a-f]{6}$/i.test(hex)) ? hex : (isDark ? '#ffffff' : '#101014');
+  if (c.toLowerCase() === '#ffffff' && !isDark) c = '#101014';
+  r.style.setProperty('--accent', c);
+  const [rv, g, b] = c.replace('#','').match(/.{2}/g).map(x => parseInt(x, 16));
+  const lum = (0.2126*rv + 0.7152*g + 0.0722*b) / 255;
+  // A near-white accent has no headroom to brighten into, so hover darkens.
+  const mix = lum > 0.72 ? 0 : 255, k = lum > 0.72 ? 0.12 : 0.18;
+  r.style.setProperty('--accent-hover',
+    `rgb(${Math.round(rv+(mix-rv)*k)},${Math.round(g+(mix-g)*k)},${Math.round(b+(mix-b)*k)})`);
+  r.style.setProperty('--on-accent', lum > 0.6 ? '#1b1b1e' : '#ffffff');
+  r.style.setProperty('--accent-soft', `rgba(${rv},${g},${b},${isDark ? '.16' : '.13'})`);
+}
 
   function render(list){
     const listEl = document.getElementById('list');
@@ -205,7 +219,6 @@ body.dark .bm-del:hover{background:rgba(255,255,255,.08);color:#f28b82}
   window.privooInternal.onSettingsChanged((data)=>{
     const s = data?.settings || data;
     document.body.classList.toggle('dark', !!s?.darkMode);
-    document.body.classList.toggle('transparent-ui', !!s?.increaseTransparency);
     applyAccent(s?.accentColor);
     bookmarks = Array.isArray(s?.bookmarks) ? s.bookmarks : [];
     const q = document.getElementById('search').value.toLowerCase();

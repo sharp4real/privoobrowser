@@ -1,461 +1,185 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Privoo Desktop: Privacy and security</title>
-<meta name="description" content="A complete reference to Privoo&#39;s privacy and security architecture: content blocking, HTTPS upgrading, cookie policy, encrypted DNS, fingerprint resistance, Tor routing and the Privacy Shield.">
+<title>Privacy</title>
+<meta name="description" content="What Privoo protects, how it does it, and what it cannot protect you from. Plus the data Privoo collects, which is none.">
 <link rel="icon" href="./logo.png">
 <script>try{var t=localStorage.getItem('privoo-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;}catch(e){}</script>
 <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
 
-<header class="topbar">
-  <a class="brand" href="./index.html">
-    <img src="./logo.png" alt="" width="24" height="24">
-    <b>Privoo</b>
-    <span class="ver">reference</span>
-  </a>
-  <div class="topbar-right">
-    <a href="https://github.com/sharp4real/privoobrowser/releases/latest">Download</a>
-    <a href="https://github.com/sharp4real/privoobrowser">Source</a>
-    <a href="https://discord.gg/WweUzF3YCQ">Discord</a>
-    <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch to dark mode" aria-pressed="false">☾ Dark</button>
-    <button class="menu-btn" id="menu-btn" aria-label="Menu">☰</button>
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="./index.html">
+      <img src="./logo.png" alt=""><span>Privoo</span><span class="tag">6.0.4</span>
+    </a>
+    <nav class="nav" id="nav">
+      <a href="./features.html">Features</a>
+      <a href="./privacy.html" aria-current="page">Privacy</a>
+      <a href="./shortcuts.html">Shortcuts</a>
+      <a href="./faq.html">FAQ</a>
+      <a href="https://github.com/sharp4real/privoobrowser">Source</a>
+      <a class="btn btn-primary btn-sm" href="./download.html">Download</a>
+    </nav>
+    <button class="icon-btn" id="theme-btn" type="button" aria-label="Switch theme">
+      <svg class="moon" viewBox="0 0 24 24"><path d="M12.3 3a9 9 0 1 0 8.7 11.3A7.4 7.4 0 0 1 12.3 3z"/></svg>
+      <svg class="sun" viewBox="0 0 24 24"><path d="M12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-13.4V1h0v2.6zM12 23v-2.6 2.6zM3.6 12H1h2.6zM23 12h-2.6H23zM5.2 5.2 3.4 3.4l1.8 1.8zm15.4 15.4-1.8-1.8 1.8 1.8zM5.2 18.8l-1.8 1.8 1.8-1.8zM20.6 3.4l-1.8 1.8 1.8-1.8z"/></svg>
+    </button>
+    <button class="icon-btn menu-btn" id="menu-btn" type="button" aria-label="Menu" aria-expanded="false">
+      <svg viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </button>
   </div>
 </header>
 
-<div class="shell">
-  <aside class="sidebar" id="sidebar">
-    <h4>Article</h4>
-    <a href="./index.html">Privoo Desktop</a>
-    <a href="./install.html">Installation</a>
-    <h4>Protection</h4>
-    <a href="./privacy.html" class="active">Privacy and security</a>
-    <a href="./mariana.html">.mariana hosting</a>
-    <h4>Using Privoo Desktop</h4>
-    <a href="./tools.html">Built-in tools</a>
-    <a href="./ai.html">Privoo AI</a>
-    <a href="./browsing.html">Browsing</a>
-    <a href="./appearance.html">Appearance</a>
-    <h4>Other products</h4>
-    <a href="./android.html">Privoo for Android</a>
-    <a href="./coder.html">Privoo Coder</a>
-    <h4>Reference</h4>
-    <a href="./shortcuts.html">Keyboard shortcuts</a>
-    <a href="./faq.html">FAQ and troubleshooting</a>
-  </aside>
-
-  <main class="doc">
-    <h1>Privoo Desktop: Privacy and security</h1>
-    <p class="subtitle">From the Privoo reference. This article covers version 5.0.6.</p>
-    <p class="hatnote">Main article: <a href="./index.html">Privoo Desktop</a>. For anonymous publishing, see <a href="./mariana.html">.mariana hosting</a>.</p>
-
-    <aside class="infobox">
-      <div class="ib-head"><div class="ib-title">Protection summary</div></div>
-      <table>
-        <tbody><tr class="ib-sec"><td colspan="2">Enabled by default</td></tr>
-        <tr><th>Ad and tracker blocking</th><td>EasyList, EasyPrivacy, uBlock Origin</td></tr>
-        <tr><th>Force HTTPS</th><td>Yes</td></tr>
-        <tr><th>Third-party cookies</th><td>Blocked</td></tr>
-        <tr><th>Encrypted DNS</th><td>DoH, strict mode</td></tr>
-        <tr><th>Canvas protection</th><td>Per-origin noise</td></tr>
-        <tr><th>WebRTC protection</th><td>Public interface only</td></tr>
-        <tr><th>Do Not Track</th><td>Sent</td></tr>
-        <tr><th>Cryptojacking</th><td>Blocked</td></tr>
-        <tr class="ib-sec"><td colspan="2">Optional</td></tr>
-        <tr><th>Stronger tracking protection</th><td>Param stripping, Referer trimming, GPC</td></tr>
-        <tr><th>Proxy / Tor</th><td>Manual or bundled Tor</td></tr>
-        <tr><th>Family filtering</th><td>DNS + navigation layer</td></tr>
-        <tr><th>Clear data on exit</th><td>Configurable</td></tr>
-      </tbody></table>
-    </aside>
-
-    <p class="lead">
-      This article documents every privacy and security protection in Privoo: what it
-      does, where it acts in the request pipeline, and which setting controls it. All
-      protections described here are included in the browser; none are on a paid tier.
-    </p>
-
-    <nav class="toc">
-      <div class="toc-title">Contents</div>
-      <ol>
-        <li><a href="./privacy#shield">The Privacy Shield</a>
-          <ol>
-            <li><a href="./privacy#shield-toggle">Behaviour when disabled</a></li>
-            <li><a href="./privacy#shield-persite">Per-site exceptions</a></li>
-          </ol>
-        </li>
-        <li><a href="./privacy#blocking">Content blocking</a>
-          <ol>
-            <li><a href="./privacy#blocking-layer">Network-layer enforcement</a></li>
-            <li><a href="./privacy#blocking-lists">Filter lists</a></li>
-          </ol>
-        </li>
-        <li><a href="./privacy#https">HTTPS upgrading</a></li>
-        <li><a href="./privacy#cookies">Cookie policy</a></li>
-        <li><a href="./privacy#dns">Encrypted DNS</a></li>
-        <li><a href="./privacy#fingerprint">Fingerprint resistance</a>
-          <ol>
-            <li><a href="./privacy#fp-canvas">Canvas noise</a></li>
-            <li><a href="./privacy#fp-ua">User-Agent normalisation</a></li>
-            <li><a href="./privacy#fp-webrtc">WebRTC</a></li>
-          </ol>
-        </li>
-        <li><a href="./privacy#stronger">Stronger tracking protection</a></li>
-        <li><a href="./privacy#crypto">Cryptojacking protection</a></li>
-        <li><a href="./privacy#tor">Tor, proxies and alternative naming</a></li>
-        <li><a href="./privacy#family">Family filtering</a></li>
-        <li><a href="./privacy#isolation">Profiles and data isolation</a></li>
-        <li><a href="./privacy#passwords">Password storage</a></li>
-        <li><a href="./privacy#threat">Threat model</a></li>
-        <li><a href="./privacy#see-also">See also</a></li>
-      </ol>
-    </nav>
-
-    <h2 id="shield">The Privacy Shield</h2>
-    <p>
-      The shield icon in the toolbar is frequently misunderstood as a single feature with
-      a single switch. It is not. <b>The shield is a status display</b> for the six
-      independent protections listed beneath it, each of which has its own setting in
-      <b>Settings → Privacy and security</b>.
-    </p>
-    <p>
-      The toolbar carries only the shield icon; the numbers live inside the panel, not on
-      the button, so the browser chrome stays quiet. Opening the shield reports what has
-      been blocked: trackers and advertisements, cookies, and HTTPS upgrades performed.
-    </p>
-
-    <h3 id="shield-toggle">Behaviour when disabled</h3>
-    <p>
-      When a protection is switched off in Settings, it stops. The setting is consulted
-      on every request rather than only at startup, so the change takes effect on the
-      next request in both directions, without a restart.
-    </p>
-    <div class="note">
-      <span class="label">Historical note</span>
+<div class="page">
+  <div class="wrap">
+    <div class="page-head">
+      <h1>Privacy</h1>
       <p>
-        This was not always true. Before version 5.0.4, the ad-blocking engine read its
-        setting only once, when the browser session was initialised. Disabling ad
-        blocking mid-session therefore had no effect until the browser was restarted. The
-        setting is now evaluated per request, and the release notes record the change.
+        What Privoo protects, how it does it, and the part most browsers leave out:
+        what it does not protect you from.
       </p>
     </div>
 
-    <h3 id="shield-persite">Per-site exceptions</h3>
-    <p>
-      The shield panel contains a per-site switch, <b>Ads blocked on this site</b>.
-      Turning it off adds that site to an exclusion list, which is checked on every
-      request. This allows advertising on a chosen site, for example one the user wishes
-      to support, without weakening the global configuration.
-    </p>
-    <p>
-      Privoo also maintains an internal compatibility list for sites where aggressive
-      filtering or fingerprint protection is known to break required functionality, such
-      as certain educational platforms, and sites whose login or integrity systems read
-      the very browser signals Privoo alters. On those hosts the request-blocking engine
-      and canvas protection step aside so the site works; for example, TikTok's login uses
-      a device-fingerprint routine that reads canvas output, and farbling it made the
-      sign-in fail, so canvas protection is relaxed there. Additionally, if a recognised
-      third-party content blocker is installed, Privoo steps aside entirely on YouTube,
-      because two blockers competing over the same requests can leave the player in a
-      broken state.
-    </p>
-
-    <h2 id="blocking">Content blocking</h2>
-
-    <h3 id="blocking-layer">Network-layer enforcement</h3>
-    <p>
-      Blocking is performed in the request pipeline by Ghostery's
-      <code>adblocker-electron</code> engine. The distinction from cosmetic blocking
-      matters: a blocked request is cancelled before it is issued. The resource is never
-      fetched, so it transfers no bytes, executes no JavaScript, sets no cookies, and
-      never observes the user's IP address. Hiding an advertisement with CSS after it has
-      loaded achieves none of those.
-    </p>
-    <p>
-      This is also the mechanism behind the performance claim. A blocked advertisement is
-      not merely invisible; it is work the browser never performed.
-    </p>
-    <p>
-      Filter lists are compiled into an engine at launch and cached on disk. The cache is
-      invalidated after seven days so that rules, notably the anti-adblock countermeasures
-      that change frequently, stay current. If the list fetch fails, for example on a
-      network that is not yet connected at startup, Privoo retries and meanwhile falls
-      back to a small built-in host blocklist rather than leaving the user unprotected.
-    </p>
-
-    <h3 id="blocking-lists">Filter lists</h3>
-    <div class="table-wrap">
-      <table>
-        <caption>Built-in filter lists</caption>
-        <thead><tr><th>List</th><th>Purpose</th></tr></thead>
-        <tbody>
-          <tr><td>EasyList</td><td>The primary advertising filter list.</td></tr>
-          <tr><td>EasyPrivacy</td><td>Tracking and analytics scripts.</td></tr>
-          <tr><td>uBlock Origin lists</td><td>Additional rules, including anti-adblock countermeasures.</td></tr>
-          <tr><td>Cryptojacking list</td><td>Known in-browser cryptocurrency mining scripts.</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p>
-      Any built-in list may be disabled, and arbitrary list URLs may be added, in
-      <b>Settings → Privacy and security → Filter lists</b>. Because lists are
-      compiled at launch, changes to the list selection apply after a restart.
-    </p>
-
-    <h2 id="https">HTTPS upgrading</h2>
-    <p>
-      Plaintext HTTP can be read and modified in transit by any intermediary, including
-      the network operator. When a navigation targets an <code>http://</code> URL, Privoo
-      cancels it and reissues it over HTTPS.
-    </p>
-    <p>
-      If a site has no HTTPS version at all, Privoo presents an interstitial rather than
-      silently returning the user to plaintext, so continuing is an explicit choice. A
-      brief notice shown during the upgrade can be disabled separately for users who find
-      it intrusive. Localhost and hosts the user has explicitly bypassed are exempt.
-    </p>
-
-    <h2 id="cookies">Cookie policy</h2>
-    <p>
-      A third-party cookie is one belonging to a domain other than the site being
-      visited, and is the classic mechanism for correlating a user's activity across
-      sites. Privoo strips them bidirectionally: the <code>Cookie</code> request header on
-      outgoing cross-site subresource requests, and the <code>Set-Cookie</code> response
-      header on the way back.
-    </p>
-    <p>
-      First-party cookies are untouched, which is why sessions on sites the user actually
-      visits are preserved. A main-frame document request is first-party by definition and
-      is never stripped.
-    </p>
-    <div class="note">
-      <span class="label">Historical note</span>
+    <div class="prose">
+      <h2>The data Privoo collects</h2>
+      <p>None.</p>
       <p>
-        An earlier implementation compared a main-frame request against the previous
-        page's origin, because during navigation the browser still reports the old URL.
-        Top-level loads were therefore misclassified as cross-site and had their cookies
-        removed, causing some services to sign users out on restart. Main-frame requests
-        are now excluded from the check.
+        That is the whole section, but it is worth saying what it means in
+        practice, because "we don't sell your data" usually means something
+        narrower than it sounds.
+      </p>
+      <ul>
+        <li>There is no Privoo account, so there is no profile to attach anything to.</li>
+        <li>There is no sync server, so your history and bookmarks have nowhere to be uploaded to.</li>
+        <li>There is no analytics or crash-reporting endpoint. Privoo does not phone home on launch, on navigation, or on error.</li>
+        <li>The only outbound requests Privoo makes that you did not ask for are the update check and the filter-list refresh, and both can be turned off in Settings.</li>
+      </ul>
+      <p>
+        Your history, bookmarks, passwords, settings and AI conversations are
+        files in one folder on your own disk. You can read them, back them up,
+        or delete them.
+      </p>
+
+      <h2>What is on by default</h2>
+      <p>
+        Protections that are off until you find them are not protections. These
+        are all active before you open the first tab:
+      </p>
+      <ul>
+        <li><b>Ad and tracker blocking.</b> EasyList, EasyPrivacy and the uBlock Origin lists, applied at the network layer so blocked requests never leave the machine.</li>
+        <li><b>Third party cookies blocked.</b> This is the mechanism most cross site tracking still depends on.</li>
+        <li><b>HTTPS only mode.</b> Insecure connections are upgraded automatically.</li>
+        <li><b>DNS over HTTPS.</b> Your lookups are encrypted, so the list of sites you resolve is not readable on the wire.</li>
+        <li><b>Fingerprint protection.</b> Canvas readback is noised deterministically per origin, the user agent is normalised, and WebRTC cannot leak your local address.</li>
+        <li><b>Do Not Track and Global Privacy Control.</b> Both signals are sent.</li>
+        <li><b>Tracking parameter stripping.</b> <code>utm_*</code>, <code>fbclid</code>, <code>gclid</code> and friends are removed from URLs, and the <code>Referer</code> header is minimised.</li>
+        <li><b>Paste protection</b> and <b>pop&#8209;up blocking</b>, both described below.</li>
+      </ul>
+
+      <h2>What Privoo cannot do</h2>
+      <div class="note">
+        <b>This is the important section.</b> A browser that overstates itself
+        is worse than one that says nothing, because you make different
+        decisions when you believe you are protected.
+      </div>
+      <ul>
+        <li><b>It does not hide which sites you visit from your internet provider.</b> Encrypted DNS hides the lookup; the connection itself still goes to an address your provider can see. Turn on the VPN or route through Tor if that matters.</li>
+        <li><b>It does not make you anonymous to sites you sign in to.</b> If you log in, you have identified yourself, and no amount of fingerprint protection changes that.</li>
+        <li><b>It does not protect a compromised machine.</b> Malware, a keylogger, or someone with access to your unlocked computer are all outside what a browser can do anything about.</li>
+        <li><b>It does not judge whether a site is honest.</b> Paste protection checks the shape of a link. It cannot tell you whether the people behind a legitimate-looking site are trustworthy.</li>
+        <li><b>Incognito does not make you invisible.</b> It stops Privoo writing anything to this device. Your employer, your school, your provider and the sites themselves see exactly what they always saw.</li>
+      </ul>
+
+      <h2>Paste protection</h2>
+      <p>
+        When you paste a link into the address bar, Privoo looks at it before
+        you follow it. The check is deliberately a short list of things that are
+        almost never innocent, because a warning people learn to click through
+        is worse than no warning at all.
+      </p>
+      <ul>
+        <li>A username hidden before an <code>@</code>, which browsers do not display. <code>https://apple.com@evil.example</code> reads as Apple and goes somewhere else.</li>
+        <li>Punycode hostnames, whose decoded form uses characters that look like ordinary letters but are not.</li>
+        <li>A well-known brand name appearing on a domain that is not that brand's.</li>
+        <li>A bare public IP address where a hostname belongs. Addresses on your own network are exempt, because a router admin page is a normal thing to open.</li>
+        <li><code>javascript:</code> and <code>data:</code> links, which have no legitimate reason to arrive via the clipboard.</li>
+      </ul>
+      <p>
+        There is no "this domain is new" check and no "http is insecure" check.
+        Both fire constantly during ordinary browsing, and a warning that fires
+        constantly is one people route around entirely. You can turn the whole
+        thing off in <b>Settings → Privacy</b>.
+      </p>
+
+      <h2>Pop-up blocking</h2>
+      <p>
+        Privoo answers one question: did you just do something? A page that
+        opens a window a moment after your click is acting on that click. One
+        that opens a window with no interaction at all is acting on its own.
+      </p>
+      <p>
+        Every legitimate case follows an interaction, whether that is a link, a "sign in with" button or a download,
+        follows an interaction, so the test costs them nothing. Pop-unders and
+        timer-driven ad redirects do not wait for one, so it catches them.
+      </p>
+
+      <h2>Where your data lives</h2>
+      <div class="table-wrap" style="margin:18px 0">
+        <table>
+          <thead><tr><th>Platform</th><th>Path</th></tr></thead>
+          <tbody>
+            <tr><td>Windows</td><td class="muted"><code>%APPDATA%/privoo/</code></td></tr>
+            <tr><td>macOS</td><td class="muted"><code>~/Library/Application Support/privoo/</code></td></tr>
+            <tr><td>Linux</td><td class="muted"><code>~/.config/privoo/</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Passwords and API keys in that folder are encrypted. Everything else is
+        plain JSON, and that is deliberate. You should be able to read what a browser has
+        written about you.
+      </p>
+
+      <h2>Verifying any of this</h2>
+      <p>
+        None of the above should be taken on trust. Privoo is
+        <a href="https://github.com/sharp4real/privoobrowser">MIT licensed and public</a>;
+        the network layer is in <code>main.js</code> and the blocking is
+        <a href="https://github.com/ghostery/adblocker">Ghostery's engine</a>.
+        Point a proxy at it and watch what it sends.
       </p>
     </div>
-
-    <h2 id="dns">Encrypted DNS</h2>
-    <p>
-      Every navigation begins with a DNS lookup translating a hostname into an address.
-      By default such lookups are sent in plaintext to whichever resolver the network
-      provides, typically the ISP's, producing a complete and readable record of every
-      site visited.
-    </p>
-    <p>
-      Privoo issues these lookups over DNS-over-HTTPS. It operates in <b>strict mode</b>,
-      meaning that if the encrypted resolver is unreachable, resolution fails rather than
-      falling back to plaintext. This is a deliberate and consequential choice: a DoH
-      implementation that silently falls back leaks precisely when the network is most
-      likely to be hostile.
-    </p>
-    <div class="table-wrap">
-      <table>
-        <caption>Supported DoH providers</caption>
-        <thead><tr><th>Provider</th><th>Notes</th></tr></thead>
-        <tbody>
-          <tr><td>Cloudflare</td><td>Default.</td></tr>
-          <tr><td>AdGuard</td><td>Filtering variants available.</td></tr>
-          <tr><td>Quad9</td><td>Malware-blocking resolver.</td></tr>
-          <tr><td>NextDNS</td><td>Configurable account-based resolver.</td></tr>
-          <tr><td>Google</td><td>Public resolver.</td></tr>
-          <tr><td>Custom</td><td>Any DoH endpoint, typically ending in <code>/dns-query</code>.</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <h2 id="fingerprint">Fingerprint resistance</h2>
-    <p>
-      Blocking cookies alone is insufficient, because a site can identify a returning
-      visitor from the combination of characteristics the browser exposes: fonts,
-      screen geometry, graphics hardware behaviour, and so on. This technique requires no
-      client-side storage, so clearing cookies does not affect it.
-    </p>
-
-    <h3 id="fp-canvas">Canvas noise</h3>
-    <p>
-      A site can draw graphics to an off-screen canvas and read back the pixels; minute
-      differences between graphics stacks yield a stable identifier. Privoo perturbs
-      these reads.
-    </p>
-    <p>
-      The noise is <b>deterministic per origin</b>: a given site observes a consistent
-      value across visits, while different sites observe different values. This is a
-      considered design decision. Noise randomised on every read would defeat correlation
-      within a site but would itself be conspicuous, since being the only visitor whose
-      fingerprint changes on every read is a fingerprint.
-    </p>
-
-    <h3 id="fp-ua">User-Agent normalisation</h3>
-    <p>
-      Privoo reports a common Chrome identity rather than announcing itself as a niche
-      browser, and keeps the User-Agent string, Client Hints headers and
-      <code>navigator.userAgentData</code> mutually consistent. An inconsistency between
-      those is itself detectable.
-    </p>
-    <p>
-      The reasoning is that a rare browser is trivially identifiable, so the larger crowd
-      is the safer place to stand. A practical side effect is compatibility with sites
-      that refuse to serve user agents they do not recognise.
-    </p>
-
-    <h3 id="fp-webrtc">WebRTC</h3>
-    <p>
-      WebRTC can disclose a device's real IP address even when a VPN or proxy is in use,
-      which defeats the purpose of the proxy. Privoo restricts the WebRTC IP-handling
-      policy to the public interface. An exception exists for Google properties, whose
-      bot detection treats the restricted policy as suspicious and responds with
-      persistent CAPTCHAs.
-    </p>
-
-    <h2 id="stronger">Stronger tracking protection</h2>
-    <p>
-      An optional layer that acts on requests which are not themselves blocked:
-    </p>
-    <ul class="plain">
-      <li><b>Tracking parameter stripping.</b> Identifiers appended to URLs are removed before the request is issued, and the page is loaded at the cleaned URL. Affected parameters include <code>utm_*</code>, <code>fbclid</code>, <code>gclid</code>, <code>gbraid</code>, <code>wbraid</code>, <code>msclkid</code>, <code>twclid</code>, <code>igshid</code>, <code>yclid</code>, <code>dclid</code>, <code>mc_eid</code> and others.</li>
-      <li><b>Referer minimisation.</b> On cross-origin requests the <code>Referer</code> header is reduced to the origin, so the destination learns the referring domain but not the exact page.</li>
-      <li><b>Global Privacy Control.</b> The <code>Sec-GPC</code> header is sent, which in some jurisdictions constitutes a legally binding instruction not to sell or share personal data.</li>
-    </ul>
-
-    <h2 id="crypto">Cryptojacking protection</h2>
-    <p>
-      Some pages embed scripts that use the visitor's processor to mine cryptocurrency,
-      typically manifesting as a hot, loud and slow machine. Privoo applies a dedicated
-      blocklist of known mining scripts, enabled by default.
-    </p>
-
-    <h2 id="tor">Tor, proxies and alternative naming</h2>
-    <p>
-      Traffic may be routed through a manual proxy, specified as a
-      <code>socks5://</code> or <code>http://</code> URL, or through a bundled Tor
-      circuit, configured in <b>Settings → Privacy and security → Proxy</b>. The
-      Tor SOCKS port defaults to <code>127.0.0.1:9100</code>.
-    </p>
-    <p>
-      Independently of that setting, <code>.onion</code> addresses are always routed over
-      Tor by means of a proxy auto-configuration rule that matches only that suffix. The
-      Tor process is started on demand at the first <code>.onion</code> navigation. The
-      remainder of the user's browsing is not rerouted, so opening a single hidden-service
-      link does not silently move all traffic onto Tor.
-    </p>
-    <div class="table-wrap">
-      <table>
-        <caption>Alternative naming and transports</caption>
-        <thead><tr><th>Scheme</th><th>Handling</th></tr></thead>
-        <tbody>
-          <tr><td><code>.onion</code></td><td>Routed over the bundled Tor SOCKS proxy.</td></tr>
-          <tr><td><code>.eth</code></td><td>ENS name resolved via a public gateway.</td></tr>
-          <tr><td><code>.crypto</code>, <code>.wallet</code>, <code>.nft</code>, others</td><td>Unstoppable Domains, via the same gateway.</td></tr>
-          <tr><td><code>ipfs://</code>, <code>ipns://</code></td><td>Redirected to an IPFS gateway.</td></tr>
-          <tr><td><code>mariana://</code></td><td>Privoo's own anonymous hosting. See <a href="./mariana.html">.mariana hosting</a>.</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="note warn">
-      <span class="label">Gateways are third parties</span>
-      <p>
-        ENS and IPFS resolution occur through public gateways. Those gateways observe the
-        request. This is a pragmatic trade-off for convenience, and it is weaker than
-        running a resolver or IPFS node locally.
-      </p>
-    </div>
-
-    <h2 id="family">Family filtering</h2>
-    <p>
-      Optional adult-content blocking is enforced at two layers simultaneously: DNS is
-      routed through a family-safe resolver (Cloudflare or AdGuard family filters), and
-      navigation is checked against a classified domain list containing approximately
-      76,000 entries. Enforcement occurs in the request pipeline rather than only at
-      navigation, which covers script-driven redirects, popups and the initial load of a
-      newly created tab. It requires encrypted DNS to be enabled.
-    </p>
-
-    <h2 id="isolation">Profiles and data isolation</h2>
-    <p>
-      <b>Profiles</b> are separate browsing identities. Isolation is achieved by
-      redirecting Chromium's entire userData directory at process start, which separates
-      cookies, cache, local storage, history, logins and settings at the filesystem
-      level rather than by convention.
-    </p>
-    <p>
-      <b>Guest mode</b> provides a session that retains nothing. <b>Incognito windows</b>
-      use a private session that is discarded on close and is never written to history.
-      Incognito windows also close fully rather than minimising to the tray, so a private
-      session does not persist in memory after the window is closed.
-    </p>
-    <p>
-      <b>Clear data on exit</b> erases selected categories on every quit.
-      <b>Delete all data</b> removes everything Privoo has stored, returning the browser
-      to a fresh state. Neither has a remote counterpart, because no remote copy exists.
-    </p>
-
-    <h2 id="passwords">Password storage</h2>
-    <p>
-      The built-in vault stores credentials encrypted on the local device. There is no
-      cloud vault, no master account and no synchronisation.
-    </p>
-    <p>
-      The trade-off is worth stating in both directions: credentials cannot be exposed by
-      a breach of a server that does not exist, and equally they will not appear on the
-      user's other devices, because nothing transports them there.
-    </p>
-
-    <h2 id="threat">Threat model</h2>
-    <p>
-      Privoo's documentation is explicit about what the browser does and does not
-      address. Its protections are aimed at the commercial tracking industry: advertising
-      networks, analytics providers, cross-site correlation and fingerprinting. Against
-      that adversary the defaults are strong and enabled from first launch.
-    </p>
-    <p>
-      No browser makes a user anonymous. Privoo's own documentation states that a user
-      whose adversary is a determined state actor should use Tor Browser, and notes that
-      Privoo will route <code>.onion</code> traffic in the meantime.<sup class="ref"><a href="./privacy#ref-1">[1]</a></sup>
-      Incognito mode prevents local retention only; it does not conceal the user from the
-      sites visited or from the network.
-    </p>
-
-    <div class="btn-row">
-      <a class="lbtn primary" href="https://github.com/sharp4real/privoobrowser/releases/latest">Download Privoo</a>
-      <a class="lbtn" href="./mariana.html">Read: .mariana hosting</a>
-      <a class="lbtn" href="https://github.com/ghostery/adblocker">Ghostery adblocker engine</a>
-      <a class="lbtn" href="https://github.com/sharp4real/privoobrowser/issues">Report a tracking bug</a>
-    </div>
-
-    <h2 id="see-also" class="nonum">See also</h2>
-    <ul>
-      <li><a href="./mariana.html">Privoo Desktop: .mariana hosting</a></li>
-      <li><a href="./tools.html">Privoo Desktop: Built-in tools</a></li>
-      <li><a href="./faq.html">Privoo Desktop: FAQ and troubleshooting</a></li>
-      <li><a href="./index.html#privacy-model">Privoo Desktop: Privacy model</a></li>
-    </ul>
-
-    <h2 class="nonum">References</h2>
-    <ol class="refs">
-      <li id="ref-1"><a href="https://github.com/sharp4real/privoobrowser#readme">Privoo Browser README</a>. Project repository. Retrieved 16 July 2026.</li>
-      <li id="ref-2"><code>settings-store.js</code> and <code>main.js</code>, request pipeline. Project repository, version 5.0.6.</li>
-    </ol>
-
-    <nav class="pager">
-      <a href="./install.html"><span>Previous</span><b>‹ Installation</b></a>
-      <a class="next" href="./mariana.html"><span>Next</span><b>.mariana hosting ›</b></a>
-    </nav>
-  </main>
+  </div>
 </div>
 
-<footer class="foot">
-  <span>Privoo is an independent project. No telemetry, no tracking, no data collection.</span>
-  <span>Content describes Privoo 5.0.6 · MIT licensed</span>
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="brand" href="./index.html"><img src="./logo.png" alt=""><span>Privoo</span></a>
+      </div>
+      <div class="foot-col">
+        <h4>Links</h4>
+        <a href="./features.html">Features</a>
+        <a href="./privacy.html">Privacy</a>
+        <a href="./download.html">Download</a>
+        <a href="./shortcuts.html">Shortcuts</a>
+        <a href="./faq.html">FAQ</a>
+        <a href="https://github.com/sharp4real/privoobrowser">GitHub</a>
+        <a href="https://discord.gg/WweUzF3YCQ">Discord</a>
+      </div>
+    </div>
+    <div class="foot-base">
+      <span>MIT licensed. No telemetry, no tracking, no data collection.</span>
+      <span>6.0.4</span>
+    </div>
+  </div>
 </footer>
 
-<script src="./nav.js"></script>
-
-
-</body></html>
+<script src="./site.js"></script>
+</body>
+</html>

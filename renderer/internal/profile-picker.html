@@ -6,10 +6,10 @@
 <title>Privoo Profiles</title>
 <style>
   :root {
-    --bg: #202124;
-    --bg2: #202124;
-    --card: #202124;
-    --card-hover: #303134;
+    --bg: #1e1e21;
+    --bg2: #1e1e21;
+    --card: #1e1e21;
+    --card-hover: #37373f;
     --text: #eceaf6;
     --muted: rgba(236,233,224,0.52);
     --faint: rgba(236,233,224,0.34);
@@ -57,112 +57,137 @@
 
   main {
     flex: 1; min-height: 0;
-    display: flex; flex-direction: column; align-items: center;
-    padding: 4px 40px 0;
+    display: flex; flex-direction: column;
+    padding: 0 34px;
     overflow: hidden;
   }
-  .logo {
-    width: 46px; height: 46px; border-radius: 12px; object-fit: contain;
-    margin-bottom: 14px;
-  }
-  h1 {
-    font-size: 26px; font-weight: 700; letter-spacing: -0.02em;
-    margin: 0 0 6px;
-  }
-  .subtitle {
-    font-size: 13.5px; color: var(--muted); margin: 0 0 26px;
-  }
 
-  /* Profile grid */
-  .grid {
-    display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;
-    width: 100%; max-width: 600px;
-    overflow-y: auto; padding: 6px;
-    max-height: 320px;
+  /* ── The heading, on one line ────────────────────────────────────────
+     A 40px logo, a headline and a subtitle each on their own centred line
+     took a third of a short window before the first profile appeared. */
+  .head {
+    display: flex; align-items: center; gap: 13px;
+    flex-shrink: 0; padding: 2px 0 20px;
   }
-  .grid::-webkit-scrollbar { width: 8px; }
+  .logo { width: 34px; height: 34px; border-radius: 9px; object-fit: contain; flex-shrink: 0; }
+  .head-text { min-width: 0; }
+  h1 { font-size: 19px; font-weight: 640; letter-spacing: -0.022em; margin: 0 0 2px; }
+  .subtitle { font-size: 12.5px; color: var(--muted); margin: 0; line-height: 1.4; }
+
+  /* ── The list ────────────────────────────────────────────────────────
+     Rows, not a grid of cards. A picker is a short list you read down and
+     click one of; a grid of centred boxes gives the eye no line to follow
+     and no room to say anything about a profile beyond its initial. */
+  .grid {
+    display: flex; flex-direction: column; gap: 2px;
+    width: 100%;
+    overflow-y: auto; overflow-x: hidden;
+    padding: 0 0 4px;
+    scrollbar-width: thin;
+  }
+  .grid::-webkit-scrollbar { width: 6px; }
   .grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 12px; }
 
   .card {
     position: relative;
-    width: 168px;
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 26px 16px 20px;
-    display: flex; flex-direction: column; align-items: center; gap: 14px;
+    display: flex; align-items: center; gap: 13px;
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid transparent;
+    border-radius: 11px;
+    background: transparent;
     cursor: pointer;
-    transition: background .14s, transform .12s, border-color .14s, box-shadow .14s;
+    text-align: left;
+    transition: background .12s ease, border-color .12s ease;
   }
-  .card:hover {
-    background: var(--card-hover);
-    transform: translateY(-3px);
-    border-color: var(--accent);
-    box-shadow: 0 14px 34px rgba(0,0,0,0.38);
-  }
-  .card.add {
-    justify-content: center;
-    border-color: var(--line);
-    background: var(--card);
-    min-height: 172px;
-  }
-  .card.add:hover { background: var(--card-hover); }
-  .card.add .card-name { color: var(--muted); }
+  .card:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.09); }
+  .card:active { background: rgba(255,255,255,0.03); }
+
+  /* "Add profile" is the last row, set quieter — it is an action, not a
+     profile, and a dashed box the size of a person was overstating it. */
+  .card.add { border-style: dashed; border-color: rgba(255,255,255,0.12); margin-top: 6px; }
+  .card.add:hover { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.04); }
+  .card.add .card-name { color: var(--muted); font-weight: 500; }
 
   .avatar {
-    width: 92px; height: 92px; border-radius: 50%;
+    width: 38px; height: 38px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 34px; font-weight: 700; color: #fff;
+    font-size: 14px; font-weight: 640; color: #fff;
     overflow: hidden; flex-shrink: 0; position: relative;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
   }
   .avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* The drawn stand-in. It fills the disc edge to edge rather than sitting
+     in the middle of it: a small figure floating in a large circle reads as
+     a missing icon, a full-bleed one reads as a picture. */
+  .pp-person {
+    width: 100%; height: 100%; display: block;
+    fill: #fff; opacity: .93;
+  }
+
+  /* Name over its one-line description. The grid had nowhere to put the
+     second line, which is why every profile looked the same. */
+  .card-lines { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
   .card-name {
-    font-size: 15px; font-weight: 600;
-    max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 13.5px; font-weight: 550;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .card-sub {
+    font-size: 11.5px; color: var(--faint);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .card-default-tag {
-    font-size: 10px; font-weight: 700; color: var(--accent);
-    text-transform: uppercase; letter-spacing: .06em; margin-top: -8px;
+    flex-shrink: 0;
+    font-size: 9px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .07em;
+    padding: 2px 7px; border-radius: 999px;
+    border: 1px solid var(--line);
+    margin: 0;
   }
+  /* Edit sits in the row, on hover, where the close button sits on a tab. */
   .card-edit {
-    position: absolute; top: 10px; right: 10px;
-    width: 28px; height: 28px; border-radius: 12px; border: none;
-    background: rgba(0,0,0,0.32); color: rgba(255,255,255,0.7); cursor: pointer;
-    display: none; align-items: center; justify-content: center;
-    transition: background .12s;
+    position: static;
+    width: 26px; height: 26px; border-radius: 7px; border: none;
+    background: transparent; color: var(--faint); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity .12s ease, background .12s ease, color .12s ease;
   }
-  .card:hover .card-edit { display: flex; }
-  .card-edit:hover { background: rgba(0,0,0,0.55); color: #fff; }
+  .card:hover .card-edit { opacity: 1; }
+  .card-edit:hover { background: rgba(255,255,255,0.1); color: var(--text); }
 
   .add-circle {
-    width: 92px; height: 92px; border-radius: 50%;
-    background: var(--accent-soft);
+    width: 38px; height: 38px; border-radius: 50%;
+    background: rgba(255,255,255,0.06);
     display: flex; align-items: center; justify-content: center;
-    color: var(--accent);
+    color: var(--muted);
+    flex-shrink: 0;
     transition: background .14s, color .14s;
   }
-  .card.add:hover .add-circle { background: var(--accent); color: #16161c; }
+  .card.add:hover .add-circle { background: rgba(255,255,255,0.12); color: var(--text); }
 
   /* Footer */
   footer {
     flex-shrink: 0;
-    width: 100%; max-width: 560px;
-    padding: 16px 0 22px;
-    display: flex; flex-direction: column; align-items: center; gap: 14px;
+    width: 100%;
+    padding: 16px 0 20px;
+    margin-top: 8px;
+    border-top: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
     color: var(--faint); font-size: 12px;
   }
   .guest-btn {
     -webkit-app-region: no-drag;
     display: inline-flex; align-items: center; gap: 8px;
-    padding: 9px 18px; border-radius: 12px;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.12);
-    color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer;
-    transition: background .14s, border-color .14s, transform .1s;
+    padding: 8px 16px; border-radius: 10px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.14);
+    color: var(--text); font-size: 12.5px; font-weight: 550; cursor: pointer;
+    transition: background .14s, border-color .14s;
   }
-  .guest-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
-  .guest-btn:active { transform: scale(.97); }
+  .guest-btn:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.24); }
+  .guest-btn:active { background: rgba(255,255,255,0.04); }
   .switch {
     -webkit-app-region: no-drag;
     display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
@@ -214,6 +239,10 @@
   }
   .modal-avatar:hover { transform: scale(1.03); box-shadow: 0 0 0 5px var(--accent-soft), 0 8px 22px rgba(0,0,0,0.35); }
   .modal-avatar img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+  /* #modal-initials is a span sized by its text; with a drawing inside it, it
+     needs the size given to it instead. A class rather than :has(), so this
+     cannot quietly do nothing on an engine that lacks it. */
+  .modal-avatar #modal-initials.has-person { position: absolute; inset: 0; }
   .modal-avatar .cam {
     position: absolute; inset: 0; background: rgba(0,0,0,0.5);
     display: flex; flex-direction: column; gap: 2px; align-items: center; justify-content: center;
@@ -271,7 +300,6 @@
   .crop-zoom {
     -webkit-appearance: none; width: 100%; height: 4px; border-radius: 3px;
     background: rgba(255,255,255,0.16); outline: none; margin: 2px 0 4px;
-    accent-color: var(--accent);
   }
   .crop-zoom::-webkit-slider-thumb {
     -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
@@ -283,8 +311,12 @@
   }
   .hidden { display: none !important; }
 </style>
+<!-- Shared finish pass: one palette across every Privoo page. Loads last so
+     it wins on order; the block above still owns this page's layout. -->
+<link rel="stylesheet" href="page-theme.css" />
 </head>
-<body>
+<!-- Always dark, like the incognito window. See the note in incognito.html. -->
+<body class="dark">
   <div id="titlebar">
     <button id="close-btn" title="Close">
       <svg viewBox="0 0 12 12" width="11" height="11"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/></svg>
@@ -292,21 +324,25 @@
   </div>
 
   <main>
-    <img class="logo" src="../../logo.png" alt="" onerror="this.style.display='none'" />
-    <h1>Who's using Privoo?</h1>
-    <p class="subtitle">Pick a profile to continue. Each keeps its own history, logins, and settings.</p>
+    <div class="head">
+      <img class="logo" src="../../logo.png" alt="" onerror="this.style.display='none'" />
+      <div class="head-text">
+        <h1>Who's using Privoo?</h1>
+        <p class="subtitle">Each one keeps its own history, logins and settings.</p>
+      </div>
+    </div>
 
     <div class="grid" id="grid"></div>
 
     <footer>
-      <button id="guest-btn" class="guest-btn" title="Open a private window — no history or cookies are kept">
+      <button id="guest-btn" class="guest-btn" title="Open a private window. No history or cookies are kept.">
         <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M12 4a4 4 0 0 1 4 4 4 4 0 0 1-8 0 4 4 0 0 1 4-4zm0 10c3.31 0 8 1.34 8 4v2H4v-2c0-2.66 4.69-4 8-4zm6.5-7.5c.83 0 1.5.67 1.5 1.5h-2.06c.02-.16.06-.33.06-.5 0-.35-.07-.68-.18-1H18.5zM6.18 6.5c-.11.32-.18.65-.18 1 0 .17.04.34.06.5H4c0-.83.67-1.5 1.5-1.5h.68z"/><circle cx="9" cy="8" r="1.2" fill="#16161c"/><circle cx="15" cy="8" r="1.2" fill="#16161c"/></svg>
         Browse as Guest
       </button>
       <label class="switch">
         <input type="checkbox" id="always-ask" />
         <span class="track"></span>
-        <span>Always ask which profile to use on startup</span>
+        <span>Always ask on startup</span>
       </label>
     </footer>
   </main>
@@ -314,7 +350,7 @@
   <div class="backdrop hidden" id="modal-backdrop">
     <div class="modal">
       <h2 id="modal-title">Create profile</h2>
-      <p class="modal-sub" id="modal-sub">Give it a name and an optional photo.</p>
+      <p class="modal-sub" id="modal-sub">Give it a name and, if you like, a photo.</p>
       <div class="modal-avatar-wrap">
         <div class="modal-avatar" id="modal-avatar">
           <span id="modal-initials">N</span>
@@ -344,8 +380,19 @@
   // The built-in "Default" profile's avatar follows the user's accent colour;
   // every other profile gets a stable, distinct palette colour so they're
   // easy to tell apart at a glance.
+  // A very light accent (Mono resolves to #ffffff) would put white on white,
+  // since everything drawn on this disc is #fff. Judged by luminance rather than
+  // by testing for one hex value: #fafafa and #f5f3ff were just as invisible.
+  function safeDisc(hex) {
+    const m = String(hex).replace('#', '').match(/^([0-9a-f]{6})$/i);
+    if (!m) return hex;
+    const [r, g, b] = m[1].match(/.{2}/g).map((x) => parseInt(x, 16) / 255);
+    const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    return lum > 0.72 ? '#6b7280' : hex;
+  }
+
   function colorFor(id) {
-    if (id === 'default') return _accent;
+    if (id === 'default') return safeDisc(_accent);
     let h = 0;
     for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
     return PALETTE[h % PALETTE.length];
@@ -388,7 +435,27 @@
   function applyFont(key) {
     document.body.style.fontFamily = UI_FONTS[key] || UI_FONTS.system;
   }
-  function initials(name) {
+  // "Last used 3 days ago" — the one fact that actually distinguishes two
+// profiles at a glance. Falls back to a description of what a profile IS for
+// one that has never been opened, rather than showing a blank line.
+function lastUsedLabel(p) {
+  // profileStore keeps this in prefs (a map of id -> timestamp), not on the
+  // profile record — see the note there.
+  const t = Number((_prefs && _prefs.lastUsed && _prefs.lastUsed[p && p.id]) || 0);
+  if (!t) return 'Not opened yet';
+  const mins = Math.floor((Date.now() - t) / 60000);
+  if (mins < 1)    return 'In use just now';
+  if (mins < 60)   return 'Last used ' + mins + (mins === 1 ? ' minute ago' : ' minutes ago');
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24)    return 'Last used ' + hrs + (hrs === 1 ? ' hour ago' : ' hours ago');
+  const days = Math.floor(hrs / 24);
+  if (days === 1)  return 'Last used yesterday';
+  if (days < 30)   return 'Last used ' + days + ' days ago';
+  const months = Math.floor(days / 30);
+  return 'Last used ' + months + (months === 1 ? ' month ago' : ' months ago');
+}
+
+function initials(name) {
     const parts = (name || 'P').trim().split(/\s+/);
     return (parts.length > 1
       ? parts[0][0] + parts[parts.length - 1][0]
@@ -414,16 +481,30 @@
         const img = document.createElement('img');
         img.src = p.avatar; img.alt = '';
         av.appendChild(img);
+      } else if (p.id === 'default') {
+        // There is only ever one built-in profile, so a letter telling it
+        // apart from nothing tells you nothing. A drawn figure at least says
+        // "this is the profile with no picture set".
+        av.innerHTML = '<svg class="pp-person" viewBox="0 0 64 64" aria-hidden="true">' + '<circle cx="32" cy="24.5" r="11.2"/>' + '<path d="M32 39.5c-10.2 0-18.5 6.7-18.5 15V64h37v-9.5c0-8.3-8.3-15-18.5-15z"/>' + '</svg>';
       } else {
         av.textContent = initials(p.name);
       }
 
+      const lines = document.createElement('div');
+      lines.className = 'card-lines';
+
       const name = document.createElement('div');
       name.className = 'card-name';
       name.textContent = p.name;
+      lines.appendChild(name);
+
+      const sub = document.createElement('div');
+      sub.className = 'card-sub';
+      sub.textContent = lastUsedLabel(p);
+      lines.appendChild(sub);
 
       card.appendChild(av);
-      card.appendChild(name);
+      card.appendChild(lines);
 
       if (_prefs.defaultProfileId === p.id) {
         const tag = document.createElement('div');
@@ -448,7 +529,10 @@
     add.className = 'card add';
     add.innerHTML =
       '<div class="add-circle"><svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></div>' +
-      '<div class="card-name">Add profile</div>';
+      '<div class="card-lines">' +
+        '<div class="card-name">Add profile</div>' +
+        '<div class="card-sub">A separate history, logins and settings</div>' +
+      '</div>';
     add.addEventListener('click', () => openModal(null));
     grid.appendChild(add);
   }
@@ -491,7 +575,13 @@
       mImg.src = pendingAvatar; mImg.classList.remove('hidden'); mInitials.classList.add('hidden');
     } else {
       mImg.classList.add('hidden'); mInitials.classList.remove('hidden');
-      mInitials.textContent = initials(profile ? profile.name : 'New');
+      if (profile && profile.id === 'default') {
+        mInitials.innerHTML = '<svg class="pp-person" viewBox="0 0 64 64" aria-hidden="true">' + '<circle cx="32" cy="24.5" r="11.2"/>' + '<path d="M32 39.5c-10.2 0-18.5 6.7-18.5 15V64h37v-9.5c0-8.3-8.3-15-18.5-15z"/>' + '</svg>';
+        mInitials.classList.add('has-person');
+      } else {
+        mInitials.classList.remove('has-person');
+        mInitials.textContent = initials(profile ? profile.name : 'New');
+      }
     }
     // Delete only for real, non-default profiles.
     mDelete.classList.toggle('hidden', !profile || profile.id === 'default');
@@ -501,6 +591,12 @@
   function closeModal() { backdrop.classList.add('hidden'); }
 
   mName.addEventListener('input', () => {
+    // Once a name is being typed the letters are the useful thing again, so
+    // the drawn figure steps aside rather than sitting behind them.
+    if (mInitials.firstElementChild) {
+      mInitials.textContent = '';
+      mInitials.classList.remove('has-person');
+    }
     if (!pendingAvatar) mInitials.textContent = initials(mName.value || 'New');
   });
   mAvatar.addEventListener('click', () => mFile.click());

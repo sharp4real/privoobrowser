@@ -47,6 +47,17 @@ function savePrefs(patch) {
   return next;
 }
 
+/* When each profile was last opened, keyed by id. Kept in prefs rather than
+   on the profile record because it is about this machine's usage, not about
+   the profile — the registry is the list of profiles, and this is a note
+   about them. */
+function getLastUsed()            { return loadPrefs().lastUsed || {}; }
+function markUsed(id) {
+  if (!id) return;
+  const lastUsed = { ...getLastUsed(), [id]: Date.now() };
+  savePrefs({ lastUsed });
+}
+
 function getActiveId()           { return loadPrefs().activeId || 'default'; }
 function setActiveId(id)          { savePrefs({ activeId: id || 'default' }); }
 function getDefaultProfileId()    { return loadPrefs().defaultProfileId || null; }
@@ -109,6 +120,8 @@ function remove(id) {
 }
 
 module.exports = {
+  getLastUsed,
+  markUsed,
   rootDir,
   getDataDir,
   getProfileDataDir,

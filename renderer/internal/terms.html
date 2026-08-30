@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Terms of Service</title>
+<style>
+/* These two pages are a document, so they are set as one: a single column,
+   a real reading measure, and no furniture that is not a heading or a rule.
+
+   The palette comes from page-theme.css (loaded below) like every other
+   internal page. The literals here are only what shows before it lands. */
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--o-bg,#f2f2f4);
+  color:var(--o-text,#101014);
+  font-family:"Inter","Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  font-size:15px;line-height:1.65;letter-spacing:-.006em;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:660px;margin:0 auto;padding:64px 26px 96px}
+
+/* The title block. A rule under it instead of a card around it — the page is
+   text, and a box drawn round the first paragraph of it says nothing. */
+h1{
+  font-size:clamp(28px,4.6vw,38px);font-weight:640;
+  letter-spacing:-.032em;line-height:1.1;margin-bottom:10px;
+}
+.date{font-size:12.5px;color:var(--o-faint,#9a9aa6);margin-bottom:18px}
+.summary{
+  font-size:16.5px;line-height:1.6;color:var(--o-muted,#64646f);
+  padding-bottom:26px;margin-bottom:8px;
+  border-bottom:1px solid var(--o-line,rgba(16,16,20,.1));
+}
+
+/* Contents: a plain list of links, not a row of pills. Five headings do not
+   need five buttons. */
+.toc{
+  display:flex;flex-wrap:wrap;gap:4px 18px;
+  margin:0 0 12px;padding:0 0 24px;
+  border-bottom:1px solid var(--o-line,rgba(16,16,20,.1));
+}
+.toc a{
+  font-size:13px;color:var(--o-muted,#64646f);text-decoration:none;
+  border:none;background:none;padding:2px 0;border-radius:0;
+  transition:color .13s ease;
+}
+.toc a:hover{color:var(--o-text,#101014);text-decoration:underline;text-underline-offset:3px}
+
+section{scroll-margin-top:24px}
+h2{
+  font-size:19px;font-weight:600;letter-spacing:-.02em;line-height:1.3;
+  margin:40px 0 10px;color:var(--o-text,#101014);
+}
+p,li{color:var(--o-muted,#64646f);margin-bottom:12px}
+ul,ol{margin:0 0 16px 20px}
+li{margin-bottom:6px}
+b,strong{color:var(--o-text,#101014);font-weight:600}
+a{color:var(--o-text,#101014);text-decoration:underline;text-underline-offset:3px;
+  text-decoration-color:var(--o-line-2,rgba(16,16,20,.2))}
+a:hover{text-decoration-color:currentColor}
+code{
+  font-family:ui-monospace,"Cascadia Code","SF Mono",Consolas,monospace;
+  font-size:.88em;padding:1px 5px;border-radius:4px;
+  background:var(--o-surface-2,#f6f6f8);color:var(--o-text,#101014);
+}
+
+/* A caveat, marked by a rule down its edge. It was a tinted box, which made
+   the one paragraph anybody needs to read look like an advert. */
+.note{
+  border:none;border-left:2px solid var(--o-line-2,rgba(16,16,20,.2));
+  border-radius:0;background:none;
+  padding:2px 0 2px 18px;margin:20px 0;
+  color:var(--o-muted,#64646f);
+}
+footer{
+  margin-top:52px;padding-top:22px;
+  border-top:1px solid var(--o-line,rgba(16,16,20,.1));
+  font-size:12.5px;color:var(--o-faint,#9a9aa6);
+}
+
+/* ── The document set ────────────────────────────────────────────────
+   Privacy and Terms are one thing in two parts. Somebody reading either
+   should be able to reach the other without going back to a menu, and should
+   be able to see that the other exists at all. */
+.docnav{
+  display:inline-flex;gap:2px;
+  padding:3px;margin-bottom:22px;
+  border:1px solid var(--o-line,rgba(16,16,20,.1));
+  border-radius:10px;
+  background:var(--o-surface-2,#f6f6f8);
+}
+.docnav a{
+  font-size:12.5px;font-weight:500;
+  padding:5px 12px;border-radius:7px;
+  color:var(--o-muted,#64646f);
+  text-decoration:none;
+  transition:background .12s ease,color .12s ease;
+}
+.docnav a:hover{color:var(--o-text,#101014)}
+.docnav a[aria-current="page"]{
+  background:var(--o-surface,#fff);
+  color:var(--o-text,#101014);
+  box-shadow:0 1px 2px rgba(0,0,0,.06);
+}
+
+/* ── Numbers from a counter ──────────────────────────────────────────
+   They used to be typed into the headings, which is fine until a section is
+   added in the middle. */
+main{counter-reset:sec}
+section{counter-increment:sec}
+h2::before{content:counter(sec) ". ";color:var(--o-faint,#9a9aa6);font-weight:500}
+
+/* ── The layout ──────────────────────────────────────────────────────
+   A rail beside the text on a wide window, and nothing but the text on a
+   narrow one. The rail is the contents, and it stays where it is. */
+@media (min-width:1000px){
+  .wrap{
+    max-width:1000px;
+    display:grid;
+    grid-template-columns:1fr 200px;
+    gap:0 52px;
+    align-items:start;
+  }
+  .docnav,.hero,.doc,footer{grid-column:1}
+  .toc{
+    grid-column:2;grid-row:2 / span 99;
+    position:sticky;top:64px;
+    display:block;
+    margin:0;padding:0;
+    border:none;
+    border-left:1px solid var(--o-line,rgba(16,16,20,.1));
+  }
+  .toc a{
+    display:block;
+    padding:5px 0 5px 14px;
+    margin-left:-1px;
+    border-left:2px solid transparent;
+    line-height:1.4;
+  }
+  .toc a:hover{text-decoration:none;border-left-color:var(--o-line-2,rgba(16,16,20,.2))}
+  /* Where you are. A rail is only worth having if it says which one you are
+     at; otherwise it is just the same list, further down. */
+  .toc a.here{
+    color:var(--o-text,#101014);
+    border-left-color:var(--o-text,#101014);
+  }
+}
+
+/* ── Print ───────────────────────────────────────────────────────────
+   The one page in a browser somebody genuinely prints. No rail, no switcher,
+   black on white, and no heading orphaned at the foot of a page. */
+@media print{
+  .docnav,.toc{display:none}
+  .wrap{max-width:none;display:block;padding:0}
+  body{background:#fff;color:#000;font-size:11pt}
+  p,li{color:#222}
+  h1,h2{break-after:avoid-page}
+  section{break-inside:avoid-page}
+  footer{border-color:#ccc}
+}
+</style>
+<!-- Shared finish pass: one palette across every Privoo page. Loads last so
+     it wins on order; the block above still owns this page's layout. -->
+<link rel="stylesheet" href="page-theme.css" /></head>
+<body><main class="wrap"><nav class="docnav"><a href="privacy.html">Privacy</a><a href="terms.html" aria-current="page">Terms</a></nav><header class="hero"><h1>Terms of Service</h1><div class="date">Effective 25 August 2026</div><p class="summary">These terms explain the basic rules for using Privoo Browser and its optional tools.</p></header><nav class="toc"><a href="#use">Using Privoo</a><a href="#tools">Optional tools</a><a href="#third-party">Third parties</a><a href="#availability">Availability</a><a href="#changes">Changes</a></nav>
+<div class="doc"><section id="use"><h2>Using Privoo</h2><p>You may use Privoo for lawful personal or business browsing. You are responsible for the websites, files, accounts and services you access. Do not use Privoo to distribute malware, infringe rights, bypass security controls, violate applicable law, or violate the terms of a service you access.</p></section>
+<section id="tools"><h2>Optional tools</h2><p>Media downloading, Privoo AI, privacy controls, extensions and Privoo Guard are optional features. You are responsible for confirming that you have the rights or permission required to download, save, analyse or use media and other content.</p><p>AI output can be incomplete or inaccurate. You should review it before relying on it. Privoo Guard provides on-demand scans through ClamAV; it is not a promise that a file or device is free from all threats.</p></section>
+<section id="third-party"><h2>Third-party services</h2><p>Websites, search engines, AI providers, media services, extensions and ClamAV are independent services. Their availability, content, practices and terms are controlled by their respective providers. Using Privoo does not change the rules that apply to those services.</p></section>
+<section id="availability"><h2>Availability and updates</h2><p>Privoo is provided on an “as is” and “as available” basis. Features may change, be removed or become unavailable. Updates may be necessary to address bugs, security issues or compatibility changes.</p><div class="note"><b>Safety note:</b> keep your operating system, Privoo, extensions and any optional protection components up to date. No browser or security tool can eliminate every risk.</div></section>
+<section id="changes"><h2>Changes and legal review</h2><p>These terms may be updated as Privoo changes; the effective date will be revised when they are. Before a public commercial release, these terms should be reviewed and adapted by a qualified legal professional for the relevant operator, jurisdiction, distribution method and business model.</p></section></div><footer>These are the in-app Terms of Service for the current Privoo build.</footer></main><script>
+(function(){
+  // Same shape as every other internal page: ask the host, and follow it
+  // live. page-theme.css keys off body.dark.
+  var api = window.privooInternal;
+  function apply(s){
+    var dark = !!(s && s.darkMode);
+    document.body.classList.toggle('dark', dark);
+    document.documentElement.classList.toggle('dark', dark);
+  }
+  api && api.getSettings && api.getSettings()
+    .then(function(d){ apply((d && d.settings) || d); })
+    .catch(function(){});
+  api && api.onSettingsChanged && api.onSettingsChanged(function(s){ apply((s && s.settings) || s); });
+
+  // Mark the section you are reading in the rail. IntersectionObserver rather
+  // than a scroll handler: the engine works out what is on screen, and this
+  // costs nothing at all while nothing is moving.
+  try {
+    var links = [].slice.call(document.querySelectorAll('.toc a'));
+    var seen = {};
+    var secs = [].slice.call(document.querySelectorAll('section[id]'));
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { seen[e.target.id] = e.isIntersecting; });
+      // The topmost section on screen wins, so scrolling up marks the one you
+      // have arrived at rather than the one you are leaving.
+      var current = null;
+      secs.forEach(function (s) { if (!current && seen[s.id]) current = s.id; });
+      links.forEach(function (a) {
+        a.classList.toggle('here', a.getAttribute('href') === '#' + current);
+      });
+    }, { rootMargin: '-70px 0px -60% 0px' });
+    secs.forEach(function (s) { io.observe(s); });
+  } catch (e) { /* the list still works as links */ }
+})();
+</script>
+</body></html>

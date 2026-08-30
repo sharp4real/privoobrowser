@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<title>Extensions – Privoo</title>
+<title>Extensions</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%238b7cf7' d='M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z'/%3E%3Cpath fill='%23fff' d='M10.6 15.4 7.4 12.2l1.3-1.3 1.9 1.9 4-4 1.3 1.3z'/%3E%3C/svg%3E"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:"Inter","Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
@@ -14,107 +14,90 @@ body.dark{ --on-accent:#14141a; }
    <html>, freezing the accent in dark mode. */
 :root{ --accent:#4f46e5; --accent-hover:#6058ea; --accent-soft:rgba(79,70,229,.13); }
 body:not(.dark){ background:#f3f3f7 !important; color:#17171f; }
-body.dark{ background:#17181c !important; color:#f1f1f4; }
-/* html is always transparent — body's solid fill covers it in normal mode,
-   and in transparency mode the see-through html lets the OS material reach
-   the corners. (A `body.transparent-ui html` selector can't work — html is
-   the ancestor of body, not a descendant.) */
+body.dark{ background:#1e1e21 !important; color:#ededf0; }
 html{height:100%;background:transparent}
 body{height:100%;background:#f3f3f7;color:#17171f;user-select:none}
-body.dark{background:#17181c;color:#f1f1f4;color-scheme:dark}
-/* Increase Transparency — every fill on this page drops to translucent so
-   the OS material shows through. Uses !important to override the generic
-   header/card rules below that have the same specificity but appear later
-   in the file. */
-body.transparent-ui{background:transparent !important;}
-body.transparent-ui main,
-body.transparent-ui header{background:transparent !important;border-bottom-color:rgba(0,0,0,.08) !important;}
-body.transparent-ui.dark header{border-bottom-color:rgba(255,255,255,.08) !important;}
-body.transparent-ui .ext-card{
-  background:rgba(255,255,255,.62) !important;
-  backdrop-filter:blur(12px) saturate(160%);
-  -webkit-backdrop-filter:blur(12px) saturate(160%);
-  border-color:rgba(255,255,255,.4) !important;
-}
-body.transparent-ui.dark .ext-card{
-  background:rgba(41,42,45,.62) !important;
-  border-color:rgba(255,255,255,.08) !important;
-}
-body.transparent-ui #empty{background:transparent !important;}
+/* Only color-scheme here: the background and colour are set on the
+   !important rule above with the same values. */
+body.dark{color-scheme:dark}
 
 /* Custom scrollbar — matches the rest of the app */
 html::-webkit-scrollbar{width:12px;height:12px}
 html::-webkit-scrollbar-track{background:transparent}
-html::-webkit-scrollbar-thumb{background:#dadce0;border-radius:12px;border:3px solid transparent;background-clip:padding-box}
-html::-webkit-scrollbar-thumb:hover{background:#bdc1c6;background-clip:padding-box;border:3px solid transparent}
-body.dark html::-webkit-scrollbar-thumb,body.dark::-webkit-scrollbar-thumb{background:#5f6368;background-clip:padding-box;border:3px solid transparent}
+html::-webkit-scrollbar-thumb{background:#d8d8de;border-radius:12px;border:3px solid transparent;background-clip:padding-box}
+html::-webkit-scrollbar-thumb:hover{background:#b0b0b8;background-clip:padding-box;border:3px solid transparent}
+body.dark html::-webkit-scrollbar-thumb,body.dark::-webkit-scrollbar-thumb{background:#4d4d57;background-clip:padding-box;border:3px solid transparent}
 
+/* A bar, on the page's own tokens rather than hardcoded whites and greys.
+   It stays put while you scroll, because the search field in it is only
+   useful if it is reachable from wherever you have got to. */
 header{
-  background:#ffffff;border-bottom:1px solid #e3e1ef;
-  padding:0 28px;height:64px;display:flex;align-items:center;gap:16px;
+  background:var(--o-surface,#fff);
+  border-bottom:1px solid var(--o-line,rgba(16,16,20,.1));
+  padding:0 24px;height:58px;
+  display:flex;align-items:center;gap:14px;
   position:sticky;top:0;z-index:10;
-  box-shadow:0 1px 0 rgba(38,36,58,.03), 0 4px 14px -8px rgba(38,36,58,.08);
 }
-body.dark header{background:#202124;border-color:#5f6368;box-shadow:0 4px 14px -8px rgba(0,0,0,.3)}
 .logo-img{
-  width:28px;height:28px;border-radius:10px;
+  width:22px;height:22px;border-radius:6px;
   object-fit:contain;flex-shrink:0;
   background:transparent;
 }
-h1{font-size:18px;font-weight:600;flex:1;line-height:1}
+h1{font-size:15px;font-weight:600;letter-spacing:-.015em;line-height:1}
+
+/* No lift, no glow, no brightness filter. A button that rises off the page
+   and casts a coloured shadow is the single loudest thing on a page whose
+   job is to list other people's software quietly. */
 .header-btn{
-  padding:8px 18px;border-radius:999px;border:1px solid var(--accent);
-  font-size:13px;font-weight:600;color:var(--on-accent);cursor:pointer;background:var(--accent);
-  transition:filter .12s,transform .12s,box-shadow .12s;
+  padding:0 14px;height:32px;border-radius:9px;
+  border:1px solid var(--accent);
+  background:var(--accent);color:var(--on-accent);
+  font-size:12.5px;font-weight:550;
   display:flex;align-items:center;gap:6px;
-  box-shadow:0 2px 8px -2px var(--accent-soft);
+  cursor:pointer;
+  box-shadow:none;
+  transition:opacity .12s ease;
 }
-.header-btn:hover{filter:brightness(1.06);transform:translateY(-1px);box-shadow:0 4px 14px -4px var(--accent-soft)}
+.header-btn:hover{opacity:.88}
 body.dark .header-btn{color:var(--on-accent);background:var(--accent);border-color:var(--accent)}
 
-main{max-width:960px;margin:24px auto;padding:0 20px 40px}
+main{max-width:1060px;margin:26px auto;padding:0 24px 56px}
 
-#empty{text-align:center;padding:80px 20px;color:#5f6368}
-#empty svg{width:64px;height:64px;fill:#dadce0;margin-bottom:16px}
-#empty h2{font-size:18px;font-weight:400;margin-bottom:8px;color:#3c4043}
-body.dark #empty,body.dark .ext-desc,body.dark .ext-version{color:#bdc1c6}
-body.dark #empty h2,body.dark .ext-name{color:#e8eaed}
-#empty p{margin-bottom:20px}
-#empty .btn{
-  display:inline-block;padding:10px 24px;border-radius:12px;
-  background:var(--accent);color:var(--on-accent);font-size:14px;font-weight:500;cursor:default;
-  transition:background .12s,box-shadow .12s;
-  box-shadow:0 1px 2px rgba(60,64,67,.15);
+/* Nothing installed. A dashed outline where the cards would be, so it reads
+   as a space waiting to be filled rather than as an error. The 64px grey
+   puzzle piece it had was the biggest thing on the page, which is a strange
+   amount of emphasis for "there is nothing here". */
+#empty{
+  text-align:center;
+  padding:52px 24px;
+  border:1px dashed var(--o-line-2,rgba(16,16,20,.18));
+  border-radius:14px;
+  color:var(--o-muted,#64646f);
 }
-#empty .btn:hover{background:var(--accent-hover);box-shadow:0 1px 3px rgba(60,64,67,.25)}
-
-.ext-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+#empty svg{width:28px;height:28px;fill:var(--o-faint,#9a9aa6);margin-bottom:12px}
+#empty h2{font-size:14.5px;font-weight:600;margin-bottom:6px;color:var(--o-text,#101014)}
+#empty p{margin-bottom:18px;font-size:12.5px}
+#empty .btn{
+  display:inline-block;padding:0 16px;height:32px;line-height:32px;
+  border-radius:9px;
+  background:var(--accent);color:var(--on-accent);
+  font-size:12.5px;font-weight:550;cursor:pointer;
+  box-shadow:none;
+  transition:opacity .12s ease;
+}
+#empty .btn:hover{opacity:.88}
 
 /* Section headers ("Built in" / "Your extensions") */
-.section-head{display:flex;align-items:center;gap:10px;margin:4px 0 2px}
-.section-head h2{font-size:15px;font-weight:650;letter-spacing:-.01em;margin:0;display:flex;align-items:center;gap:8px}
-.section-head h2::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0}
-.section-head-user{margin-top:34px}
-.by-privoo{
-  font-size:11px;font-weight:700;letter-spacing:.04em;
-  color:var(--accent,#4f46e5);background:var(--accent-soft,rgba(79,70,229,.16));
-  border-radius:10px;padding:3px 8px;
-}
-.section-note{font-size:12.5px;color:#6d6a85;margin:0 0 16px}
-body.dark .section-note{color:#9aa0a6}
+.section-head{display:flex;align-items:center;gap:10px}
+.section-head h2{margin:0;display:flex;align-items:center;gap:8px}
+
+body.dark .section-note{color:#b0b0b8}
 
 /* Built-in extension cards carry a small "By Privoo" tag + accent edge. */
-#builtin-list .ext-card,
-body.dark #builtin-list .ext-card{border-color:var(--accent,#4f46e5)}
 #builtin-list .ext-version{
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  color:var(--accent,#4f46e5);font-weight:600;
+  color:var(--accent,#ffffff);font-weight:600;
 }
-.ext-always{
-  display:inline-flex;align-items:center;gap:6px;
-  font-size:12px;font-weight:600;color:var(--accent,#4f46e5);
-}
-.ext-always::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent,#4f46e5)}
 
 .ext-card{
   background:#ffffff;border-radius:16px;padding:18px;
@@ -123,9 +106,7 @@ body.dark #builtin-list .ext-card{border-color:var(--accent,#4f46e5)}
   transition:box-shadow .16s ease,transform .16s cubic-bezier(.2,.8,.25,1),border-color .16s ease;
   position:relative;
 }
-body.dark .ext-card{background:#303134;border-color:#5f6368;box-shadow:none}
-.ext-card:hover{box-shadow:0 10px 26px -12px rgba(38,36,58,.18);transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 35%,#e3e1ef)}
-body.dark .ext-card:hover{box-shadow:0 10px 26px -12px rgba(0,0,0,.4);transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 40%,#5f6368)}
+body.dark .ext-card{background:#37373f;border-color:#4d4d57}
 
 /* Compatibility warning shown in the install modal */
 .ext-compat-warn{
@@ -146,22 +127,13 @@ body.dark .ext-compat-warn{
 }
 body.dark .ext-compat-warn svg{fill:#fdd663}
 body.dark .ext-compat-warn code{background:rgba(255,255,255,.06)}
-
-.ext-header{display:flex;align-items:flex-start;gap:12px}
-.ext-icon{
-  width:48px;height:48px;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  font-size:20px;font-weight:700;color:#5f6368;overflow:hidden;
-}
-body.dark .ext-icon{color:#e8eaed}
+.ext-icon{display:flex;align-items:center;justify-content:center;font-weight:700;overflow:hidden}
 .ext-icon img{width:100%;height:100%;object-fit:cover}
-#builtin-list .ext-icon{color:var(--accent,#4f46e5);}
-#builtin-list .ext-icon svg{width:26px;height:26px;fill:currentColor}
+#builtin-list .ext-icon svg{fill:currentColor}
 
 .ext-info{flex:1;min-width:0}
-.ext-name{font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ext-version{font-size:11.5px;color:#9aa0a6;margin-top:2px}
-.ext-desc{font-size:13px;color:#5f6368;line-height:1.4;flex:1}
+.ext-name{text-overflow:ellipsis}
+.ext-version{font-size:11.5px;color:#b0b0b8;margin-top:2px}
 
 .ext-footer{
   display:flex;justify-content:space-between;align-items:center;
@@ -169,12 +141,12 @@ body.dark .ext-icon{color:#e8eaed}
 }
 body.dark .ext-footer{border-color:#3c4043}
 
-.ext-toggle{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#5f6368}
+.ext-toggle{display:flex;align-items:center}
 .switch{position:relative;width:36px;height:20px;flex-shrink:0;display:inline-block}
 .switch input{opacity:0;width:0;height:0;position:absolute}
 .slider{
   position:absolute;inset:0;cursor:pointer;
-  background:#bdc1c6;border-radius:999px;
+  background:#b0b0b8;border-radius:999px;
   transition:background .18s cubic-bezier(.4,0,.2,1);
 }
 .slider::before{
@@ -186,25 +158,22 @@ body.dark .ext-footer{border-color:#3c4043}
 /* Light blue accent for toggles in both modes */
 input:checked+.slider{background:var(--accent)}
 input:checked+.slider::before{transform:translateX(16px)}
-body.dark .slider{background:#5f6368}
+body.dark .slider{background:#4d4d57}
 body.dark input:checked+.slider{background:var(--accent)}
-
-.ext-actions{display:flex;align-items:center;gap:6px}
 
 .ext-pin-btn,.ext-remove,.ext-open-folder{
   padding:5px 10px;border-radius:14px;font-size:11.5px;
-  border:1.5px solid #dadce0;cursor:default;background:transparent;
-  transition:background .1s;display:flex;align-items:center;gap:4px;color:#5f6368;
+  border:1.5px solid #d8d8de;cursor:default;background:transparent;
+  transition:background .1s;display:flex;align-items:center;gap:4px;color:#4d4d57;
 }
 .ext-pin-btn:hover,.ext-open-folder:hover{background:#f1f3f4}
-.ext-pin-btn.pinned{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
 .ext-pin-btn.pinned:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
-.ext-remove{color:#d93025;border-color:#dadce0}
+.ext-remove{color:#d93025;border-color:#d8d8de}
 .ext-remove:hover{background:#fce8e6}
-body.dark .ext-pin-btn,body.dark .ext-remove,body.dark .ext-open-folder{color:#bdc1c6}
-body.dark .ext-pin-btn,body.dark .ext-open-folder{border-color:#5f6368;background:#303134}
+body.dark .ext-pin-btn,body.dark .ext-remove,body.dark .ext-open-folder{color:#b0b0b8}
+body.dark .ext-pin-btn,body.dark .ext-open-folder{border-color:#4d4d57;background:#37373f}
 body.dark .ext-pin-btn:hover,body.dark .ext-open-folder:hover{background:#3c4043}
-body.dark .ext-remove{color:#f28b82;border-color:#5f6368;background:#303134}
+body.dark .ext-remove{color:#f28b82;border-color:#4d4d57;background:#37373f}
 body.dark .ext-remove:hover{background:#4a2725}
 
 /* ── Install modal ── */
@@ -217,48 +186,53 @@ body.dark .ext-remove:hover{background:#4a2725}
   background:#fff;border-radius:14px;padding:24px;
   width:min(440px,100%);box-shadow:0 12px 40px rgba(0,0,0,.22);
 }
-body.dark #install-modal{background:#303134}
-body.transparent-ui #install-modal{
-  background:rgba(255,255,255,.72) !important;
-  backdrop-filter:blur(28px) saturate(180%);
-  -webkit-backdrop-filter:blur(28px) saturate(180%);
-  box-shadow:0 16px 50px rgba(0,0,0,.28);
-}
-body.transparent-ui.dark #install-modal{background:rgba(38,40,46,.72) !important;}
+body.dark #install-modal{background:#37373f}
 #install-modal h3{font-size:16px;font-weight:600;margin-bottom:4px}
-.modal-sub{font-size:12.5px;color:#5f6368;margin-bottom:18px}
-body.dark .modal-sub{color:#bdc1c6}
+.compat-warn{display:none;gap:10px;margin:12px 0 0;padding:11px 13px;border-radius:9px;
+  background:rgba(200,70,60,.12);font-size:12.5px;line-height:1.5;align-items:flex-start}
+.compat-warn.show{display:flex}
+.compat-warn.minor{background:rgba(224,168,42,.14)}
+.compat-warn svg{flex-shrink:0;margin-top:1px;fill:currentColor;opacity:.8}
+.compat-warn ul{margin:5px 0 0;padding-left:17px}
+.compat-warn li{margin:1px 0}
+/* The same verdict, on an already-installed extension's card. */
+.ext-compat{display:flex;gap:7px;align-items:flex-start;margin:9px 0 0;padding:8px 10px;
+  border-radius:8px;background:rgba(200,70,60,.12);font-size:11.5px;line-height:1.45}
+.ext-compat.minor{background:rgba(224,168,42,.14)}
+.ext-compat svg{flex-shrink:0;margin-top:1px;fill:currentColor;opacity:.75}
+.modal-sub{font-size:12.5px;color:#4d4d57;margin-bottom:18px}
+body.dark .modal-sub{color:#b0b0b8}
 
 .choose-btns{display:flex;gap:10px;margin-bottom:16px}
 .choose-btn{
-  flex:1;padding:10px 12px;border-radius:10px;border:1.5px solid #dadce0;
+  flex:1;padding:10px 12px;border-radius:10px;border:1.5px solid #d8d8de;
   background:#f8f9fa;font-size:13px;color:#3c4043;cursor:default;
   display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;
   transition:background .1s,border-color .1s;
 }
 .choose-btn:hover{background:#f1f3f4;border-color:#3c4043}
-body.dark .choose-btn{background:#3c4043;border-color:#5f6368;color:#e8eaed}
-body.dark .choose-btn:hover{background:#4a4d51;border-color:#9aa0a6}
-.choose-btn svg{color:#5f6368}
-body.dark .choose-btn svg{color:#bdc1c6}
-.choose-btn span{font-size:11px;color:#5f6368}
-body.dark .choose-btn span{color:#9aa0a6}
+body.dark .choose-btn{background:#3c4043;border-color:#4d4d57;color:#ededf0}
+body.dark .choose-btn:hover{background:#43434c;border-color:#b0b0b8}
+.choose-btn svg{color:#4d4d57}
+body.dark .choose-btn svg{color:#b0b0b8}
+.choose-btn span{font-size:11px;color:#4d4d57}
+body.dark .choose-btn span{color:#b0b0b8}
 
 #chosen-path-display{
-  font-size:11.5px;color:#5f6368;background:#f1f3f4;border-radius:10px;
+  font-size:11.5px;color:#4d4d57;background:#f1f3f4;border-radius:10px;
   padding:7px 10px;margin-bottom:14px;word-break:break-all;display:none;
 }
-body.dark #chosen-path-display{background:#3c4043;color:#bdc1c6}
+body.dark #chosen-path-display{background:#3c4043;color:#b0b0b8}
 
 .crx-tip{
-  font-size:11.5px;line-height:1.55;color:#5f6368;
+  font-size:11.5px;line-height:1.55;color:#4d4d57;
   background:#f1f3f4;border-radius:12px;padding:10px 12px;margin-bottom:16px;
 }
 .crx-tip b{color:#3c4043;font-weight:600}
-.crx-tip .crx-tip-note{display:block;margin-top:4px;color:#9aa0a6;font-size:11px}
-body.dark .crx-tip{background:#3c4043;color:#bdc1c6}
-body.dark .crx-tip b{color:#e8eaed}
-body.dark .crx-tip .crx-tip-note{color:#9aa0a6}
+.crx-tip .crx-tip-note{display:block;margin-top:4px;color:#b0b0b8;font-size:11px}
+body.dark .crx-tip{background:#3c4043;color:#b0b0b8}
+body.dark .crx-tip b{color:#ededf0}
+body.dark .crx-tip .crx-tip-note{color:#b0b0b8}
 
 .modal-fields input,.modal-fields textarea{
   width:100%;border:1.5px solid #dfe1e5;border-radius:12px;
@@ -266,44 +240,26 @@ body.dark .crx-tip .crx-tip-note{color:#9aa0a6}
   background:#fff;color:#1f1f1f;font-family:inherit;user-select:text;
 }
 body.dark .modal-fields input,body.dark .modal-fields textarea{
-  background:#202124;border-color:#5f6368;color:#e8eaed;
+  background:#1e1e21;border-color:#4d4d57;color:#ededf0;
 }
-.modal-fields input:focus,.modal-fields textarea:focus{border-color:#9aa0a6}
+.modal-fields input:focus,.modal-fields textarea:focus{border-color:#b0b0b8}
 .modal-fields textarea{resize:vertical;min-height:70px;font-size:13px}
 
 .pin-row{
-  display:flex;align-items:center;gap:10px;padding:10px 0;
-  border-top:1px solid #f1f3f4;margin-bottom:4px;
+  display:flex;align-items:center;gap:10px;padding:12px 0 4px;
+  border-top:1px solid var(--o-line);margin-bottom:4px;
 }
-body.dark .pin-row{border-color:#4a4d51}
-/* Scope to the text label only — otherwise .pin-switch (also a <label>)
+/* Scope to the text label only — otherwise the switch (also a <label>)
    inherits flex:1 and stretches into a horizontal line. */
-.pin-row > label:not(.pin-switch){font-size:13px;flex:1}
-.pin-switch{position:relative;width:36px;height:20px;flex-shrink:0;flex-grow:0;flex-basis:36px;display:inline-block}
-.pin-switch input{opacity:0;width:0;height:0;position:absolute}
-.pin-slider{
-  position:absolute;inset:0;cursor:pointer;
-  background:#bdc1c6;border-radius:999px;
-  transition:background .18s cubic-bezier(.4,0,.2,1);
-}
-.pin-slider::before{
-  content:"";position:absolute;width:14px;height:14px;
-  left:3px;top:3px;background:#fff;border-radius:50%;
-  transition:transform .18s cubic-bezier(.4,0,.2,1);
-  box-shadow:0 1px 3px rgba(0,0,0,.2);
-}
-.pin-switch input:checked+.pin-slider{background:var(--accent)}
-.pin-switch input:checked+.pin-slider::before{transform:translateX(16px)}
-body.dark .pin-slider{background:#5f6368}
-body.dark .pin-switch input:checked+.pin-slider{background:var(--accent)}
+.pin-row > label:not(.switch){font-size:13px;flex:1}
 
 .modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
 .btn{padding:8px 18px;border-radius:12px;font-size:13px;cursor:default;border:1.5px solid transparent}
-.btn-cancel{border-color:#dfe1e5;color:#5f6368}
+.btn-cancel{border-color:#dfe1e5;color:#4d4d57}
 .btn-cancel:hover{background:#f1f3f4}
 .btn-save{background:var(--accent);color:var(--on-accent);font-weight:500}
 .btn-save:hover{background:var(--accent-hover)}
-body.dark .btn-cancel{border-color:#5f6368;color:#bdc1c6;background:#303134}
+body.dark .btn-cancel{border-color:#4d4d57;color:#b0b0b8;background:#37373f}
 body.dark .btn-cancel:hover{background:#3c4043}
 
 /* Confirm modal */
@@ -316,25 +272,327 @@ body.dark .btn-cancel:hover{background:#3c4043}
   width:min(360px,100%);background:#fff;border-radius:12px;padding:22px;
   box-shadow:0 12px 40px rgba(0,0,0,.22);
 }
-body.dark #confirm-modal{background:#303134}
+body.dark #confirm-modal{background:#37373f}
 #confirm-modal h3{font-size:17px;font-weight:500;margin-bottom:10px}
-#confirm-modal p{font-size:13px;color:#5f6368;line-height:1.45;margin-bottom:18px}
-body.dark #confirm-modal p{color:#bdc1c6}
+#confirm-modal p{font-size:13px;color:#4d4d57;line-height:1.45;margin-bottom:18px}
+body.dark #confirm-modal p{color:#b0b0b8}
 
 #toast{
   position:fixed;left:50%;bottom:22px;transform:translateX(-50%);
-  background:#202124;color:#fff;border-radius:12px;padding:10px 16px;
+  background:#1e1e21;color:#fff;border-radius:12px;padding:10px 16px;
   font-size:13px;opacity:0;pointer-events:none;transition:opacity .18s;z-index:260;
 }
 #toast.show{opacity:1}
-body.dark #toast{background:#e8eaed;color:#202124}
+body.dark #toast{background:#ededf0;color:#1e1e21}
+
+/* ════════════════════════════════════════════════════════════════════════
+   THE EXTENSIONS PAGE, AS A LIST
+
+   It was a grid of cards, and the cards were carrying: a fill, a border, a
+   drop shadow, a lift-on-hover, an accent-coloured border for built-ins, an
+   accent dot before every heading, an accent pill reading BY PRIVOO, accent
+   version numbers, an accent bullet before "Always on", and a second accent
+   border on hover. Nine decorations on one screen, eight of them in the
+   accent — which, on the default Mono accent, are all the same white.
+
+   That is what reads as machine-made: every element given something, and
+   nothing given priority. The content is a list of things, each with a name,
+   a description and a switch — which is exactly a Settings row. So it is set
+   as one, and it matches the Settings page it is a sibling of.
+
+   Last in the file, so it settles the earlier rules rather than arguing with
+   them from a distance.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── The grid ────────────────────────────────────────────────────────
+   Cards, not rows. An extension is an object with a picture on it, and the
+   picture is how anyone finds the one they mean — a single column turns that
+   picture into a 32px stamp in a margin and makes you read names instead. */
+.ext-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(296px,1fr));
+  gap:14px;
+  border:none;
+  border-radius:0;
+  overflow:visible;
+  background:transparent;
+}
+
+/* A card: one surface, one hairline, one small shadow. No lift on hover —
+   twelve cards that rise as the pointer crosses them is a page that will not
+   sit still. The border firming is enough to say which one you are on. */
+.ext-card,
+body.dark .ext-card{
+  display:flex;
+  flex-direction:column;
+  min-height:158px;
+  padding:16px 18px 14px;
+  gap:0;
+  background:var(--o-surface);
+  border:1px solid var(--o-line);
+  border-radius:12px;
+  box-shadow:0 1px 2px rgba(0,0,0,.04);
+  transform:none;
+  transition:border-color .13s ease, box-shadow .13s ease;
+}
+.ext-card + .ext-card{border-top:1px solid var(--o-line)}
+.ext-card:hover,
+body.dark .ext-card:hover{
+  transform:none;
+  border-color:var(--o-line-2);
+  box-shadow:0 1px 2px rgba(0,0,0,.05), 0 8px 22px -14px rgba(0,0,0,.5);
+}
+body.dark .ext-card{box-shadow:none}
+body.dark .ext-card:hover{box-shadow:0 8px 22px -14px rgba(0,0,0,.9)}
+/* Built-in extensions are not a different KIND of thing, so they are not
+   drawn as one. The accent border they had made half the list look selected. */
+#builtin-list .ext-card,
+body.dark #builtin-list .ext-card{border-color:var(--o-line)}
+
+/* ── The head of the card ────────────────────────────────────────────
+   Icon and name on one line, the way every extension gallery does it. */
+.ext-header{display:flex;align-items:flex-start;gap:13px}
+.ext-icon{
+  width:36px;height:36px;
+  border-radius:9px;
+  font-size:16px;
+  color:var(--o-muted);
+  flex-shrink:0;
+}
+body.dark .ext-icon{color:var(--o-muted)}
+#builtin-list .ext-icon{color:var(--o-muted)}
+#builtin-list .ext-icon svg{width:21px;height:21px}
+.ext-icon img{border-radius:8px}
+
+.ext-name{
+  font-size:14px;font-weight:600;color:var(--o-text);
+  line-height:1.3;
+  /* Two lines, then the ellipsis. A long extension name used to push the
+     switch off the bottom of its own card. */
+  white-space:normal;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  overflow:hidden;
+}
+/* The version is a fact about the card, not a headline. It was set in the
+   accent and bold, which made it the brightest thing on it. */
+.ext-version,
+#builtin-list .ext-version,
+body.dark .ext-version{
+  font-size:11.5px;
+  font-weight:400;
+  color:var(--o-faint);
+  margin-top:3px;
+}
+
+/* Three lines, then stop. Cards in a grid have to agree on a height or the
+   row below them goes ragged, and a description is the only part that can
+   run to any length. */
+.ext-desc{
+  font-size:12.5px;color:var(--o-muted);line-height:1.5;
+  margin-top:11px;
+  flex:1;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
+  overflow:hidden;
+}
+
+/* ── The foot ────────────────────────────────────────────────────────
+   Actions on the left, the switch on the right, a rule between them and the
+   description. Ordered with CSS rather than by moving the markup, so the
+   render functions are untouched. */
+.ext-footer,
+body.dark .ext-footer{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-top:13px;
+  padding-top:11px;
+  border-top:1px solid var(--o-line);
+}
+.ext-actions{order:1;display:flex;align-items:center;gap:4px}
+.ext-toggle{order:2;font-size:12px;color:var(--o-muted);gap:9px}
+/* A card whose only footer content is the switch keeps it on the right, so
+   every switch on the page lines up down the same edge. */
+.ext-footer > .ext-toggle:only-child{margin-left:auto}
+
+/* "Built in / always on" as a word, not an accent dot plus accent text. */
+.ext-always,
+.by-privoo{
+  font-size:11px;
+  font-weight:500;
+  letter-spacing:0;
+  color:var(--o-faint);
+  background:transparent;
+  border:none;
+  border-radius:0;
+  padding:0;
+}
+
+/* Section headings: the word alone. The dot before it was decoration for a
+   heading that already looks like a heading. */
+.section-head h2::before{display:none}
+.section-head h2{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--o-faint)}
+.section-head{margin:0 0 10px}
+.section-head-user{margin-top:38px}
+.section-note{font-size:12.5px;color:var(--o-muted);margin:0 0 14px}
+
+/* Card actions: quiet until you are on the card, and shaped like every other
+   small button in the browser rather than pill outlines. */
+.ext-pin-btn,.ext-remove,.ext-open-folder,
+body.dark .ext-pin-btn,body.dark .ext-remove,body.dark .ext-open-folder{
+  padding:5px 10px;
+  border-radius:7px;
+  border:1px solid transparent;
+  background:transparent;
+  color:var(--o-muted);
+  font-size:12px;
+}
+.ext-pin-btn:hover,.ext-open-folder:hover,
+body.dark .ext-pin-btn:hover,body.dark .ext-open-folder:hover{
+  background:var(--o-hover);
+  color:var(--o-text);
+  border-color:var(--o-line);
+}
+/* Pinned is a state, so it keeps a fill — the one place on the page the
+   accent still earns its place. */
+.ext-pin-btn.pinned{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.ext-remove,body.dark .ext-remove{color:#e5534b;background:transparent;border-color:transparent}
+.ext-remove:hover,body.dark .ext-remove:hover{background:rgba(229,83,75,.12);border-color:rgba(229,83,75,.3)}
+
+/* ── The built-ins, as one row ───────────────────────────────────────
+   One line instead of seven cards. They are not extensions in the sense this
+   page is about — they are parts of the browser with switches — and giving
+   them the top half of the grid made the list you came for look like an
+   afterthought to them. */
+.builtin-card{
+  display:flex;align-items:center;gap:13px;width:100%;
+  padding:14px 16px;margin-bottom:30px;
+  border:1px solid var(--o-line);
+  border-radius:12px;
+  background:var(--o-surface);
+  font-family:inherit;text-align:left;cursor:pointer;
+  transition:border-color .13s ease, box-shadow .13s ease;
+}
+.builtin-card:hover{
+  border-color:var(--o-line-2);
+  box-shadow:0 1px 2px rgba(0,0,0,.05), 0 8px 22px -14px rgba(0,0,0,.5);
+}
+.builtin-icon{
+  width:34px;height:34px;flex-shrink:0;
+  display:grid;place-items:center;
+  border-radius:9px;
+  background:var(--o-surface-2);
+  color:var(--o-muted);
+}
+.builtin-icon svg{width:19px;height:19px;fill:currentColor}
+.builtin-lines{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.builtin-title{font-size:14px;font-weight:600;color:var(--o-text)}
+.builtin-sub{font-size:12.5px;color:var(--o-muted)}
+.builtin-go{
+  display:flex;align-items:center;gap:3px;flex-shrink:0;
+  font-size:12.5px;font-weight:500;color:var(--o-muted);
+}
+.builtin-go svg{width:15px;height:15px;fill:currentColor}
+.builtin-card:hover .builtin-go{color:var(--o-text)}
+
+/* The sheet. */
+#builtin-modal-bg{
+  display:none;position:fixed;inset:0;z-index:60;
+  background:rgba(16,16,20,.45);
+  backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+  align-items:center;justify-content:center;padding:28px;
+}
+#builtin-modal-bg.show{display:flex}
+#builtin-modal{
+  width:100%;max-width:520px;max-height:82vh;
+  display:flex;flex-direction:column;
+  background:var(--o-surface);
+  border:1px solid var(--o-line);
+  border-radius:16px;
+  box-shadow:0 24px 60px -18px rgba(0,0,0,.5);
+  overflow:hidden;
+  animation:bi-in .18s cubic-bezier(.2,.8,.25,1) both;
+}
+@keyframes bi-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.bi-head{
+  display:flex;align-items:flex-start;gap:14px;
+  padding:20px 20px 16px;
+  border-bottom:1px solid var(--o-line);
+}
+.bi-head h3{font-size:15px;font-weight:600;margin-bottom:5px;color:var(--o-text)}
+.bi-head .modal-sub{margin:0;font-size:12.5px;line-height:1.5}
+.bi-close{
+  width:28px;height:28px;flex-shrink:0;
+  display:grid;place-items:center;
+  border:none;border-radius:8px;background:transparent;
+  color:var(--o-muted);cursor:pointer;
+}
+.bi-close:hover{background:var(--o-hover);color:var(--o-text)}
+.bi-close svg{width:14px;height:14px;fill:currentColor}
+/* The list scrolls, the header does not: seven rows fit, and if a later
+   version has fifteen the sheet still opens the same size. */
+.bi-list{overflow-y:auto;padding:6px 0}
+.bi-row{
+  display:flex;align-items:center;gap:13px;
+  padding:11px 20px;
+}
+.bi-row + .bi-row{border-top:1px solid var(--o-line)}
+.bi-row:hover{background:var(--o-hover)}
+.bi-ico{
+  width:30px;height:30px;flex-shrink:0;
+  display:grid;place-items:center;
+  border-radius:8px;background:var(--o-surface-2);
+  color:var(--o-muted);
+}
+.bi-ico svg{width:17px;height:17px;fill:currentColor}
+.bi-lines{flex:1;min-width:0}
+.bi-name{font-size:13.5px;font-weight:550;color:var(--o-text)}
+.bi-desc{font-size:12px;color:var(--o-muted);line-height:1.45;margin-top:2px}
+.bi-always{font-size:11px;color:var(--o-faint);flex-shrink:0}
+
+/* ── Search ──────────────────────────────────────────────────────────
+   The thing that actually replaces reading the list. Chrome has one and this
+   page did not, which is fine at four extensions and useless at thirty. */
+.ext-search{
+  margin-left:auto;
+  display:flex;align-items:center;gap:8px;
+  height:32px;padding:0 12px;
+  border:1px solid var(--o-line);
+  border-radius:9px;
+  background:var(--o-surface-2);
+}
+.ext-search svg{width:14px;height:14px;fill:var(--o-faint);flex-shrink:0}
+.ext-search input{
+  border:none;background:transparent;outline:none;
+  font-family:inherit;font-size:12.5px;color:var(--o-text);
+  width:170px;
+}
+.ext-search input::placeholder{color:var(--o-faint)}
+.ext-search:focus-within{border-color:var(--o-line-2)}
+/* A section with nothing left in it after a search would otherwise leave its
+   heading floating over a gap. */
+.section-hidden{display:none}
+#no-matches{
+  display:none;
+  padding:34px 0;
+  text-align:center;
+  font-size:13px;
+  color:var(--o-muted);
+}
 </style>
+<!-- Shared finish pass: one palette across every Privoo page. Loads last so
+     it wins on order; the block above still owns this page's layout. -->
+<link rel="stylesheet" href="page-theme.css" />
 </head>
 <body>
 
 <header>
   <img class="logo-img" src="/logo.png" alt="" onerror="this.style.display='none'"/>
   <h1>Extensions</h1>
+  <label class="ext-search">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.49 4.49 0 0 1 9.5 14z"/></svg>
+    <input type="search" id="ext-search" placeholder="Search extensions" autocomplete="off" spellcheck="false" aria-label="Search extensions"/>
+  </label>
   <button class="header-btn" id="install-btn">
     <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
     Add extension
@@ -342,17 +600,22 @@ body.dark #toast{background:#e8eaed;color:#202124}
 </header>
 
 <main>
-  <div class="section-head">
-    <h2>Built in</h2>
-    <span class="by-privoo">by Privoo Browser</span>
-  </div>
-  <p class="section-note">Privacy tools baked right into the browser — no install needed.</p>
-  <div id="builtin-list" class="ext-grid"></div>
+  <button type="button" class="builtin-card" id="builtin-open">
+    <span class="builtin-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1.4 14.4L7.4 12.2l1.3-1.3 1.9 1.9 4-4 1.3 1.3-5.3 5.3z"/></svg>
+    </span>
+    <span class="builtin-lines">
+      <span class="builtin-title">Built in to Privoo</span>
+      <span class="builtin-sub" id="builtin-count">Privacy tools and toolbar buttons that need no install</span>
+    </span>
+    <span class="builtin-go">View all<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.3 5.3 15.9 12l-6.6 6.7-1.4-1.4L13.1 12 7.9 6.7z"/></svg></span>
+  </button>
 
   <div class="section-head section-head-user">
     <h2>Your extensions</h2>
   </div>
   <div id="list" class="ext-grid"></div>
+  <div id="no-matches">No extension matches that.</div>
   <div id="empty">
     <svg viewBox="0 0 24 24"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11z"/></svg>
     <h2>No extensions installed</h2>
@@ -360,6 +623,22 @@ body.dark #toast{background:#e8eaed;color:#202124}
     <button class="btn" id="empty-install">Add extension</button>
   </div>
 </main>
+
+<!-- The built-ins, in a sheet -->
+<div id="builtin-modal-bg">
+  <div id="builtin-modal">
+    <div class="bi-head">
+      <div>
+        <h3>Built in to Privoo</h3>
+        <div class="modal-sub">Part of the browser already. Nothing here is downloaded or installed, and turning one off removes its button rather than uninstalling anything.</div>
+      </div>
+      <button type="button" class="bi-close" id="builtin-close" aria-label="Close">
+        <svg viewBox="0 0 24 24"><path d="M6.2 4.8 4.8 6.2 10.6 12l-5.8 5.8 1.4 1.4L12 13.4l5.8 5.8 1.4-1.4L13.4 12l5.8-5.8-1.4-1.4L12 10.6z"/></svg>
+      </button>
+    </div>
+    <div id="builtin-list" class="bi-list"></div>
+  </div>
+</div>
 
 <!-- Install modal -->
 <div id="install-modal-bg">
@@ -370,7 +649,7 @@ body.dark #toast{background:#e8eaed;color:#202124}
     <div class="ext-compat-warn">
       <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
       <div>
-        <b>Heads up — some extensions may not fully work.</b>
+        <b>Heads up. Some extensions may not fully work.</b>
         Privoo runs on Electron, which implements most but not all Chrome
         extension APIs. Popups and content scripts usually work, but
         features that rely on <code>contextMenus</code>, <code>privacy</code>,
@@ -394,11 +673,17 @@ body.dark #toast{background:#e8eaed;color:#202124}
     </div>
 
     <div class="crx-tip">
-      <b>Where to get a .crx file?</b> Sites like <b>crx4chrome.com</b> let you
-      download extension packages using a Chrome Web Store ID or URL. Save the
-      .crx, then choose it above.
-      <span class="crx-tip-note">Privoo isn't affiliated with crx4chrome or any
-      third-party CRX site. Only install extensions from sources you trust.</span>
+      <b>Looking for an extension?</b> Open the
+      <b>Chrome Web Store</b> in Privoo and click <b>Add to Privoo</b> on any
+      listing. It installs straight from there, no downloading required.
+      <span class="crx-tip-note">The options above are for extensions that
+      aren't on the store, or that you build yourself. Only install extensions
+      from sources you trust.</span>
+    </div>
+
+    <div class="compat-warn" id="compat-warn">
+      <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+      <div id="compat-warn-body"></div>
     </div>
 
     <div id="chosen-path-display"></div>
@@ -411,9 +696,9 @@ body.dark #toast{background:#e8eaed;color:#202124}
 
     <div class="pin-row">
       <label for="modal-pin">Pin to toolbar</label>
-      <label class="pin-switch">
-        <input type="checkbox" id="modal-pin"/>
-        <span class="pin-slider"></span>
+      <label class="switch">
+        <input type="checkbox" id="modal-pin" checked/>
+        <span class="slider"></span>
       </label>
     </div>
 
@@ -445,13 +730,34 @@ let confirmResolve = null;
 let pendingPath = null;
 let pendingCrxPath = null;
 let pendingIconUrl = null;
+let pendingCompat = null;
 
 function applyTheme(settings) {
   document.body.classList.toggle('dark', !!settings?.darkMode);
-  document.body.classList.toggle('transparent-ui', !!settings?.increaseTransparency);
   applyAccent(settings?.accentColor);
 }
-function applyAccent(hex){const r=document.documentElement;if(!hex){r.style.removeProperty('--accent');r.style.removeProperty('--accent-hover');r.style.removeProperty('--accent-soft');return;}r.style.setProperty('--accent',hex);const m=hex.replace('#','').match(/.{2}/g);if(m){const[rv,g,b]=m.map(x=>parseInt(x,16));const h=`rgb(${Math.min(255,Math.round(rv+(255-rv)*.18))},${Math.min(255,Math.round(g+(255-g)*.18))},${Math.min(255,Math.round(b+(255-b)*.18))})`;r.style.setProperty('--accent-hover',h);r.style.setProperty('--accent-soft',`rgba(${rv},${g},${b},.18)`);} }
+// Mirrors applyAccentTriad() in renderer.js, so this page shows the same
+// accent as the browser around it. Two rules it has to honour:
+//   - '#ffffff' is the adaptive "Mono" accent, not literally white: it means
+//     white on the dark UI and near-black on the light one. Written through
+//     unmapped it painted white on white in light mode.
+//   - --on-accent comes from the accent's own luminance, so a toggle knob or
+//     button label on top of it always contrasts with it.
+function applyAccent(hex){
+  const r = document.documentElement;
+  const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
+  let c = (hex && /^#[0-9a-f]{6}$/i.test(hex)) ? hex : (isDark ? '#ffffff' : '#101014');
+  if (c.toLowerCase() === '#ffffff' && !isDark) c = '#101014';
+  r.style.setProperty('--accent', c);
+  const [rv, g, b] = c.replace('#','').match(/.{2}/g).map(x => parseInt(x, 16));
+  const lum = (0.2126*rv + 0.7152*g + 0.0722*b) / 255;
+  // A near-white accent has no headroom to brighten into, so hover darkens.
+  const mix = lum > 0.72 ? 0 : 255, k = lum > 0.72 ? 0.12 : 0.18;
+  r.style.setProperty('--accent-hover',
+    `rgb(${Math.round(rv+(mix-rv)*k)},${Math.round(g+(mix-g)*k)},${Math.round(b+(mix-b)*k)})`);
+  r.style.setProperty('--on-accent', lum > 0.6 ? '#1b1b1e' : '#ffffff');
+  r.style.setProperty('--accent-soft', `rgba(${rv},${g},${b},${isDark ? '.16' : '.13'})`);
+}
 
 function showToast(message) {
   const toast = document.getElementById('toast');
@@ -500,10 +806,10 @@ function render() {
         `</div>` +
       `</div>` +
       `<div class="ext-desc">${escHtml(ext.description || 'No description provided.')}</div>` +
+      compatRowFor(ext) +
       `<div class="ext-footer">` +
         `<div class="ext-toggle">` +
           `<label class="switch"><input type="checkbox" ${ext.enabled ? 'checked' : ''} data-id="${escHtml(ext.id)}"/><span class="slider"></span></label>` +
-          `<span>${ext.enabled ? 'Enabled' : 'Disabled'}</span>` +
         `</div>` +
         `<div class="ext-actions">` +
           (ext.path ? `<button type="button" class="ext-open-folder" data-id="${escHtml(ext.id)}" title="Open folder"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg></button>` : '') +
@@ -533,6 +839,7 @@ function render() {
     card.querySelector('.ext-remove').addEventListener('click', () => removeExtension(ext.id));
     listEl.appendChild(card);
   }
+  applyExtSearch();
 }
 
 async function toggleExtension(id, enabled) {
@@ -580,7 +887,7 @@ const BUILTIN_EXTS = [
     desc:'Blocks ads, trackers and known malware on every site. Always on.' },
   { core:true, name:'Downloads', tag:'Default',
     icon:'<svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>',
-    desc:'Manage your downloads from the toolbar. Always available (Ctrl+J).' },
+    desc:'Download files and manage them from the downloads page. Always available (Ctrl+J).' },
   // Toggleable extensions — each maps to a real setting.
   { key:'httpsUpgrade', name:'HTTPS-Only Mode', defaultOn:true,
     icon:'<svg viewBox="0 0 24 24"><path d="M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2zm-3 0H9V6a3 3 0 0 1 6 0z"/></svg>',
@@ -595,11 +902,20 @@ const BUILTIN_EXTS = [
     icon:'<svg viewBox="0 0 24 24"><path d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2v3h10V4H7z"/></svg>',
     desc:'A handy calculator right in your toolbar for quick sums.' },
   { key:'showYtdlpToolbar', name:'Media Downloader', defaultOn:false, adds:'a download button to the toolbar',
-    icon:'<svg viewBox="0 0 24 24"><path d="M10 16.5l6-4.5-6-4.5v9zM8 2h8a2 2 0 0 1 2 2v16l-6-3-6 3V4a2 2 0 0 1 2-2z"/></svg>',
+    icon:'<svg viewBox="0 0 24 24"><path d="M13 3h-2v7.2L8.4 7.6 7 9l5 5 5-5-1.4-1.4L13 10.2V3zM5 16v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3h-2v3H7v-3H5z"/><circle cx="18.5" cy="5.5" r="2.6" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".55"/></svg>',
     desc:'Save video or audio from pages to your download folder (uses yt-dlp).' },
-  { key:'showAiButton', name:'Privoo AI', defaultOn:true, adds:'the AI button to the toolbar',
+  { key:'showDownloadsButton', name:'Downloads button', defaultOn:true, adds:'a downloads button to the toolbar',
+    icon:'<svg viewBox="0 0 24 24"><path d="M13 3h-2v10.17l-3.59-3.58L6 11l6 6 6-6-1.41-1.41L13 13.17V3zM5 19v2h14v-2H5z"/></svg>',
+    desc:'Keeps a downloads button in the toolbar at all times. On by default; turn it off and it still appears on its own while a download is running.' },
+  { key:'showExtensionsButton', name:'Extensions button', defaultOn:true, adds:'an extensions button to the toolbar',
+    icon:'<svg viewBox="0 0 24 24"><path d="M20 11h-1V7a2 2 0 0 0-2-2h-4V4a2 2 0 0 0-4 0v1H5a2 2 0 0 0-2 2v3.8h1.2a2.2 2.2 0 0 1 0 4.4H3V19a2 2 0 0 0 2 2h3.8v-1.2a2.2 2.2 0 0 1 4.4 0V21H17a2 2 0 0 0 2-2v-4h1a2 2 0 0 0 0-4z"/></svg>',
+    desc:'Adds a shortcut to your extensions. The Extensions page is always in the main menu.' },
+  { key:'showVpnButton', name:'Privoo VPN', defaultOn:false, adds:'the VPN button to the toolbar',
+    icon:'<svg viewBox="0 0 24 24"><path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zM9 7a3 3 0 0 1 6 0v3H9V7z"/></svg>',
+    desc:'Route traffic through a proxy server you provide. Privoo doesn\'t operate any proxy servers itself.' },
+  { key:'showAiButton', name:'Privoo AI', defaultOn:false, adds:'the AI button to the toolbar',
     icon:'<svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3zm6.5 11 .9 2.4L22 17.3l-2.6.9-.9 2.4-.9-2.4-2.6-.9 2.6-.9.9-2.4z"/></svg>',
-    desc:'Chat with a built-in AI assistant, with saved history — from your toolbar.' },
+    desc:'Chat with a built-in AI assistant, with saved history, from your toolbar. Attach a document, a spreadsheet, a PDF or a photograph and Privoo reads the text out of it. Privoo AI also has a full page of its own, kept as a pinned tab; right-click either to unpin it.' },
   { key:'lucidMode', name:'Lucid Mode', defaultOn:false,
     icon:'<svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.9L22 9.3l-5.5 4.8L18.2 21 12 17.3 5.8 21l1.7-6.9L2 9.3l7.1-.4z"/></svg>',
     desc:'Hover any video for a star that sharpens and enriches its picture — adjust the strength with a slider.' },
@@ -608,6 +924,67 @@ const BUILTIN_EXTS = [
     desc:'Splits large downloads into several parallel connections instead of one, when the server supports it.' },
 ];
 
+/* Filter across BOTH lists at once. Searching only your own extensions
+   would be a search that quietly cannot find Privoo AI, which is one of the
+   things people are most likely to be looking for.
+
+   It reads the rendered cards rather than the data behind them, because
+   there are two different shapes of data on this page and one filter over
+   the thing they have in common — text on screen — cannot fall out of step
+   with either. Re-run after every render for the same reason. */
+function applyExtSearch() {
+  const input = document.getElementById('ext-search');
+  const q = (input ? input.value : '').trim().toLowerCase();
+  let shown = 0, total = 0;
+
+  // Only the grid of installed extensions. The built-ins live in a sheet
+  // now, and hiding rows inside a closed sheet is work nobody can see.
+  for (const list of document.querySelectorAll('.ext-grid')) {
+    let visible = 0;
+    for (const card of list.querySelectorAll('.ext-card')) {
+      total++;
+      const hay = (card.textContent || '').toLowerCase();
+      const match = !q || hay.includes(q);
+      card.style.display = match ? '' : 'none';
+      if (match) { visible++; shown++; }
+    }
+    // Hide the heading and note that belong to an emptied section, not just
+    // the section: a lone "Built in" over nothing is worse than no heading.
+    const head = list.previousElementSibling;
+    const note = head && head.classList.contains('section-note') ? head : null;
+    const heading = note ? note.previousElementSibling : head;
+    for (const el of [list, note, heading]) {
+      if (el) el.classList.toggle('section-hidden', !!q && !visible);
+    }
+  }
+
+  const none = document.getElementById('no-matches');
+  if (none) none.style.display = (q && total && !shown) ? 'block' : 'none';
+  // The "no extensions installed" panel is about having none, not about a
+  // search matching none, so it stays out of the way while searching.
+  const empty = document.getElementById('empty');
+  if (empty && q) empty.style.display = 'none';
+}
+
+document.getElementById('ext-search')?.addEventListener('input', applyExtSearch);
+
+// The built-ins sheet.
+(function builtinSheet() {
+  const bg = document.getElementById('builtin-modal-bg');
+  const open = document.getElementById('builtin-open');
+  const close = document.getElementById('builtin-close');
+  if (!bg || !open) return;
+  const hide = () => bg.classList.remove('show');
+  open.addEventListener('click', () => bg.classList.add('show'));
+  close?.addEventListener('click', hide);
+  // Clicking the backdrop, not a click that merely finished on it after
+  // starting inside the sheet.
+  bg.addEventListener('mousedown', (e) => { if (e.target === bg) hide(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && bg.classList.contains('show')) hide();
+  });
+})();
+
 function renderBuiltin(settings) {
   const listEl = document.getElementById('builtin-list');
   if (!listEl) return;
@@ -615,34 +992,45 @@ function renderBuiltin(settings) {
   for (const b of BUILTIN_EXTS) {
     const on = b.core ? true : (settings[b.key] !== undefined ? !!settings[b.key] : b.defaultOn);
     const card = document.createElement('div');
-    card.className = 'ext-card';
-    const footer = b.core
-      ? '<div class="ext-footer"><span class="ext-always">Always on</span></div>'
-      : '<div class="ext-footer"><div class="ext-toggle">' +
-          '<label class="switch"><input type="checkbox" ' + (on ? 'checked' : '') + '/><span class="slider"></span></label>' +
-          '<span class="ext-status">' + (on ? 'Enabled' : 'Disabled') + '</span>' +
-        '</div></div>';
-    const meta = b.core ? 'Default' : (b.adds ? 'Adds ' + escHtml(b.adds) : 'Built-in');
+    card.className = 'bi-row';
     card.innerHTML =
-      '<div class="ext-header">' +
-        '<div class="ext-icon">' + b.icon + '</div>' +
-        '<div class="ext-info">' +
-          '<div class="ext-name">' + escHtml(b.name) + '</div>' +
-          '<div class="ext-version">' + meta + '</div>' +
-        '</div>' +
+      '<div class="bi-ico">' + b.icon + '</div>' +
+      '<div class="bi-lines">' +
+        '<div class="bi-name">' + escHtml(b.name) + '</div>' +
+        '<div class="bi-desc">' + escHtml(b.desc) + '</div>' +
       '</div>' +
-      '<div class="ext-desc">' + escHtml(b.desc) + '</div>' +
-      footer;
+      (b.core
+        ? '<span class="bi-always">Always on</span>'
+        : '<label class="switch"><input type="checkbox" ' + (on ? 'checked' : '') + '/><span class="slider"></span></label>');
     if (!b.core) {
       card.querySelector('.switch input').addEventListener('change', async (e) => {
         const v = e.target.checked;
         if (api) await api.setSettings({ [b.key]: v });
-        card.querySelector('.ext-status').textContent = v ? 'Enabled' : 'Disabled';
+        // The summary line on the closed row counts these, so it has to be
+        // told. Reading it back out of the DOM keeps one source of truth.
+        updateBuiltinCount();
         showToast(b.name + (v ? ' enabled' : ' disabled'));
       });
     }
     listEl.appendChild(card);
   }
+  updateBuiltinCount();
+}
+
+/* "Four of seven on". Counted from the switches that are actually in the
+   sheet rather than from the settings object, so a built-in added later
+   cannot make the number lie without also failing to appear. */
+function updateBuiltinCount() {
+  const el = document.getElementById('builtin-count');
+  const list = document.getElementById('builtin-list');
+  if (!el || !list) return;
+  const boxes = list.querySelectorAll('.switch input');
+  const on = [...boxes].filter((b) => b.checked).length;
+  const core = list.querySelectorAll('.bi-always').length;
+  const total = boxes.length;
+  el.textContent = total
+    ? on + ' of ' + total + ' on, plus ' + core + ' that are always on'
+    : 'Privacy tools that need no install';
 }
 
 async function loadExtensions() {
@@ -658,13 +1046,15 @@ function openModal() {
   pendingPath = null;
   pendingCrxPath = null;
   pendingIconUrl = null;
+  pendingCompat = null;
   document.getElementById('modal-name').value = '';
   document.getElementById('modal-version').value = '';
   document.getElementById('modal-desc').value = '';
-  document.getElementById('modal-pin').checked = false;
+  document.getElementById('modal-pin').checked = true;
   const dp = document.getElementById('chosen-path-display');
   dp.style.display = 'none';
   dp.textContent = '';
+  showCompat(null);
   document.getElementById('install-modal-bg').classList.add('open');
   document.getElementById('modal-name').focus();
 }
@@ -673,14 +1063,51 @@ function closeModal() {
   document.getElementById('install-modal-bg').classList.remove('open');
 }
 
+// Privoo implements only part of the Chrome extension API surface. Anything an
+// extension needs that is missing is worth saying BEFORE it is installed —
+// otherwise it lands in the list, quietly fails to start, and the only clue is
+// a stack trace in a log nobody reads.
+const COMPAT_ICON =
+  '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">'
+  + '<path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>';
+
+function showCompat(compat) {
+  const box = document.getElementById('compat-warn');
+  const body = document.getElementById('compat-warn-body');
+  if (!box || !body) return;
+  if (!compat || !compat.summary) { box.className = 'compat-warn'; body.innerHTML = ''; return; }
+  box.className = 'compat-warn show' + (compat.critical ? '' : ' minor');
+  const items = (compat.unsupported || [])
+    .map((u) => '<li><b>' + escHtml(u.permission) + '</b>'
+      + (u.impact ? ' — ' + escHtml(u.impact) : '') + '</li>')
+    .join('');
+  body.innerHTML =
+    '<b>' + (compat.critical
+      ? "This extension won't work in Privoo."
+      : "Parts of this extension won't work.")
+    + '</b> It needs APIs Privoo doesn\'t provide:<ul>' + items + '</ul>';
+}
+
+/** Warning row for an extension already in the list. */
+function compatRowFor(ext) {
+  const list = Array.isArray(ext && ext.unsupported) ? ext.unsupported : [];
+  if (!list.length) return '';
+  const critical = !!ext.unsupportedCritical;
+  return '<div class="ext-compat' + (critical ? '' : ' minor') + '">' + COMPAT_ICON
+    + '<div>' + (critical ? "Doesn't work in Privoo" : 'Partly unsupported')
+    + ' — needs ' + escHtml(list.join(', ')) + '.</div></div>';
+}
+
 async function handleManifestResult(result, filePath) {
   const dp = document.getElementById('chosen-path-display');
+  showCompat(result && result.compat);
   if (result?.ok && result.manifest) {
     const m = result.manifest;
     document.getElementById('modal-name').value = m.name || '';
     document.getElementById('modal-version').value = m.version || '';
     document.getElementById('modal-desc').value = m.description || '';
     pendingIconUrl = result.iconUrl || null;
+    pendingCompat = result.compat || null;
     dp.textContent = filePath;
     dp.style.display = 'block';
     showToast('Manifest loaded');
@@ -733,6 +1160,8 @@ document.getElementById('modal-install').addEventListener('click', async () => {
     path: pendingPath || '',
     crxPath: pendingCrxPath || '',
     iconUrl: pendingIconUrl || null,
+    unsupported: pendingCompat ? pendingCompat.unsupported.map((u) => u.permission) : [],
+    unsupportedCritical: !!(pendingCompat && pendingCompat.critical),
     enabled: true,
     pinnedToToolbar: pinned,
   });

@@ -12,6 +12,9 @@ const SEARCH_ENGINES = {
   qwant:      { name: 'Qwant',        url: 'https://www.qwant.com/?q=' },
   yandex:     { name: 'Yandex',       url: 'https://yandex.com/search/?text=' },
   kagi:       { name: 'Kagi',         url: 'https://kagi.com/search?q=' },
+  // Reachable from inside mainland China, where Google/Bing/DuckDuckGo are not.
+  baidu:      { name: 'Baidu 百度',    url: 'https://www.baidu.com/s?wd=' },
+  sogou:      { name: 'Sogou 搜狗',    url: 'https://www.sogou.com/web?query=' },
   // Sentinel — when selected, the actual URL template comes from
   // settings.customSearchUrl. The query is appended at the end (or
   // substituted for "%s" if present).
@@ -66,6 +69,20 @@ const DOH_PROVIDERS = {
     desc: '8.8.8.8 — reliable. Operated by Google.',
     urls: ['https://dns.google/dns-query', 'https://8.8.8.8/dns-query'],
   },
+  // Mainland China: the resolvers above are unreachable from inside the
+  // country, and because Privoo never falls back to plaintext system DNS, a
+  // blocked DoH endpoint means every lookup hangs and nothing loads at all.
+  // These two answer from inside China.
+  alidns: {
+    name: 'AliDNS (Mainland China)',
+    desc: 'Alibaba public DNS — reachable from inside mainland China.',
+    urls: ['https://dns.alidns.com/dns-query', 'https://223.5.5.5/dns-query'],
+  },
+  dnspod: {
+    name: 'DNSPod (Mainland China)',
+    desc: 'Tencent DNSPod — reachable from inside mainland China.',
+    urls: ['https://doh.pub/dns-query', 'https://1.12.12.12/dns-query'],
+  },
   // Sentinel — when selected, the URL comes from settings.customDohUrl.
   // Useful for self-hosted resolvers (Pi-hole + Unbound, etc.) or a personal
   // NextDNS profile URL.
@@ -102,7 +119,7 @@ const DEFAULTS = {
   restoreTabsOnLaunch: true,
 
   // Search
-  searchEngine: 'brave',
+  searchEngine: 'google',
   // Used when searchEngine === 'custom'. Either a full URL ending in "=" so
   // the query is appended, or include "%s" where the query should land.
   // Example: https://www.example.com/search?q=%s
@@ -112,7 +129,8 @@ const DEFAULTS = {
   // Privacy
   adBlocking: true,
   cryptojackingProtection: true, // blocks known in-browser cryptomining scripts
-  protectedToastSeen: false, // "We ❤️ keeping you protected online!" — shown once on the new tab page
+  protectedToastSeen: false,
+  surveyPromptShown: false, // one-time "Take the survey" card on the new tab page // "We ❤️ keeping you protected online!" — shown once on the new tab page
   httpsUpgrade: true,
   httpsUpgradeShowNotice: true,  // show the "upgrading to HTTPS" splash for 3s
   blockThirdPartyCookies: true,
@@ -127,6 +145,61 @@ const DEFAULTS = {
   canvasSpoofing: true,
   webrtcProtection: true,
   doNotTrack: true,
+  // Warn before following a pasted link that looks like it is pretending to
+  // be somewhere else. See looksSuspiciousUrl() in renderer.js for what
+  // "looks like" means — it is deliberately a short list of things that are
+  // almost never innocent, because a warning people learn to click through
+  // is worse than no warning.
+  // Thumbnail of a page when you rest on its tab. Costs one capturePage()
+  // per tab per navigation, cached in between — but it is a picture of what
+  // you were doing appearing on hover, so it gets a switch.
+  // A one-time note at the top of Settings saying what is already protecting
+  // you. Dated key, like the other one-time notes: a future message gets its
+  // own rather than re-showing itself to people who dismissed this one.
+  settingsPrivacyNote1Seen: false,
+  // ── Vision assistance ──────────────────────────────────────────────
+  // All off by default: each one is a real change to how the browser looks,
+  // and none of them should arrive uninvited.
+  visionUiScale: 100,          // 100 | 115 | 130 | 150 (percent)
+  visionHighContrast: false,   // stronger text and hairlines in the chrome
+  visionBoldText: false,       // heavier interface text
+  visionFocusRings: false,     // focus outline always visible, not just on Tab
+  visionReduceMotion: false,   // no animation anywhere in the chrome
+  visionUnderlineLinks: false, // underline every link on every page
+  visionMinFontSize: 0,        // 0 = off, otherwise a px floor for page text
+  // Night light. Strength 0-3; the schedule is local clock hours, because
+  // working out real sunset needs a location and Privoo does not ask for one.
+  nightLight: 0,
+  nightLightAuto: false,
+  nightLightFrom: 21,
+  nightLightTo: 7,
+  // Distance breaks: minutes between reminders, 0 = off.
+  eyeBreakMinutes: 0,
+  // Read aloud. Rate is a percentage so it stays an integer like the rest.
+  readAloud: false,
+  readAloudKeys: true,
+  readAloudRate: 100,
+
+  tabHoverPreview: true,
+  // Tab Snooze. A tab you have not looked at in a while lets go of its page
+  // and keeps only its title, favicon and address; touching it loads the page
+  // back. This is what Chrome calls Memory Saver, and it is the same trade:
+  // a second of reload in exchange for the memory a background tab was
+  // holding onto for a page nobody was reading.
+  tabSnooze: true,
+  // Minutes of not being looked at. 0 means never — the switch above is the
+  // on/off, this is only the delay.
+  tabSnoozeMinutes: 30,
+  // A one-time note shown quietly at the bottom of the window. The key is
+  // dated and names its subject on purpose: the next one gets its own key
+  // rather than resetting this one, so nobody who has already seen this
+  // message sees it again.
+  noteNepalChinaFloods2026: false,
+  pasteProtection: true,
+  // Only let a page open a new tab or window if the user just interacted with
+  // it. Blocks popunders and the redirect-on-any-click pattern without
+  // touching the OAuth popups and download links that follow a real click.
+  popupBlocking: true,
   allowGeolocation: false,
 
   // Language — preferred content language sent to sites (Accept-Language) and
@@ -134,23 +207,19 @@ const DEFAULTS = {
   // keeps content in your language even behind a VPN in another country.
   preferredLanguage: 'auto',
 
+  // Region preset — '' (worldwide defaults) or 'cn' (mainland China). Picking
+  // one writes the individual search/DoH/language settings below; it is stored
+  // only so the Settings dropdown can show which preset is currently applied.
+  regionPreset: '',
+
   // Proxy / Tor
   proxyMode: 'none',   // 'none' | 'manual' | 'tor'
   proxyUrl: '',        // manual proxy, e.g. socks5://127.0.0.1:1080 or http://host:port
   proxyTorPort: 9100,  // local SOCKS port Tor listens on / we route through
 
   // Appearance
-  darkMode: true,
+  darkMode: true,    // Dark by default — a neutral grey ladder, not pure black
   forceDarkMode: false,
-  // Increase Transparency — uses Mica/Acrylic on Win11, vibrancy on macOS,
-  // and a translucent toolbar fallback on Linux. Off by default; turn it on
-  // in Settings → Appearance for the frosted look.
-  increaseTransparency: false,
-  transparencyStyle: 'frosted', // glass look when transparency is on: frosted | liquid | acrylic | clear
-  // Aero gradient — layers a soft colored gradient behind the chrome when
-  // transparency is on, for the classic Aero / colour-acrylic look. Has no
-  // effect when increaseTransparency is off.
-  aeroGradient: false,
   // Your Vibe — ambient hue gradient behind the browser chrome.
   vibeEnabled: false,
   vibeHue: 210,    // 210 = Ocean blue default
@@ -162,10 +231,10 @@ const DEFAULTS = {
   // state to match that theme's colours. Off by default so a manually chosen
   // Vibe setting isn't silently overwritten by a theme pick.
   themeAutoVibe: false,
-  fontSizeScale: 1,        // 1 = default, 0.9 = small, 1.2 = large
-  showBookmarksBar: true,
+  semiTransparent: false,
+  fontSizeScale: 1,       // 1 = default, 0.9 = small, 1.2 = large
+  showBookmarksBar: false,
   showHomeButton: false,
-  homePage: 'privoo://newtab/',
   bookmarks: [
     { name: 'Amazon',       url: 'https://www.amazon.com',       addedAt: 0 },
     { name: 'eBay',         url: 'https://www.ebay.com',         addedAt: 0 },
@@ -181,16 +250,19 @@ const DEFAULTS = {
 
   // New tab
   ntpShowClock: true,
-  ntpShowStats: true,
+  ntpShowStats: false,       // privacy widget — opt in from Settings → New tab
   // Optional "Privoo News" link on the Speed Dial (off by default). The news
   // itself lives at privoo://news and auto-opens after setup / an update.
   ntpNewsLink: false,
   // Last app version we auto-opened Privoo News for — drives "show news once
-  // after an update". Empty on a fresh install (setup records it instead).
-  newsSeenVersion: '',
-  ntpWallpaperAnimated: true, // subtle ambient motion on the default wave wallpaper
+  // Random wallpaper: a freely licensed photo behind the new tab, credited to
+  // its photographer. A batch is fetched once an hour and every new tab picks
+  // one out of it, so ten tabs is one download, not ten.
+  ntpRandomWallpaper: false,
+  // Superseded by ntpRandomWallpaper. Kept so an existing profile's choice can
+  // be carried across once, in the migration below.
+  ntpWallpaperSlideshow: false,
   ntpShowQuickLinks: true,   // shortcut cards under the search bar — on by default
-  ntpShowGreeting: true,     // "Good morning/afternoon/evening/night" under the logo
   ntpShowAddShortcutBtn: true, // top-right "Add shortcut" pill
   // Brave-style focused search: when the user clicks/focuses the search bar
   // on the new tab page, it scales up and the shortcuts below fade out so
@@ -203,18 +275,20 @@ const DEFAULTS = {
   // Gates the shipped default wallpaper.png specifically (Settings → Apply
   // Privoo Background). Has no effect once the user sets their own custom
   // wallpaper — that always shows regardless of this toggle.
-  ntpApplyPrivooBackground: true,
+  ntpApplyPrivooBackground: false,
   ntpWallpaperDim: 0.42,
+  // Wallpapers kept for reuse. Each entry is { id, type, ext, name, addedAt };
+  // the file lives in userData/wallpapers/<id><ext>. The ACTIVE wallpaper is
+  // still ntpWallpaperPath — the library just sets it, the same way the file
+  // picker always did, so nothing downstream needs to know this exists.
+  ntpWallpaperLibrary: [],
+  // Which library entry is currently the active wallpaper, so the collection
+  // can show which tile is in use and know what to clear if it is removed.
+  ntpWallpaperActiveId: '',
   ntpDark: false,
-  // Starter shortcuts seeded for fresh installs. (Existing users keep their
-  // own — an empty array they've already saved is respected.)
-  ntpQuickLinks: [
-    { name: 'YouTube', url: 'https://youtube.com' },
-    { name: 'Spotify', url: 'https://open.spotify.com' },
-    { name: 'Amazon',  url: 'https://www.amazon.com' },
-    { name: 'eBay',    url: 'https://www.ebay.com' },
-    { name: 'Reddit',  url: 'https://reddit.com' },
-  ],
+  // No shortcuts on a fresh install. They can be added in Settings under
+  // New tab page. An empty array a user has saved is respected too.
+  ntpQuickLinks: [],
 
   // Downloads
   downloadPath: null,   // null = use system default (app.getPath('downloads'))
@@ -225,11 +299,21 @@ const DEFAULTS = {
 
   // Misc
   hardwareAcceleration: true,
+  // Routes video through normal GPU compositing instead of a DirectComposition
+  // hardware overlay plane. On by default: the overlay path is what produces
+  // black video (with working audio) on a number of NVIDIA driver branches.
+  // Turn it off to reclaim a little GPU bandwidth if your machine is unaffected.
+  // Requires a restart — the switch is read before the GPU process starts.
+  videoOverlayCompat: true,
   smoothScrolling: true,
   videoPopOut: false,
   ytdlpPath: null,
-  showYtdlpToolbar: true,
+  showYtdlpToolbar: false,
   showGeoToolbar: true,
+  // Downloads is the one toolbar button that earns permanent space: it is
+  // where an in-flight transfer reports and where a finished one waits.
+  showDownloadsButton: true,
+  showExtensionsButton: true,   // pinned by default; unpin from the Extensions page
   showNotesButton: false, // hidden by default — enable via the Notes extension
   showCalculator: false,  // Calculator toolbar button — enable via the Calculator extension
   lucidMode: false,       // Lucid Mode — hover a video for a star that enhances its picture
@@ -238,9 +322,17 @@ const DEFAULTS = {
   showSidebar: true,      // legacy boolean — derived from/kept in sync with sidebarMode below
   sidebarMode: 'on',      // 'on' | 'off' | 'hover' — hover auto-collapses the rail until the cursor nears the edge
   sidebarQuickAccess: true, // pinned Downloads/History/Bookmarks/Settings row at the top of the rail
-  sidebarPanelWidth: 480, // width of the embedded web panel in the sidebar (drag the edge to resize, 180-760px)
+  sidebarPanelWidth: 880, // width of the embedded web panel in the sidebar (drag the edge to resize)
+  sidebarMusicPlayer: '', // remembered choice behind the sidebar Music shortcut ('' = ask on next click)
+  // Surface the sidebar music player in the toolbar media dropdown rather
+  // than as a hover pill on the sidebar icon. On by default.
+  musicInToolbar: true,
   mobileEmulationDevice: 'samsung', // 'samsung' | 'iphone', used by the sidebar web panel and Mobile View
-  showAiButton: true,     // AI toolbar button — can be hidden via Settings → Features
+  showAiButton: false,    // AI toolbar button — off by default, turned on from the Extensions page
+  aiTabPinned1Applied: false,  // one-time: place the pinned Privoo AI tab
+  noteInControl: false,        // one-time: the line shown after fifteen sites
+  extButtonPinned1Applied: false,  // one-time: pin the extensions button on existing profiles
+  showVpnButton: false,   // VPN toolbar button — enable via the Privoo VPN extension
 
   // Privoo VPN — a friendly toolbar front-end for the existing manual-proxy
   // system below (proxyMode/proxyUrl). Privoo doesn't operate or provide any
@@ -258,7 +350,6 @@ const DEFAULTS = {
   showTranslateButton: false, // Translate toolbar button — off by default, enable in Settings → Features
   verticalTabs: false,    // show tabs in a vertical left panel instead of horizontal strip
   vtabsCollapsed: false,  // vertical tabs panel collapsed to icon-only rail
-  vtabsIntegrated: false,   // move toolbar icon buttons into the vertical tabs panel
   vtabsSearchPopup: true,   // show the Spotlight-style search overlay on New Tab in vtabs mode (off = open a normal new tab page)
   searchPopupGlass: true,   // apply the transparency/glass effect to the vtabs search popup
   ntpWallpaperFullBrowser: false, // stretch the new-tab wallpaper behind the whole browser chrome (toolbar + tab strip)
@@ -274,19 +365,25 @@ const DEFAULTS = {
   uiSoundVolume: 0.7,     // 0..1 volume for the UI blips
   newSearchBarStyle: false, // legacy boolean for the "soft" address bar (superseded by searchBarStyle)
   searchBarStyle: '',     // address-bar appearance: classic | soft | pill | square ('' = derive from newSearchBarStyle)
-  vtabsCenterIcons: false, // vertically centre the vertical-tabs icon rail
-  newTabBtnCircle: false, // draw a circle around the new-tab "+" button
   syncDiscordTheme: true,  // recolor discord.com to match Privoo's accent + theme palette
-  uiRoundness: 'default', // corner style of the whole UI: default | sharp | round
+  // Pointer shown over Privoo's own interface: system | large | precise | custom
+  cursorStyle: 'system',
+  cursorImagePath: '',    // set when cursorStyle is 'custom'
   customChromeCss: '',    // power-user: raw CSS injected into the browser chrome
   sidebarLinks: [
     { title: 'Snapchat', url: 'https://web.snapchat.com' },
-    { title: 'Spotify',  url: 'https://open.spotify.com' },
+    { title: 'Music',    url: 'privoo://music', music: true },
     { title: 'Discord',  url: 'https://discord.com/app' },
     { title: 'Instagram',url: 'https://www.instagram.com' },
   ],
   ghostName: '',          // user-supplied name for the Privoo mascot
-  accentColor: '#8b7cf7', // Lavender — the single "quiet & precise" accent, whole UI
+  // Monochrome accent. The literal value is only a fallback: the renderer
+  // treats MONO_ACCENT as adaptive and resolves it to white on the black
+  // chrome and to near-black in light mode, so "the accent" is always the
+  // opposite of the surface it sits on. Any other hex is used verbatim.
+  accentColor: '#ffffff',
+
+  accentBeforeTheme: '',  // accent in use before a theme retuned it; restored when the theme is turned off
   /** Last window bounds + maximized state — restored on next launch. */
   windowState: null,
   disclaimerAccepted: false,
@@ -295,6 +392,7 @@ const DEFAULTS = {
   updatesToastShown: false,
   discordPromptShown: false,
   thankYouShown: false,    // one-time "Thank you for using Privoo" popup
+  ownBrowsingShown: false, // one-time "Your browsing belongs to you, not advertisers" popup
   incognitoWelcomeShown: false, // one-time "Welcome to Incognito" intro on the private new-tab page
   androidPromptShown: false, // one-time "Android has released!" popup (v4.0.1 only)
   britainShown: false,     // one-time "Made with care in Britain" popup
@@ -329,6 +427,11 @@ const DEFAULTS = {
   easyFilesEnabled: true,
   downloadBoosterEnabled: false, // splits large downloads into parallel range requests
 
+  // Privoo Guard — optional ClamAV-backed on-demand scanning. Off by
+  // default and does nothing at all unless ClamAV is installed separately.
+  protectionEnabled: false,
+  protectionBinaryPath: '',
+
   // Safety
   safeMode: false,        // blur/block explicit images via CSS injection
   blockAdultSites: false, // block navigation to known adult domains
@@ -362,7 +465,10 @@ const DEFAULTS = {
   // Stronger tracking protection — strips tracking URL parameters (utm_*,
   // fbclid, etc.), minimises the Referer header on cross-origin requests,
   // and sends the Global Privacy Control signal.
-  strongerTrackingProtection: false,
+  // On. Stripping utm_*/fbclid, minimising Referer and sending GPC break
+  // nothing — they are the cheapest privacy in the browser, and shipping
+  // them off by default meant almost nobody had them.
+  strongerTrackingProtection: true,
 };
 
 const profileStore = require('./profile-store');
@@ -372,6 +478,27 @@ let cache = null;
 function filePath() {
   return path.join(profileStore.getDataDir(), 'privoo-settings.json');
 }
+
+// Flags for every one-time migration wave below. A new profile is stamped with
+// all of them, because it starts life at the shape those waves exist to reach.
+// Adding a wave means adding its flag here too, or new installs will run it.
+const MIGRATIONS_ALREADY_APPLIED = {
+  uiRefresh2Applied: true,
+  // Turns Stronger tracking protection on once, for profiles created while
+  // it defaulted to off. Guarded by its own flag so it never fights someone
+  // who has since turned it off on purpose.
+  trackingProt1Applied: true,
+  seedTrim1Applied: true,
+  circleUndo1Applied: true,
+  identityOptIn1Applied: true,
+  sidebarWiden1Applied: true,
+  musicShortcut1Applied: true,
+  quietUi1Applied: true,
+  qlSeedClear1Applied: true,
+  downloadsBtn1Applied: true,
+  onyx1Applied: true,
+  randomWp1Applied: true,
+};
 
 function load() {
   if (cache) return cache;
@@ -401,9 +528,6 @@ function load() {
       if (parsed.ntpShowQuickLinks === false || parsed.ntpShowQuickLinks === undefined) {
         cache.ntpShowQuickLinks = true;
       }
-      if (parsed.newTabBtnCircle === false || parsed.newTabBtnCircle === undefined) {
-        cache.newTabBtnCircle = true;
-      }
       if (parsed.showSidebar === false || parsed.showSidebar === undefined) {
         cache.showSidebar = true;
       }
@@ -416,6 +540,12 @@ function load() {
     // Second migration wave — MUST live outside the uiRefresh2 block: profiles
     // that already ran wave 1 have the flag set, so anything added inside that
     // block after the fact never fires for them.
+    if (!parsed.trackingProt1Applied) {
+      cache.strongerTrackingProtection = true;
+      cache.trackingProt1Applied = true;
+      try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
+    }
+
     if (!parsed.seedTrim1Applied) {
       if (!parsed.sidebarPanelWidth || parsed.sidebarPanelWidth <= 340) {
         cache.sidebarPanelWidth = 480;
@@ -426,14 +556,12 @@ function load() {
       cache.seedTrim1Applied = true;
       try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
     }
-    // Third migration wave, same "must live outside the earlier block" reason.
-    // seedTrim1 had turned newTabBtnCircle ON for anyone who'd never touched
-    // it; that decision is reversed, so undo it once for anyone still sitting
-    // on the value that migration set (never touched it since).
+    // Third migration wave. It used to flip newTabBtnCircle back off; that
+    // setting no longer exists, so all this does now is clear the key out of
+    // profiles that still carry it. The flag stays so the waves below keep
+    // running in the order they expect.
     if (!parsed.circleUndo1Applied) {
-      if (parsed.newTabBtnCircle === true) {
-        cache.newTabBtnCircle = false;
-      }
+      delete cache.newTabBtnCircle;
       cache.circleUndo1Applied = true;
       try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
     }
@@ -442,6 +570,17 @@ function load() {
     // changes on upgrade.
     if (!parsed.sidebarMode) {
       cache.sidebarMode = parsed.showSidebar === false ? 'off' : 'on';
+      try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
+    }
+    // The five starter shortcuts are no longer seeded. Clear them for anyone
+    // still carrying the shipped set untouched. A customised list is kept.
+    if (!parsed.qlSeedClear1Applied) {
+      const SEEDED = 'YouTube|Spotify|Amazon|eBay|Reddit';
+      const current = Array.isArray(parsed.ntpQuickLinks) ? parsed.ntpQuickLinks : null;
+      if (current && current.map((l) => l && l.name).join('|') === SEEDED) {
+        cache.ntpQuickLinks = [];
+      }
+      cache.qlSeedClear1Applied = true;
       try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
     }
     // Fifth migration wave, again outside the earlier blocks. Identity autofill
@@ -455,8 +594,103 @@ function load() {
       cache.identityOptIn1Applied = true;
       try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
     }
+    // Sixth migration wave. sidebarPanelWidth's default widened from 480 to
+    // 640 — bump anyone still sitting on the old default, but leave any width
+    // the user actually dragged untouched.
+    if (!parsed.sidebarWiden1Applied) {
+      if (parsed.sidebarPanelWidth === 480) {
+        cache.sidebarPanelWidth = 640;
+      }
+      cache.sidebarWiden1Applied = true;
+      try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
+    }
+    if (!parsed.musicShortcut1Applied) {
+      if (Array.isArray(parsed.sidebarLinks)) {
+        cache.sidebarLinks = parsed.sidebarLinks.map((l) => (
+          /open\.spotify\.com/i.test((l && l.url) || '')
+            ? { title: 'Music', url: 'privoo://music', music: true }
+            : l
+        ));
+      }
+      if (!parsed.sidebarPanelWidth || parsed.sidebarPanelWidth === 640) {
+        cache.sidebarPanelWidth = 880;
+      }
+      cache.musicShortcut1Applied = true;
+      try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
+    }
+    if (!parsed.quietUi1Applied) {
+      if (parsed.accentColor === '#8b7cf7' || parsed.accentColor === undefined) {
+        cache.accentColor = '#5b7fb9';
+      }
+      if (parsed.ntpApplyPrivooBackground !== false && parsed.ntpWallpaperPath == null) {
+        cache.ntpApplyPrivooBackground = false;
+      }
+      if (parsed.searchEngine === 'brave' || parsed.searchEngine === undefined) {
+        cache.searchEngine = 'google';
+      }
+      if (parsed.showYtdlpToolbar === true) cache.showYtdlpToolbar = false;
+      if (parsed.showAiButton !== false) cache.showAiButton = false;
+      cache.quietUi1Applied = true;
+      try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
+    }
+    // The extensions button is pinned by default now. A change of default
+    // reaches only profiles that do not exist yet, so this reaches the rest,
+    // once. Flagged, so unpinning it afterwards sticks rather than being
+    // undone on the next launch.
+    if (!parsed.extButtonPinned1Applied) {
+      cache.showExtensionsButton = true;
+      cache.extButtonPinned1Applied = true;
+      try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
+    }
+
+    // showDownloadsButton shipped defaulting to false and its toggle drove
+    // nothing — the renderer forced the button visible regardless — so a
+    // persisted `false` is leftover from the old default, never a choice
+    // anyone made. Clear it once; from here the toggle is live and whatever
+    // the user sets afterwards sticks.
+    if (!parsed.downloadsBtn1Applied) {
+      if (parsed.showDownloadsButton === false) cache.showDownloadsButton = true;
+      cache.downloadsBtn1Applied = true;
+      try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
+    }
+    // Dark-by-default refresh, with a monochrome accent. Like every migration
+    // above it only moves values still sitting on the OLD default: someone
+    // who deliberately picked light mode or a coloured accent keeps both.
+    // (The flag is named onyx1 after the black theme this first shipped as;
+    // the name is load-bearing in existing profiles, so it stays.)
+    if (!parsed.onyx1Applied) {
+      if (parsed.darkMode === undefined || parsed.darkMode === false) {
+        cache.darkMode = true;
+      }
+      // Every accent Privoo has ever shipped as a default, in order. Any of
+      // them still in place means the user never chose one.
+      const SHIPPED_ACCENTS = ['#57a97e', '#8b7cf7', '#5b7fb9', '#4f46e5'];
+      if (parsed.accentColor === undefined
+          || SHIPPED_ACCENTS.includes(String(parsed.accentColor).toLowerCase())) {
+        cache.accentColor = '#ffffff';
+      }
+      cache.onyx1Applied = true;
+      try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
+    }
+    // The bundled wallpaper gallery is gone, and the hourly single-photo
+    // slideshow became "Random wallpaper" — a batch an hour, one per tab.
+    // Carry the old switch across, and clear a wallpaper that pointed into the
+    // gallery, so a profile that had one falls back to a plain new tab rather
+    // than to a file that no longer exists.
+    if (!parsed.randomWp1Applied) {
+      if (parsed.ntpWallpaperSlideshow === true) cache.ntpRandomWallpaper = true;
+      const wp = String(parsed.ntpWallpaperPath || '').split(String.fromCharCode(92)).join('/');
+      if (wp.includes('/renderer/wallpapers/')) {
+        cache.ntpWallpaperPath = '';
+        cache.ntpWallpaperType = 'image';
+      }
+      cache.randomWp1Applied = true;
+      try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
+    }
   } catch {
-    cache = { ...DEFAULTS };
+    // No settings file yet: this is a brand-new profile.
+    cache = { ...DEFAULTS, ...MIGRATIONS_ALREADY_APPLIED };
+    try { fs.writeFileSync(filePath(), JSON.stringify(cache, null, 2), 'utf8'); } catch {}
   }
   return cache;
 }

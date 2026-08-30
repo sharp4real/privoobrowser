@@ -11,6 +11,17 @@ html,body{height:100%;overflow:hidden}
 /* Hidden until applyNtpLook() has themed the page — kills any flash of an
    un-themed new tab. Once themed it reveals with a clean entrance below. */
 body{background:transparent;color:#1f1f1f;user-select:none;opacity:0;}
+html:has(body.ntp-see-through){background:transparent!important;}
+body.ntp-see-through{background:transparent!important;}
+body.ntp-see-through #ntp-bg,
+body.ntp-see-through #ntp-bg-dim,
+body.ntp-see-through #ntp-bg-video,
+body.ntp-see-through #ntp-wave{display:none!important;}
+/* The "quiet" look paints its gradient wash and its big pale blob on the body's
+   own pseudo-elements, so hiding #ntp-bg alone left them drawn over a window
+   that is meant to be see-through. */
+body.ntp-see-through::before,
+body.ntp-see-through::after{display:none!important;content:none!important;}
 body.ntp-ready{opacity:1;}
 /* Clean new-tab entrance — the background is there instantly, the content
    (search bar, shortcuts) gently rises into place. Runs once on load. */
@@ -26,7 +37,6 @@ body.ntp-ready #ntp-root{
    applied (ntp-in keyframe) it becomes the backdrop-filter's stacking root,
    causing the blur to trail/drag as the element slides. Use a fade-only
    animation instead so no transform stacking context is created. */
-body.ntp-ready.ntp-wp.transparent-ui #ntp-root,
 body.ntp-ready.ntp-wp #ntp-root,
 body.ntp-ready.ntp-live #ntp-root,
 body.ntp-ready.ntp-wave-on #ntp-root{
@@ -46,16 +56,17 @@ body.ntp-ready.ntp-wave-on #ntp-root{
   background-size:cover;background-position:center;background-repeat:no-repeat;
 }
 @media (prefers-color-scheme: dark) {
-  #ntp-bg { background-color:#17181c; }
+  #ntp-bg { background-color:#33333b; }
 }
 /* Explicit theme classes win over the OS media query so dark/light never mismatch. */
-body.ntp-dark #ntp-bg { background-color:#17181c; }
-body:not(.ntp-dark):not(.ntp-wp) #ntp-bg { background-color:#f3f3f7; }
-/* Increase Transparency on the new tab — drop the solid fill so the OS
-   material peeks through. Only kicks in when no wallpaper is set; if the
-   user uploaded a wallpaper, that takes precedence (transparency over a
-   wallpaper would look muddy). */
-body.transparent-ui:not(.ntp-wp) #ntp-bg{background-color:transparent;}
+body.ntp-dark #ntp-bg { background-color:#33333b; }
+body:not(.ntp-dark):not(.ntp-wp) #ntp-bg { background-color:#f2f2f4; }
+/* With no wallpaper set this layer has nothing to show, and its opaque
+   pre-paint fill was covering the page's own background — which is why the
+   new tab stayed one flat dark colour no matter what the canvas rules said.
+   It only exists to stop a white flash before applyNtpLook() runs, so once
+   the page has decided it is in quiet mode, get out of the way. */
+body.ntp-quiet #ntp-bg { background-color:transparent; background-image:none; }
 /* Live (video) wallpaper — sits in the same plane as #ntp-bg, beneath the dim
    overlay and content. Only shown when a video wallpaper is active. */
 #ntp-bg-video{
@@ -141,7 +152,7 @@ body.ntp-wave-on #ntp-bg{background-image:none !important;}
 }
 
 body.ntp-dark:not(.ntp-wp) #ntp-footer,
-body.ntp-dark:not(.ntp-wp) #ntp-disclaimer{color:#9aa0a6;}
+body.ntp-dark:not(.ntp-wp) #ntp-disclaimer{color:#b0b0b8;}
 
 body.ntp-wp #ntp-footer,
 body.ntp-wp #ntp-disclaimer{color:rgba(255,255,255,.88);text-shadow:0 1px 8px rgba(0,0,0,.4);}
@@ -174,7 +185,7 @@ body.ntp-wp .ntp-brand-logo{filter:drop-shadow(0 2px 14px rgba(0,0,0,.5));}
   margin-bottom:18px;
   letter-spacing:.005em;
 }
-body.ntp-dark .ntp-ghost-name{color:#9aa0a6}
+body.ntp-dark .ntp-ghost-name{color:#b0b0b8}
 body.ntp-wp .ntp-ghost-name{
   color:#fff;
   text-shadow:0 1px 4px rgba(0,0,0,.5);
@@ -203,13 +214,13 @@ body.ntp-wp .ntp-ghost-name{
   border-color:rgba(23,23,31,.16);
   box-shadow:0 1px 2px rgba(23,23,31,.05), 0 6px 20px -8px rgba(23,23,31,.14);
 }
+/* Focused search (Settings -> New tab, off by default). Its point is the
+   field growing, not glowing — so no accent ring here either. */
 body.ntp-focused-search-on #ntp-root.search-focused #search-form{
   height:54px;
   max-width:580px;
   padding:0 20px;
-  background:#ffffff;
-  border-color:var(--accent,#4f46e5);
-  box-shadow:0 0 0 3px var(--accent-soft,rgba(79,70,229,.13)), 0 6px 20px -8px rgba(23,23,31,.14);
+  box-shadow:0 10px 28px -14px rgba(0,0,0,.4);
 }
 body.ntp-wp:not(.ntp-dark).ntp-focused-search-on #ntp-root.search-focused #search-form{
   background:rgba(255,255,255,.68);
@@ -218,7 +229,7 @@ body.ntp-wp.ntp-dark.ntp-focused-search-on #ntp-root.search-focused #search-form
   background:rgba(32,33,36,.78);
 }
 body.ntp-dark:not(.ntp-wp).ntp-focused-search-on #ntp-root.search-focused #search-form{
-  background:#1f2024;
+  background:#28282c;
 }
 body.ntp-focused-search-on #ntp-root.search-focused #q{
   font-size:16px;
@@ -245,7 +256,7 @@ body.ntp-wp:not(.ntp-dark) #search-form{
 body.ntp-wp.ntp-dark #search-form{
   background:rgba(32,33,36,.78);
   border-color:rgba(255,255,255,.10);
-  color:#e8eaed;
+  color:#ededf0;
   box-shadow:0 10px 34px -10px rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.15);
 }
 /* The generic #search-form:hover rule forces a near-opaque white background
@@ -261,15 +272,15 @@ body.ntp-wp.ntp-dark #search-form:hover{
   border-color:rgba(255,255,255,.16);
   box-shadow:0 14px 40px -10px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.2);
 }
-body.ntp-wp.ntp-dark #q{color:#e8eaed;}
-body.ntp-wp.ntp-dark #search-form svg{fill:#9aa0a6;}
+body.ntp-wp.ntp-dark #q{color:#ededf0;}
+body.ntp-wp.ntp-dark #search-form svg{fill:#b0b0b8;}
 body.ntp-wp.ntp-dark #search-suggestions{
-  background:rgba(32,33,36,.96);border-color:rgba(255,255,255,.10);color:#e8eaed;
+  background:rgba(32,33,36,.96);border-color:rgba(255,255,255,.10);color:#ededf0;
 }
 body.ntp-wp.ntp-dark .ss-item:hover,
 body.ntp-wp.ntp-dark .ss-item.active{background:rgba(255,255,255,.10);}
 body.ntp-dark:not(.ntp-wp) #search-form{
-  background:#1f2024;
+  background:#28282c;
   border-color:rgba(255,255,255,.09);
   box-shadow:0 1px 2px rgba(0,0,0,.2), 0 4px 16px -8px rgba(0,0,0,.4);
 }
@@ -277,58 +288,7 @@ body.ntp-dark:not(.ntp-wp) #search-form:hover{
   border-color:rgba(255,255,255,.15);
 }
 body.ntp-dark.ntp-focused-search-on:not(.ntp-wp) #ntp-root.search-focused #search-form{
-  background:#303134;
-}
-/* Increase Transparency — the new-tab search bar becomes a frosted glass
-   pill so the OS material shows through it. !important + the extra
-   :not(.ntp-wp) keeps it winning over the wallpaper / dark variants. */
-body.transparent-ui:not(.ntp-wp) #search-form{
-  background:rgba(255,255,255,.46) !important;
-  border-color:rgba(255,255,255,.40) !important;
-  backdrop-filter:blur(20px) saturate(170%);
-  -webkit-backdrop-filter:blur(20px) saturate(170%);
-}
-body.transparent-ui.ntp-dark:not(.ntp-wp) #search-form{
-  background:rgba(40,41,45,.46) !important;
-  border-color:rgba(255,255,255,.12) !important;
-}
-/* Transparent + wallpaper: frosted glass instead of near-opaque fill */
-body.transparent-ui.ntp-wp:not(.ntp-dark) #search-form{
-  background:rgba(255,255,255,.52) !important;
-  border-color:rgba(255,255,255,.42) !important;
-  backdrop-filter:blur(22px) saturate(180%);
-  -webkit-backdrop-filter:blur(22px) saturate(180%);
-}
-body.transparent-ui.ntp-wp.ntp-dark #search-form{
-  background:rgba(28,29,33,.52) !important;
-  border-color:rgba(255,255,255,.14) !important;
-  backdrop-filter:blur(22px) saturate(180%);
-  -webkit-backdrop-filter:blur(22px) saturate(180%);
-}
-/* Explicit #q text color for every transparent combination */
-body.transparent-ui:not(.ntp-dark) #q{color:#1f1f1f;}
-body.transparent-ui.ntp-dark #q{color:#e8eaed;}
-/* Suggestions — frosted for no-wallpaper case */
-body.transparent-ui:not(.ntp-wp) #search-suggestions{
-  background:rgba(255,255,255,.78) !important;
-  backdrop-filter:blur(20px) saturate(170%);
-  -webkit-backdrop-filter:blur(20px) saturate(170%);
-}
-body.transparent-ui.ntp-dark:not(.ntp-wp) #search-suggestions{
-  background:rgba(40,41,45,.82) !important;
-}
-/* Suggestions — frosted for wallpaper case */
-body.transparent-ui.ntp-wp:not(.ntp-dark) #search-suggestions{
-  background:rgba(255,255,255,.84) !important;
-  backdrop-filter:blur(20px) saturate(170%);
-  -webkit-backdrop-filter:blur(20px) saturate(170%);
-  color:#1f1f1f;
-}
-body.transparent-ui.ntp-wp.ntp-dark #search-suggestions{
-  background:rgba(28,29,33,.88) !important;
-  backdrop-filter:blur(20px) saturate(170%);
-  -webkit-backdrop-filter:blur(20px) saturate(170%);
-  color:#e8eaed;
+  background:#37373f;
 }
 /* ── Your Vibe — tint the NTP search bar to match the browser chrome ── */
 :root { --ntp-vibe-hue: 210; }
@@ -345,18 +305,14 @@ body.ntp-vibe.ntp-dark:not(.ntp-wp) #search-form{
   box-shadow:0 2px 14px hsl(var(--ntp-vibe-hue) 55% 40% / .18),
              0 1px 4px rgba(0,0,0,.18) !important;
 }
-body.ntp-vibe:not(.ntp-wp) #search-form:focus-within{
-  background:color-mix(in srgb, hsl(var(--ntp-vibe-hue) 75% 96%) 18%, #fff) !important;
-  box-shadow:0 4px 24px hsl(var(--ntp-vibe-hue) 65% 58% / .22),
-             0 8px 32px rgba(0,0,0,.10) !important;
-}
-body.ntp-vibe.ntp-dark:not(.ntp-wp) #search-form:focus-within{
-  background:color-mix(in srgb, hsl(var(--ntp-vibe-hue) 45% 22%) 30%, #303134) !important;
-  box-shadow:0 4px 24px hsl(var(--ntp-vibe-hue) 55% 40% / .25),
-             0 8px 32px rgba(0,0,0,.25) !important;
-}
-/* Wallpaper — frosted glass instead of stark white; vibe adds a hue glow */
-body.ntp-wp:not(.ntp-dark) #search-form{
+/* Vibe keeps its resting tint but not the bloom on focus — clicking the
+   field should not change how bright the page is. */
+/* Wallpaper — frosted glass instead of stark white; vibe adds a hue glow.
+   This is the base the two vibe rules below tint, so it belongs to the vibe
+   block and is scoped to it. Without `.ntp-vibe` it was an unconditional
+   !important that forced a white field onto EVERY wallpapered new tab,
+   whether or not Your Vibe was even switched on. */
+body.ntp-vibe.ntp-wp:not(.ntp-dark) #search-form{
   background:rgba(255,255,255,.68) !important;
   backdrop-filter:blur(18px) saturate(160%);
   -webkit-backdrop-filter:blur(18px) saturate(160%);
@@ -376,7 +332,7 @@ body.ntp-vibe #search-suggestions{
              0 2px 8px rgba(0,0,0,.06) !important;
 }
 body.ntp-vibe.ntp-dark #search-suggestions{
-  background:color-mix(in srgb, hsl(var(--ntp-vibe-hue) 45% 22%) 26%, #303134) !important;
+  background:color-mix(in srgb, hsl(var(--ntp-vibe-hue) 45% 22%) 26%, #37373f) !important;
 }
 
 /* Real focus ring for the base pill (this was missing entirely before —
@@ -387,7 +343,7 @@ body.ntp-vibe.ntp-dark #search-suggestions{
    search bar kept looking flat and beige no matter what was changed above.) */
 #search-form:focus-within{
   background:#fff;
-  border-color:color-mix(in srgb, var(--accent,#4f46e5) 55%, transparent);
+  border-color:color-mix(in srgb, var(--accent,#ffffff) 55%, transparent);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.9), 0 0 0 4px var(--accent-soft,rgba(79,70,229,.16)),
              0 14px 40px -10px rgba(38,36,58,.22);
 }
@@ -406,18 +362,18 @@ body.ntp-wp.ntp-dark #search-form:focus-within{
   border-color:rgba(255,255,255,.16);
   box-shadow:0 14px 40px -10px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.2);
 }
-#search-form svg{fill:#9aa0a6;flex-shrink:0;}
-body.ntp-dark:not(.ntp-wp) #search-form svg{fill:#9aa0a6;}
+#search-form svg{fill:#b0b0b8;flex-shrink:0;}
+body.ntp-dark:not(.ntp-wp) #search-form svg{fill:#b0b0b8;}
 /* Search-engine favicon shown in place of the magnifying glass. */
 #search-icon-img{width:20px;height:20px;border-radius:10px;object-fit:contain;flex-shrink:0;display:none;}
 #search-form.has-engine-icon #search-icon{display:none;}
 #search-form.has-engine-icon #search-icon-img{display:block;}
 
-#search-form svg{ fill:#9aa0a6; }
+#search-form svg{ fill:#b0b0b8; }
 /* Leading search icon + trailing clear button (muted, never accent). */
 #search-icon{ flex-shrink:0; color:#8a887e; transition:transform .15s cubic-bezier(.34,1.6,.64,1); }
-#search-form:focus-within #search-icon{ color:var(--accent,#4f46e5); transform:scale(1.08); }
-body.ntp-dark:not(.ntp-wp) #search-icon{ color:#9aa0a6; }
+#search-form:focus-within #search-icon{ color:var(--accent,#ffffff); transform:scale(1.08); }
+body.ntp-dark:not(.ntp-wp) #search-icon{ color:#b0b0b8; }
 body.ntp-wp #search-icon{ color:rgba(255,255,255,.8); }
 #search-clear{
   flex-shrink:0;border:none;background:transparent;cursor:pointer;padding:4px;
@@ -429,16 +385,16 @@ body.ntp-wp #search-icon{ color:rgba(255,255,255,.8); }
 @keyframes sc-pop-in{ from{ opacity:0; transform:scale(.4) rotate(-90deg); } to{ opacity:1; transform:none; } }
 #search-clear:hover{ background:rgba(0,0,0,.06); color:#26243a; transform:rotate(90deg); }
 #search-clear:active{ transform:rotate(90deg) scale(.85); }
-body.ntp-dark:not(.ntp-wp) #search-clear:hover{ background:rgba(255,255,255,.08); color:#e8eaed; }
+body.ntp-dark:not(.ntp-wp) #search-clear:hover{ background:rgba(255,255,255,.08); color:#ededf0; }
 body.ntp-wp #search-clear{ color:rgba(255,255,255,.85); }
 #search-clear[hidden]{ display:none; }
 #q{
   flex:1;border:none;outline:none;background:transparent;user-select:text;
   font-size:15px;color:#26243a;
 }
-body.ntp-dark:not(.ntp-wp) #q{color:#e8eaed;}
+body.ntp-dark:not(.ntp-wp) #q{color:#ededf0;}
 body.ntp-wp #q{color:#fff;}
-#q::placeholder{color:#9aa0a6;}
+#q::placeholder{color:#b0b0b8;}
 
 /* ── Focus mode ── click the search: it lifts with a pine ring while the
    wordmark, shortcuts, clock and news recede, so the field owns the screen.
@@ -449,19 +405,29 @@ body.ntp-wp #q{color:#fff;}
    which reads as a darker seam on one side of the pill for a beat. */
 #search-form{
   transition:
+    background .18s ease,
+    border-color .18s ease,
+    box-shadow .18s ease !important;
+}
+/* Focused search (Settings -> New tab) is the only thing that resizes the
+   field, so it brings its own geometry transition with it rather than
+   every new tab paying for one. */
+body.ntp-focused-search-on #search-form{
+  transition:
     height .26s cubic-bezier(.2,.85,.25,1),
     padding .26s cubic-bezier(.2,.85,.25,1),
     max-width .26s cubic-bezier(.2,.85,.25,1),
-    background .24s ease,
     transform .26s cubic-bezier(.2,.85,.25,1),
-    border-color .24s ease,
-    box-shadow .24s ease !important;
+    background .18s ease,
+    border-color .18s ease,
+    box-shadow .18s ease !important;
 }
+/* The !important copy of the focused-search treatment. It carried the accent
+   ring that the rule further up no longer does, and being !important it was
+   the one that actually painted. The lift is the effect; the glow was not. */
 body.ntp-focused-search-on #ntp-root.search-focused #search-form{
   transform:translateY(-3px) !important;
-  border-color:var(--accent,#4f46e5) !important;
-  box-shadow:0 0 0 3px color-mix(in srgb, var(--accent,#4f46e5) 20%, transparent),
-             0 14px 34px -16px rgba(0,0,0,.28) !important;
+  box-shadow:0 14px 34px -16px rgba(0,0,0,.28) !important;
 }
 #ntp-logo-wrap,#ntp-news-link,#ntp-clock,#ntp-ghost-name{
   transition:opacity .26s ease, transform .3s cubic-bezier(.2,.8,.25,1), filter .26s ease;
@@ -495,9 +461,9 @@ body.ntp-focused-search-on #ntp-root.search-focused #ntp-ghost-name{
   to{opacity:1;transform:translateY(0);}
 }
 body.ntp-dark:not(.ntp-wp) #search-suggestions{
-  background:#303134;border-color:#5f6368;
+  background:#37373f;border-color:#4d4d57;
   box-shadow:0 18px 44px -14px rgba(0,0,0,.6), 0 3px 12px rgba(0,0,0,.4);
-  color:#e8eaed;
+  color:#ededf0;
 }
 .ss-item{
   display:flex;align-items:center;gap:12px;
@@ -506,30 +472,46 @@ body.ntp-dark:not(.ntp-wp) #search-suggestions{
   line-height:1.3;position:relative;
   transition:background .1s ease;
 }
-.ss-item:hover,.ss-item.active{background:var(--accent-soft,rgba(79,70,229,.12));}
+/* Hover and the keyboard cursor are the SAME state. An accent wash plus a
+   separate accent bar meant the selected row was shouting two things at
+   once; a plain fill is enough to say "this one". */
+.ss-item:hover,.ss-item.active{background:rgba(0,0,0,.055);}
 body.ntp-dark:not(.ntp-wp) .ss-item:hover,
-body.ntp-dark:not(.ntp-wp) .ss-item.active{background:var(--accent-soft,rgba(79,70,229,.16));}
-/* Accent indicator on the keyboard-selected row. */
-.ss-item.active::before{
-  content:"";position:absolute;left:0;top:7px;bottom:7px;width:2.5px;
-  border-radius:0 2px 2px 0;background:var(--accent,#4f46e5);
-}
+body.ntp-dark:not(.ntp-wp) .ss-item.active{background:rgba(255,255,255,.07);}
+
+/* The icon is a glyph, not a chip. The filled rounded square around it made
+   every row look like an app in a launcher. */
 .ss-icon{
-  width:22px;height:22px;flex-shrink:0;border-radius:10px;
+  width:16px;height:16px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
-  background:rgba(0,0,0,.05);color:#6d6a85;
+  background:none;color:#8b8898;
 }
-body.ntp-dark:not(.ntp-wp) .ss-icon{background:rgba(255,255,255,.06);color:#9aa0a6;}
-.ss-icon svg{width:14px;height:14px;fill:currentColor;}
-.ss-item > span:not(.ss-icon){
-  flex:1;min-width:0;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+body.ntp-dark:not(.ntp-wp) .ss-icon{background:none;color:#85858e;}
+.ss-icon svg{width:14px;height:14px;}
+/* The "go" arrow is stroked, not filled — leave its stroke alone. */
+.ss-icon svg[stroke]{fill:none;}
+.ss-icon svg:not([stroke]){fill:currentColor;}
+
+.ss-body{
+  flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;
 }
-/* Trailing hint (e.g. "Search") on the right of a suggestion row. */
-.ss-item .ss-hint{
-  flex:0 0 auto;font-size:11px;font-weight:600;color:#9aa0a6;
-  letter-spacing:.02em;
+.ss-label,.ss-sub{
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;
 }
+/* Ordinary readable rows. The matched part is bolder and that is the whole
+   difference — emphasis is added to one part, never removed from the rest.
+
+   The version before this set the label in grey so the match could stand
+   out against it, which works on a search suggestion (the query is a literal
+   prefix) and fails on a history row, whose label is the page title and
+   usually contains nothing you typed. No match meant no ink, and those rows
+   rendered entirely grey. */
+.ss-label{color:#26243a;font-weight:400;}
+.ss-label b{font-weight:620;}
+.ss-sub{font-size:11.5px;color:#6d6a85;}
+.ss-sub b{font-weight:620;}
+body.ntp-dark:not(.ntp-wp) .ss-label{color:#ededf0;}
+body.ntp-dark:not(.ntp-wp) .ss-sub{color:#b0b0b8;}
 
 #quick-links{
   display:flex;flex-wrap:wrap;justify-content:center;
@@ -578,7 +560,7 @@ body.ss-open #quick-links{
 }
 .ql-item:hover{
   background:#fff;
-  border-color:color-mix(in srgb, var(--accent,#4f46e5) 24%, transparent);
+  border-color:color-mix(in srgb, var(--accent,#ffffff) 24%, transparent);
   box-shadow:0 4px 14px -6px rgba(38,36,58,.16);
 }
 .ql-item:active{
@@ -589,7 +571,7 @@ body.ntp-dark:not(.ntp-wp) .ql-item{background:rgba(40,38,54,.85);border-color:r
 body.ntp-wp .ql-item{background:rgba(255,255,255,.82);}
 body.ntp-wp.ntp-dark .ql-item{background:rgba(35,34,48,.75);color:rgba(255,255,255,.85);}
 body.ntp-wp .ql-item{color:rgba(255,255,255,.85);}
-body.ntp-dark:not(.ntp-wp) .ql-item{color:#9aa0a6;}
+body.ntp-dark:not(.ntp-wp) .ql-item{color:#b0b0b8;}
 .ql-ico{
   width:38px;height:38px;border-radius:10px;
   background:transparent;
@@ -599,16 +581,24 @@ body.ntp-dark:not(.ntp-wp) .ql-item{color:#9aa0a6;}
   border:none;
   transition:color .14s ease;
 }
-body.ntp-wp .ql-ico{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.16);color:#fff;}
-body.ntp-dark:not(.ntp-wp) .ql-ico{background:#303134;border-color:#5f6368;color:#9aa0a6;}
-.ql-item:hover .ql-ico{border-color:var(--accent,#4f46e5);color:var(--text,#26243a);}
-body.ntp-dark:not(.ntp-wp) .ql-item:hover .ql-ico{color:#e8eaed;}
+/* The tile is what makes the row read as a grid, so it needs to be visible in
+   every theme, not just faintly present over a wallpaper. */
+body.ntp-wp .ql-ico{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.18);color:#fff;}
+body.ntp-dark:not(.ntp-wp) .ql-ico{background:#37373f;border-color:#4d4d57;color:#b0b0b8;}
+body:not(.ntp-dark):not(.ntp-wp) .ql-ico{background:rgba(24,34,47,.06);}
+.ql-item:hover .ql-ico{border-color:var(--accent,#ffffff);color:var(--text,#26243a);}
+body.ntp-dark:not(.ntp-wp) .ql-item:hover .ql-ico{color:#ededf0;}
 body.ntp-wp .ql-item:hover .ql-ico{color:#fff;}
 .ql-item:hover .ql-name{color:var(--text,#26243a);}
-body.ntp-dark:not(.ntp-wp) .ql-item:hover .ql-name{color:#e8eaed;}
+body.ntp-dark:not(.ntp-wp) .ql-item:hover .ql-name{color:#ededf0;}
 body.ntp-wp .ql-item:hover .ql-name{color:#fff;}
-.ql-ico img{width:100%;height:100%;object-fit:contain;border-radius:10px;}
-.ql-ico svg{width:100%;height:100%;border-radius:10px;}
+/* Favicons vary a lot: some are square, some are wide, some ship with their own
+   background plate baked in. Filling the 38px box meant each logo landed at a
+   different optical size and the row read as ragged. Drawing them at a fixed
+   24px inside a uniform tile equalises them — every shortcut now occupies the
+   same square, whatever shape its icon happens to be. */
+.ql-ico img{width:24px;height:24px;object-fit:contain;border-radius:5px;}
+.ql-ico svg{width:24px;height:24px;border-radius:5px;}
 .ql-name{
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   width:100%;text-align:center;transition:color .14s;
@@ -638,7 +628,7 @@ body.ntp-dark:not(.ntp-wp) .ql-remove:hover{background:rgba(210,208,200,.4);}
 }
 .ql-add:hover{
   background:#fff;
-  color:var(--accent,#4f46e5);
+  color:var(--accent,#ffffff);
 }
 body.ntp-dark:not(.ntp-wp) .ql-add{background:rgba(255,255,255,.05);color:#8f8ca6;}
 body.ntp-wp .ql-add{color:rgba(255,255,255,.85);}
@@ -670,44 +660,17 @@ body.ntp-wp .ql-add{color:rgba(255,255,255,.85);}
 }
 body.ntp-dark #ql-modal,
 body.ntp-dark #custom-modal {
-  background:#303134;color:#e8eaed;
+  background:#37373f;color:#ededf0;
   box-shadow:0 12px 40px rgba(0,0,0,.5);
 }
 body.ntp-dark.ntp-wp #ql-modal,
 body.ntp-dark.ntp-wp #custom-modal {
   background:rgba(32,33,36,.94);
-  color:#e8eaed;
+  color:#ededf0;
   border:1px solid rgba(255,255,255,.12);
   box-shadow:0 12px 40px rgba(0,0,0,.55);
 }
 
-/* Frosted modal when Increase Transparency is on so the OS material
-   shows through. Keeps winning over the wallpaper / dark variants. */
-body.transparent-ui #ql-modal-bg,
-body.transparent-ui #custom-modal-bg{
-  background:rgba(0,0,0,.18);
-}
-body.transparent-ui #ql-modal,
-body.transparent-ui #custom-modal{
-  background:rgba(255,255,255,.62) !important;
-  border:1px solid rgba(255,255,255,.5);
-  backdrop-filter:blur(26px) saturate(180%);
-  -webkit-backdrop-filter:blur(26px) saturate(180%);
-  box-shadow:0 16px 48px rgba(0,0,0,.28) !important;
-}
-body.transparent-ui.ntp-dark #ql-modal,
-body.transparent-ui.ntp-dark #custom-modal{
-  background:rgba(32,33,36,.6) !important;
-  border:1px solid rgba(255,255,255,.12);
-}
-body.transparent-ui #ql-modal input,
-body.transparent-ui #custom-modal input[type="text"]{
-  background:rgba(255,255,255,.55);
-}
-body.transparent-ui.ntp-dark #ql-modal input,
-body.transparent-ui.ntp-dark #custom-modal input[type="text"]{
-  background:rgba(0,0,0,.28);
-}
 #ql-modal{width:340px;}
 #ql-modal h3,#custom-modal h3{font-size:16px;margin-bottom:16px;}
 #ql-modal input,#custom-modal input[type="text"]{
@@ -717,26 +680,26 @@ body.transparent-ui.ntp-dark #custom-modal input[type="text"]{
 }
 body.ntp-dark #ql-modal input,
 body.ntp-dark #custom-modal input[type="text"] {
-  background:#202124;border-color:#5f6368;color:#e8eaed;
+  background:#1e1e21;border-color:#4d4d57;color:#ededf0;
 }
-body.ntp-dark .btn-cancel { border-color:#5f6368;color:#bdc1c6;background:#3c4043; }
-body.ntp-dark .btn-cancel:hover { background:#4a4d51; }
-body.ntp-dark .btn-save { background:#e8eaed;color:#202124; }
+body.ntp-dark .btn-cancel { border-color:#4d4d57;color:#b0b0b8;background:#3c4043; }
+body.ntp-dark .btn-cancel:hover { background:#43434c; }
+body.ntp-dark .btn-save { background:#ededf0;color:#1e1e21; }
 body.ntp-dark .btn-save:hover { background:#f1f3f4; }
-body.ntp-dark #custom-modal .row-label { color:#9aa0a6; }
+body.ntp-dark #custom-modal .row-label { color:#b0b0b8; }
 body.ntp-dark #custom-modal .mini-btn {
-  border-color:#5f6368;color:#bdc1c6;background:#3c4043;
+  border-color:#4d4d57;color:#b0b0b8;background:#3c4043;
 }
-body.ntp-dark #custom-modal .mini-btn:hover { background:#4a4d51; }
+body.ntp-dark #custom-modal .mini-btn:hover { background:#43434c; }
 body.ntp-dark #custom-modal .mini-btn.primary {
-  border-color:#e8eaed;color:#202124;background:#e8eaed;
+  border-color:#ededf0;color:#1e1e21;background:#ededf0;
 }
 body.ntp-dark #custom-modal .mini-btn.primary:hover { background:#f1f3f4; }
-#custom-modal .row-label{font-size:12.5px;color:#5f6368;margin-bottom:8px;margin-top:4px;}
+#custom-modal .row-label{font-size:12.5px;color:#4d4d57;margin-bottom:8px;margin-top:4px;}
 #custom-modal .btn-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;}
 #custom-modal .mini-btn{
   padding:7px 14px;border-radius:12px;font-size:13px;
-  border:1.5px solid #dadce0;color:#5f6368;cursor:default;background:#f8f9fa;
+  border:1.5px solid #d8d8de;color:#4d4d57;cursor:default;background:#f8f9fa;
 }
 #custom-modal .mini-btn:hover{background:#f1f3f4;}
 #custom-modal .mini-btn.primary{border-color:#1f1f1f;color:#1f1f1f;background:#fff;}
@@ -746,7 +709,7 @@ body.ntp-dark #custom-modal .mini-btn.primary:hover { background:#f1f3f4; }
   padding:8px 18px;border-radius:12px;font-size:13px;cursor:default;
   border:1.5px solid transparent;
 }
-.btn-cancel{border-color:#dfe1e5;color:#5f6368;}
+.btn-cancel{border-color:#dfe1e5;color:#4d4d57;}
 .btn-cancel:hover{background:#f1f3f4;}
 .btn-save{background:#1f1f1f;color:#fff;}
 .btn-save:hover{background:#000;}
@@ -760,7 +723,7 @@ body.ntp-dark #custom-modal .mini-btn.primary:hover { background:#f1f3f4; }
 }
 body.ntp-dark #ql-modal,body.ntp-dark #custom-modal,
 body.ntp-dark.ntp-wp #ql-modal,body.ntp-dark.ntp-wp #custom-modal{
-  background:#303134 !important;color:#e8eaed;border-color:rgba(255,255,255,.09) !important;
+  background:#2d2d33 !important;color:#ededf0;border-color:rgba(255,255,255,.10) !important;
   box-shadow:0 30px 74px -22px rgba(0,0,0,.7) !important;
 }
 #ql-modal h3,#custom-modal h3{font-weight:650;letter-spacing:-.01em;}
@@ -770,11 +733,11 @@ body.ntp-dark.ntp-wp #ql-modal,body.ntp-dark.ntp-wp #custom-modal{
   transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
 }
 body.ntp-dark #ql-modal input,body.ntp-dark #custom-modal input[type="text"]{
-  background:rgba(255,255,255,.06) !important;border-color:rgba(255,255,255,.10) !important;color:#e8eaed !important;
+  background:rgba(255,255,255,.06) !important;border-color:rgba(255,255,255,.10) !important;color:#ededf0 !important;
 }
 #ql-modal input:focus,#custom-modal input[type="text"]:focus{
   background:#fff !important;
-  border-color:var(--accent,#4f46e5) !important;box-shadow:0 0 0 3px rgba(79,70,229,.16) !important;
+  border-color:var(--accent,#ffffff) !important;box-shadow:0 0 0 3px var(--accent-soft,rgba(255,255,255,.16)) !important;
 }
 body.ntp-dark #ql-modal input:focus,body.ntp-dark #custom-modal input[type="text"]:focus{
   background:rgba(255,255,255,.1) !important;
@@ -783,69 +746,150 @@ body.ntp-dark #ql-modal input:focus,body.ntp-dark #custom-modal input[type="text
   transition:background .15s ease, transform .12s cubic-bezier(.34,1.6,.64,1), filter .15s ease;}
 .btn:active{transform:scale(.96);}
 .btn-cancel,body.ntp-dark .btn-cancel{border-color:rgba(38,36,58,.14) !important;color:#6d6a85 !important;background:transparent !important;}
-body.ntp-dark .btn-cancel{border-color:rgba(255,255,255,.14) !important;color:#9aa0a6 !important;}
+body.ntp-dark .btn-cancel{border-color:rgba(255,255,255,.14) !important;color:#b0b0b8 !important;}
 .btn-cancel:hover{background:rgba(38,36,58,.05) !important;}
 body.ntp-dark .btn-cancel:hover{background:rgba(255,255,255,.07) !important;}
-.btn-save,body.ntp-dark .btn-save{background:var(--accent,#4f46e5) !important;color:#fff !important;border-color:transparent !important;}
+.btn-save,body.ntp-dark .btn-save{background:var(--accent,#ffffff) !important;color:var(--on-accent,#202024) !important;border-color:transparent !important;}
 .btn-save:hover,body.ntp-dark .btn-save:hover{filter:brightness(1.07);}
 #custom-modal .mini-btn{border-radius:999px !important;border-color:rgba(38,36,58,.12) !important;color:#6d6a85 !important;background:#f4f3fa !important;}
-body.ntp-dark #custom-modal .mini-btn{border-color:rgba(255,255,255,.12) !important;color:#9aa0a6 !important;background:rgba(255,255,255,.06) !important;}
+body.ntp-dark #custom-modal .mini-btn{border-color:rgba(255,255,255,.12) !important;color:#b0b0b8 !important;background:rgba(255,255,255,.06) !important;}
 #custom-modal .mini-btn.primary,body.ntp-dark #custom-modal .mini-btn.primary{
-  border-color:transparent !important;color:#fff !important;background:var(--accent,#4f46e5) !important;
+  border-color:transparent !important;color:var(--on-accent,#202024) !important;background:var(--accent,#ffffff) !important;
 }
 #custom-modal .row-label,body.ntp-dark #custom-modal .row-label{color:#8b88a3 !important;
   font-size:11px;text-transform:uppercase;letter-spacing:.07em;}
 
 footer{
-  padding:14px 24px 72px;font-size:12px;color:#9aa0a6;text-align:center;
+  padding:14px 24px 72px;font-size:12px;color:#b0b0b8;text-align:center;
   max-width:560px;margin:0 auto;line-height:1.55;
 }
 #ntp-disclaimer{margin:0;}
 
-/* ── Weather widget ── */
+/* ── Weather widget ──
+   Top-left corner, not in the footer. It is something you glance at, so it
+   wants a fixed place on the page rather than a spot in the centred stack
+   that shifts every time the middle of the page changes. */
 #ntp-weather{
-  position:relative;z-index:1;
-  display:flex;align-items:center;justify-content:center;gap:10px;
-  margin-bottom:14px;
+  position:fixed;top:16px;left:16px;z-index:3;
+  display:flex;align-items:center;gap:10px;
+  margin:0;
   animation:fadein .3s ease;
 }
+#ntp-weather[hidden]{display:none;}
 @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .wx-card{
-  display:inline-flex;align-items:center;gap:13px;
-  padding:10px 16px;border-radius:10px;
-  background:#ffffff;
+  position:relative;
+  display:flex;align-items:center;gap:8px;
+  padding:6px 12px 6px 8px;
+  border-radius:999px;
+  background:rgba(255,255,255,.82);
   border:1px solid #e3e1ef;
-  box-shadow:none;
   color:#26243a;
-  font-size:13px;
   user-select:none;
+  transition:border-color .16s ease;
 }
 body.ntp-dark:not(.ntp-wp) .wx-card{
-  background:#303134;
-  border-color:#5f6368;
-  color:#e8eaed;
+  background:rgba(55,55,63,.82);
+  border-color:#4d4d57;
+  color:#ededf0;
 }
 body.ntp-wp .wx-card{
-  background:rgba(20,19,17,.5);
-  border-color:rgba(255,255,255,.14);
+  background:rgba(20,19,17,.4);
+  border-color:rgba(255,255,255,.16);
   color:#fff;
-  backdrop-filter:blur(14px);
-  -webkit-backdrop-filter:blur(14px);
+  backdrop-filter:blur(16px) saturate(1.3);
+  -webkit-backdrop-filter:blur(16px) saturate(1.3);
 }
-.wx-icon{line-height:1;flex-shrink:0;color:var(--accent,#4f46e5);}
-.wx-icon svg{display:block;width:30px;height:30px;}
-.wx-body{display:flex;flex-direction:column;gap:1px;}
-.wx-temp{font-size:22px;font-weight:700;line-height:1;}
-.wx-desc{font-size:12px;opacity:.75;text-transform:capitalize;}
-.wx-loc{font-size:11.5px;opacity:.6;margin-top:1px;}
-.wx-details{
-  display:flex;flex-direction:column;gap:3px;
-  font-size:11.5px;opacity:.7;
-  border-left:1px solid rgba(128,128,128,.25);
-  padding-left:13px;
-  margin-left:2px;
+
+.wx-temp{
+  font-size:16px;font-weight:600;line-height:1;letter-spacing:-.02em;
+  display:flex;align-items:flex-start;
 }
-.wx-details span{white-space:nowrap;}
+.wx-deg{font-size:10px;font-weight:500;line-height:1.1;opacity:.5;margin-left:1px;}
+
+/* ── The rest, on hover ──────────────────────────────────────────────
+   The place, the description and the three numbers. At rest they were
+   competing with a search box for the same corner of the eye; asked for,
+   they are exactly what you want. */
+.wx-more{
+  position:absolute;top:calc(100% + 6px);left:0;
+  padding:8px 11px;border-radius:11px;
+  background:inherit;
+  border:1px solid;border-color:inherit;
+  backdrop-filter:inherit;-webkit-backdrop-filter:inherit;
+  white-space:nowrap;
+  opacity:0;transform:translateY(-3px);pointer-events:none;
+  transition:opacity .14s ease, transform .14s cubic-bezier(.2,.8,.25,1);
+}
+.wx-card:hover .wx-more{opacity:1;transform:none;}
+.wx-more-top{font-size:12px;font-weight:550;line-height:1.3;}
+.wx-more-sub{font-size:11px;opacity:.6;line-height:1.4;margin-top:1px;}
+
+/* ══════════════════════════════════════════════════════════════════════
+   The icon — 26px, one shape each
+
+   Real SVG on a 32 unit grid, all seven drawn at the same weight. The cloud
+   is a single closed path, which is the whole reason these look right where
+   the div version did not: a cloud has one outline, and three box-shadow
+   bumps sitting on a bar can never be one outline.
+
+   Colour: the cloud inherits the card's own text colour at low opacity, so
+   it is dark on the light card and light on the dark one with no theme
+   override at all. Only the things that genuinely have a colour in life get
+   given one.
+   ══════════════════════════════════════════════════════════════════════ */
+.wx-icon{width:26px;height:26px;flex-shrink:0;display:block;overflow:visible;}
+.wx-cloud{fill:currentColor;opacity:.5;}
+.wx-cloud.heavy{opacity:.72;}
+.wx-sun{fill:#ffb02e;}
+.wx-sun.hot{fill:#ff8a34;}
+.wx-ray{stroke:#ffb02e;stroke-linecap:round;fill:none;}
+.wx-ray.hot{stroke:#ff8a34;}
+.wx-rain{stroke:#5f9ede;stroke-width:2;stroke-linecap:round;fill:none;}
+.wx-flake{fill:#9dc0e8;}
+.wx-bolt{fill:#ffcf2f;}
+.wx-mist{stroke:currentColor;stroke-width:2;stroke-linecap:round;opacity:.42;fill:none;}
+
+/* ── Motion ──────────────────────────────────────────────────────────
+   One moving idea per icon. transform-box: fill-box makes "centre" mean the
+   centre of the drawn shape rather than the corner of the viewBox, which is
+   the difference between a spin and a wobble. */
+.wx-rays-g{animation:wx-turn 26s linear infinite;transform-origin:center;transform-box:fill-box;}
+.wx-rays-g.hot{animation-duration:14s;}
+.wx-cloud-g{animation:wx-drift 7s ease-in-out infinite;}
+.wx-drop{animation:wx-fall 1.15s linear infinite;animation-delay:calc(var(--i) * -.38s);}
+.wx-flake{animation:wx-settle 2.8s linear infinite;animation-delay:calc(var(--i) * -.93s);}
+.wx-bolt{animation:wx-strike 3.6s ease-in-out infinite;}
+.wx-mist-g{animation:wx-haze 6s ease-in-out infinite;}
+
+@keyframes wx-turn{to{transform:rotate(360deg)}}
+@keyframes wx-drift{0%,100%{transform:translateX(0)}50%{transform:translateX(1.1px)}}
+/* px on an SVG child means user units, so these read on the 32 grid. */
+@keyframes wx-fall{
+  0%{transform:translateY(-1px);opacity:0}
+  22%{opacity:1}
+  75%{opacity:1}
+  100%{transform:translateY(6.5px);opacity:0}
+}
+@keyframes wx-settle{
+  0%{transform:translate(0,-1px);opacity:0}
+  25%{opacity:1}
+  100%{transform:translate(2px,6.5px);opacity:0}
+}
+@keyframes wx-strike{
+  0%,72%,100%{opacity:0}
+  76%{opacity:1}
+  80%{opacity:.2}
+  84%{opacity:1}
+  91%{opacity:0}
+}
+@keyframes wx-haze{0%,100%{transform:translateX(-1px)}50%{transform:translateX(1px)}}
+
+/* The drawing still draws; only the motion stops. */
+@media (prefers-reduced-motion:reduce){
+  .wx-icon *{animation:none !important}
+  .wx-more{transition:none}
+}
 
 /* ── "See what's new" — a quiet text link under the search bar, not a button ── */
 #ntp-news-link{
@@ -859,8 +903,8 @@ body.ntp-wp .wx-card{
   transition:color .14s ease,border-color .14s ease;
 }
 #ntp-news-link:hover{
-  color:var(--accent,#4f46e5);
-  border-bottom-color:color-mix(in srgb, var(--accent,#4f46e5) 45%, transparent);
+  color:var(--accent,#ffffff);
+  border-bottom-color:color-mix(in srgb, var(--accent,#ffffff) 45%, transparent);
 }
 #ntp-news-link[hidden]{display:none;}
 main:has(#q:focus) #ntp-news-link{opacity:0;pointer-events:none;}
@@ -890,21 +934,21 @@ body.ss-open #ntp-news-link{display:none !important;}
   text-align:center;
   animation:mmhm-rise .24s cubic-bezier(.16,1,.3,1) both;
 }
-body.ntp-dark #mmhm-card{background:#22242a;}
+body.ntp-dark #mmhm-card{background:#2d2d33;}
 @keyframes mmhm-rise{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
 .mmhm-icon{
   display:block;margin:0 auto 14px;
-  color:#4f46e5;
+  color:var(--accent,#101014);
 }
-body.ntp-dark .mmhm-icon{color:#948ef2;}
+body.ntp-dark .mmhm-icon{color:var(--accent,#ffffff);}
 .mmhm-title{
   font-size:16px;font-weight:600;color:#1f1f1f;margin-bottom:7px;
 }
-body.ntp-dark .mmhm-title{color:#e8eaed;}
+body.ntp-dark .mmhm-title{color:#ededf0;}
 .mmhm-text{
-  font-size:13px;color:#5f6368;line-height:1.5;margin-bottom:20px;
+  font-size:13px;color:#4d4d57;line-height:1.5;margin-bottom:20px;
 }
-body.ntp-dark .mmhm-text{color:#9aa0a6;}
+body.ntp-dark .mmhm-text{color:#b0b0b8;}
 .mmhm-close{
   width:100%;height:40px;border:none;border-radius:10px;
   background:#4f46e5;color:#fff;font-size:13.5px;font-weight:600;
@@ -938,7 +982,7 @@ body.ntp-dark #britain-card{background:#22242a;}
   background:linear-gradient(90deg,#C8102E 0 33.3%,#fff 33.3% 66.6%,#012169 66.6% 100%);
 }
 body.ntp-dark #britain-card::before{
-  background:linear-gradient(90deg,#ff5d73 0 33.3%,#e8eaed 33.3% 66.6%,#4f73d6 66.6% 100%);
+  background:linear-gradient(90deg,#ff5d73 0 33.3%,#ededf0 33.3% 66.6%,#4f73d6 66.6% 100%);
 }
 .britain-flagwrap{
   width:84px;height:42px;margin:4px auto 16px;
@@ -952,9 +996,9 @@ body.ntp-dark #britain-card::before{
 }
 body.ntp-dark .britain-kicker{color:#ff7a8c;}
 .britain-title{font-size:17px;font-weight:700;color:#1f1f1f;margin-bottom:8px;}
-body.ntp-dark .britain-title{color:#e8eaed;}
-.britain-text{font-size:13px;color:#5f6368;line-height:1.55;margin-bottom:22px;}
-body.ntp-dark .britain-text{color:#9aa0a6;}
+body.ntp-dark .britain-title{color:#ededf0;}
+.britain-text{font-size:13px;color:#4d4d57;line-height:1.55;margin-bottom:22px;}
+body.ntp-dark .britain-text{color:#b0b0b8;}
 .britain-close{
   width:100%;height:42px;border:none;border-radius:11px;
   background:#012169;color:#fff;font-size:13.5px;font-weight:600;
@@ -1067,7 +1111,7 @@ body.ntp-dark .britain-close{background:#4f73d6;}
 .ntp-pen-btn:hover{background:#f5f5f7;}
 .ntp-pen-btn svg{fill:currentColor;}
 body.ntp-dark:not(.ntp-wp) .ntp-pen-btn{
-  background:#1f2024;color:#f1f1f4;border-color:rgba(255,255,255,.10);
+  background:#28282c;color:#ededf0;border-color:rgba(255,255,255,.10);
   box-shadow:0 1px 3px rgba(0,0,0,.3), 0 6px 18px -8px rgba(0,0,0,.4);
 }
 body.ntp-dark:not(.ntp-wp) .ntp-pen-btn:hover{background:#26272c;}
@@ -1081,27 +1125,6 @@ body.ntp-wp .ntp-pen-btn{
 body.ntp-wp .ntp-pen-btn:hover{background:rgba(20,20,24,.7);}
 
 
-/* One-time "protected online" banner — bottom centre, shown for 15s on the
-   very first new tab a user ever opens, then never again. */
-#ntp-protected-toast{
-  position:fixed;bottom:14px;left:50%;z-index:35;
-  transform:translateX(-50%) translateY(10px);
-  opacity:0;pointer-events:none;
-  display:flex;align-items:center;gap:6px;
-  padding:8px 16px;border-radius:999px;
-  background:rgba(255,255,255,.7);color:#5d5a73;
-  border:1px solid rgba(38,36,58,.08);
-  backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);
-  box-shadow:0 2px 10px rgba(38,36,58,.08);
-  font-size:12.5px;font-weight:500;white-space:nowrap;
-  transition:opacity .35s cubic-bezier(.2,.8,.25,1),transform .35s cubic-bezier(.2,.8,.25,1);
-}
-#ntp-protected-toast.visible{opacity:1;transform:translateX(-50%) translateY(0);}
-body.ntp-dark:not(.ntp-wp) #ntp-protected-toast{background:rgba(255,255,255,.06);color:#9aa0a6;border-color:rgba(255,255,255,.09);}
-body.ntp-wp #ntp-protected-toast{background:rgba(20,19,17,.4);color:rgba(255,255,255,.85);border-color:rgba(255,255,255,.16);}
-.ntp-pt-heart{color:#e8505a;animation:ntp-pt-beat 1.4s ease-in-out infinite;display:inline-block;}
-@keyframes ntp-pt-beat{0%,100%{transform:scale(1)}50%{transform:scale(1.22)}}
-@media(prefers-reduced-motion:reduce){.ntp-pt-heart{animation:none}}
 
 /* ── One-time "thanks for the trust" toast ── */
 #ntp-updates-toast{
@@ -1166,14 +1189,14 @@ body.ntp-vibe .ut-icon{
   line-height:1.35;
   margin-bottom:5px;
 }
-body.ntp-dark .ut-title, body.ntp-wp .ut-title{color:#e8eaed;}
+body.ntp-dark .ut-title, body.ntp-wp .ut-title{color:#ededf0;}
 .ut-sub{
   display:block;
   font-size:12.5px;
-  color:#5f6368;
+  color:#4d4d57;
   line-height:1.45;
 }
-body.ntp-dark .ut-sub, body.ntp-wp .ut-sub{color:#9aa0a6;}
+body.ntp-dark .ut-sub, body.ntp-wp .ut-sub{color:#b0b0b8;}
 /* vtabs search-popup mode: hide logo, search bar and quick links */
 body.vtabs-popup-mode #ntp-logo-wrap,
 body.vtabs-popup-mode #search-form,
@@ -1289,11 +1312,593 @@ body.ntp-wp .ql-name{color:rgba(255,255,255,.85);text-shadow:0 1px 4px rgba(0,0,
   66%{transform:scale(1.06) translate(1%,0.6%)}
   100%{transform:scale(1.02) translate(0,0)}
 }
+#ntp-credit{position:fixed;left:14px;bottom:12px;z-index:3;font-size:11px;line-height:1.3;pointer-events:auto}
+/* The photo arrives over the network a beat after the page paints, so its
+   caption arrives with it instead of snapping in on top of a background that
+   is still loading. */
+@keyframes ntp-credit-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+#ntp-credit.is-in{animation:ntp-credit-in .5s cubic-bezier(.2,.8,.25,1) .15s both}
+@media (prefers-reduced-motion:reduce){#ntp-credit.is-in{animation:none}}
+#ntp-credit a{color:rgba(255,255,255,.72);text-decoration:none;background:rgba(0,0,0,.32);padding:4px 9px;border-radius:999px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:color .15s,background .15s}
+#ntp-credit a:hover{color:#fff;background:rgba(0,0,0,.5)}
 body.ntp-wp-animated #ntp-bg{animation:ntp-bg-drift 22s ease-in-out infinite;will-change:transform}
 
 @media (prefers-reduced-motion: reduce){
   #search-form,#quick-links,#ntp-clock,#ntp-weather,#ntp-news-link,#ntp-bg{animation:none !important}
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   Quiet — the calm default new tab. Near-white canvas, one hero line, one
+   wide search field, a row of plain shortcut cards. Applied whenever the
+   page isn't showing a wallpaper or animated theme (body.ntp-quiet).
+   ══════════════════════════════════════════════════════════════════════ */
+body.ntp-quiet{
+  --q-ink:#18222f;
+  --q-ink-soft:#5b6675;
+  --q-line:rgba(24,34,47,.07);
+  --q-blue:#5b7fb9;
+  background:#f3f6fb;
+}
+body.ntp-quiet::before{
+  content:'';position:fixed;inset:0;z-index:-3;pointer-events:none;
+  background:
+    radial-gradient(1100px 620px at 84% 10%, #e7eefa 0%, rgba(231,238,250,0) 62%),
+    radial-gradient(900px 560px at 8% 92%, #e9eef8 0%, rgba(233,238,248,0) 60%),
+    linear-gradient(180deg,#f7f9fd 0%,#eef2f9 100%);
+}
+/* Two very large, very pale curves — depth without pattern. */
+body.ntp-quiet::after{
+  content:'';position:fixed;z-index:-2;pointer-events:none;
+  right:-22vw;bottom:-46vh;width:104vw;height:104vw;
+  border-radius:46% 54% 55% 45%/52% 46% 54% 48%;
+  background:linear-gradient(145deg,rgba(206,221,243,.5),rgba(233,240,251,.16));
+}
+body.ntp-quiet.ntp-dark{
+  --q-ink:#e8ecf3;
+  --q-ink-soft:#98a2b0;
+  --q-line:rgba(255,255,255,.08);
+  --q-blue:#8fabdc;
+  background:#14171d;
+}
+body.ntp-quiet.ntp-dark::before{
+  background:
+    radial-gradient(1100px 620px at 84% 10%, #1b2130 0%, rgba(27,33,48,0) 62%),
+    radial-gradient(900px 560px at 8% 92%, #191e2a 0%, rgba(25,30,42,0) 60%),
+    linear-gradient(180deg,#15181f 0%,#111419 100%);
+}
+body.ntp-quiet.ntp-dark::after{ background:linear-gradient(145deg,rgba(46,57,80,.4),rgba(30,36,50,.12)); }
+
+/* Logo sits directly above the hero line and the field, so the three read as
+   one centred stack rather than text floating over an unanchored input. The
+   spacing tightens here (vs. the wallpaper layout) because there are three
+   elements in the column instead of two. */
+body.ntp-quiet #ntp-logo-wrap{margin-bottom:14px;}
+body.ntp-quiet .ntp-brand-logo{
+  width:54px;height:54px;
+  filter:drop-shadow(0 2px 8px rgba(24,34,47,.14));
+}
+body.ntp-quiet.ntp-dark .ntp-brand-logo{
+  filter:drop-shadow(0 2px 12px rgba(0,0,0,.5));
+}
+.ntp-hero{display:none;}
+body.ntp-quiet .ntp-hero{
+  display:block;margin:0 0 26px;
+  font-size:clamp(23px,2.7vw,34px);font-weight:640;letter-spacing:-.021em;
+  line-height:1.15;text-align:center;color:var(--q-ink);
+  animation:ntp-in-fade .5s cubic-bezier(.2,.8,.25,1) both;
+}
+
+/* One wide, quiet field — the only real call to action on the page. */
+/* The field's shape no longer depends on whether a wallpaper is set. This
+   block used to make it a 26px pill at 52px tall on the plain new tab, while
+   the wallpaper version used the base 16px rounded rect - which is why the
+   search bar appeared to change style when you set a wallpaper. The base rule
+   now applies in both cases. */
+body.ntp-quiet.ntp-dark #search-form{background:#1c2029;border-color:var(--q-line);}
+body.ntp-quiet #search-form:focus-within{
+  border-color:color-mix(in srgb,var(--q-blue) 42%,transparent);
+  box-shadow:0 1px 2px rgba(24,34,47,.03),0 14px 36px -18px rgba(37,60,99,.34);
+}
+body.ntp-quiet #q{font-size:14.5px;color:var(--q-ink);}
+body.ntp-quiet #q::placeholder{color:var(--q-ink-soft);opacity:.72;}
+body.ntp-quiet #search-icon,body.ntp-quiet #search-icon-img{opacity:.9;}
+body.ntp-quiet #search-clear{color:var(--q-ink-soft);}
+
+/* Lens + search actions, right-aligned inside the field. */
+#search-lens,#search-go{
+  flex-shrink:0;display:none;align-items:center;justify-content:center;
+  width:34px;height:34px;border:none;border-radius:50%;
+  background:transparent;color:#5b6675;cursor:pointer;
+  transition:background .16s ease,color .16s ease;
+}
+/* The lens + submit buttons stay hidden in every mode. They were shown only
+   on the plain (no-wallpaper) new tab, which is why the field appeared to
+   change style depending on whether a wallpaper was set. One field, always. */
+body.ntp-quiet #search-clear{width:30px;height:30px;order:1;}
+body.ntp-quiet #search-lens{order:2;}
+body.ntp-quiet #search-go{order:3;}
+
+/* Suggestions: same width as the field, never taller than the viewport. */
+body.ntp-quiet #search-suggestions{
+  top:calc(100% + 10px);left:0;right:0;
+  padding:7px;border-radius:20px;
+  border:1px solid var(--q-line);background:#fff;
+  box-shadow:0 20px 48px -24px rgba(24,34,47,.45),0 2px 8px rgba(24,34,47,.05);
+  max-height:min(46vh,380px);overflow-y:auto;overscroll-behavior:contain;
+}
+body.ntp-quiet.ntp-dark #search-suggestions{background:#1c2029;}
+body.ntp-quiet .ss-item{padding:9px 14px;border-radius:13px;font-size:13.5px;}
+
+/* Shortcut row — equal, plain, barely-there cards. */
+body.ntp-quiet #quick-links{gap:14px;margin-top:34px;max-width:840px;}
+body.ntp-quiet .ql-item,
+body.ntp-quiet .ql-add{
+  width:104px;height:96px;border-radius:18px;gap:11px;
+  background:#fff;border:1px solid var(--q-line);
+  box-shadow:0 1px 2px rgba(24,34,47,.035);
+  color:var(--q-ink-soft);font-size:11.5px;font-weight:550;
+  transition:transform .17s cubic-bezier(.2,.8,.25,1),box-shadow .17s ease,border-color .17s ease;
+}
+body.ntp-quiet.ntp-dark .ql-item,
+body.ntp-quiet.ntp-dark .ql-add{background:#1c2029;}
+body.ntp-quiet .ql-item:hover,
+body.ntp-quiet .ql-add:hover{
+  transform:translateY(-2px);
+  border-color:color-mix(in srgb,var(--q-blue) 26%,transparent);
+  box-shadow:0 8px 22px -12px rgba(24,34,47,.3);
+}
+body.ntp-quiet .ql-add:hover{color:var(--q-blue);}
+body.ntp-quiet .ql-item:active,body.ntp-quiet .ql-add:active{transform:none;}
+body.ntp-quiet .ql-ico{width:34px;height:34px;}
+body.ntp-quiet .ql-item:hover .ql-name,
+body.ntp-quiet .ql-item:hover .ql-ico{color:var(--q-ink);}
+
+/* Weather — a small floating card in the upper-left of the content area. */
+body.ntp-quiet #ntp-footer{
+  position:fixed;top:16px;left:18px;right:auto;bottom:auto;
+  margin:0;padding:0;width:auto;z-index:3;
+}
+body.ntp-quiet #ntp-weather{margin:0;}
+/* Quiet mode keeps the same card, on its own surface. */
+body.ntp-quiet .wx-card{
+  background:rgba(255,255,255,.78);
+  border:1px solid var(--q-line);
+  color:var(--q-ink);
+}
+body.ntp-quiet.ntp-dark .wx-card{background:rgba(28,32,41,.8);}
+
+body.ntp-quiet main{padding:36px 20px 8vh;}
+body.ntp-quiet #ntp-ghost-name{display:none;}
+
+/* Quiet chrome for the page's own extras. */
+body.ntp-quiet .ntp-pen-btn{opacity:.32;}
+body.ntp-quiet .ntp-pen-btn:hover{opacity:.75;}
+body.ntp-quiet #ntp-clock{color:var(--q-ink);}
+
+/* ── Search field: hover + focus never depend on the wallpaper ──
+   The wallpaper state used a soft translucent treatment while the plain state
+   used an opaque white fill with an accent ring and an inset highlight, so the
+   field behaved visibly differently depending on whether a background was set.
+   These reuse the wallpaper treatment in every mode, split only by light/dark.
+   Last in the sheet, so they win over the earlier state-specific rules. */
+#search-form:hover,
+body.ntp-quiet #search-form:hover {
+  background: rgba(255,255,255,.86);
+  border-color: rgba(23,23,31,.14);
+  box-shadow: 0 14px 40px -10px rgba(38,36,58,.28), 0 2px 8px rgba(38,36,58,.1);
+}
+#search-form:focus-within,
+body.ntp-quiet #search-form:focus-within {
+  background: rgba(255,255,255,.92);
+  border-color: rgba(23,23,31,.16);
+  box-shadow: 0 14px 40px -10px rgba(38,36,58,.28), 0 2px 8px rgba(38,36,58,.1);
+}
+body.ntp-dark #search-form:hover,
+body.ntp-quiet.ntp-dark #search-form:hover {
+  background: rgba(32,33,36,.88);
+  border-color: rgba(255,255,255,.16);
+  box-shadow: 0 14px 40px -10px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.2);
+}
+body.ntp-dark #search-form:focus-within,
+body.ntp-quiet.ntp-dark #search-form:focus-within {
+  background: rgba(32,33,36,.92);
+  border-color: rgba(255,255,255,.16);
+  box-shadow: 0 14px 40px -10px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.2);
+}
+/* The accent tint on the magnifier was also focus-state-only in one mode. */
+#search-form:focus-within #search-icon { transform: none; }
+
+/* ── Privacy widget ── */
+.ntp-privacy{
+  display:flex;align-items:center;justify-content:center;gap:22px;
+  margin-top:26px;padding:12px 20px;border-radius:12px;
+  background:rgba(24,34,47,.05);
+  animation:ntp-rise .5s cubic-bezier(.2,.8,.25,1) .3s backwards;
+}
+.ntp-privacy[hidden]{display:none !important;}
+body.ntp-dark:not(.ntp-wp) .ntp-privacy{background:rgba(255,255,255,.05);}
+body.ntp-wp .ntp-privacy{background:rgba(255,255,255,.12);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+.npv-item{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:0;}
+.npv-item b{
+  font-size:19px;font-weight:650;line-height:1.15;
+  font-variant-numeric:tabular-nums;
+  color:var(--q-ink,#18222f);
+}
+.npv-item span{font-size:11px;line-height:1.3;color:var(--q-ink-soft,#5b6675);white-space:nowrap;}
+body.ntp-dark:not(.ntp-wp) .npv-item b{color:#ededf0;}
+body.ntp-dark:not(.ntp-wp) .npv-item span{color:#b0b0b8;}
+body.ntp-wp .npv-item b{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.4);}
+body.ntp-wp .npv-item span{color:rgba(255,255,255,.86);text-shadow:0 1px 3px rgba(0,0,0,.4);}
+.npv-sep{width:1px;height:26px;background:currentColor;opacity:.14;flex-shrink:0;}
+
+/* ── One-time survey card ── */
+.ntp-survey{
+  display:flex;align-items:center;gap:18px;justify-content:space-between;
+  margin-top:22px;padding:13px 16px;border-radius:12px;max-width:560px;width:100%;
+  background:rgba(24,34,47,.05);
+  animation:ntp-rise .5s cubic-bezier(.2,.8,.25,1) .38s backwards;
+}
+.ntp-survey[hidden]{display:none !important;}
+body.ntp-dark:not(.ntp-wp) .ntp-survey{background:rgba(255,255,255,.05);}
+body.ntp-wp .ntp-survey{background:rgba(255,255,255,.13);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+.nsv-text{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.nsv-text b{font-size:13px;font-weight:600;color:var(--q-ink,#18222f);}
+.nsv-text span{font-size:11.5px;color:var(--q-ink-soft,#5b6675);}
+body.ntp-dark:not(.ntp-wp) .nsv-text b{color:#ededf0;}
+body.ntp-dark:not(.ntp-wp) .nsv-text span{color:#b0b0b8;}
+body.ntp-wp .nsv-text b{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.4);}
+body.ntp-wp .nsv-text span{color:rgba(255,255,255,.86);text-shadow:0 1px 3px rgba(0,0,0,.4);}
+.nsv-actions{display:flex;gap:8px;flex-shrink:0;}
+.nsv-btn{
+  border:none;border-radius:8px;padding:7px 13px;cursor:pointer;
+  font-size:12px;font-weight:550;font-family:inherit;
+  background:rgba(24,34,47,.07);color:var(--q-ink,#18222f);
+}
+.nsv-btn:hover{background:rgba(24,34,47,.12);}
+.nsv-btn.primary{background:var(--accent,#ffffff);color:#fff;}
+.nsv-btn.primary:hover{filter:brightness(1.08);}
+body.ntp-dark:not(.ntp-wp) .nsv-btn{background:rgba(255,255,255,.09);color:#ededf0;}
+body.ntp-dark:not(.ntp-wp) .nsv-btn:hover{background:rgba(255,255,255,.15);}
+body.ntp-wp .nsv-btn{background:rgba(255,255,255,.18);color:#fff;}
+body.ntp-wp .nsv-btn:hover{background:rgba(255,255,255,.28);}
+
+/* ══════════════════════════════════════════════════════════════════════
+   New tab finish pass.
+
+   The page above this point grew a separate treatment for each state:
+   quiet vs. wallpaper, light vs. dark, focused vs. not. Four codepaths for
+   one screen is why the new tab visibly re-shaped itself when you set a
+   background — the field changed radius, the headline appeared and
+   disappeared, the canvas went from blue-grey to a photo.
+
+   This block collapses that back to ONE layout. Exactly two things vary:
+   what is behind the content (a colour, or the user's wallpaper), and
+   whether the ink is light or dark. Everything else — the stack, the
+   spacing, the field's shape, the card grid — is identical in every state.
+   It is last in the sheet, so it wins on order.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* The ink tokens used to exist only in quiet mode, so every rule below that
+   mixes against them would have been invalid on a new tab with a wallpaper
+   set. Declared on `body` they are always defined; `body.ntp-quiet` still
+   wins where it needs to. */
+body{
+  --q-ink:#101014;
+  --q-ink-soft:#64646f;
+  --q-line:rgba(16,16,20,.10);
+}
+body.ntp-dark{
+  --q-ink:#ededf0;
+  --q-ink-soft:#b0b0b8;
+  --q-line:rgba(255,255,255,.10);
+}
+/* Over a wallpaper the ink is always light — the image behind it could be
+   any brightness, so the cards and glass carry their own dark ground. */
+body.ntp-wp{
+  --q-ink:#ffffff;
+  --q-ink-soft:rgba(255,255,255,.72);
+  --q-line:rgba(255,255,255,.16);
+}
+
+/* ── Canvas ──────────────────────────────────────────────────────────
+   The same neutral grey as the chrome, lifted by one very soft overhead
+   light so the page has a top and a bottom rather than being a flat slab.
+   No blue, no purple — a tinted new tab makes every thumbnail on it look
+   colour-shifted. */
+body.ntp-quiet{
+  --q-ink:#101014;
+  --q-ink-soft:#64646f;
+  --q-line:rgba(16,16,20,.10);
+  --q-blue:var(--accent,#101014);
+  background:#f2f2f4;
+}
+body.ntp-quiet::before{
+  background:
+    radial-gradient(1200px 700px at 50% -10%, #ffffff 0%, rgba(255,255,255,0) 65%),
+    linear-gradient(180deg,#f6f6f8 0%,#ececed 100%);
+}
+body.ntp-quiet::after{ content:none; }
+
+body.ntp-quiet.ntp-dark{
+  --q-ink:#ededf0;
+  --q-ink-soft:#b0b0b8;
+  --q-line:rgba(255,255,255,.10);
+  --q-blue:var(--accent,#ededf0);
+  background:#33333b;
+}
+body.ntp-quiet.ntp-dark::before{
+  background:
+    radial-gradient(1500px 800px at 50% -18%, #41414b 0%, rgba(65,65,75,0) 70%),
+    linear-gradient(180deg,#37373f 0%,#2f2f36 100%);
+}
+body.ntp-quiet.ntp-dark::after{ content:none; }
+
+/* ── The stack ───────────────────────────────────────────────────────
+   Logo, headline, field, shortcuts — one centred column, sitting a little
+   above true centre because a page anchored dead-centre reads as bottom-
+   heavy once the shortcut row is there. */
+#ntp-root main{ padding:40px 24px 12vh; }
+#ntp-root #ntp-logo-wrap,
+body.ntp-quiet #ntp-root #ntp-logo-wrap{ margin-bottom:20px; }
+#ntp-root .ntp-brand-logo{
+  width:56px;height:56px;
+  filter:drop-shadow(0 4px 18px rgba(0,0,0,.35));
+}
+
+/* No headline. A logo, a field and your shortcuts already say everything
+   this page needs to; a sentence above them is read once and then looked
+   past every day after. The greeting (Settings -> New tab) still has its
+   own line if you want one. */
+#ntp-root .ntp-hero,
+body.ntp-quiet #ntp-root .ntp-hero,
+body.ntp-wp #ntp-root .ntp-hero{ display:none; }
+
+/* ── Search field ────────────────────────────────────────────────────
+   One shape, everywhere: 54px tall, 14px radius, a fill that is a step
+   away from whatever is behind it. Over a wallpaper that step is glass;
+   over a flat canvas it is a well. Nothing about the geometry moves. */
+#ntp-root #search-form,
+body.ntp-quiet #ntp-root #search-form,
+body.ntp-quiet.ntp-dark #ntp-root #search-form{
+  max-width:600px;
+  height:56px;
+  padding:0 10px 0 22px;
+  gap:12px;
+  border-radius:999px;
+  background:#ffffff;
+  border:1px solid var(--q-line);
+  box-shadow:0 1px 2px rgba(16,16,20,.05), 0 10px 30px -18px rgba(16,16,20,.3);
+  transition:background .16s cubic-bezier(.2,.8,.25,1),
+             border-color .16s cubic-bezier(.2,.8,.25,1),
+             box-shadow .16s cubic-bezier(.2,.8,.25,1);
+}
+body.ntp-quiet.ntp-dark #ntp-root #search-form,
+body.ntp-dark #ntp-root #search-form{
+  background:#43434d;
+  border-color:rgba(255,255,255,.13);
+  box-shadow:0 1px 2px rgba(0,0,0,.18);
+}
+/* Over a wallpaper the field is glass, so the image reads through it
+   without the text ever losing its ground. */
+body.ntp-wp #ntp-root #search-form{
+  background:rgba(255,255,255,.16);
+  border-color:rgba(255,255,255,.26);
+  backdrop-filter:blur(22px) saturate(150%);
+  -webkit-backdrop-filter:blur(22px) saturate(150%);
+  box-shadow:0 12px 40px -16px rgba(0,0,0,.7);
+}
+
+/* No hover state. This field sits alone in the middle of an otherwise
+   empty page, so the pointer crosses it constantly on the way to anything
+   else — and every crossing lit it up. A control that is the only thing
+   there does not need to announce that you are near it. It reacts when you
+   click it, and not before. */
+#ntp-root #search-form:hover,
+body.ntp-quiet #ntp-root #search-form:hover{
+  background:#ffffff;
+  border-color:var(--q-line);
+  box-shadow:0 1px 2px rgba(16,16,20,.05), 0 10px 30px -18px rgba(16,16,20,.3);
+}
+body.ntp-dark #ntp-root #search-form:hover,
+body.ntp-quiet.ntp-dark #ntp-root #search-form:hover{
+  background:#43434d;
+  border-color:rgba(255,255,255,.13);
+  box-shadow:0 1px 2px rgba(0,0,0,.18);
+}
+body.ntp-wp #ntp-root #search-form:hover{
+  background:rgba(255,255,255,.16);
+  border-color:rgba(255,255,255,.26);
+  box-shadow:0 12px 40px -16px rgba(0,0,0,.7);
+}
+/* Focus is a hairline getting a little firmer and the field lifting a
+   millimetre. Deliberately NOT an accent ring: with a white or a bright
+   accent that ring flashes across the middle of the page every time you
+   click the one control you are meant to click, which is the opposite of
+   calm. The keyboard ring below still exists for people who need it. */
+/* Clicking it changes nothing either. The field is the only control on the
+   page, you clicked it on purpose, and the caret already tells you it has
+   focus — so lighting the whole thing up says nothing you did not know a
+   moment ago. These restate the base values because older focus rules
+   further up this file would otherwise take over. */
+#ntp-root #search-form:focus-within,
+body.ntp-quiet #ntp-root #search-form:focus-within{
+  background:#ffffff;
+  border-color:var(--q-line);
+  box-shadow:0 1px 2px rgba(16,16,20,.05), 0 10px 30px -18px rgba(16,16,20,.3);
+}
+body.ntp-dark #ntp-root #search-form:focus-within,
+body.ntp-quiet.ntp-dark #ntp-root #search-form:focus-within{
+  background:#43434d;
+  border-color:rgba(255,255,255,.13);
+  box-shadow:0 1px 2px rgba(0,0,0,.18);
+}
+body.ntp-wp #ntp-root #search-form:focus-within{
+  background:rgba(255,255,255,.16);
+  border-color:rgba(255,255,255,.26);
+  box-shadow:0 12px 40px -16px rgba(0,0,0,.7);
+}
+/* No ring, on any input path. :focus-visible looks like the way to give one
+   only to keyboard users, but for a TEXT INPUT it matches a pointer click as
+   well — the spec assumes you are about to type either way — so it lit up on
+   every click. The caret is the focus indicator here; it is unambiguous, and
+   it is the one the field already had. */
+
+#ntp-root #q,
+body.ntp-quiet #ntp-root #q{
+  font-size:14.5px;letter-spacing:-.005em;color:var(--q-ink);
+}
+body.ntp-wp #ntp-root #q{ color:#fff; }
+#ntp-root #q::placeholder{ color:var(--q-ink-soft); opacity:1; }
+body.ntp-wp #ntp-root #q::placeholder{ color:rgba(255,255,255,.62); }
+
+#ntp-root #search-go,
+#ntp-root #search-lens,
+#ntp-root #search-clear{
+  width:36px;height:36px;border-radius:9px;
+  color:var(--q-ink-soft);
+  transition:background .13s ease,color .13s ease;
+}
+#ntp-root #search-go:hover,
+#ntp-root #search-lens:hover,
+#ntp-root #search-clear:hover{
+  background:color-mix(in srgb, var(--q-ink) 9%, transparent);
+  color:var(--q-ink);
+}
+body.ntp-wp #ntp-root #search-go,
+body.ntp-wp #ntp-root #search-lens,
+body.ntp-wp #ntp-root #search-clear{ color:rgba(255,255,255,.72); }
+body.ntp-wp #ntp-root #search-go:hover,
+body.ntp-wp #ntp-root #search-lens:hover,
+body.ntp-wp #ntp-root #search-clear:hover{ background:rgba(255,255,255,.14);color:#fff; }
+
+/* ── Suggestions ─────────────────────────────────────────────────── */
+#ntp-root #search-suggestions,
+body.ntp-quiet #ntp-root #search-suggestions{
+  border-radius:14px;
+  padding:5px;
+  background:#ffffff;
+  border:1px solid var(--q-line);
+  box-shadow:0 24px 60px -18px rgba(16,16,20,.3);
+}
+body.ntp-dark #ntp-root #search-suggestions,
+body.ntp-quiet.ntp-dark #ntp-root #search-suggestions{
+  background:#3d3d46;
+  border-color:rgba(255,255,255,.10);
+  box-shadow:0 16px 44px -12px rgba(0,0,0,.6), 0 2px 8px rgba(0,0,0,.35);
+}
+#ntp-root .ss-item,
+body.ntp-quiet #ntp-root .ss-item{
+  padding:9px 12px;border-radius:9px;font-size:13.5px;color:var(--q-ink);
+}
+#ntp-root .ss-item:hover,
+#ntp-root .ss-item.sel{ background:color-mix(in srgb, var(--q-ink) 8%, transparent); }
+
+/* ── Shortcut cards ──────────────────────────────────────────────────
+   Same well/glass logic as the field, at card scale. The label only has
+   to survive on top of an arbitrary photograph, so over a wallpaper the
+   card carries its own dark glass rather than relying on text shadow. */
+#ntp-root #quick-links,
+body.ntp-quiet #ntp-root #quick-links{
+  gap:10px;margin-top:32px;max-width:660px;
+}
+#ntp-root .ql-item,
+#ntp-root .ql-add,
+body.ntp-quiet #ntp-root .ql-item,
+body.ntp-quiet #ntp-root .ql-add{
+  width:96px;height:82px;gap:9px;
+  border-radius:14px;
+  font-size:11px;font-weight:500;letter-spacing:0;
+  color:var(--q-ink-soft);
+  background:rgba(16,16,20,.045);
+  border:1px solid transparent;
+  box-shadow:none;
+  transition:background .14s cubic-bezier(.2,.8,.25,1),
+             color .14s cubic-bezier(.2,.8,.25,1),
+             transform .14s cubic-bezier(.16,1,.3,1);
+}
+body.ntp-dark #ntp-root .ql-item,
+body.ntp-dark #ntp-root .ql-add,
+body.ntp-quiet.ntp-dark #ntp-root .ql-item,
+body.ntp-quiet.ntp-dark #ntp-root .ql-add{
+  background:rgba(255,255,255,.07);
+}
+body.ntp-wp #ntp-root .ql-item,
+body.ntp-wp #ntp-root .ql-add{
+  background:rgba(0,0,0,.38);
+  border-color:rgba(255,255,255,.1);
+  backdrop-filter:blur(18px) saturate(150%);
+  -webkit-backdrop-filter:blur(18px) saturate(150%);
+  color:rgba(255,255,255,.86);
+}
+#ntp-root .ql-item:hover,
+#ntp-root .ql-add:hover,
+body.ntp-quiet #ntp-root .ql-item:hover,
+body.ntp-quiet #ntp-root .ql-add:hover{
+  background:color-mix(in srgb, var(--q-ink) 10%, transparent);
+  color:var(--q-ink);
+  transform:translateY(-2px);
+}
+body.ntp-wp #ntp-root .ql-item:hover,
+body.ntp-wp #ntp-root .ql-add:hover{
+  background:rgba(0,0,0,.55);
+  border-color:rgba(255,255,255,.2);
+  color:#fff;
+}
+#ntp-root .ql-item:active,
+#ntp-root .ql-add:active{ transform:translateY(0) scale(.97); }
+#ntp-root .ql-ico,
+body.ntp-quiet #ntp-root .ql-ico{
+  width:30px;height:30px;border:none;background:transparent;
+}
+#ntp-root .ql-name{ font-size:11px;font-weight:500; }
+body.ntp-wp #ntp-root .ql-name{ text-shadow:none; }
+
+/* ── Everything else that used to carry its own colour ───────────── */
+#ntp-root #ntp-footer,
+#ntp-root #ntp-disclaimer,
+#ntp-root #ntp-news-link{ color:var(--q-ink-soft); }
+body.ntp-wp #ntp-root #ntp-footer,
+body.ntp-wp #ntp-root #ntp-disclaimer{ color:rgba(255,255,255,.7);text-shadow:0 1px 10px rgba(0,0,0,.6); }
+#ntp-root .ntp-privacy{
+  background:color-mix(in srgb, var(--q-ink) 6%, transparent);
+  border-radius:14px;
+}
+body.ntp-wp #ntp-root .ntp-privacy{
+  background:rgba(0,0,0,.38);
+  backdrop-filter:blur(18px) saturate(150%);
+  -webkit-backdrop-filter:blur(18px) saturate(150%);
+}
+
+/* The pen sits in the corner over anything, so it needs its own ground. */
+.ntp-pen-btn{
+  width:38px;height:38px;border-radius:11px;
+  background:color-mix(in srgb, var(--q-ink) 7%, transparent);
+  color:var(--q-ink-soft);
+  border:none;
+  transition:background .14s ease,color .14s ease,transform .14s cubic-bezier(.16,1,.3,1);
+}
+.ntp-pen-btn:hover{
+  background:color-mix(in srgb, var(--q-ink) 13%, transparent);
+  color:var(--q-ink);
+  transform:translateY(-1px);
+}
+body.ntp-wp .ntp-pen-btn{
+  background:rgba(0,0,0,.42);color:rgba(255,255,255,.8);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+}
+body.ntp-wp .ntp-pen-btn:hover{ background:rgba(0,0,0,.6);color:#fff; }
+
+/* Scrollbar — same thin, hover-only treatment as the browser chrome. */
+::-webkit-scrollbar{ width:10px;height:10px; }
+::-webkit-scrollbar-track{ background:transparent; }
+::-webkit-scrollbar-thumb{
+  background:transparent;border:3px solid transparent;
+  border-radius:999px;background-clip:content-box;
+}
+:hover::-webkit-scrollbar-thumb{
+  background:color-mix(in srgb, var(--q-ink) 18%, transparent);background-clip:content-box;
+}
+::selection{ background:var(--accent,#fff);color:var(--on-accent,#000); }
 </style>
 </head>
 <body>
@@ -1302,6 +1907,8 @@ body.ntp-wp-animated #ntp-bg{animation:ntp-bg-drift 22s ease-in-out infinite;wil
 <video id="ntp-bg-video" aria-hidden="true" muted loop playsinline preload="auto" disablepictureinpicture></video>
 <div id="ntp-wave" aria-hidden="true"></div>
 <div id="ntp-bg-dim" aria-hidden="true"></div>
+<div id="ntp-weather" hidden></div>
+<div id="ntp-credit" hidden><a id="ntp-credit-link" target="_blank" rel="noreferrer noopener"></a></div>
 
 
 <div id="ntp-root">
@@ -1310,26 +1917,65 @@ body.ntp-wp-animated #ntp-bg{animation:ntp-bg-drift 22s ease-in-out infinite;wil
   <div id="ntp-clock" class="ntp-clock" hidden></div>
   <div id="ntp-logo-wrap"></div>
   <div id="ntp-ghost-name" class="ntp-ghost-name" hidden></div>
+  <h1 id="ntp-hero" class="ntp-hero">What will you explore today?</h1>
 
   <div id="search-form" style="position:relative">
     <img id="search-icon-img" alt="" aria-hidden="true"/>
     <svg id="search-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5 1.49-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg>
     <input id="q" type="text" autocomplete="off" spellcheck="false"
            placeholder="Search or type a url"/>
+    <button id="search-lens" type="button" aria-label="Search with Google Lens" title="Search with Google Lens">
+      <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 8.5V6a2 2 0 0 1 2-2h2.5M15.5 4H18a2 2 0 0 1 2 2v2.5M20 15.5V18a2 2 0 0 1-2 2h-2.5M8.5 20H6a2 2 0 0 1-2-2v-2.5"/>
+        <circle cx="12" cy="12" r="3.1"/>
+      </svg>
+    </button>
+    <button id="search-go" type="button" aria-label="Search" title="Search">
+      <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="11" cy="11" r="6.2"/><path d="m16 16 4 4"/>
+      </svg>
+    </button>
     <button id="search-clear" type="button" aria-label="Clear" title="Clear" hidden><svg viewBox="0 0 24 24" width="15" height="15"><path fill="currentColor" d="M19 6.4 17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg></button>
     <div id="search-suggestions"></div>
   </div>
 
-  <!-- Privoo News lives on its own internal page (privoo://news). This is a quiet
-       text link directly under the search bar — hidden unless the setting is on. -->
-  <a id="ntp-news-link" href="privoo://news/" hidden>See what's new</a>
+  <!-- The releases are on GitHub. This still goes through privoo://news, which
+       is one sentence and a button rather than a changelog, so nobody is thrown
+       straight out of the browser onto an external site by a link that gave no
+       sign it would do that. -->
+  <a id="ntp-news-link" href="privoo://news/" hidden>What's new</a>
 
   <div id="quick-links"></div>
+
+  <!-- Privacy widget. Counts come from the same live counters the shield
+       popover reads, so the two can never disagree. -->
+  <div id="ntp-privacy" class="ntp-privacy" hidden>
+    <div class="npv-item">
+      <b id="npv-ads">0</b>
+      <span>ads &amp; trackers blocked</span>
+    </div>
+    <div class="npv-sep" aria-hidden="true"></div>
+    <div class="npv-item">
+      <b id="npv-https">0</b>
+      <span>connections secured</span>
+    </div>
+  </div>
+
+  <!-- One-time survey invite. Taking it and declining both set the same flag,
+       so it shows once and can never nag. -->
+  <div id="ntp-survey" class="ntp-survey" hidden>
+    <div class="nsv-text">
+      <b>Take the survey to help us improve</b>
+      <span>A few questions about how you use Privoo. Completely optional.</span>
+    </div>
+    <div class="nsv-actions">
+      <button type="button" id="nsv-dismiss" class="nsv-btn">No thanks</button>
+      <button type="button" id="nsv-open" class="nsv-btn primary">Take the survey</button>
+    </div>
+  </div>
 </main>
 
-<footer id="ntp-footer">
-  <div id="ntp-weather" hidden></div>
-</footer>
+<footer id="ntp-footer"></footer>
 
 </div>
 
@@ -1371,8 +2017,6 @@ body.ntp-wp-animated #ntp-bg{animation:ntp-bg-drift 22s ease-in-out infinite;wil
   <svg viewBox="0 0 24 24" width="22" height="22"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
 </button>
 
-<div id="ntp-protected-toast" hidden>We <span class="ntp-pt-heart">♥</span> keeping you protected online!</div>
-
 <div id="custom-modal-bg">
   <div id="custom-modal">
     <h3>Customize new tab</h3>
@@ -1387,7 +2031,6 @@ body.ntp-wp-animated #ntp-bg{animation:ntp-bg-drift 22s ease-in-out infinite;wil
       <button type="button" class="mini-btn" id="cw-clear">Remove wallpaper</button>
     </div>
     <div class="btn-row">
-      <button type="button" class="mini-btn" id="cw-animate-toggle">Animate Wallpaper: <span id="cw-animate-state">On</span></button>
     </div>
     <div class="modal-btns">
       <button type="button" class="btn btn-cancel" id="custom-close">Close</button>
@@ -1449,62 +2092,54 @@ function setWallpaperImage(bg, url) {
   else { img.onload = apply; img.onerror = apply; }
 }
 
-let _protectedToastShown = false;
-function maybeShowProtectedToast(settings) {
-  if (_protectedToastShown || settings?.protectedToastSeen) return;
-  _protectedToastShown = true;
-  const el = document.getElementById('ntp-protected-toast');
-  if (!el) return;
-  el.hidden = false;
-  requestAnimationFrame(() => el.classList.add('visible'));
-  setTimeout(() => {
-    el.classList.remove('visible');
-    setTimeout(() => { el.hidden = true; }, 400);
-  }, 15000);
-  api?.setSettings?.({ protectedToastSeen: true }).catch(() => {});
-}
-
 // Good Morning / Good Afternoon / Good Evening / Good Night under the logo,
 // based on the local system clock. On by default — Settings → New tab.
 function renderGreeting(settings) {
   const el = document.getElementById('ntp-ghost-name');
-  if (!el) return;
-  if (settings?.ntpShowGreeting === false) { el.hidden = true; return; }
-  el.style.fontFamily = '';
+  const hero = document.getElementById('ntp-hero');
   const h = new Date().getHours();
   const text = h < 5 ? 'Good night'
     : h < 12 ? 'Good morning'
     : h < 18 ? 'Good afternoon'
     : h < 22 ? 'Good evening'
     : 'Good night';
-  el.textContent = text;
-  el.hidden = false;
+  // The headline element is display:none in every state — this only keeps
+  // its text honest for anyone who unhides it.
+  if (hero) hero.textContent = text;
+  if (el) el.hidden = true;
 }
 
 function applyNtpLook(settings) {
   const bg = document.getElementById('ntp-bg');
   const dim = document.getElementById('ntp-bg-dim');
   const wpPath = settings?.ntpWallpaperPath;
-  const isWave = !!settings?.ntpWaveEnabled;
+  const isWave = false;
   // The wave takes precedence over any wallpaper file. wpPath === '' means the
   // user explicitly removed their wallpaper; null/undefined (unset) falls
   // through to the shipped default wallpaper.png, served by the same URL —
   // unless the user turned that default off via Settings → Apply Privoo
   // Background, in which case an unset path means no wallpaper at all. A
   // real custom path (non-null, non-empty) always shows regardless.
-  const wantsDefaultBg = settings?.ntpApplyPrivooBackground !== false;
-  const hasWp = !isWave && wpPath !== '' && !(wpPath == null && !wantsDefaultBg);
+  // Vertical tabs too, not just Transparent Mode. With the panel down the
+  // side, a new tab painting its own slab of grey put a hard seam between
+  // itself and the chrome; with nothing painted here the host's colour shows
+  // and the two read as one surface.
+  const seeThrough = !!settings?.semiTransparent || !!settings?.verticalTabs;
+  document.body.classList.toggle('ntp-see-through', seeThrough);
+  // No shipped default any more: a wallpaper shows only if the user set one.
+  // A wallpaper the user chose always beats the random one.
+  const hasRandom = !seeThrough && !isWave && !wpPath && !!settings?.ntpRandomWallpaper;
+  const hasWp = !seeThrough && !isWave && (!!wpPath || hasRandom);
   const dark = !!(settings && settings.darkMode);
 
   // Default = the clean warm dark/light background (no gradient). The glassy
   // "wallpaper" UI only kicks in when there's an actual wallpaper or wave.
   document.body.classList.toggle('ntp-grad', false);
   document.body.classList.toggle('ntp-wp', hasWp || isWave);
+  document.body.classList.toggle('ntp-quiet', !hasWp && !isWave);
   document.body.classList.toggle('ntp-dark', dark);
   // Default ON — toggle in Settings → New tab.
   document.body.classList.toggle('ntp-focused-search-on', settings?.ntpFocusedSearch !== false);
-  // Increase Transparency — let the OS material show through the NTP too.
-  document.body.classList.toggle('transparent-ui', !!settings?.increaseTransparency);
   // Vibe — tint the search bar to match the browser chrome colour.
   const vibeOn = !!settings?.vibeEnabled;
   document.body.classList.toggle('ntp-vibe', vibeOn);
@@ -1513,6 +2148,16 @@ function applyNtpLook(settings) {
   } else {
     document.documentElement.style.removeProperty('--ntp-vibe-hue');
   }
+
+  // Privacy widget follows its own setting (Settings -> New tab).
+  try { window.__privooPrivacyWidget?.(settings?.ntpShowStats !== false); } catch { /* not mounted yet */ }
+  // Survey card: once only, and not on the very first run - let people use
+  // the browser a little before being asked what they think of it.
+  try {
+    const seen = settings?.surveyPromptShown === true;
+    const settled = (settings?.siteVisitCount || 0) >= 3;
+    window.__privooSurveyCard?.(!seen && settled);
+  } catch { /* not mounted yet */ }
 
   const ql = document.getElementById('quick-links');
   if (ql) ql.style.display = settings?.ntpShowQuickLinks === false ? 'none' : '';
@@ -1523,7 +2168,6 @@ function applyNtpLook(settings) {
 
   // Only the shipped default art breathes — a custom wallpaper the user
   // uploaded is theirs as-is, not something to animate on top of.
-  document.body.classList.toggle('ntp-wp-animated', settings?.ntpWallpaperAnimated !== false && !hasWp);
 
   // Optional "See what's new" link under the search bar — off by default. It ships
   // with [hidden] in the HTML, so showing it means removing the attribute outright;
@@ -1557,10 +2201,11 @@ function applyNtpLook(settings) {
       const def = ['#7c5cff', '#b14bff', '#ff5c9e', '#4bc5ff'];
       const id = settings.ntpThemeId;
       if (id) {
-        // Preset theme → generated background image; the palette gradient shows
-        // through as a fallback until the image file is added.
+        // Preset theme → its palette, drawn as a gradient. There used to be a
+        // rendered PNG per theme layered over this; the gradient was always the
+        // fallback underneath it and stands on its own.
         waveEl.className = '';
-        waveEl.style.background = "url('privoo://newtab/themes/" + id + ".png') center/cover no-repeat, linear-gradient(135deg, " + (cols.length ? cols.join(',') : def.join(',')) + ")";
+        waveEl.style.background = "linear-gradient(135deg, " + (cols.length ? cols.join(',') : def.join(',')) + ")";
       } else {
         // Custom colours → animated gradient.
         waveEl.style.background = '';
@@ -1601,7 +2246,15 @@ function applyNtpLook(settings) {
     // URL lets the image cache, and decode()-ing it before paint makes it appear
     // in one shot rather than streaming in.
     const ver = String(settings.ntpWallpaperVersion || '1');
-    setWallpaperImage(bg, "privoo://newtab/wallpaper?v=" + ver);
+    // A local included collection avoids the privacy and licensing ambiguity
+    // of silently fetching third-party images. Each new-tab document gets one
+    // random background; an uploaded image remains the user's explicit choice.
+    if (hasRandom) {
+      startRandomWallpaper(bg);
+    } else {
+      hideCredit();
+      setWallpaperImage(bg, 'privoo://newtab/wallpaper?v=' + ver);
+    }
     const d = typeof settings.ntpWallpaperDim === 'number' ? settings.ntpWallpaperDim : 0.42;
     dim.style.opacity = String(Math.min(0.85, Math.max(0, d)));
   } else {
@@ -1610,16 +2263,132 @@ function applyNtpLook(settings) {
     if (vid) { vid.pause(); vid.removeAttribute('src'); vid.dataset.ver = ''; }
     bg.style.backgroundImage = '';
     dim.style.opacity = '0';
-    // When transparency is on, leave the NTP background fully transparent
-    // so the OS material / desktop shows through. Otherwise clear any inline
-    // fill so the CSS gradient (body.ntp-grad) paints the Opera-style default.
-    bg.style.backgroundColor = settings?.increaseTransparency ? 'transparent' : '';
+    // The credit belongs to the photo. With no photo there is nothing to
+    // credit — this branch cleared the image, the video and the dim layer but
+    // left the caption behind, so turning Random Wallpaper off left
+    // "Photo by … on Unsplash" sitting on a plain background.
+    hideCredit();
+    // Clear any inline fill so the CSS gradient (body.ntp-grad) paints the
+    // Opera-style default.
+    bg.style.backgroundColor = '';
     // No default wallpaper — a fresh new tab is a plain flat background,
     // like Chrome's. The wallpaper picker in Customize is still available
     // for anyone who wants to opt into one.
   }
 
   applyAccent(settings?.accentColor);
+}
+
+// Random wallpaper.
+// Pulls freely licensed photos from Lorem Picsum, which serves Unsplash
+// photos and publishes the photographer for each one. The credit sits in the
+// bottom-left corner and links back to the original.
+//
+// A BATCH of ten is fetched at most once an hour and kept in localStorage;
+// each new tab picks one of the ten at random. That is the whole point of
+// batching: opening ten tabs costs one API call and ten cache hits, not ten
+// round trips, and you still get a different photo each time.
+// Shown for the instant before the first photo decodes, so the background is
+// never a bare rectangle. A gradient rather than a bundled image: it costs
+// nothing to load and cannot be the wrong one.
+const RWP_PLACEHOLDERS = [
+  ['#1f2937', '#111827'],
+  ['#1e3a5f', '#0f172a'],
+  ['#243b2f', '#111c17'],
+  ['#3b2f4a', '#1a1522'],
+  ['#4a3728', '#1f1811'],
+];
+const RWP_CACHE_KEY = 'privooRandomWallpaperBatch';
+const RWP_TTL_MS = 60 * 60 * 1000;   // one refill per hour
+const RWP_BATCH = 10;
+
+function hideCredit() {
+  const c = document.getElementById('ntp-credit');
+  if (c) c.hidden = true;
+}
+
+function showCredit(author, link) {
+  const c = document.getElementById('ntp-credit');
+  const a = document.getElementById('ntp-credit-link');
+  if (!c || !a || !author) { hideCredit(); return; }
+  a.textContent = 'Photo by ' + author + ' on Unsplash';
+  if (link) a.href = link; else a.removeAttribute('href');
+  c.hidden = false;
+  // Restart the fade every time. Re-adding a class the element already has
+  // does not replay an animation, so it has to come off, force a reflow, and
+  // go back on — otherwise the second photo's credit appears instantly.
+  c.classList.remove('is-in');
+  void c.offsetWidth;
+  c.classList.add('is-in');
+}
+
+function localPlaceholderGradient() {
+  const p = RWP_PLACEHOLDERS[Math.floor(Math.random() * RWP_PLACEHOLDERS.length)];
+  return 'linear-gradient(160deg, ' + p[0] + ', ' + p[1] + ')';
+}
+
+function readPhotoBatch() {
+  try {
+    const raw = localStorage.getItem(RWP_CACHE_KEY);
+    if (!raw) return null;
+    const v = JSON.parse(raw);
+    if (!v || !v.at || !Array.isArray(v.photos) || !v.photos.length) return null;
+    if (Date.now() - v.at > RWP_TTL_MS) return null;
+    return v.photos;
+  } catch { return null; }
+}
+
+// Sized to this display so the CDN sends one appropriately-scaled image
+// rather than a 5000px original that then gets downscaled in the compositor.
+function photoUrl(id) {
+  const w = Math.min(2560, Math.max(1280, window.screen?.width || 1920));
+  const h = Math.min(1600, Math.max(720, window.screen?.height || 1080));
+  return 'https://picsum.photos/id/' + id + '/' + w + '/' + h;
+}
+
+async function fetchPhotoBatch() {
+  const page = 1 + Math.floor(Math.random() * 10);
+  const res = await fetch('https://picsum.photos/v2/list?page=' + page + '&limit=30', { cache: 'no-store' });
+  if (!res.ok) throw new Error('picsum ' + res.status);
+  const list = await res.json();
+  if (!Array.isArray(list) || !list.length) throw new Error('empty list');
+  // Shuffle, then keep ten. Taking the first ten of a fixed page would show
+  // the same set of photos to everyone who happened to land on that page.
+  const shuffled = list.slice();
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  const photos = shuffled.slice(0, RWP_BATCH).map((item) => ({
+    src: photoUrl(item.id),
+    author: item.author || '',
+    link: item.url || '',
+  }));
+  try { localStorage.setItem(RWP_CACHE_KEY, JSON.stringify({ at: Date.now(), photos })); } catch {}
+  return photos;
+}
+
+async function startRandomWallpaper(bg) {
+  // Paint something first so the background is never empty while a network
+  // call is in flight. backgroundImage takes a gradient as happily as a url(),
+  // and setWallpaperImage() is for real images only — it preloads and decodes,
+  // which a gradient has nothing to do.
+  hideCredit();
+  bg.dataset.wpUrl = '';
+  bg.style.backgroundImage = localPlaceholderGradient();
+  const show = (photos) => {
+    const pick = photos[Math.floor(Math.random() * photos.length)];
+    setWallpaperImage(bg, pick.src);
+    showCredit(pick.author, pick.link);
+  };
+  const cached = readPhotoBatch();
+  if (cached) { show(cached); return; }
+  try {
+    show(await fetchPhotoBatch());
+  } catch {
+    // Offline or blocked. The bundled image already showing is the fallback.
+    hideCredit();
+  }
 }
 
 // Play the live wallpaper only when it makes sense — never while the tab is
@@ -1666,7 +2435,25 @@ document.addEventListener('visibilitychange', () => {
   else maybePlayVideo(vid);
 });
 
-function applyAccent(themeHex){const r=document.documentElement;const fallback=document.body.classList.contains('ntp-dark')?'#948ef2':'#4f46e5';const hex=(themeHex&&/^#[0-9a-f]{6}$/i.test(themeHex))?themeHex:fallback;r.style.setProperty('--accent',hex);const m=hex.replace('#','').match(/.{2}/g);const[rv,g,b]=m.map(x=>parseInt(x,16));const h=`rgb(${Math.min(255,Math.round(rv+(255-rv)*.18))},${Math.min(255,Math.round(g+(255-g)*.18))},${Math.min(255,Math.round(b+(255-b)*.18))})`;r.style.setProperty('--accent-hover',h);r.style.setProperty('--accent-soft',`rgba(${rv},${g},${b},.18)`);}
+// Mirrors applyAccentTriad() in renderer.js — same monochrome sentinel, same
+// luminance rules — so the new tab and the chrome around it never disagree
+// about what the accent is or what colour of text sits on top of it.
+function applyAccent(themeHex){
+  const r=document.documentElement;
+  const isDark=document.body.classList.contains('ntp-dark');
+  let hex=(themeHex&&/^#[0-9a-f]{6}$/i.test(themeHex))?themeHex:(isDark?'#ffffff':'#101014');
+  // '#ffffff' is the adaptive "mono" accent: white on black, ink on paper.
+  if(hex.toLowerCase()==='#ffffff'&&!isDark)hex='#101014';
+  r.style.setProperty('--accent',hex);
+  const [rv,g,b]=hex.replace('#','').match(/.{2}/g).map(x=>parseInt(x,16));
+  const lum=(0.2126*rv+0.7152*g+0.0722*b)/255;
+  // A near-white accent has no headroom to brighten into, so hover darkens.
+  const mix=lum>0.72?0:255, k=lum>0.72?0.12:0.18;
+  r.style.setProperty('--accent-hover',
+    `rgb(${Math.round(rv+(mix-rv)*k)},${Math.round(g+(mix-g)*k)},${Math.round(b+(mix-b)*k)})`);
+  r.style.setProperty('--on-accent',lum>0.6?'#202024':'#ffffff');
+  r.style.setProperty('--accent-soft',`rgba(${rv},${g},${b},${isDark?'.16':'.13'})`);
+}
 
 let ntpSettings = null;
 const NtpUiSfx = (() => {
@@ -1708,13 +2495,7 @@ function syncThemeButtons(settings) {
 let quickLinks = [];
 let searchEngine = 'google';
 const ENGINES = { google:'https://www.google.com/search?q=', bing:'https://www.bing.com/search?q=', duckduckgo:'https://duckduckgo.com/?q=', brave:'https://search.brave.com/search?q=' };
-const DEFAULT_QUICK_LINKS = [
-  { name: 'YouTube',   url: 'https://youtube.com' },
-  { name: 'GitHub',    url: 'https://github.com' },
-  { name: 'Reddit',    url: 'https://reddit.com' },
-  { name: 'Wikipedia', url: 'https://wikipedia.org' },
-  { name: 'Gmail',     url: 'https://mail.google.com' },
-];
+const DEFAULT_QUICK_LINKS = [];
 
 async function loadNtp() {
   if (!api) { document.body.classList.add('ntp-ready'); return; }
@@ -1739,7 +2520,6 @@ async function loadNtp() {
   renderQL();
 
   renderGreeting(settings);
-  maybeShowProtectedToast(settings);
 
   // In vtabs search-popup mode the overlay handles search — hide logo + search bar.
   // With the popup disabled the new-tab page shows its normal search bar.
@@ -1955,8 +2735,6 @@ async function openCustomize() {
   if (!api) return;
   const { settings } = await api.getSettings();
   syncThemeButtons(settings);
-  const stateEl = document.getElementById('cw-animate-state');
-  if (stateEl) stateEl.textContent = settings?.ntpWallpaperAnimated === false ? 'Off' : 'On';
 }
 function closeCustomize() {
   document.getElementById('custom-modal-bg').classList.remove('open');
@@ -2002,22 +2780,14 @@ document.getElementById('cw-clear').addEventListener('click', async () => {
   await loadNtp();
 });
 
-document.getElementById('cw-animate-toggle').addEventListener('click', async () => {
-  if (!api) return;
-  const { settings } = await api.getSettings();
-  const next = settings?.ntpWallpaperAnimated === false;   // toggle
-  await api.setSettings({ ntpWallpaperAnimated: next });
-  const stateEl = document.getElementById('cw-animate-state');
-  if (stateEl) stateEl.textContent = next ? 'On' : 'Off';
-  const hasWp = settings?.ntpWallpaperPath !== '';
-  document.body.classList.toggle('ntp-wp-animated', next && !hasWp);
-});
 
 const qInput = document.getElementById('q');
 const ssSug  = document.getElementById('search-suggestions');
 let ssItems  = [];
 let ssIdx    = -1;
 let ssTimer  = null;
+// What was typed before any arrow key walked the list, so it can be put back.
+let ssTyped  = '';
 
 // ── New-tab clock ─────────────────────────────────────────────────────────────
 let _ntpClockTimer = null;
@@ -2100,27 +2870,115 @@ ssClear?.addEventListener('click', () => {
   closeSS();
   qInput.focus();
 });
+document.getElementById('search-go')?.addEventListener('click', () => {
+  if (qInput.value.trim()) { doSearch(qInput.value); closeSS(); }
+  else qInput.focus();
+});
+document.getElementById('search-lens')?.addEventListener('click', () => {
+  api?.navigate?.('https://lens.google.com/');
+});
+
+/* ── Suggestions ─────────────────────────────────────────────────────────
+   This list used to be whatever the search engine sent back and nothing
+   else: no row for what Enter would do, no pages from your own history, no
+   indication of which was which, and no sign of why any row was there.
+
+   It is now the same list the address bar shows, built the same way:
+     1. what pressing Enter does, always first
+     2. up to three pages you have actually been to
+     3. up to five things the engine suggested
+   deduped across all three, with the typed part of each row picked out.
+   ───────────────────────────────────────────────────────────────────── */
+const SS_MAX_HISTORY = 3;
+const SS_MAX_SEARCH  = 5;
+const SS_ICON_SEARCH = '<svg viewBox="0 0 24 24" width="14" height="14"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5 1.49-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg>';
+const SS_ICON_CLOCK  = '<svg viewBox="0 0 24 24" width="14" height="14"><path d="M13 3a9 9 0 1 0 2.8 17.5l-1.4-1.4A7 7 0 1 1 19 12h-3l4 4-4 4v-3a9 9 0 0 0-3-17z"/></svg>';
+
+// Scheme, www. and a trailing slash do not make two rows different.
+function ssKey(text) {
+  return String(text || '').trim().toLowerCase()
+    .replace(/^[a-z][a-z0-9+.-]*:\/\//, '').replace(/^www\./, '').replace(/\/+$/, '');
+}
+
+// Bold the matched portion. Escaping happens in here because the match has
+// to be located in the raw text, before entities shift the offsets.
+function ssHighlight(text, query) {
+  const raw = String(text || '');
+  const q = String(query || '').trim();
+  if (!q) return escHtml(raw);
+  const at = raw.toLowerCase().indexOf(q.toLowerCase());
+  if (at < 0) return escHtml(raw);
+  return escHtml(raw.slice(0, at))
+       + '<b>' + escHtml(raw.slice(at, at + q.length)) + '</b>'
+       + escHtml(raw.slice(at + q.length));
+}
+
+function ssPrettyUrl(u) {
+  try {
+    const p = new URL(/^https?:\/\//i.test(u) ? u : 'https://' + u);
+    return (p.hostname.replace(/^www\./, '') + p.pathname + p.search).replace(/\/$/, '');
+  } catch { return String(u || ''); }
+}
+
+// Bumped on every close and every new keystroke, so a slow response cannot
+// paint itself over a list built from a newer query.
+let ssGen = 0;
 
 async function fetchSuggestions(q) {
   if (!q.trim() || !api) { closeSS(); return; }
-  try {
-    const results = await api.getSuggestions(q, searchEngine);
-    ssItems = results;
-    renderSS(results, q);
-  } catch { closeSS(); }
+  const myGen = ++ssGen;
+  const typed = q.trim();
+
+  let hist = [];
+  try { hist = (await api.historyAutocomplete?.(typed)) || []; } catch {}
+  if (myGen !== ssGen) return;
+
+  let remote = [];
+  try { remote = (await api.getSuggestions(typed, searchEngine)) || []; } catch {}
+  if (myGen !== ssGen) return;
+  // The field moved on while we waited.
+  if (qInput.value.trim() !== typed) return;
+
+  const items = [];
+  const seen = new Set();
+  const push = (it) => {
+    const k = ssKey(it.text);
+    if (!k || seen.has(k)) return;
+    seen.add(k);
+    items.push(it);
+  };
+
+  // No row echoing back what you just typed — Enter already does that, and
+  // it cost the first real suggestion its place at the top of the list.
+  for (const h of hist.slice(0, SS_MAX_HISTORY)) {
+    push({ text: h.url, label: h.title || ssPrettyUrl(h.url), sub: ssPrettyUrl(h.url),
+           type: 'history' });
+  }
+  for (const r of remote.slice(0, SS_MAX_SEARCH)) {
+    push({ text: r.text, label: r.text, type: 'search' });
+  }
+
+  ssItems = items;
+  renderSS(items, typed);
 }
 
 function renderSS(items, q) {
   if (!items.length) { closeSS(); return; }
   ssSug.innerHTML = '';
   ssIdx = -1;
+  ssTyped = q;
   for (const it of items) {
     const el = document.createElement('div');
-    el.className = 'ss-item';
+    el.className = 'ss-item ss-' + it.type;
+    const icon = it.type === 'history' ? SS_ICON_CLOCK : SS_ICON_SEARCH;
     el.innerHTML =
-      `<span class="ss-icon"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5 1.49-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg></span>` +
-      `<span>${escHtml(it.text)}</span>`;
-    el.addEventListener('mousedown', (e) => { e.preventDefault(); doSearch(it.text); });
+      '<span class="ss-icon">' + icon + '</span>' +
+      '<span class="ss-body">' +
+        '<span class="ss-label">' + ssHighlight(it.label, q) + '</span>' +
+        (it.sub && it.sub !== it.label
+          ? '<span class="ss-sub">' + ssHighlight(it.sub, q) + '</span>' : '') +
+      '</span>';
+    el.addEventListener('mousedown', (e) => { e.preventDefault(); doSearch(it.text); closeSS(); });
     ssSug.appendChild(el);
   }
   ssSug.classList.add('open');
@@ -2131,7 +2989,13 @@ function renderSS(items, q) {
   document.body.classList.add('ss-open');
 }
 
-function closeSS() { ssSug.classList.remove('open'); ssIdx = -1; document.body.classList.remove('ss-open'); }
+function closeSS() {
+  ssGen++;
+  ssSug.classList.remove('open');
+  ssIdx = -1;
+  ssTyped = '';
+  document.body.classList.remove('ss-open');
+}
 
 qInput.addEventListener('blur', () => setTimeout(closeSS, 150));
 document.addEventListener('contextmenu', closeSS);
@@ -2157,12 +3021,28 @@ document.getElementById('search-form')?.addEventListener('mousedown', () => {
   qInput.focus();
 });
 
+function ssMove(delta) {
+  const rows = ssSug.querySelectorAll('.ss-item');
+  if (!rows.length) return;
+  ssIdx = Math.max(-1, Math.min(ssIdx + delta, rows.length - 1));
+  rows.forEach((el, i) => el.classList.toggle('active', i === ssIdx));
+  if (ssIdx >= 0 && ssItems[ssIdx]) {
+    qInput.value = ssItems[ssIdx].text;
+    rows[ssIdx].scrollIntoView({ block: 'nearest' });
+  } else {
+    // Back above the first row puts your own query back in the field. It
+    // used to leave the last suggestion sitting there, so the only way to
+    // recover what you had written was Escape.
+    qInput.value = ssTyped;
+  }
+  syncClearBtn();
+}
+
 qInput.addEventListener('keydown', (e) => {
-  const items = ssSug.querySelectorAll('.ss-item');
-  if (e.key === 'ArrowDown')  { e.preventDefault(); ssIdx = Math.min(ssIdx + 1, items.length - 1); items.forEach((el, i) => el.classList.toggle('active', i === ssIdx)); if (ssItems[ssIdx]) qInput.value = ssItems[ssIdx].text; }
-  else if (e.key === 'ArrowUp') { e.preventDefault(); ssIdx = Math.max(ssIdx - 1, -1); items.forEach((el, i) => el.classList.toggle('active', i === ssIdx)); }
-  else if (e.key === 'Escape') { closeSS(); }
-  else if (e.key === 'Enter') { e.preventDefault(); doSearch(qInput.value); closeSS(); }
+  if (e.key === 'ArrowDown')    { e.preventDefault(); ssMove(1); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); ssMove(-1); }
+  else if (e.key === 'Escape')  { closeSS(); }
+  else if (e.key === 'Enter')   { e.preventDefault(); doSearch(qInput.value); closeSS(); }
 });
 
 function doSearch(input) {
@@ -2197,6 +3077,95 @@ const WX_SVG={
   storm:_wxS('<path d="M7 14a4 4 0 0 1 .5-7.97A5.5 5.5 0 0 1 18 7a3.5 3.5 0 0 1-.5 7H7z"/><path d="M12 14l-2 4h3l-2 4"/>'),
 };
 const WX_ICONS={0:WX_SVG.sun,1:WX_SVG.sun,2:WX_SVG.partly,3:WX_SVG.cloud,45:WX_SVG.fog,48:WX_SVG.fog,51:WX_SVG.rain,53:WX_SVG.rain,55:WX_SVG.rain,61:WX_SVG.rain,63:WX_SVG.rain,65:WX_SVG.rain,71:WX_SVG.snow,73:WX_SVG.snow,75:WX_SVG.snow,77:WX_SVG.snow,80:WX_SVG.rain,81:WX_SVG.rain,82:WX_SVG.storm,85:WX_SVG.snow,86:WX_SVG.snow,95:WX_SVG.storm,96:WX_SVG.storm,99:WX_SVG.storm};
+// Which scene the card draws. Grouped by what is happening in the sky, not
+// by severity — a drizzle and a downpour are both falling water.
+//
+// `hot` is not a weather code: it is clear sky plus a temperature, because
+// "sunny" at 4°C and "sunny" at 34°C are not the same day and should not
+// look the same. See wxScene().
+function wxKind(code, temp) {
+  if ([0, 1].includes(code)) return (temp >= 28 ? 'hot' : 'sun');
+  if (code === 2) return 'partly';
+  if (code === 3) return 'cloud';
+  if ([45, 48].includes(code)) return 'fog';
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return 'snow';
+  if ([95, 96, 99, 82].includes(code)) return 'storm';
+  return 'rain';
+}
+
+/* The icons. One 32 unit grid, one shape per idea, all at the same weight.
+
+   The cloud is a single path used at two heights: sitting low when it is the
+   whole picture, lifted when something has to fall out of it. Every icon
+   containing a cloud uses that same path, so the seven read as one family
+   rather than seven separate drawings.
+
+   Drops and flakes are generated rather than written out so their delays can
+   be staggered. Without the stagger they fall in a rank, which reads as a
+   curtain rather than as weather. */
+
+// One closed outline. This is the part the div version could not do.
+const WX_CLOUD = 'M4.41 3.34A5.53 5.53 0 0 1 8 2c2.69 0 4.92 2 5.17 4.58C14.76 7.22 16 8.79 16 10.5'
+               + 'A3.5 3.5 0 0 1 12.5 14h-9A3.5 3.5 0 0 1 0 10.5c0-1.71 1.24-3.28 2.83-3.92'
+               + 'A5.53 5.53 0 0 1 4.41 3.34z';
+
+function wxCloud(cls, lifted) {
+  // Two placements of the one path: centred when the cloud is the whole
+  // picture, raised when there has to be room underneath for the weather.
+  const t = lifted ? 'translate(4.4 1.6) scale(1.45)' : 'translate(4.4 4.2) scale(1.45)';
+  return '<g class="wx-cloud-g" transform="' + t + '">'
+       + '<path class="wx-cloud' + (cls ? ' ' + cls : '') + '" d="' + WX_CLOUD + '"/></g>';
+}
+
+function wxSun(hot) {
+  const h = hot ? ' hot' : '';
+  return '<g class="wx-rays-g' + h + '">'
+       + '<path class="wx-ray' + h + '" stroke-width="2.1" d="M16 2.6v3.4M16 26v3.4M2.6 16h3.4M26 16h3.4"/>'
+       + '<path class="wx-ray' + h + '" stroke-width="2.1" d="M6.5 6.5l2.4 2.4M23.1 23.1l2.4 2.4M25.5 6.5l-2.4 2.4M8.9 23.1l-2.4 2.4"/>'
+       + '</g>'
+       + '<circle class="wx-sun' + h + '" cx="16" cy="16" r="6.3"/>';
+}
+
+function wxScene(kind) {
+  const many = (n, cls, x0, gap, y) => Array.from({ length: n }, (_, i) =>
+    cls === 'drop'
+      ? '<path class="wx-rain wx-drop" style="--i:' + i + '" d="M' + (x0 + i * gap) + ' ' + y + 'v3.4"/>'
+      : '<circle class="wx-flake" style="--i:' + i + '" cx="' + (x0 + i * gap) + '" cy="' + (y + 1) + '" r="1.7"/>'
+  ).join('');
+
+  let body;
+  switch (kind) {
+    case 'sun':
+      body = wxSun(false); break;
+    case 'hot':
+      body = wxSun(true); break;
+    case 'partly':
+      // The sun is drawn first so the cloud passes in front of it, which is
+      // what "partly" actually looks like.
+      body = '<g class="wx-rays-g"><path class="wx-ray" stroke-width="1.9" '
+           + 'd="M12 1.8v2.6M3.1 10.7h2.6M5.7 4.4l1.9 1.9M18.3 4.4l-1.9 1.9"/></g>'
+           + '<circle class="wx-sun" cx="12" cy="10.7" r="5"/>'
+           + '<g class="wx-cloud-g" transform="translate(6.4 8.6) scale(1.28)">'
+           + '<path class="wx-cloud" d="' + WX_CLOUD + '"/></g>';
+      break;
+    case 'rain':
+      body = wxCloud('', true) + many(3, 'drop', 11.4, 4.6, 23.4); break;
+    case 'snow':
+      body = wxCloud('', true) + many(3, 'flake', 11.4, 4.6, 23.4); break;
+    case 'storm':
+      body = wxCloud('heavy', true)
+           + '<path class="wx-bolt" d="M17.4 22.2l-5 6.1h3.1l-.9 3.7 5.2-6.4h-3.3z"/>';
+      break;
+    case 'fog':
+      body = wxCloud('', true)
+           + '<g class="wx-mist-g"><path class="wx-mist" d="M9.4 24.6h13.2M12 28.6h9.6"/></g>';
+      break;
+    default:
+      body = wxCloud('', false);
+  }
+  return '<svg class="wx-icon" viewBox="0 0 32 32" aria-hidden="true">' + body + '</svg>';
+}
+
 const WX_DESC = {
   0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',
   45:'Foggy',48:'Icy fog',
@@ -2259,20 +3228,19 @@ async function renderWeather(settings) {
   if (!el.innerHTML) el.innerHTML = '<div class="wx-card" style="opacity:.5;font-size:13px">Loading weather...</div>';
   try {
     const wx = await fetchWeather(loc);
-    const icon = WX_ICONS[wx.code] || WX_SVG.sun;
     const desc = WX_DESC[wx.code] || 'Unknown';
+    // data-wx picks the scene and drives every animation in it.
+    const kind = wxKind(wx.code, wx.temp);
+    // Two things at rest: what the sky is doing, and how warm it is. The
+    // rest only appears on hover — see the note above wxScene().
     el.innerHTML =
-      '<div class="wx-card">' +
-        '<div class="wx-icon">' + icon + '</div>' +
-        '<div class="wx-body">' +
-          '<div class="wx-temp">' + wx.temp + '°C</div>' +
-          '<div class="wx-desc">' + desc + '</div>' +
-          '<div class="wx-loc">' + wx.city + (wx.country ? ', ' + wx.country : '') + '</div>' +
-        '</div>' +
-        '<div class="wx-details">' +
-          '<span>Feels like ' + wx.feels + '°C</span>' +
-          '<span>Humidity ' + wx.humidity + '%</span>' +
-          '<span>Wind ' + wx.wind + ' km/h</span>' +
+      '<div class="wx-card" data-wx="' + kind + '">' +
+        wxScene(kind) +
+        '<div class="wx-temp">' + wx.temp + '<span class="wx-deg">°</span></div>' +
+        '<div class="wx-more">' +
+          '<div class="wx-more-top">' + escHtml(desc) + '</div>' +
+          '<div class="wx-more-sub">' + escHtml(wx.city) + ' · feels ' + wx.feels + '° · ' +
+            wx.humidity + '% · ' + wx.wind + ' km/h</div>' +
         '</div>' +
       '</div>';
   } catch {
@@ -2338,6 +3306,57 @@ api?.onSettingsChanged?.((settings) => {
     console.error('Privoo NTP settings update:', e);
   }
 });
+
+// ── Privacy widget ─────────────────────────────────────────────────────────
+// Reads the same counters the toolbar shield uses, so the numbers always agree.
+// Polls rather than subscribing because the counters live in the main process
+// and tick far too often to be worth an IPC message each.
+(function initPrivacyWidget() {
+  const el   = document.getElementById("ntp-privacy");
+  const ads  = document.getElementById("npv-ads");
+  const https = document.getElementById("npv-https");
+  if (!el || !ads || !https) return;
+
+  const fmt = (n) => { const v = Number(n) || 0; return v >= 1000 ? v.toLocaleString() : String(v); };
+
+  async function tick() {
+    if (el.hidden) return;
+    try {
+      const s = await api.getPrivacyStats();
+      if (!s) return;
+      ads.textContent   = fmt((s.blockedAds || 0) + (s.blockedCookies || 0));
+      https.textContent = fmt(s.upgradedHttps || 0);
+    } catch { /* main process busy - try again next tick */ }
+  }
+
+  window.__privooPrivacyWidget = (show) => {
+    el.hidden = !show;
+    if (show) tick();
+  };
+
+  setInterval(tick, 1500);
+  tick();
+})();
+
+
+// ── One-time survey invite ─────────────────────────────────────────────────
+const SURVEY_URL = "https://forms.gle/XAs6NmFQhvCUgZQL7";
+(function initSurvey() {
+  const el = document.getElementById("ntp-survey");
+  if (!el) return;
+  const settle = () => {
+    el.hidden = true;
+    try { api?.setSettings?.({ surveyPromptShown: true }); } catch { /* ignore */ }
+  };
+  document.getElementById("nsv-dismiss")?.addEventListener("click", settle);
+  document.getElementById("nsv-open")?.addEventListener("click", () => {
+    settle();
+    if (api?.openTab) api.openTab(SURVEY_URL);
+    else window.location.href = SURVEY_URL;
+  });
+  window.__privooSurveyCard = (show) => { el.hidden = !show; };
+})();
+
 </script>
 </body>
 </html>

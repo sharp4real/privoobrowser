@@ -1,6 +1,6 @@
 const {
   app, BrowserWindow, BrowserView, session, ipcMain, webContents, protocol, net, shell, dialog,
-  Menu, Tray, nativeImage, screen, components,
+  Menu, Tray, nativeImage, screen, components, nativeTheme,
 } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -15,6 +15,10 @@ const { DOH_PROVIDERS } = settingsStore;
 // wins over the user's manual provider choice — it routes through a family
 // filter regardless. `secureDnsMode: 'secure'` keeps Chromium from ever
 // falling back to plaintext system DNS, so no leaks.
+// webContents id -> timestamp of the last real user interaction with it.
+// Read by the popup guard in setWindowOpenHandler.
+const _lastGestureAt = new Map();
+
 function resolveDohServers(settings) {
   if (!settings.dnsOverHttps) return [];
   if (settings.adultContentBlocking) {
@@ -310,6 +314,46 @@ if (_earlySettings.lowEndDevice) {
   app.commandLine.appendSwitch('num-raster-threads', '1');
 }
 
+// The ONE exception to "force nothing" above, and it is a disable, not a
+// force-enable — which is why it does not carry the risk the removed flags did.
+//
+// On Windows with DirectComposition, Chromium hands decoded video straight to a
+// hardware overlay plane. On several NVIDIA driver branches that plane is never
+// composited into the visible surface: audio plays, the picture stays black,
+// and a refresh or a window resize fixes it. `app.getGPUInfo('complete')` on an
+// affected machine reports exactly the setup that triggers it:
+//     directComposition: true, supportsOverlays: true, nv12OverlaySupport: SCALING
+//
+// Measured on an affected machine (RTX 4060, driver 32.0.16.1088) via
+// app.getGPUInfo('complete'):
+//
+//                        default        with this switch
+//   directComposition    true           false
+//   supportsOverlays     true           false
+//   nv12OverlaySupport   SCALING        NONE
+//   gpu_compositing      enabled        enabled     <- kept
+//   video_decode         enabled        enabled     <- kept
+//   rasterization        enabled        enabled     <- kept
+//
+// So this costs us the overlay presentation path and nothing else: hardware
+// decode, GPU compositing and rasterization all stay on. The frame simply takes
+// the normal composited route instead of a dedicated hardware plane.
+//
+// NOTE ON THE SWITCH NAME: the narrower `disable-direct-composition-video-overlays`
+// is NOT recognised in this Chromium — verified by checking the gpu-process
+// command line, which Chromium populates only with switches it forwards.
+// `disable-blink-features` and `disable-features` show up there; the video-overlays
+// one never does, on any process. `disable-direct-composition` does. Do not
+// "improve" this to the narrower name without re-checking that.
+//
+// Worth knowing for anyone debugging this later: you cannot detect this failure
+// from page JS. Sampling the <video> into a canvas returns the DECODED frame,
+// which is perfectly fine — the black happens downstream at presentation. Any
+// in-page "is the frame black?" check will see a healthy image and do nothing.
+if (_earlySettings.videoOverlayCompat !== false) {
+  app.commandLine.appendSwitch('disable-direct-composition');
+}
+
 // ---------------------------------------------------------------------------
 // Single-instance lock + default-browser registration
 // ---------------------------------------------------------------------------
@@ -423,6 +467,14 @@ let _pendingLaunchUrl = urlFromArgv(process.argv);
 //   - "ERR_ABORTED (-3)" — our HTTPS-upgrade preventDefault aborts the
 //     original navigation, which is intended (we re-issue as https://)
 //     but Electron logs the aborted IPC call as an error.
+// A throw that reaches the top of the main process takes the whole browser
+// down with every open tab. Log it and stay up: a broken feature is better
+// than losing the window.
+process.on('uncaughtException', (err) => {
+  const msg = (err && (err.stack || err.message)) || String(err);
+  console.error('Privoo: uncaught exception in the main process:', msg);
+});
+
 process.on('unhandledRejection', (reason) => {
   const msg = reason && (reason.message || String(reason));
   if (!msg) return;
@@ -513,6 +565,8 @@ const INTERNAL_PAGES = {
   news:       'news.html',
   identities: 'identities.html',
   mariana:    'mariana.html',
+  privacy:    'privacy.html',
+  terms:      'terms.html',
 };
 
 // Pin Chrome identity centrally. It must match Electron's bundled Chromium
@@ -699,7 +753,41 @@ const SEC_CH_UA_PLATFORM_VERSION =
     : process.platform === 'linux' ? '"6.5.0"'
       : '"15.0.0"';
 
-const stats = { blockedAds: 0, blockedCookies: 0, upgradedHttps: 0 };
+// Lifetime privacy counters. These are PERSISTED: they used to live only in
+// memory, so every relaunch silently reset the Privacy Shield numbers to zero
+// and the panel looked like it was never counting anything. `since` is the
+// first time we started counting, so the UI can say what period it covers.
+const stats = { blockedAds: 0, blockedCookies: 0, upgradedHttps: 0, since: Date.now() };
+
+function statsFilePath() {
+  return path.join(profileStore.getDataDir(), 'privoo-stats.json');
+}
+function loadStats() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(statsFilePath(), 'utf8'));
+    // Add rather than assign: this runs after the first window exists, so a
+    // handful of requests may already have been counted this session.
+    for (const k of ['blockedAds', 'blockedCookies', 'upgradedHttps']) {
+      if (Number.isFinite(raw[k])) stats[k] += raw[k];
+    }
+    if (Number.isFinite(raw.since)) stats.since = Math.min(stats.since, raw.since);
+  } catch { /* first run, or unreadable — keep the zeroed defaults */ }
+}
+// These counters tick many times per page load, so we never write on the
+// increment itself — a dirty check every few seconds (plus one final flush on
+// quit) keeps the file current without an fs write per blocked request.
+let _statsWritten = '';
+function persistStatsNow() {
+  const json = JSON.stringify(stats);
+  if (json === _statsWritten) return;
+  try { fs.writeFileSync(statsFilePath(), json, 'utf8'); _statsWritten = json; }
+  catch { /* non-fatal */ }
+}
+function initStats() {
+  loadStats();
+  _statsWritten = JSON.stringify(stats);
+  setInterval(persistStatsNow, 5000).unref?.();
+}
 // Per-webContents block counts — reset on each main-frame navigation so the
 // omnibox shield can show "blocked on this page" without bleeding across loads.
 const pageBlockedCounts = new Map();
@@ -747,33 +835,79 @@ function buildPrivooProtocolHandler() {
   return async (request) => {
     let host = '';
     let pathname = '/';
+    let search = '';
     try {
       const u = new URL(request.url);
       host = u.hostname;
       pathname = u.pathname;
+      search = u.search;
     } catch { /* use defaults */ }
 
-    // Theme background images live in renderer/themes/<id>.jpg. Checked before
-    // the generic root-image handler so the subfolder path is honoured. Missing
-    // files return 404 so the CSS gradient fallback shows through.
-    const themeMatch = pathname.toLowerCase().match(/^\/themes\/([a-z0-9_-]+\.(?:jpe?g|png|webp))$/);
-    if (themeMatch) {
-      const tname = path.basename(themeMatch[1]);
-      const text  = path.extname(tname).slice(1).replace('jpg', 'jpeg');
-      const tcands = [
-        path.join(__dirname, 'renderer', 'themes', tname),
-        process.resourcesPath ? path.join(process.resourcesPath, 'themes', tname) : null,
-      ].filter(Boolean);
-      for (const asset of tcands) {
-        if (fs.existsSync(asset)) {
-          try {
-            const data = await fs.promises.readFile(asset);
-            return new Response(data, { headers: { 'content-type': 'image/' + text } });
-          } catch { /* try next */ }
-        }
+    // Extension background workers get no preload and so no IPC; they reach
+    // the same API handlers over fetch instead. Every request carries a secret
+    // Privoo generated and baked into the extension's copy of the bridge, so an
+    // ordinary web page — which cannot read a file inside an extension — cannot
+    // reach this even though the scheme is fetchable.
+    if (host === 'ext-api') {
+      const json = (body, status = 200) => new Response(JSON.stringify(body), {
+        status,
+        headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' },
+      });
+      const deny = () => json({ error: 'forbidden' }, 403);
+
+      if (request.method === 'OPTIONS') {
+        return new Response(null, {
+          status: 204,
+          headers: {
+            'access-control-allow-origin': '*',
+            'access-control-allow-methods': 'GET, POST, OPTIONS',
+            'access-control-allow-headers': '*',
+            'access-control-max-age': '86400',
+          },
+        });
       }
-      return new Response('', { status: 404 });
+
+      if (pathname === '/events') {
+        const params = new URLSearchParams(search);
+        if (params.get('token') !== extensionApiToken()) return deny();
+        const since = Number(params.get('since') || 0) || 0;
+        // Hangs until there is something to report, so a worker with listeners
+        // does no polling of its own.
+        return json(await extensionApiHost.waitForEvents(since, 25000));
+      }
+
+      if (pathname === '/call') {
+        let body = null;
+        try { body = JSON.parse(await request.text()); } catch { return json({ error: 'bad request' }, 400); }
+        if (!body || body.token !== extensionApiToken()) return deny();
+        return json(await extensionApiHost.handleCall(body.method, body.args));
+      }
+
+      return json({ error: 'not found' }, 404);
     }
+
+    // Shared finish-pass stylesheet for the internal pages (privoo://settings,
+    // history, downloads, …). Each of those pages carries its own <style>
+    // block; this is the one file that gives them a common palette, so it is
+    // linked from all of them as privoo://<page>/page-theme.css and served here
+    // regardless of host. fs.readFile, not net.fetch — it lives inside ASAR.
+    if (/^\/page-theme\.css$/i.test(pathname)) {
+      try {
+        const data = await fs.promises.readFile(path.join(INTERNAL_DIR, 'page-theme.css'));
+        return new Response(data, {
+          headers: { 'content-type': 'text/css; charset=utf-8', 'cache-control': 'no-store' },
+        });
+      } catch {
+        // A missing finish pass must not take the page down with it — the
+        // page's own styles are still a working (if unbranded) UI.
+        return new Response('', { headers: { 'content-type': 'text/css' } });
+      }
+    }
+
+    // NOTE: privoo://newtab/themes/<id>.png used to be served here. The themes
+    // are drawn from their own palettes as gradients now — no image to fetch,
+    // nothing to ship, and no 404 on a theme whose PNG was never generated.
+    // renderer/themes/ is unreferenced; it can be deleted.
 
     // Serve root image assets (logo.png, europeprivoobanner.png, …) for any
     // privoo://*/<name>.<ext> request. path.basename strips any directory
@@ -804,6 +938,18 @@ function buildPrivooProtocolHandler() {
 
     // New-tab wallpaper (image copied into userData)
     const pathNorm = pathname.replace(/\/$/, '') || '/';
+    // One wallpaper out of the collection, by id. The settings page is a
+    // guest document and cannot load a file:// URL, and sending ten
+    // multi-megabyte images across as data URLs to draw ten thumbnails would
+    // be absurd, so they are served.
+    if (host === 'newtab' && /^\/wallpaper\/[a-z0-9]+$/i.test(pathNorm)) {
+      const id = pathNorm.slice('/wallpaper/'.length);
+      const file = wallpaperLibPath(id);
+      if (!file) return new Response('', { status: 404 });
+      const range = request.headers.get('range');
+      return net.fetch(pathToFileURL(file).toString(), range ? { headers: { range } } : undefined);
+    }
+
     if (host === 'newtab' && pathNorm === '/wallpaper') {
       const s = settingsStore.load();
       const wp = s.ntpWallpaperPath;
@@ -811,30 +957,16 @@ function buildPrivooProtocolHandler() {
       if (wp === '') {
         return new Response('', { status: 404 });
       }
-      // Serve wallpaper if it exists (either default or custom). Forward the
-      // Range header so a live (video) wallpaper streams + loops smoothly
-      // (the media element issues range requests; net.fetch returns 206).
       if (wp && fs.existsSync(wp)) {
+        // Always the user's own file, in their profile directory. Forward the
+        // Range header so a video wallpaper streams and loops smoothly (the
+        // media element issues range requests; net.fetch returns 206).
         const range = request.headers.get('range');
         return net.fetch(pathToFileURL(wp).toString(), range ? { headers: { range } } : undefined);
       }
-      // No custom wallpaper set (wp is null/undefined — fresh install or never
-      // configured). Serve the shipped default wallpaper.png, unless the user
-      // turned it off via Settings → Apply Privoo Background.
-      if (s.ntpApplyPrivooBackground === false) {
-        return new Response('', { status: 404 });
-      }
-      const defaultWpCandidates = process.resourcesPath
-        ? [path.join(process.resourcesPath, 'wallpaper.png'), path.join(__dirname, 'wallpaper.png')]
-        : [path.join(__dirname, 'wallpaper.png')];
-      for (const asset of defaultWpCandidates) {
-        if (fs.existsSync(asset)) {
-          try {
-            const data = await fs.promises.readFile(asset);
-            return new Response(data, { headers: { 'content-type': 'image/png' } });
-          } catch { /* try next candidate */ }
-        }
-      }
+      // No wallpaper set. Privoo ships no default background and no bundled
+      // gallery — an unset wallpaper means no wallpaper, full stop. The
+      // Random Wallpaper option fetches its photos in the new tab page itself.
       return new Response('', { status: 404 });
     }
 
@@ -842,7 +974,22 @@ function buildPrivooProtocolHandler() {
     const full = path.join(INTERNAL_DIR, fileName);
     // Path traversal guard
     if (!full.startsWith(INTERNAL_DIR)) return new Response('Not found', { status: 404 });
-    return net.fetch(pathToFileURL(full).toString());
+    // Read through fs (ASAR-aware) and send it as no-store. These pages ship
+    // inside the app, so a cached copy is never fresher than the file — but
+    // Chromium was caching them anyway, which meant a restored tab could keep
+    // serving the version of privoo://newtab from before an update until the
+    // user happened to hard-reload it.
+    try {
+      const html = await fs.promises.readFile(full);
+      return new Response(html, {
+        headers: {
+          'content-type': 'text/html; charset=utf-8',
+          'cache-control': 'no-store',
+        },
+      });
+    } catch {
+      return new Response('Not found', { status: 404 });
+    }
   };
 }
 
@@ -977,7 +1124,7 @@ function buildMarianaProtocolHandler() {
           bodyBuf = mariana.decryptBody(aesKey, nonce, tag, resp.body);
         } catch {
           return marianaErrorPage('Decryption failed',
-            'The post-quantum layer could not verify this page. It may have been tampered with in transit — Privoo refused to show it.');
+            'The post-quantum layer could not verify this page. It may have been tampered with in transit, so Privoo refused to show it.');
         }
       }
 
@@ -1128,7 +1275,9 @@ function isSiteCompatibilityHost(hostname) {
     h === 'snapchat.com'          || h.endsWith('.snapchat.com')          ||
     h === 'snap.com'              || h.endsWith('.snap.com')              ||
     h.endsWith('.sc-cdn.net')     ||
-    // Google domains — canvas farbling and friends make Google's bot
+    h === 'mediafire.com'         || h.endsWith('.mediafire.com')         ||
+    h.endsWith('.mfi.re')         ||
+    // Google domains - canvas farbling and friends make Google's bot
     // detection bury the user in reCAPTCHAs. Treat Google as a compat host
     // so its pages get the minimal-interference path.
     h === 'google.com'            || h.endsWith('.google.com')              ||
@@ -1151,6 +1300,44 @@ function isSiteCompatibilityHost(hostname) {
     h.endsWith('.ibyteimg.com')   ||
     h.endsWith('.bytescm.com')
   );
+}
+
+/** Sites whose own dark theme is broken enough that we keep them on light.
+ *  NOT the same list as isSiteCompatibilityHost() — that one is about
+ *  request rewriting and fingerprinting, and Google and TikTok are on it for
+ *  bot detection. Being awkward about network requests says nothing about
+ *  whether a site's dark mode works.
+ *
+ *  Sparx Maths ships white text in white login inputs under prefers-dark;
+ *  Bedrock misrenders quiz images. Everything else follows the browser. */
+function prefersLightOnlyHost(hostname) {
+  if (!hostname) return false;
+  const h = String(hostname).toLowerCase();
+  return (
+    h === 'bedrocklearning.org'   || h.endsWith('.bedrocklearning.org')   ||
+    h === 'bedrocklearning.co.uk' || h.endsWith('.bedrocklearning.co.uk') ||
+    h === 'bedrocklearning.com'   || h.endsWith('.bedrocklearning.com')   ||
+    h === 'sparxmaths.com'        || h.endsWith('.sparxmaths.com')        ||
+    h === 'sparxmaths.uk'         || h.endsWith('.sparxmaths.uk')         ||
+    h === 'sparx-learning.com'    || h.endsWith('.sparx-learning.com')
+  );
+}
+
+/** The ONLY place that decides a page's prefers-color-scheme.
+ *
+ *  Every caller goes through here. Three of them used to work it out
+ *  independently and disagree, and because setEmulatedMedia persists, the
+ *  disagreement did not show up as a flicker — it showed up as a site stuck
+ *  on the wrong theme until it was navigated again. */
+function prefersDarkFor(url, settings) {
+  const s = settings || settingsStore.load();
+  const host = hostnameOf(url || '');
+  if (prefersLightOnlyHost(host)) return false;
+  const isInternal = !url || url.startsWith('privoo://') || url.startsWith('about:') || url.startsWith('devtools:');
+  // Force Dark inverts pages that have no dark theme of their own, so it
+  // implies the preference too — but never for Privoo's own pages, which
+  // have a real light mode and follow darkMode alone.
+  return isInternal ? !!s.darkMode : !!(s.darkMode || s.forceDarkMode);
 }
 
 /** TikTok / ByteDance family hosts. Their login + verification requests are
@@ -1587,6 +1774,45 @@ async function getSharedBlocker() {
   return _sharedBlockerPromise;
 }
 
+// ── onBeforeRequest pipeline ────────────────────────────────────────────────
+// Electron allows exactly ONE onBeforeRequest listener per session — a second
+// registration silently replaces the first. We had two: the ad blocker's (from
+// setupAdBlocking) and the tracking-parameter stripper's (from
+// setupHeaderPrivacy). hardenSession() calls them in that order, so the
+// stripper was replacing the ad blocker's listener on every session: network-
+// level ad blocking never ran, the blocked-request counters never moved, and
+// switching the setting off changed nothing visible because only the cosmetic
+// (element-hiding) half was ever active.
+//
+// This routes every consumer through one registered listener that runs the
+// handlers in the order they were added. A handler calls done(response) to
+// answer the request, or done(null) to pass it to the next handler.
+const _obrChains = new WeakMap();   // session -> Map<name, handler>
+function addBeforeRequestHandler(sess, name, handler) {
+  let chain = _obrChains.get(sess);
+  if (!chain) { chain = new Map(); _obrChains.set(sess, chain); }
+  chain.set(name, handler);   // keyed, so re-running setup replaces rather than stacks
+  // Always (re-)register: third-party code — @ghostery's enableBlockingInSession
+  // among them — can install its own listener after ours and take the slot back.
+  sess.webRequest.onBeforeRequest({ urls: ['<all_urls>'] }, (details, cb) => {
+    const handlers = [...chain.values()];
+    let i = 0;
+    let answered = false;
+    const next = () => {
+      if (answered) return;
+      if (i >= handlers.length) { answered = true; return cb({ cancel: false }); }
+      const h = handlers[i++];
+      try {
+        h(details, (res) => {
+          if (answered) return;
+          if (res) { answered = true; cb(res); } else next();
+        });
+      } catch { next(); }
+    };
+    next();
+  });
+}
+
 async function setupAdBlocking(sess) {
   // We always register the request wrapper below and gate the actual
   // blocking decision live off settings.adBlocking on every request. There
@@ -1610,13 +1836,53 @@ async function setupAdBlocking(sess) {
     try { ipcMain.removeHandler('@ghostery/adblocker/is-mutation-observer-enabled'); } catch {}
     blocker.enableBlockingInSession(sess);
 
+    // ── Make "Ad blocking: off" actually mean off ──────────────────────────
+    // enableBlockingInSession() wires up THREE things, and only one of them is
+    // the request listener we re-register (and gate) below:
+    //   1. onBeforeRequest      — network blocking (re-registered + gated here)
+    //   2. cosmetic filtering   — element hiding, injected over IPC
+    //   3. onHeadersReceived    — the engine's own CSP directives
+    // (2) ran unconditionally, so switching the setting off still left every ad
+    // slot collapsed by element-hiding rules — which is exactly why turning the
+    // ad blocker off looked like it did nothing. It is now gated on the same
+    // live setting the request path uses.
+    const adBlockingOn = (url) => {
+      const s = settingsStore.load();
+      if (!s.adBlocking) return false;
+      const host = hostnameOf(url || '');
+      if (host && isSiteCompatibilityHost(host)) return false;
+      const excl = s.adBlockExcludedDomains;
+      if (Array.isArray(excl) && excl.length && host) {
+        if (excl.some((d) => host === d || host.endsWith('.' + d))) return false;
+      }
+      return true;
+    };
+    const cosmeticImpl = blocker.onInjectCosmeticFilters;
+    const mutationImpl = blocker.onIsMutationObserverEnabled;
+    try { ipcMain.removeHandler('@ghostery/adblocker/inject-cosmetic-filters'); } catch {}
+    try { ipcMain.removeHandler('@ghostery/adblocker/is-mutation-observer-enabled'); } catch {}
+    ipcMain.handle('@ghostery/adblocker/inject-cosmetic-filters', (event, url, msg) => {
+      if (!adBlockingOn(url)) return undefined;
+      return cosmeticImpl(event, url, msg);
+    });
+    ipcMain.handle('@ghostery/adblocker/is-mutation-observer-enabled', (event) => {
+      const u = (() => { try { return event.sender.getURL(); } catch { return ''; } })();
+      if (!adBlockingOn(u)) return false;
+      return mutationImpl(event);
+    });
+    // (3) needs no gate: setupHeaderPrivacy() runs right after us and registers
+    // its own onHeadersReceived, and Electron allows exactly one listener per
+    // event per session — so the engine's CSP listener is already replaced and
+    // never runs. Registering a gated wrapper here would only risk clobbering
+    // the cookie/CSP privacy handler on the delayed retry path below.
+
     // Wrap the blocker's onBeforeRequest so requests originating from
     // compatibility hosts (Sparx, Bedrock, etc. — school sites that need
     // unrestricted CDN access) bypass the engine entirely. Without this
     // wrap, EasyList/EasyPrivacy false-positives can take out Bedrock's
     // quiz image CDN. We still apply the 18+ block before delegating.
     const blockerOnBeforeRequest = blocker.onBeforeRequest.bind(blocker);
-    sess.webRequest.onBeforeRequest({ urls: ['<all_urls>'] }, (details, cb) => {
+    addBeforeRequestHandler(sess, 'adblock', (details, cb) => {
       // 18+ enforcement first — must apply everywhere, including compat sites.
       const s2 = settingsStore.load();
       const reqHost = hostnameOf(details.url);
@@ -1635,24 +1901,27 @@ async function setupAdBlocking(sess) {
       // Compat-host exemption: if the document making the request is a
       // school/edu site we marked as needing full compatibility, let
       // everything through. Top-level navigation to that host counts too.
+      // NOTE: cb(null) here means "I have nothing to say about this request" —
+      // it hands off to the next handler in the pipeline (the tracking-parameter
+      // stripper), rather than answering "allow" and ending the chain.
       const sourceHost = documentBaseDomain(details.webContentsId) || hostnameOf(details.url);
-      if (isSiteCompatibilityHost(sourceHost)) return cb({ cancel: false });
+      if (isSiteCompatibilityHost(sourceHost)) return cb(null);
       // Hand YouTube entirely to a user-installed content blocker (uBlock,
       // AdGuard, …) when one is present. Running Privoo's engine AND the
       // extension over the same YouTube requests fights over the player and
       // can leave it black until a refresh — so we fully step aside here.
       if ((isYouTubeHost(sourceHost) || isYouTubeHost(reqHost)) && hasContentBlockerExtension()) {
-        return cb({ cancel: false });
+        return cb(null);
       }
       // Ad blocking itself — checked live on every request, not just once at
       // startup, so switching it off in Settings actually stops it instead
       // of continuing to run for the rest of the session.
-      if (!s2.adBlocking) return cb({ cancel: false });
+      if (!s2.adBlocking) return cb(null);
       // Per-site ad-block exclusion — user toggled ads off for this host.
       const excl = s2.adBlockExcludedDomains;
       if (Array.isArray(excl) && excl.length && sourceHost) {
         if (excl.some((d) => sourceHost === d || sourceHost.endsWith('.' + d))) {
-          return cb({ cancel: false });
+          return cb(null);
         }
       }
       // Spotify web-player ads: block ad/telemetry endpoints so the audio ads
@@ -1683,8 +1952,10 @@ async function setupAdBlocking(sess) {
               (pageBlockedCounts.get(details.webContentsId) || 0) + 1
             );
           }
+          return cb(response);
         }
-        cb(response);
+        // Engine had no opinion — keep the chain going.
+        cb(null);
       });
     });
     console.log('Privoo: adblock engine (EasyList + EasyPrivacy + uBO) active');
@@ -1702,7 +1973,9 @@ async function setupAdBlocking(sess) {
     }
   }
 
-  sess.webRequest.onBeforeRequest({ urls: ['<all_urls>'] }, (details, cb) => {
+  // Same pipeline slot name as the engine path, so if the delayed retry above
+  // eventually succeeds it REPLACES this fallback rather than stacking on it.
+  addBeforeRequestHandler(sess, 'adblock', (details, cb) => {
     const host = hostnameOf(details.url);
 
     // 18+ block: when the setting is on, cancel any main-frame navigation
@@ -1727,9 +2000,9 @@ async function setupAdBlocking(sess) {
     // Same compat-host carve-out as the engine path above — keep school
     // sites unblocked even on the fallback list.
     const sourceHost = documentBaseDomain(details.webContentsId) || host;
-    if (isSiteCompatibilityHost(sourceHost)) return cb({ cancel: false });
+    if (isSiteCompatibilityHost(sourceHost)) return cb(null);
 
-    if (!s.adBlocking) return cb({ cancel: false });
+    if (!s.adBlocking) return cb(null);
 
     // Spotify web-player ad / telemetry endpoints.
     if (isSpotifyAdRequest(details.url)) {
@@ -1753,7 +2026,7 @@ async function setupAdBlocking(sess) {
     if (details.resourceType === 'mainFrame' && details.webContentsId) {
       pageBlockedCounts.set(details.webContentsId, 0);
     }
-    cb({ cancel: false });
+    cb(null);
   });
 }
 
@@ -1875,19 +2148,22 @@ function setupHeaderPrivacy(sess) {
   // Strip known tracking URL parameters (utm_*, fbclid, gclid, etc.) when
   // stronger tracking protection is enabled. We redirect to a cleaned URL so
   // the page still loads — the only change is removal of tracker params.
-  sess.webRequest.onBeforeRequest({ urls: ['https://*/*', 'http://*/*'] }, (details, cb) => {
-    if (!settingsStore.load().strongerTrackingProtection) return cb({ cancel: false });
+  // Runs as the second handler in the shared onBeforeRequest pipeline. It used
+  // to register its own listener, which silently replaced the ad blocker's.
+  addBeforeRequestHandler(sess, 'tracking-params', (details, cb) => {
+    if (!settingsStore.load().strongerTrackingProtection) return cb(null);
+    if (!/^https?:/i.test(details.url)) return cb(null);
     if (details.resourceType !== 'mainFrame' && details.resourceType !== 'subFrame') {
-      return cb({ cancel: false });
+      return cb(null);
     }
     let u;
-    try { u = new URL(details.url); } catch { return cb({ cancel: false }); }
+    try { u = new URL(details.url); } catch { return cb(null); }
     const TRACKING_PARAMS = /^(utm_\w+|fbclid|gclid|gad_source|gbraid|wbraid|dclid|msclkid|twclid|mc_eid|igshid|_ga|yclid|zanpid|srsltid|epik|ref_src|ref_url|ttclid|s_kwcid|ef_id|affiliate_id|cmpid|adid|ad_id|campaignid|campaign_id|adgroupid)$/i;
     let stripped = false;
     for (const key of [...u.searchParams.keys()]) {
       if (TRACKING_PARAMS.test(key)) { u.searchParams.delete(key); stripped = true; }
     }
-    if (!stripped) return cb({ cancel: false });
+    if (!stripped) return cb(null);
     cb({ redirectURL: u.toString() });
   });
 
@@ -2026,8 +2302,31 @@ async function runBoostedDownload(url, savePath, id, record, totalBytes) {
 }
 
 function setupDownloads(sess) {
+  // url -> timestamp of the last time we started downloading it. Used only
+  // by the duplicate guard below.
+  const _recentDownloadStarts = new Map();
+
   sess.on('will-download', (event, item, wc) => {
     const settings = settingsStore.load();
+
+    // Duplicate guard. The same URL starting again within a few seconds is a
+    // double-click or an impatient second click on a slow link, not an
+    // intention to keep two copies — and the second one silently lands as
+    // "file (1).zip", so nothing tells you it happened. Short window on
+    // purpose: downloading the same file again ten seconds later is a real
+    // decision and is left alone.
+    const dlUrl = item.getURL();
+    const lastAt = _recentDownloadStarts.get(dlUrl) || 0;
+    if (Date.now() - lastAt < 4000) {
+      item.cancel();
+      return;
+    }
+    _recentDownloadStarts.set(dlUrl, Date.now());
+    // Keep the map from growing for the life of the process.
+    if (_recentDownloadStarts.size > 64) {
+      const cutoff = Date.now() - 60000;
+      for (const [k, t] of _recentDownloadStarts) if (t < cutoff) _recentDownloadStarts.delete(k);
+    }
     // A probe that declined to boost re-triggers this same download once,
     // normally — without this guard that retry would probe again and loop.
     const boostBypass = _boostBypassUrls.delete(item.getURL());
@@ -2062,7 +2361,12 @@ function setupDownloads(sess) {
       endTime: null,
     };
     downloadStore.add(record);
-    broadcastAll('download-update', record);
+    // The id of the page that started this. A site that opens a new tab just
+    // to serve a file leaves that tab behind on a blank page; the renderer
+    // uses this to find it and close it, the way every other browser does.
+    let initiatorId = 0;
+    try { initiatorId = wc && !wc.isDestroyed() ? wc.id : 0; } catch { /* gone already */ }
+    broadcastAll('download-update', { ...record, initiatorId });
 
     if (settings.downloadBoosterEnabled && !boostBypass) {
       const downloadUrl = item.getURL();
@@ -2071,6 +2375,7 @@ function setupDownloads(sess) {
         if (info && info.totalBytes >= DOWNLOAD_BOOST_MIN_BYTES) {
           record.totalBytes = info.totalBytes;
           downloadStore.update(id, { totalBytes: info.totalBytes });
+          broadcastAll('download-boost-started', { id, filename: record.filename });
           runBoostedDownload(downloadUrl, savePath, id, record, info.totalBytes);
         } else {
           // Not worth boosting (small file or server doesn't support ranges) —
@@ -2123,6 +2428,15 @@ function broadcastSettings(settings) {
 }
 
 function applyRuntimeSettings(settings) {
+  // Set prefers-color-scheme at the engine, not per tab. A CDP override only
+  // lands once the debugger has attached to that specific page, so any tab
+  // that painted first — or whose attach failed — showed a site's light theme
+  // inside a dark browser. This applies to every web contents at once,
+  // including ones created later, with nothing to race.
+  try {
+    nativeTheme.themeSource = settings.darkMode ? 'dark' : 'light';
+  } catch { /* older Electron, or headless — the CDP path still covers it */ }
+
   if (!defaultUserAgent) defaultUserAgent = session.defaultSession.getUserAgent();
   session.defaultSession.setUserAgent(
     settings.spoofUserAgent ? CHROME_UA : defaultUserAgent,
@@ -2133,59 +2447,32 @@ function applyRuntimeSettings(settings) {
 
   for (const wc of webContents.getAllWebContents()) {
     if (wc.isDestroyed() || wc.getType() !== 'webview') continue;
+    applyGuestBackground(wc, settings);
     try {
       wc.setWebRTCIPHandlingPolicy(
         settings.webrtcProtection ? 'default_public_interface_only' : 'default',
       );
     } catch { /* ignore */ }
-    // Keep each live tab's `prefers-color-scheme` in sync with the user's
-    // theme. Compatibility hosts are pinned to LIGHT regardless — Sparx
-    // Maths' dark variant breaks its login inputs (white text on white) and
-    // Bedrock's dark variant misrenders quiz images. The renderer's Force
-    // Dark inversion handles actually darkening pages with no dark theme.
+    // Keep each live tab's `prefers-color-scheme` in sync. This used to pin
+    // every compatibility host to light, which is how Google and TikTok ended
+    // up stuck on their light themes: they are on that list for bot
+    // detection, and any settings write dragged them back to light and left
+    // them there. prefersDarkFor() is now the only thing that decides.
     try {
       if (wc.debugger && wc.debugger.isAttached()) {
         const url = (() => { try { return wc.getURL(); } catch { return ''; } })();
-        const host = hostnameOf(url);
-        const isInternal = !url || url.startsWith('privoo://') || url.startsWith('about:') || url.startsWith('devtools:');
-        const isCompat = isSiteCompatibilityHost(host);
-        const prefersDark = isCompat
-          ? false
-          : isInternal
-            ? !!settings.darkMode
-            : !!(settings.darkMode || settings.forceDarkMode);
         wc.debugger.sendCommand('Emulation.setEmulatedMedia', {
-          features: [{ name: 'prefers-color-scheme', value: prefersDark ? 'dark' : 'light' }],
+          features: [{ name: 'prefers-color-scheme', value: prefersDarkFor(url, settings) ? 'dark' : 'light' }],
         }).catch(() => {});
       }
     } catch { /* ignore */ }
   }
 
-  // Keep the OS material on while first-run setup is still in progress —
-  // the wizard renders as frosted glass and wants the desktop behind it.
-  // Without the `!disclaimerAccepted` term, every setting the wizard saves
-  // (theme, hardware accel, …) would re-run this and turn the material off
-  // mid-setup, making the wizard lose its transparency after a few steps.
-  const transparencyOn = !!settings.increaseTransparency || !settings.disclaimerAccepted;
   for (const win of BrowserWindow.getAllWindows()) {
     if (win.isDestroyed()) continue;
-    // Transparency on → transparent base so the acrylic/vibrancy material
-    // shows. Off → opaque theme fill. The window keeps a normal shape
-    // either way so Windows 11 DWM keeps rounding the corners.
-    win.setBackgroundColor(
-      transparencyOn ? '#00000000' : (settings.darkMode ? '#202124' : '#ffffff'),
-    );
-    try {
-      if (process.platform === 'win32' && typeof win.setBackgroundMaterial === 'function') {
-        win.setBackgroundMaterial(transparencyOn ? 'acrylic' : 'none');
-      } else if (process.platform === 'darwin' && typeof win.setVibrancy === 'function') {
-        win.setVibrancy(transparencyOn ? 'sidebar' : null);
-      }
-    } catch { /* older OS without the API — fall back to CSS alpha only */ }
+    if (win.privooMainWindow) applyWindowTranslucency(win, settings);
+    else win.setBackgroundColor(settings.darkMode ? '#202024' : '#ffffff');
   }
-  // Renderer flips a `body.transparent` class for CSS to switch toolbar
-  // backgrounds to rgba() when the OS material is behind us.
-  broadcastAll('transparency-state', transparencyOn);
 
   try {
     app.configureHostResolver({
@@ -2213,9 +2500,30 @@ function applyRuntimeSettings(settings) {
   else if (!settings.discordRpc && _discordRpc) shutdownDiscordRpc();
 }
 
+// Cosmetic (element-hiding) rules are injected into a page once, at load, and
+// there is no way to un-inject them. So flipping ad blocking off only fully
+// takes hold after a reload — otherwise the ad slots stay collapsed and the
+// setting looks broken. Reload the open web pages when (and only when) the
+// value actually changes.
+function reloadWebPagesForAdBlockChange() {
+  for (const wc of webContents.getAllWebContents()) {
+    try {
+      if (wc.isDestroyed() || wc.getType() !== 'webview') continue;
+      const u = wc.getURL() || '';
+      if (!/^https?:/i.test(u)) continue;
+      wc.reload();
+    } catch { /* tab went away mid-loop */ }
+  }
+}
+
 async function saveSettingsAndBroadcast(patch) {
   const hadExtPatch = patch && Object.prototype.hasOwnProperty.call(patch, 'extensions');
+  const adBlockBefore = settingsStore.load().adBlocking;
   const updated = settingsStore.save(patch || {});
+  if (patch && Object.prototype.hasOwnProperty.call(patch, 'adBlocking')
+      && !!adBlockBefore !== !!updated.adBlocking) {
+    reloadWebPagesForAdBlockChange();
+  }
   applyRuntimeSettings(updated);
   if (hadExtPatch) {
     try {
@@ -2510,8 +2818,8 @@ function createProfilePicker() {
   }
   const isMac = process.platform === 'darwin';
   const win = new BrowserWindow({
-    width: 760,
-    height: 640,
+    width: 700,
+    height: 600,
     resizable: false,
     maximizable: false,
     fullscreenable: false,
@@ -2539,6 +2847,42 @@ function createProfilePicker() {
   });
   profilePickerWin = win;
   return win;
+}
+
+function semiTransparencySupported() {
+  if (process.platform === 'darwin') return true;
+  if (process.platform !== 'win32') return false;
+  const build = Number(String(require('os').release()).split('.')[2] || 0);
+  return build >= 22000;
+}
+
+function wantsSemiTransparency(settings) {
+  return semiTransparencySupported()
+    && !!settings.semiTransparent
+    && !!settings.disclaimerAccepted;
+}
+
+function applyGuestBackground(wc, settings) {
+  if (!wc || wc.isDestroyed()) return;
+  try {
+    const url = wc.getURL() || '';
+    const seeThrough = wantsSemiTransparency(settings) && url.startsWith('privoo://');
+    wc.setBackgroundColor(seeThrough ? '#00000000' : (settings.darkMode ? '#202024' : '#ffffff'));
+  } catch { /* ignore */ }
+}
+
+function applyWindowTranslucency(win, settings) {
+  if (!win || win.isDestroyed()) return;
+  const on = wantsSemiTransparency(settings);
+  const base = on ? '#00000000' : (settings.darkMode ? '#202024' : '#ffffff');
+  try {
+    win.setBackgroundColor(base);
+    if (!win.webContents.isDestroyed()) win.webContents.setBackgroundColor?.(base);
+    if (process.platform === 'win32') win.setBackgroundMaterial(on ? 'acrylic' : 'none');
+    else if (process.platform === 'darwin') win.setVibrancy(on ? 'under-window' : null);
+  } catch (e) {
+    console.warn('Privoo: translucency update failed:', e.message);
+  }
 }
 
 function createWindow(opts = {}) {
@@ -2571,35 +2915,8 @@ function createWindow(opts = {}) {
   }
 
   // Rounded corners are left to the OS. Windows 11 automatically rounds
-  // frameless windows via DWM — but ONLY when the window is NOT
-  // `transparent: true` (transparent windows are excluded from DWM
-  // rounding). So we keep the window opaque-shaped and let DWM do it.
-  // The Increase-Transparency feature uses backgroundMaterial / vibrancy,
-  // which both work on a normal (non-transparent) window and still get
-  // DWM-rounded. macOS rounds its own windows.
-  // The OS material backdrop is enabled only via the Increase Transparency
-  // setting. The first-run terms/disclaimer screen paints its own fully
-  // opaque background (see .setup-overlay in styles.css), so it never needs
-  // the window itself to be transparent — forcing that for first-run used
-  // to leave a genuinely see-through, glitchy window on systems where the
-  // Windows 11 acrylic material fails to apply (backgroundColor is set to
-  // fully transparent regardless of whether the material actually painted).
+  // frameless windows via DWM.
   const isFirstRun = !settings.disclaimerAccepted;
-  const wantsTransparency = !!settings.increaseTransparency;
-  const transparencyOpts = {};
-  if (wantsTransparency) {
-    if (process.platform === 'win32') {
-      // Win11: acrylic material on a normal (DWM-rounded) window.
-      transparencyOpts.backgroundMaterial = 'acrylic';
-    } else if (process.platform === 'darwin') {
-      transparencyOpts.vibrancy = 'appearance-based';
-    } else {
-      // Linux has no native material API — the only way translucency
-      // shows is a genuinely transparent window. Frameless Linux windows
-      // don't get OS corner-rounding anyway, so nothing is lost.
-      transparencyOpts.transparent = true;
-    }
-  }
 
   // First run: open at a generous fixed size, centred, with resizing locked
   // so the setup wizard always has a stable, comfortable canvas. Resizing is
@@ -2611,6 +2928,8 @@ function createWindow(opts = {}) {
     y = undefined;
   }
 
+  const translucent = !isFirstRun && wantsSemiTransparency(settings);
+
   const win = new BrowserWindow({
     width, height, x, y,
     minWidth: 680,
@@ -2621,13 +2940,13 @@ function createWindow(opts = {}) {
       ? { titleBarStyle: 'hidden', trafficLightPosition: { x: 14, y: 11 } }
       : { frame: false }
     ),
-    // Opaque base color so the window has a normal shape DWM can round.
-    // When the transparency setting is on, backgroundMaterial paints over
-    // this and the renderer surfaces go translucent.
-    backgroundColor: wantsTransparency ? '#00000000' : (settings.darkMode ? '#202124' : '#ffffff'),
-    title: isIncognito ? 'Privoo — Incognito' : 'Privoo',
+    ...(translucent
+      ? (isMac ? { vibrancy: 'under-window' } : { backgroundMaterial: 'acrylic' })
+      : {}
+    ),
+    backgroundColor: translucent ? '#00000000' : (settings.darkMode ? '#202024' : '#ffffff'),
+    title: isIncognito ? 'Privoo Incognito' : 'Privoo',
     icon: resolveIcon(),
-    ...transparencyOpts,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -2643,6 +2962,7 @@ function createWindow(opts = {}) {
         : [],
     },
   });
+  win.privooMainWindow = true;
   if (!isIncognito && saved.maximized) win.maximize();
 
   win.loadFile(path.join(RENDERER_DIR, 'index.html'));
@@ -2679,11 +2999,42 @@ function createWindow(opts = {}) {
     }
   });
 
+  win.webContents.on('did-attach-webview', (_e, guest) => {
+    const sync = () => applyGuestBackground(guest, settingsStore.load());
+    guest.on('did-navigate', sync);
+    guest.on('did-navigate-in-page', sync);
+    guest.on('dom-ready', sync);
+    sync();
+    // Feed this tab's navigations to any extension listening on
+    // chrome.webNavigation. No-ops when nothing has subscribed.
+    try { extensionApiHost.watchNavigation(guest); } catch { /* guest already gone */ }
+
+    // A tab whose renderer dies leaves a blank frame with no way back, and a
+    // hung one just freezes with no explanation. Tell the shell in both cases
+    // so it can offer a reload instead of looking broken.
+    guest.on('render-process-gone', (_ev, details) => {
+      const reason = (details && details.reason) || 'crashed';
+      console.warn('Privoo: tab renderer gone:', reason);
+      try {
+        if (!win.isDestroyed()) win.webContents.send('tab-renderer-gone', { guestId: guest.id, reason });
+      } catch { /* window closing */ }
+    });
+    guest.on('unresponsive', () => {
+      try {
+        if (!win.isDestroyed()) win.webContents.send('tab-unresponsive', { guestId: guest.id });
+      } catch { /* window closing */ }
+    });
+    guest.on('responsive', () => {
+      try {
+        if (!win.isDestroyed()) win.webContents.send('tab-responsive', { guestId: guest.id });
+      } catch { /* window closing */ }
+    });
+  });
+
   win.on('maximize',   () => win.webContents.send('window-state', true));
   win.on('unmaximize', () => win.webContents.send('window-state', false));
   win.webContents.once('did-finish-load', () => {
     win.webContents.send('platform', process.platform);
-    win.webContents.send('transparency-state', !!settingsStore.load().increaseTransparency);
     // Send the initial maximized state so the renderer can square off the
     // corners if the window was restored maximized.
     win.webContents.send('window-state', win.isMaximized());
@@ -3153,7 +3504,15 @@ async function startBrowser(opts = {}) {
 
   registerPrivooProtocol();
   registerMarianaProtocol();
+  await installExtensionApiBridge();
   await hardenSession(session.defaultSession);
+  // Dark mode has to be set at boot, not only when a setting changes:
+  // applyRuntimeSettings only runs on save, so on a cold start every page
+  // loaded before the first settings change saw the system preference.
+  try {
+    nativeTheme.themeSource = settingsStore.load().darkMode ? 'dark' : 'light';
+  } catch { /* older Electron — the CDP path still covers it */ }
+
   // Launch Tor on boot if the saved proxy mode needs it.
   applyProxyAll(settingsStore.load());
 
@@ -3176,18 +3535,28 @@ async function startBrowser(opts = {}) {
     const extList = Array.isArray(settings.extensions) ? settings.extensions : [];
     let dirty = false;
     for (const ext of extList) {
-      const needsResolve =
-        (typeof ext.name === 'string' && /^__MSG_/.test(ext.name)) ||
-        (typeof ext.description === 'string' && /^__MSG_/.test(ext.description));
-      if (!needsResolve || !ext.path) continue;
+      if (!ext || !ext.path) continue;
       try {
         const mp = path.join(ext.path, 'manifest.json');
         if (!fs.existsSync(mp)) continue;
         const raw = JSON.parse(fs.readFileSync(mp, 'utf8'));
         const resolved = resolveManifestI18n(raw, ext.path);
-        if (resolved.name && /^__MSG_/.test(ext.name)) { ext.name = resolved.name; dirty = true; }
-        if (resolved.description && /^__MSG_/.test(ext.description)) {
+        if (resolved.name && typeof ext.name === 'string' && /^__MSG_/.test(ext.name)) {
+          ext.name = resolved.name; dirty = true;
+        }
+        if (resolved.description && typeof ext.description === 'string' && /^__MSG_/.test(ext.description)) {
           ext.description = resolved.description; dirty = true;
+        }
+        // Re-checked every launch rather than trusted from the record: the
+        // supported API list changes with the Electron version, so a verdict
+        // saved by an older build could be wrong.
+        const compat = checkExtension(resolved);
+        const names = compat.unsupported.map((u) => u.permission);
+        if (String(ext.unsupported || '') !== String(names)
+            || !!ext.unsupportedCritical !== compat.critical) {
+          ext.unsupported = names;
+          ext.unsupportedCritical = compat.critical;
+          dirty = true;
         }
       } catch {}
     }
@@ -3236,6 +3605,9 @@ async function startBrowser(opts = {}) {
   const { initAdultBlocker: _initAdult } = require('./safety');
   _initAdult().catch((e) => console.warn('Privoo: adult blocker init error:', e.message));
 
+  // Restore the lifetime privacy counters and start the periodic flush.
+  initStats();
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
@@ -3268,8 +3640,33 @@ app.on('web-contents-created', (_event, contents) => {
     contents.setWebRTCIPHandlingPolicy('default_public_interface_only');
   }
 
+  // Popup blocking works on one question: did the user just do something?
+  // A page that opens a window a second after a click is acting on that
+  // click; one that opens a window with no interaction at all is acting on
+  // its own. Every real case — a link, a Sign in with X button, a download —
+  // follows an interaction, so the gesture test costs them nothing.
+  contents.on('input-event', (_e, ev) => {
+    if (ev.type === 'mouseDown' || ev.type === 'keyDown' || ev.type === 'rawKeyDown') {
+      _lastGestureAt.set(contents.id, Date.now());
+    }
+  });
+  contents.once('destroyed', () => _lastGestureAt.delete(contents.id));
+
   contents.setWindowOpenHandler(({ url, disposition, features, frameName }) => {
     const host = contents.hostWebContents;
+
+    if (settingsStore.load().popupBlocking !== false) {
+      const since = Date.now() - (_lastGestureAt.get(contents.id) || 0);
+      // A generous window: some sites do real work between the click and the
+      // open. Popunders do not wait at all, and neither do timer-driven ad
+      // redirects, so this still catches them.
+      if (since > 2500) {
+        try {
+          broadcastAll('popup-blocked', { url, host: hostnameOf(url) });
+        } catch { /* the block is what matters, not the notice */ }
+        return { action: 'deny' };
+      }
+    }
 
     // Custom (non-web) scheme via window.open() — never spawn a tab for it.
     // A blank tab pointed at snssdk:// / bytedance:// just dead-ends on an
@@ -3627,11 +4024,12 @@ app.on('web-contents-created', (_event, contents) => {
       // Emulate `prefers-color-scheme` so sites that ship a real dark theme
       // follow the user's choice. Pages with no dark theme are handled by the
       // renderer's Force Dark inversion (forceDarkScript) instead.
+      // This one used to skip the host check entirely, so it disagreed with
+      // both of the other two — see prefersDarkFor().
       try {
-        const s = settingsStore.load();
-        const prefersDark = !!(s.darkMode || s.forceDarkMode);
+        const url = (() => { try { return contents.getURL(); } catch { return ''; } })();
         contents.debugger.sendCommand('Emulation.setEmulatedMedia', {
-          features: [{ name: 'prefers-color-scheme', value: prefersDark ? 'dark' : 'light' }],
+          features: [{ name: 'prefers-color-scheme', value: prefersDarkFor(url) ? 'dark' : 'light' }],
         }).catch(() => {});
       } catch { /* ignore */ }
     } catch (e) {
@@ -3646,23 +4044,14 @@ app.on('web-contents-created', (_event, contents) => {
   });
   tryAttachCdp();
 
-  // Re-apply prefers-color-scheme on every navigation:
-  //   - internal pages: follow the user's darkMode choice
-  //   - compat sites:   pinned to light — don't force them into dark
-  //   - other pages:    prefer dark if either dark toggle is on
+  // Re-apply prefers-color-scheme on every navigation. What it should be is
+  // prefersDarkFor()'s job — see the note there for why that matters.
   const reapplyDarkMode = () => {
     if (contents.isDestroyed() || !cdpAttached) return;
     try {
-      const s = settingsStore.load();
       const url = (() => { try { return contents.getURL(); } catch { return ''; } })();
-      const host = hostnameOf(url);
-      const isInternal = !url || url.startsWith('privoo://') || url.startsWith('about:') || url.startsWith('devtools:');
-      const isCompat = isSiteCompatibilityHost(host);
-      const prefersDark = isInternal || isCompat
-        ? !!s.darkMode
-        : !!(s.darkMode || s.forceDarkMode);
       contents.debugger.sendCommand('Emulation.setEmulatedMedia', {
-        features: [{ name: 'prefers-color-scheme', value: prefersDark ? 'dark' : 'light' }],
+        features: [{ name: 'prefers-color-scheme', value: prefersDarkFor(url) ? 'dark' : 'light' }],
       }).catch(() => {});
     } catch { /* ignore */ }
   };
@@ -3881,20 +4270,75 @@ ipcMain.on('mark-mobile-webview', (_e, id, device) => {
 });
 
 let _lastRecentFiles = [];
+// Broad file category, used for the icon shown in the picker.
+function fileKindFromExt(filePath) {
+  const e = path.extname(filePath).toLowerCase();
+  if (/\.(png|jpe?g|gif|webp|bmp|svg|avif|heic|ico)$/.test(e)) return 'image';
+  if (/\.(mp4|mkv|mov|avi|webm|m4v|wmv|flv)$/.test(e))         return 'video';
+  if (/\.(mp3|wav|flac|m4a|aac|ogg|opus|wma)$/.test(e))        return 'audio';
+  if (/\.pdf$/.test(e))                                        return 'pdf';
+  if (/\.(docx?|odt|rtf|pages)$/.test(e))                      return 'doc';
+  if (/\.(xlsx?|csv|ods|numbers)$/.test(e))                    return 'sheet';
+  if (/\.(pptx?|odp|key)$/.test(e))                            return 'slides';
+  if (/\.(zip|rar|7z|tar|gz|bz2|xz)$/.test(e))                 return 'archive';
+  if (/\.(js|ts|jsx|tsx|json|html?|css|py|rb|go|rs|java|c|cpp|h|sh|yml|yaml|xml|md)$/.test(e)) return 'code';
+  if (/\.(txt|log|ini|cfg)$/.test(e))                          return 'text';
+  return 'file';
+}
+
+// Recent files. Previously this only listed things Privoo itself had
+// downloaded, which is rarely what you want to attach - the file you just
+// saved from another app, or a screenshot on the Desktop, never appeared.
+// Now it merges Privoo's own downloads with the most recently modified files
+// in the usual folders, newest first.
+function scanRecentDir(dir, out, seen, cutoffMs) {
+  let entries = [];
+  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+  for (const ent of entries) {
+    if (!ent.isFile() || ent.name.startsWith('.')) continue;
+    const full = path.join(dir, ent.name);
+    if (seen.has(full)) continue;
+    let stat;
+    try { stat = fs.statSync(full); } catch { continue; }
+    // Skip partial downloads and anything ancient.
+    if (/\.(crdownload|part|tmp)$/i.test(ent.name)) continue;
+    if (stat.mtimeMs < cutoffMs) continue;
+    seen.add(full);
+    out.push({ name: ent.name, path: full, size: stat.size, mtimeMs: stat.mtimeMs, kind: fileKindFromExt(full) });
+  }
+}
+
 ipcMain.handle('recent-files-list', () => {
-  const all = downloadStore.load();
   const seen = new Set();
   const out = [];
-  for (const d of all) {
+
+  // Privoo's completed downloads first - they are the most likely target.
+  for (const d of downloadStore.load()) {
     if (d.state !== 'completed' || !d.savePath || seen.has(d.savePath)) continue;
-    seen.add(d.savePath);
     let stat;
     try { stat = fs.statSync(d.savePath); } catch { continue; }
-    out.push({ name: d.filename || path.basename(d.savePath), path: d.savePath, size: stat.size, mtimeMs: stat.mtimeMs });
-    if (out.length >= 8) break;
+    seen.add(d.savePath);
+    out.push({
+      name: d.filename || path.basename(d.savePath),
+      path: d.savePath,
+      size: stat.size,
+      mtimeMs: stat.mtimeMs,
+      kind: fileKindFromExt(d.savePath),
+    });
   }
-  _lastRecentFiles = out;
-  return out;
+
+  // Then whatever is genuinely recent in the usual places. 30 days keeps the
+  // scan cheap and the list relevant.
+  const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  const dirs = [];
+  const pushPath = (name) => { try { dirs.push(app.getPath(name)); } catch { /* not on this OS */ } };
+  pushPath('downloads'); pushPath('desktop'); pushPath('documents'); pushPath('pictures');
+  for (const d of dirs) scanRecentDir(d, out, seen, cutoff);
+
+  out.sort((a, b) => b.mtimeMs - a.mtimeMs);
+  const top = out.slice(0, 12);
+  _lastRecentFiles = top;
+  return top;
 });
 ipcMain.handle('recent-file-read', async (_e, filePath) => {
   const entry = _lastRecentFiles.find((f) => f.path === filePath);
@@ -3938,6 +4382,7 @@ app.on('before-quit', async (event) => {
 });
 
 app.on('will-quit', () => {
+  persistStatsNow();
   shutdownDiscordRpc();
   // Tear down hosted .mariana services (DEL_ONION) before Tor dies, so we
   // don't leave orphaned hidden-service descriptors on the network.
@@ -4010,16 +4455,34 @@ app.on('open-file', (e, filePath) => {
 // ---------------------------------------------------------------------------
 // IPC — window controls
 // ---------------------------------------------------------------------------
-function winOf(e) { return BrowserWindow.fromWebContents(e.sender); }
+function winOf(e) {
+  const wc = e && e.sender;
+  if (!wc) return null;
+  const direct = BrowserWindow.fromWebContents(wc);
+  if (direct) return direct;
+  // A <webview> guest is not owned by a window directly — its embedder is.
+  try {
+    const host = wc.hostWebContents;
+    if (host && !host.isDestroyed()) {
+      const viaHost = BrowserWindow.fromWebContents(host);
+      if (viaHost) return viaHost;
+    }
+  } catch { /* guest already gone */ }
+  return null;
+}
 
 ipcMain.on('window-minimize',  (e) => winOf(e)?.minimize());
 ipcMain.on('window-maximize',  (e) => { const w = winOf(e); if (!w) return; w.isMaximized() ? w.unmaximize() : w.maximize(); });
 ipcMain.on('window-close',     (e) => winOf(e)?.close());
 // The setup wizard locks the window size; this re-enables resizing once the
 // user finishes (or skips) first-run setup.
-ipcMain.on('setup-finished',   (e) => { const w = winOf(e); if (w && !w.isDestroyed()) { try { w.setResizable(true); } catch {} } });
+ipcMain.on('setup-finished',   (e) => { const w = winOf(e); if (w && !w.isDestroyed()) { try { w.setResizable(true); } catch {} if (w.privooMainWindow) applyWindowTranslucency(w, settingsStore.load()); } });
 ipcMain.handle('window-is-maximized', (e) => !!winOf(e)?.isMaximized());
 ipcMain.handle('get-platform', () => process.platform);
+
+// The renderer needs this so it does not paint the translucent chrome on a
+// platform where the window behind it can never actually be see-through.
+ipcMain.handle('translucency-supported', () => semiTransparencySupported());
 ipcMain.handle('get-app-version', () => app.getVersion());
 
 // Returns the OS cursor position translated into the window's content area
@@ -4057,8 +4520,13 @@ ipcMain.handle('open-mobile-window', (_e, url) => {
       minHeight: 700,
       title: 'Mobile View',
       frame: false,
-      transparent: true,
-      backgroundColor: '#00000000',
+      // NOT transparent. With a transparent window and a transparent body the
+      // desktop showed through around the phone, so whatever happened to be
+      // behind the window became the backdrop - and changing device changed
+      // the phone size, which changed how much of it you saw. An opaque stage
+      // looks the same on every machine and for every device.
+      transparent: false,
+      backgroundColor: '#15161a',
       autoHideMenuBar: true,
       ...(iconPath ? { icon: iconPath } : {}),
       webPreferences: {
@@ -4128,6 +4596,42 @@ ipcMain.handle('set-default-browser', () => {
 // (`{id, label, type, enabled, submenu}`); we build a Menu, popup it at the
 // cursor position (OS handles positioning so it's always exactly under the
 // cursor), and resolve with the clicked item id (or null on dismiss).
+// "Open link in new window". A real second window, with the link as its
+// first tab — the renderer cannot make one.
+ipcMain.handle('open-in-new-window', (_e, url) => {
+  if (!url || typeof url !== 'string') return false;
+  try {
+    const w = createWindow();
+    w.webContents.once('did-finish-load', () => {
+      try { w.webContents.send('open-tab', url); } catch {}
+    });
+    return true;
+  } catch { return false; }
+});
+
+// "Add to dictionary". The word list belongs to the session the page is in,
+// not to the default one — an incognito or profile partition has its own.
+ipcMain.handle('add-to-dictionary', (_e, guestWcId, word) => {
+  if (!word || typeof word !== 'string') return false;
+  try {
+    const guest = webContents.fromId(Number(guestWcId));
+    const ses = guest && !guest.isDestroyed() ? guest.session : session.defaultSession;
+    ses.addWordToSpellCheckerDictionary(word);
+    return true;
+  } catch { return false; }
+});
+
+// "Copy image" puts the decoded bitmap on the clipboard, which only the
+// page's own webContents can do — the renderer has the URL, not the pixels.
+ipcMain.handle('context-copy-image', (_e, guestWcId, x, y) => {
+  try {
+    const guest = webContents.fromId(Number(guestWcId));
+    if (!guest || guest.isDestroyed()) return false;
+    guest.copyImageAt(Number(x) || 0, Number(y) || 0);
+    return true;
+  } catch { return false; }
+});
+
 ipcMain.handle('show-context-menu', (e, items) => {
   return new Promise((resolve) => {
     const win = winOf(e);
@@ -4196,6 +4700,37 @@ ipcMain.handle('show-emoji-panel', () => {
 // webContents and save it as a PNG. Uses CDP Page.captureScreenshot with
 // captureBeyondViewport — the only reliable way to get below-the-fold content
 // in a single image. Chrome buries this; Privoo puts it one click away.
+/* Thumbnail of a tab, for the hover preview in the tab strip.
+   Deliberately NOT the CDP path that capture-full-page uses: attaching the
+   debugger to a page just because the pointer crossed its tab would fight
+   with DevTools, and capturing "beyond viewport" would render the whole
+   document to produce a 220px picture. capturePage() takes what is already
+   composited, which for a background tab is its last painted frame — exactly
+   what a preview should show.
+
+   The resize happens here rather than in CSS so what crosses the IPC boundary
+   is a ~15KB data URL instead of a full-window PNG. */
+ipcMain.handle('capture-tab-preview', async (_e, guestWcId) => {
+  try {
+    const guest = webContents.fromId(Number(guestWcId));
+    if (!guest || guest.isDestroyed()) return null;
+    // A page that has never been shown has no frame to capture and returns an
+    // empty image; the renderer treats null as "no preview" and falls back to
+    // the title card.
+    if (guest.isLoadingMainFrame() && guest.getURL() === '') return null;
+    const img = await guest.capturePage();
+    if (!img || img.isEmpty()) return null;
+    // JPEG, not PNG. This is a 260px photograph of a web page — the base64
+    // of a PNG at that size is roughly three times the bytes for no visible
+    // difference, and every one of those bytes crosses an IPC boundary
+    // before the card can be shown.
+    const small = img.resize({ width: 260, quality: 'good' });
+    return 'data:image/jpeg;base64,' + small.toJPEG(70).toString('base64');
+  } catch {
+    return null;
+  }
+});
+
 ipcMain.handle('capture-full-page', async (e, guestWcId) => {
   const guest = webContents.fromId(Number(guestWcId));
   if (!guest || guest.isDestroyed()) return { ok: false, error: 'Page unavailable' };
@@ -4310,6 +4845,10 @@ ipcMain.handle('open-devtools', (_e, guestWcId, opts) => {
   try {
     const guest = webContents.fromId(Number(guestWcId));
     if (!guest || guest.isDestroyed()) return { ok: false };
+    // Privoo's own pages are app UI, not inspectable content. The renderer
+    // already hides the menu item; this stops any other route in.
+    const gurl = (() => { try { return guest.getURL() || ''; } catch { return ''; } })();
+    if (gurl.startsWith('privoo://') || gurl.startsWith('devtools://')) return { ok: false };
     const hasCoords = opts && opts.x !== undefined && opts.y !== undefined;
     const guestId = guest.id;
 
@@ -4381,12 +4920,247 @@ ipcMain.handle('update-devtools-bounds', (_e, guestWcId, bounds) => {
 // ---------------------------------------------------------------------------
 // IPC — privacy / stats / settings
 // ---------------------------------------------------------------------------
+// ── Privoo Guard (optional ClamAV-backed scanning) ───────────────────
+const privooProtection = require('./privoo-protection');
+let _scanHandle = null;
+
+ipcMain.handle('protection-status', async () => ({
+  installed: privooProtection.isInstalled(),
+  binary:    privooProtection.findBinary(),
+  version:   await privooProtection.version(),
+  scanning:  privooProtection.isScanning(),
+  installing: clamInstaller.isInstalling(),
+  managed:    !!clamInstaller.managedScanner(),
+  hasDatabase: clamInstaller.hasDatabase(),
+  canAutoInstall: clamInstaller.supportsAutoInstall(),
+  targets:   { quick: privooProtection.scanTargets('quick'), full: privooProtection.scanTargets('full') },
+  downloadUrl: privooProtection.downloadPageUrl(),
+}));
+
+ipcMain.handle('protection-locate', async (e) => {
+  const { dialog } = require('electron');
+  const res = await dialog.showOpenDialog(winOf(e), {
+    title: 'Locate clamscan',
+    properties: ['openFile'],
+    filters: process.platform === 'win32' ? [{ name: 'clamscan', extensions: ['exe'] }] : [],
+  });
+  if (res.canceled || !res.filePaths[0]) return null;
+  privooProtection.setBinaryPath(res.filePaths[0]);
+  settingsStore.save({ protectionBinaryPath: res.filePaths[0] });
+  return res.filePaths[0];
+});
+
+ipcMain.handle('protection-scan', (e, opts) => {
+  const wc = e.sender;
+  if (_scanHandle) return { ok: false, error: 'A scan is already running.' };
+  const started = Date.now();
+  // Show the browser-wide status immediately. ClamAV only reports individual
+  // files periodically, which used to leave the notification absent for the
+  // first part of a large scan.
+  const begin = { type: 'start', startedAt: started };
+  try { if (!wc.isDestroyed()) wc.send('protection-scan-event', begin); } catch { /* closed */ }
+  try { broadcastAll('protection-scan-event', begin); } catch { /* ignore */ }
+  _scanHandle = privooProtection.scan(opts || {}, (ev) => {
+    if (ev.type === 'done' || ev.type === 'error') _scanHandle = null;
+    // The requesting page (Settings, in a webview) gets the detailed stream.
+    try { if (!wc.isDestroyed()) wc.send('protection-scan-event', ev); } catch { /* closed */ }
+    // Every browser window also gets it, so the progress toast can live in
+    // the main chrome and stay visible while you carry on browsing.
+    try { broadcastAll('protection-scan-event', { ...ev, startedAt: started }); } catch { /* ignore */ }
+  });
+  return { ok: true };
+});
+
+const clamInstaller = require('./clamav-installer');
+
+// Runs in the background; progress is streamed to the requesting page so the
+// Settings section can show the download without blocking anything.
+ipcMain.handle('protection-install', async (e) => {
+  const wc = e.sender;
+  const send = (ev) => { try { if (!wc.isDestroyed()) wc.send('protection-install-event', ev); } catch { /* page gone */ } };
+  const ok = await clamInstaller.install(send);
+  return { ok };
+});
+
+ipcMain.handle('protection-update-signatures', async (e) => {
+  const wc = e.sender;
+  const send = (ev) => { try { if (!wc.isDestroyed()) wc.send('protection-install-event', ev); } catch {} };
+  const ok = await clamInstaller.updateSignatures(send);
+  return { ok };
+});
+
+ipcMain.handle('protection-detect', () => {
+  const res = privooProtection.detectExisting();
+  // Adopting it here means the user does not have to point at it by hand.
+  if (res.found && !res.managed) {
+    privooProtection.setBinaryPath(res.path);
+    settingsStore.save({ protectionBinaryPath: res.path });
+  }
+  return res;
+});
+
+// Removes a Privoo-managed copy. For a system install there is nothing of
+// ours to delete, so it just forgets the path and leaves the package alone.
+ipcMain.handle('protection-uninstall', () => {
+  const managed = !!clamInstaller.managedScanner();
+  privooProtection.setBinaryPath(null);
+  settingsStore.save({ protectionBinaryPath: '' });
+  if (!managed) return true;
+  return clamInstaller.uninstall();
+});
+
+// Every action that destroys or moves a file confirms first, and the bulk
+// variants confirm ONCE for the whole set rather than once per file — a scan
+// that turns up forty hits must not mean forty dialogs.
+function threatDetail(paths) {
+  const list = paths.slice(0, 8).join('\n');
+  return paths.length > 8 ? list + '\n…and ' + (paths.length - 8) + ' more' : list;
+}
+
+ipcMain.handle('protection-quarantine-threat', async (e, filePath, threat) => {
+  const answer = await dialog.showMessageBox(winOf(e), {
+    type: 'warning', buttons: ['Quarantine', 'Cancel'], defaultId: 1, cancelId: 1,
+    title: 'Quarantine detected file?',
+    message: 'Move this detected file into Privoo Guard quarantine?',
+    detail: String(filePath || ''),
+  });
+  if (answer.response !== 0) return { ok: false, canceled: true };
+  try { return await privooProtection.quarantine(filePath, threat); }
+  catch (err) { return { ok: false, error: err.message || 'Could not quarantine the file.' }; }
+});
+
+ipcMain.handle('protection-remove-threat', async (e, filePath) => {
+  const answer = await dialog.showMessageBox(winOf(e), {
+    type: 'warning', buttons: ['Remove permanently', 'Cancel'], defaultId: 1, cancelId: 1,
+    title: 'Remove detected file?',
+    message: 'Permanently remove this detected file?',
+    detail: String(filePath || ''),
+  });
+  if (answer.response !== 0) return { ok: false, canceled: true };
+  try { return await privooProtection.removeThreat(filePath); }
+  catch (err) { return { ok: false, error: err.message || 'Could not remove the file.' }; }
+});
+
+// Bulk actions. `items` is [{ path, threat }]; the result reports per-path
+// outcomes so the list can mark each row without a second round trip.
+ipcMain.handle('protection-act-on-threats', async (e, action, items) => {
+  const list = (Array.isArray(items) ? items : []).filter((i) => i && i.path);
+  if (!list.length) return { ok: false, error: 'Nothing to act on.' };
+  const paths = list.map((i) => String(i.path));
+  const removing = action === 'remove';
+  const answer = await dialog.showMessageBox(winOf(e), {
+    type: 'warning',
+    buttons: [removing ? 'Remove all permanently' : 'Quarantine all', 'Cancel'],
+    defaultId: 1, cancelId: 1,
+    title: removing ? 'Remove all detected files?' : 'Quarantine all detected files?',
+    message: removing
+      ? `Permanently remove ${paths.length} detected file${paths.length === 1 ? '' : 's'}?`
+      : `Move ${paths.length} detected file${paths.length === 1 ? '' : 's'} into Privoo Guard quarantine?`,
+    detail: threatDetail(paths),
+  });
+  if (answer.response !== 0) return { ok: false, canceled: true };
+
+  const results = [];
+  for (const item of list) {
+    try {
+      if (removing) await privooProtection.removeThreat(item.path);
+      else await privooProtection.quarantine(item.path, item.threat);
+      results.push({ path: item.path, ok: true });
+    } catch (err) {
+      results.push({ path: item.path, ok: false, error: err.message || 'Failed.' });
+    }
+  }
+  return { ok: true, results, done: results.filter((r) => r.ok).length };
+});
+
+// Open the containing folder with the file selected — the "let me look at it
+// myself before deciding" option.
+ipcMain.handle('protection-reveal-threat', (_e, filePath) => {
+  try { shell.showItemInFolder(path.resolve(String(filePath || ''))); return { ok: true }; }
+  catch (err) { return { ok: false, error: err.message || 'Could not open that folder.' }; }
+});
+
+// ── Quarantine management ──────────────────────────────────────────────────
+ipcMain.handle('protection-quarantine-list', async () => {
+  try { return { ok: true, items: await privooProtection.quarantineList() }; }
+  catch (err) { return { ok: false, error: err.message || 'Could not read the quarantine.', items: [] }; }
+});
+
+ipcMain.handle('protection-quarantine-open', async () => {
+  const dir = privooProtection.quarantineDir();
+  try {
+    await fs.promises.mkdir(dir, { recursive: true });
+    const err = await shell.openPath(dir);
+    return err ? { ok: false, error: err } : { ok: true };
+  } catch (err) { return { ok: false, error: err.message || 'Could not open the folder.' }; }
+});
+
+ipcMain.handle('protection-quarantine-restore', async (e, id) => {
+  const answer = await dialog.showMessageBox(winOf(e), {
+    type: 'warning', buttons: ['Restore anyway', 'Cancel'], defaultId: 1, cancelId: 1,
+    title: 'Restore a quarantined file?',
+    message: 'Put this file back where it came from?',
+    detail: 'It was detected as a threat. Restoring it makes it runnable again.',
+  });
+  if (answer.response !== 0) return { ok: false, canceled: true };
+  try { return await privooProtection.quarantineRestore(id); }
+  catch (err) { return { ok: false, error: err.message || 'Could not restore the file.' }; }
+});
+
+ipcMain.handle('protection-quarantine-delete', async (e, id) => {
+  const answer = await dialog.showMessageBox(winOf(e), {
+    type: 'warning', buttons: ['Delete permanently', 'Cancel'], defaultId: 1, cancelId: 1,
+    title: 'Delete a quarantined file?',
+    message: 'Permanently delete this quarantined file?',
+    detail: 'This cannot be undone.',
+  });
+  if (answer.response !== 0) return { ok: false, canceled: true };
+  try { return await privooProtection.quarantineDelete(id); }
+  catch (err) { return { ok: false, error: err.message || 'Could not delete the file.' }; }
+});
+
+ipcMain.handle('protection-quarantine-empty', async (e) => {
+  const answer = await dialog.showMessageBox(winOf(e), {
+    type: 'warning', buttons: ['Empty quarantine', 'Cancel'], defaultId: 1, cancelId: 1,
+    title: 'Empty the quarantine?',
+    message: 'Permanently delete everything Privoo Guard has quarantined?',
+    detail: 'This cannot be undone.',
+  });
+  if (answer.response !== 0) return { ok: false, canceled: true };
+  try { return await privooProtection.quarantineEmpty(); }
+  catch (err) { return { ok: false, error: err.message || 'Could not empty the quarantine.' }; }
+});
+
+// Pick an arbitrary folder or file to scan, rather than the fixed quick/full
+// target sets.
+ipcMain.handle('protection-pick-target', async (e, mode) => {
+  const { dialog } = require('electron');
+  const wantFile = mode === 'file';
+  const res = await dialog.showOpenDialog(winOf(e), {
+    title: wantFile ? 'Choose a file to scan' : 'Choose a folder to scan',
+    properties: [wantFile ? 'openFile' : 'openDirectory'],
+    filters: wantFile && process.platform === 'win32'
+      ? [{ name: 'Programs and files', extensions: ['exe', 'msi', 'com', 'bat', 'cmd', '*'] }]
+      : [],
+  });
+  if (res.canceled || !res.filePaths[0]) return null;
+  return res.filePaths[0];
+});
+
+ipcMain.handle('protection-cancel', () => {
+  privooProtection.cancel();
+  _scanHandle = null;
+  return true;
+});
+
 ipcMain.handle('privacy-stats', () => stats);
 
 ipcMain.handle('reset-privacy-stats', () => {
   stats.blockedAds = 0;
   stats.blockedCookies = 0;
   stats.upgradedHttps = 0;
+  stats.since = Date.now();
+  persistStatsNow();
   return stats;
 });
 
@@ -4541,6 +5315,114 @@ function removeNtpWallpaperFiles() {
   } catch { /* ignore */ }
 }
 
+/* ── The wallpaper collection ──────────────────────────────────────────
+   Files live in userData/wallpapers/<id><ext>, one per entry. The active
+   wallpaper is still ntpWallpaperPath and is still a copy at a fixed name,
+   so nothing that reads it has to change: choosing from the collection is
+   the same write the file picker has always done.
+   ─────────────────────────────────────────────────────────────────────── */
+function wallpaperLibDir() {
+  const dir = path.join(app.getPath('userData'), 'wallpapers');
+  try { fs.mkdirSync(dir, { recursive: true }); } catch { /* already there */ }
+  return dir;
+}
+
+function wallpaperLibList() {
+  const lib = settingsStore.load().ntpWallpaperLibrary;
+  if (!Array.isArray(lib)) return [];
+  // Drop entries whose file has gone — deleted outside Privoo, or a profile
+  // copied between machines. A tile that opens nothing is worse than no tile.
+  const dir = wallpaperLibDir();
+  return lib.filter((w) => w && w.id && fs.existsSync(path.join(dir, w.id + w.ext)));
+}
+
+function wallpaperLibPath(id) {
+  const w = wallpaperLibList().find((x) => x.id === id);
+  return w ? path.join(wallpaperLibDir(), w.id + w.ext) : null;
+}
+
+ipcMain.handle('wallpaper-lib-list', () => wallpaperLibList());
+
+ipcMain.handle('wallpaper-lib-add', async (e) => {
+  const { dialog } = require('electron');
+  const res = await dialog.showOpenDialog(winOf(e), {
+    title: 'Add wallpapers',
+    // More than one at a time: building a collection one file picker at a
+    // time is the tedium this feature exists to remove.
+    properties: ['openFile', 'multiSelections'],
+    filters: [
+      { name: 'Images and video', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'mp4', 'webm', 'mov', 'm4v'] },
+      { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'] },
+      { name: 'Video', extensions: ['mp4', 'webm', 'mov', 'm4v'] },
+    ],
+  });
+  if (res.canceled || !res.filePaths.length) return wallpaperLibList();
+
+  const dir = wallpaperLibDir();
+  const lib = wallpaperLibList();
+  for (const src of res.filePaths) {
+    const ext = (path.extname(src) || '.jpg').toLowerCase();
+    if (!/^\.(jpe?g|png|gif|webp|bmp|mp4|webm|mov|m4v)$/i.test(ext)) continue;
+    const id = 'wp' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    try {
+      fs.copyFileSync(src, path.join(dir, id + ext));
+      lib.push({
+        id,
+        ext,
+        type: /^\.(mp4|webm|mov|m4v)$/i.test(ext) ? 'video' : 'image',
+        name: path.basename(src),
+        addedAt: Date.now(),
+      });
+    } catch (err) {
+      console.warn('wallpaper-lib-add:', err.message);
+    }
+  }
+  saveSettingsAndBroadcast({ ntpWallpaperLibrary: lib });
+  return lib;
+});
+
+ipcMain.handle('wallpaper-lib-use', (_e, id) => {
+  const src = wallpaperLibPath(String(id || ''));
+  if (!src) return null;
+  const entry = wallpaperLibList().find((w) => w.id === id);
+  // Copied to the active name rather than pointed at, so removing it from the
+  // collection later cannot pull the wallpaper out from under the new tab.
+  removeNtpWallpaperFiles();
+  const dest = path.join(app.getPath('userData'), 'ntp-wallpaper' + entry.ext);
+  try {
+    fs.copyFileSync(src, dest);
+    saveSettingsAndBroadcast({
+      ntpWallpaperPath: dest,
+      ntpWallpaperType: entry.type,
+      ntpWallpaperVersion: Date.now(),
+      ntpWallpaperActiveId: id,
+    });
+    return dest;
+  } catch (err) {
+    console.warn('wallpaper-lib-use:', err.message);
+    return null;
+  }
+});
+
+ipcMain.handle('wallpaper-lib-remove', (_e, id) => {
+  const key = String(id || '');
+  const file = wallpaperLibPath(key);
+  if (file) { try { fs.unlinkSync(file); } catch { /* already gone */ } }
+  const lib = wallpaperLibList().filter((w) => w.id !== key);
+  const s = settingsStore.load();
+  const patch = { ntpWallpaperLibrary: lib };
+  // Removing the one currently in use leaves the new tab with a wallpaper
+  // that is no longer in the collection, which is a state nobody asked for.
+  if (s.ntpWallpaperActiveId === key) {
+    removeNtpWallpaperFiles();
+    patch.ntpWallpaperPath = '';
+    patch.ntpWallpaperActiveId = '';
+    patch.ntpWallpaperVersion = Date.now();
+  }
+  saveSettingsAndBroadcast(patch);
+  return lib;
+});
+
 ipcMain.handle('choose-ntp-wallpaper', async (e) => {
   const { dialog } = require('electron');
   const win = winOf(e);
@@ -4567,6 +5449,59 @@ ipcMain.handle('choose-ntp-wallpaper', async (e) => {
   }
 });
 
+// Custom pointer. The image is copied into the profile so it survives the
+// original file being moved, and read back as a data URL because CSS cursor()
+// will not load a privoo:// URL from the chrome document.
+ipcMain.handle('choose-cursor-image', async (e) => {
+  const { dialog } = require('electron');
+  const result = await dialog.showOpenDialog(winOf(e), {
+    title: 'Choose a cursor image',
+    properties: ['openFile'],
+    filters: [{ name: 'Images', extensions: ['png', 'gif', 'webp', 'cur', 'svg'] }],
+  });
+  if (result.canceled || !result.filePaths[0]) return null;
+  const src = result.filePaths[0];
+  const ext = (path.extname(src).toLowerCase().match(/^.(png|gif|webp|cur|svg)$/) || [])[0] || '.png';
+  try {
+    const stat = fs.statSync(src);
+    // A cursor bigger than this is not a cursor, and browsers cap it anyway.
+    if (stat.size > 512 * 1024) return { error: 'That image is too large. Use one under 512 KB.' };
+    const dest = path.join(app.getPath('userData'), 'cursor' + ext);
+    for (const old of ['.png', '.gif', '.webp', '.cur', '.svg']) {
+      try { fs.rmSync(path.join(app.getPath('userData'), 'cursor' + old), { force: true }); } catch {}
+    }
+    fs.copyFileSync(src, dest);
+    saveSettingsAndBroadcast({ cursorImagePath: dest, cursorStyle: 'custom' });
+    return { path: dest };
+  } catch (err) {
+    return { error: err.message };
+  }
+});
+
+// Handed to the renderer as a data URL for the CSS cursor property.
+ipcMain.handle('get-cursor-image-url', () => {
+  const p = settingsStore.load().cursorImagePath;
+  if (!p) return null;
+  try {
+    const ext = path.extname(p).toLowerCase();
+    const mime = ext === '.svg' ? 'image/svg+xml'
+      : ext === '.gif' ? 'image/gif'
+      : ext === '.webp' ? 'image/webp'
+      : ext === '.cur' ? 'image/x-icon'
+      : 'image/png';
+    return 'data:' + mime + ';base64,' + fs.readFileSync(p).toString('base64');
+  } catch { return null; }
+});
+
+ipcMain.handle('clear-cursor-image', () => {
+  const p = settingsStore.load().cursorImagePath;
+  if (p) { try { fs.rmSync(p, { force: true }); } catch {} }
+  // 'system', not 'default' — the Settings dropdown offers
+  // system/large/precise/custom, so 'default' matched no option and left the
+  // control blank after clearing the image.
+  saveSettingsAndBroadcast({ cursorImagePath: '', cursorStyle: 'system' });
+  return true;
+});
 // Live (video) wallpaper — a muted, looping video plays behind the new tab.
 ipcMain.handle('choose-ntp-live-wallpaper', async (e) => {
   const { dialog } = require('electron');
@@ -4636,14 +5571,85 @@ ipcMain.handle('choose-music-file', async (e) => {
 
 ipcMain.handle('ytdlp-probe', () => ytdlp.probe(settingsStore.load()));
 
-ipcMain.handle('ytdlp-download', async (_e, url, opts) => {
+ipcMain.handle('ytdlp-download', async (e, url, opts) => {
   const settings = settingsStore.load();
-  return ytdlp.downloadMedia(url, settings, opts || {});
+  const wc = e.sender;
+  // Progress is streamed to the requesting page rather than withheld until
+  // the download completes.
+  const send = (ev) => {
+    try { if (!wc.isDestroyed()) wc.send('ytdlp-progress', ev); } catch { /* page gone */ }
+  };
+  return ytdlp.downloadMedia(url, settings, opts || {}, send);
 });
+
+ipcMain.handle('ytdlp-cancel', (_e, id) => ytdlp.cancelDownload(id));
+
+ipcMain.handle('ytdlp-inspect', (_e, url) => ytdlp.inspect(url, settingsStore.load()));
+
+ipcMain.handle('ytdlp-has-ffmpeg', () => ytdlp.hasFfmpeg());
 
 // ---------------------------------------------------------------------------
 // Extensions — load / unload / CRX unpack
 // ---------------------------------------------------------------------------
+const { checkExtension, impactLines } = require('./extension-compat-check');
+const extensionApiHost = require('./extension-api-host');
+const { applyCompatShim } = require('./extension-compat');
+
+// Baked into each extension's copy of the bridge and required on every call.
+// Persisted so it survives a restart — the bridge file is only rewritten when
+// an extension is loaded, and a token that changed underneath it would lock the
+// extension out until its next load.
+let _extApiToken = null;
+let _extApiPort = 0;
+function extensionApiToken() {
+  if (_extApiToken) return _extApiToken;
+  const saved = settingsStore.load().extensionApiToken;
+  if (typeof saved === 'string' && saved.length >= 32) {
+    _extApiToken = saved;
+    return _extApiToken;
+  }
+  _extApiToken = require('crypto').randomBytes(24).toString('hex');
+  try { settingsStore.save({ extensionApiToken: _extApiToken }); } catch { /* read-only profile */ }
+  return _extApiToken;
+}
+
+// Electron leaves several Chrome extension APIs out entirely, and an extension
+// that touches a missing one dies while its background is still loading. These
+// are implemented for real — cookies from Electron's own jar, webNavigation
+// from Privoo's actual navigation events — and injected into extension service
+// workers through a preload, which is the only hook that reaches a background
+// context. See extension-api-host.js for what is deliberately NOT provided.
+async function installExtensionApiBridge() {
+  extensionApiHost.install({
+    getWindowInfo: () => {
+      const win = BrowserWindow.getAllWindows().find((w) => w.privooMainWindow)
+        || BrowserWindow.getAllWindows()[0];
+      let bounds = { x: 0, y: 0, width: 0, height: 0 };
+      try { if (win && !win.isDestroyed()) bounds = win.getBounds(); } catch { /* gone */ }
+      return {
+        id: PRIVOO_EXT_WINDOW_ID,
+        focused: !!(win && !win.isDestroyed() && win.isFocused()),
+        incognito: false,
+        alwaysOnTop: false,
+        type: 'normal',
+        state: win && !win.isDestroyed() && win.isMaximized() ? 'maximized' : 'normal',
+        top: bounds.y, left: bounds.x, width: bounds.width, height: bounds.height,
+      };
+    },
+  });
+
+  // Background workers get no preload — Electron accepts
+  // registerPreloadScript({ type: 'service-worker' }) and never runs it — and
+  // they cannot fetch a custom scheme across origins either. A loopback server
+  // is the transport that does reach them. It listens on 127.0.0.1 only and
+  // every request must carry a secret that exists solely inside each
+  // extension's copy of the bridge.
+  return extensionApiHost.startServer(extensionApiToken()).then((port) => {
+    _extApiPort = port;
+    if (!port) console.warn('Privoo: extension API server could not bind; background bridge is off');
+  }).catch(() => { _extApiPort = 0; });
+}
+
 function extensionSession() {
   return session.defaultSession.extensions || session.defaultSession;
 }
@@ -4655,9 +5661,26 @@ function extPopupPath(manifest) {
 }
 
 async function loadExtensionAtPath(extPath) {
+  // Electron omits several Chrome APIs, and an extension that touches a missing
+  // one dies while its background is still loading. The bridge is written into
+  // the extension here — before it loads — so it is in place from the first
+  // run. See extension-compat.js for what this touches and why.
+  try {
+    const res = applyCompatShim(extPath, extensionApiToken(), _extApiPort);
+    if (res.patched) {
+      console.log('Privoo: extension bridge installed for', path.basename(extPath), '(' + res.reason + ')');
+    }
+  } catch (err) {
+    console.warn('Privoo: could not install the extension bridge:', err.message);
+  }
+
   const sess = extensionSession();
   const loaded = await sess.loadExtension(extPath, { allowFileAccess: true });
   loadedExtensionIds.set(extPath, loaded.id);
+  // The bridge answers chrome.commands out of the extension's own manifest.
+  try {
+    extensionApiHost.registerExtensionManifest('chrome-extension://' + loaded.id, loaded.manifest);
+  } catch { /* nothing to register */ }
   return loaded;
 }
 
@@ -4823,6 +5846,271 @@ function resolveManifestI18n(manifest, extDir) {
   return walk(manifest);
 }
 
+// ---------------------------------------------------------------------------
+// Chrome Web Store
+// ---------------------------------------------------------------------------
+// Store pages have no "install" hook a third-party browser can call, but the
+// packages themselves come from a plain, unauthenticated endpoint: the same
+// update service Chrome uses to fetch and refresh extensions. Given an
+// extension ID it answers with a 302 to the CRX. That is the whole mechanism —
+// download the CRX, then reuse the unpack/load path that already handles a
+// hand-downloaded .crx.
+
+/** Pull the 32-character extension ID out of a store URL, or accept a bare ID. */
+function parseWebStoreId(input) {
+  const raw = String(input || '').trim();
+  if (!raw) return null;
+  // IDs are exactly 32 characters from a-p (a base-16 alphabet shifted to letters).
+  if (/^[a-p]{32}$/i.test(raw)) return raw.toLowerCase();
+  let u;
+  try { u = new URL(raw.includes('://') ? raw : 'https://' + raw); } catch { return null; }
+  const host = u.hostname.toLowerCase().replace(/^www\./, '');
+  const onStore = host === 'chromewebstore.google.com'
+    || (host === 'chrome.google.com' && u.pathname.toLowerCase().startsWith('/webstore'));
+  if (!onStore) return null;
+  // The ID is the last path segment on both the current and legacy URL shapes.
+  const segs = u.pathname.split('/').filter(Boolean);
+  for (let i = segs.length - 1; i >= 0; i--) {
+    if (/^[a-p]{32}$/i.test(segs[i])) return segs[i].toLowerCase();
+  }
+  return null;
+}
+
+/** The update service wants to know what it is serving; wrong values get a 204. */
+function crxDownloadUrl(id) {
+  const chromeVersion = process.versions.chrome || '120.0.0.0';
+  const os = process.platform === 'win32' ? 'win'
+    : process.platform === 'darwin' ? 'mac' : 'linux';
+  const arch = process.arch === 'arm64' ? 'arm64' : 'x86-64';
+  const naclArch = process.arch === 'arm64' ? 'arm' : 'x86-64';
+  const params = new URLSearchParams({
+    response: 'redirect',
+    acceptformat: 'crx2,crx3',
+    prodversion: chromeVersion,
+    prodchannel: 'stable',
+    prod: 'chromiumcrx',
+    os,
+    arch,
+    os_arch: arch,
+    nacl_arch: naclArch,
+    x: `id=${id}&installsource=ondemand&uc`,
+  });
+  return 'https://clients2.google.com/service/update2/crx?' + params.toString();
+}
+
+async function downloadWebStoreCrx(id) {
+  const res = await net.fetch(crxDownloadUrl(id), { redirect: 'follow' });
+  // 204 is the update service's way of saying "nothing for this ID on this
+  // platform / browser version" — it is not an HTTP error, so it has to be
+  // checked separately or we would hand an empty buffer to the unpacker.
+  if (res.status === 204) {
+    throw new Error('The Chrome Web Store has no package for this extension on this platform.');
+  }
+  if (!res.ok) {
+    throw new Error(`The Chrome Web Store returned ${res.status}.`);
+  }
+  const buf = Buffer.from(await res.arrayBuffer());
+  if (buf.length < 64) throw new Error('The downloaded package was empty.');
+  return buf;
+}
+
+ipcMain.handle('webstore-install', async (_e, input) => {
+  const id = parseWebStoreId(input);
+  if (!id) {
+    return { ok: false, error: 'That is not a Chrome Web Store link or extension ID.' };
+  }
+  try {
+    const crx = await downloadWebStoreCrx(id);
+    const zip = stripCrxHeader(crx);
+    const dir = await unpackZipBuffer(zip, id);
+    const manifestPath = path.join(dir, 'manifest.json');
+    if (!fs.existsSync(manifestPath)) {
+      throw new Error('The package did not contain a manifest.json.');
+    }
+    const raw = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    const manifest = resolveManifestI18n(raw, dir);
+    return {
+      ok: true,
+      id,
+      path: dir,
+      name: manifest.name || id,
+      version: manifest.version || '',
+      description: manifest.description || '',
+      manifestVersion: manifest.manifest_version || 2,
+    };
+  } catch (err) {
+    return { ok: false, error: err.message || 'Could not install from the Chrome Web Store.' };
+  }
+});
+
+/** Used by the chrome to decide whether to offer an install on the page. */
+ipcMain.handle('webstore-parse-id', (_e, input) => parseWebStoreId(input));
+
+// ── "Add to Privoo" on the store page itself ───────────────────────────────
+// The content script in webview-preload.js relabels the store's own install
+// button and routes its click here, so installing from the Chrome Web Store is
+// the same two clicks it is in any other Chromium browser.
+
+function extensionList() {
+  const list = settingsStore.load().extensions;
+  return Array.isArray(list) ? list : [];
+}
+
+function findWebStoreExtension(id) {
+  return extensionList().find((x) => x && x.webstoreId === id) || null;
+}
+
+/**
+ * A short, human-readable summary of what the extension is asking for, for the
+ * confirmation dialog. Deliberately plain sentences rather than raw permission
+ * strings — "Read and change your data on all sites" is what a person needs to
+ * decide, not "<all_urls>".
+ */
+function describePermissions(manifest) {
+  const perms = []
+    .concat(manifest.permissions || [])
+    .concat(manifest.host_permissions || [])
+    .filter((p) => typeof p === 'string');
+  const hosts = perms.filter((p) => p.includes('://') || p === '<all_urls>');
+  const lines = [];
+  if (hosts.some((h) => h === '<all_urls>' || /^(\*|https?):\/\/\*\/?/.test(h))) {
+    lines.push('Read and change your data on every site you visit');
+  } else if (hosts.length) {
+    const shown = hosts.slice(0, 4).join(', ');
+    lines.push('Read and change your data on: ' + shown + (hosts.length > 4 ? ', and more' : ''));
+  }
+  const named = {
+    tabs: 'See your open tabs and their addresses',
+    history: 'Read your browsing history',
+    bookmarks: 'Read and change your bookmarks',
+    downloads: 'Manage your downloads',
+    cookies: 'Read and change cookies',
+    clipboardRead: 'Read your clipboard',
+    nativeMessaging: 'Talk to applications on your computer',
+    proxy: 'Change your proxy settings',
+    webRequest: 'Observe and change network requests',
+    declarativeNetRequest: 'Block or change network requests',
+    management: 'Manage your other extensions',
+  };
+  for (const key of Object.keys(named)) {
+    if (perms.includes(key)) lines.push(named[key]);
+  }
+  return lines;
+}
+
+ipcMain.handle('webstore-status', (_e, input) => {
+  const id = parseWebStoreId(input);
+  if (!id) return { ok: false, installed: false };
+  const found = findWebStoreExtension(id);
+  return {
+    ok: true,
+    installed: !!found,
+    enabled: !!(found && found.enabled),
+    name: found ? found.name : '',
+  };
+});
+
+ipcMain.handle('webstore-add', async (e, payload) => {
+  const id = parseWebStoreId(payload && payload.id ? payload.id : payload);
+  if (!id) return { ok: false, error: 'That is not a Chrome Web Store extension.' };
+  if (findWebStoreExtension(id)) {
+    return { ok: false, already: true, error: 'That extension is already installed.' };
+  }
+
+  let dir, manifest;
+  try {
+    const crx = await downloadWebStoreCrx(id);
+    dir = await unpackZipBuffer(stripCrxHeader(crx), id);
+    const manifestPath = path.join(dir, 'manifest.json');
+    if (!fs.existsSync(manifestPath)) throw new Error('The package did not contain a manifest.json.');
+    manifest = resolveManifestI18n(JSON.parse(fs.readFileSync(manifestPath, 'utf8')), dir);
+  } catch (err) {
+    return { ok: false, error: err.message || 'Could not download that extension.' };
+  }
+
+  const name = manifest.name || (payload && payload.title) || id;
+  const perms = describePermissions(manifest);
+  // Electron implements only part of the Chrome extension API surface, and an
+  // extension that needs a missing piece fails on load rather than degrading.
+  // Better to say so now than let it sit in the list doing nothing.
+  const compat = checkExtension(manifest);
+  const compatBlock = compat.summary
+    ? (compat.critical ? "⚠ This extension will not work in Privoo.\n\n" : "⚠ Parts of this extension will not work.\n\n")
+      + 'It needs:\n• ' + impactLines(compat).join('\n• ') + '\n\n'
+    : '';
+  const answer = await dialog.showMessageBox(winOf(e), {
+    type: compat.critical ? 'warning' : 'question',
+    buttons: [compat.critical ? 'Install anyway' : 'Add extension', 'Cancel'],
+    defaultId: compat.critical ? 1 : 0,
+    cancelId: 1,
+    title: 'Add "' + name + '"?',
+    message: compat.critical
+      ? '"' + name + '" is not compatible with Privoo'
+      : 'Add "' + name + '" to Privoo?',
+    detail: compatBlock
+      + (perms.length ? 'It can:\n• ' + perms.join('\n• ') + '\n\n' : '')
+      + 'Privoo runs on Electron, which implements most but not all Chrome extension APIs.',
+  });
+  if (answer.response !== 0) {
+    // Clean up the package we downloaded for a install that was declined.
+    try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* best effort */ }
+    return { ok: false, canceled: true };
+  }
+
+  const record = {
+    id: 'ext_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    webstoreId: id,
+    name,
+    version: manifest.version || '1.0.0',
+    description: manifest.description || 'No description provided.',
+    path: dir,
+    crxPath: '',
+    iconUrl: iconAsDataUrl(resolveExtIcon(manifest, dir)),
+    unsupported: compat.unsupported.map((u) => u.permission),
+    unsupportedCritical: compat.critical,
+    enabled: true,
+    // Installed from the store on purpose, so put it where the user can reach
+    // it — an extension that vanishes on install reads as a failed install.
+    pinnedToToolbar: true,
+  };
+
+  try {
+    const loaded = await loadExtensionAtPath(dir);
+    record.electronId = loaded && loaded.id;
+  } catch (err) {
+    try { fs.rmSync(dir, { recursive: true, force: true }); } catch {}
+    return { ok: false, error: 'Privoo could not load that extension: ' + (err.message || 'unknown error') };
+  }
+
+  const updated = settingsStore.save({ extensions: [...extensionList(), record] });
+  broadcastSettings(updated);
+  return { ok: true, name, version: record.version };
+});
+
+ipcMain.handle('webstore-remove', async (e, input) => {
+  const id = parseWebStoreId(input);
+  const found = id && findWebStoreExtension(id);
+  if (!found) return { ok: false, error: 'That extension is not installed.' };
+
+  const answer = await dialog.showMessageBox(winOf(e), {
+    type: 'warning',
+    buttons: ['Remove', 'Cancel'],
+    defaultId: 1,
+    cancelId: 1,
+    title: 'Remove "' + found.name + '"?',
+    message: 'Remove "' + found.name + '" from Privoo?',
+  });
+  if (answer.response !== 0) return { ok: false, canceled: true };
+
+  try { await unloadExtensionAtPath(found.path); } catch { /* already gone */ }
+  try { if (found.path) fs.rmSync(found.path, { recursive: true, force: true }); } catch {}
+  const updated = settingsStore.save({
+    extensions: extensionList().filter((x) => x !== found),
+  });
+  broadcastSettings(updated);
+  return { ok: true, name: found.name };
+});
+
 ipcMain.handle('choose-crx-file', async (e) => {
   const win = winOf(e);
   const result = await dialog.showOpenDialog(win, {
@@ -4843,7 +6131,10 @@ ipcMain.handle('read-ext-manifest', async (_e, filePath) => {
       const raw = JSON.parse(fs.readFileSync(mp, 'utf8'));
       const manifest = resolveManifestI18n(raw, filePath);
       const iconFile = resolveExtIcon(manifest, filePath);
-      return { ok: true, manifest, path: filePath, iconUrl: iconAsDataUrl(iconFile) };
+      return {
+        ok: true, manifest, path: filePath, iconUrl: iconAsDataUrl(iconFile),
+        compat: checkExtension(manifest),
+      };
     }
     const lower = filePath.toLowerCase();
     if (lower.endsWith('.crx') || lower.endsWith('.zip')) {
@@ -4861,9 +6152,10 @@ ipcMain.handle('read-ext-manifest', async (_e, filePath) => {
       return {
         ok: true, manifest, path: unpacked, crxPath: filePath,
         iconUrl: iconAsDataUrl(iconFile),
+        compat: checkExtension(manifest),
       };
     }
-    return { error: 'Unsupported file — use a .crx, a .zip, or an unpacked folder' };
+    return { error: 'Unsupported file. Use a .crx, a .zip, or an unpacked folder' };
   } catch (e) {
     return { error: String(e.message || e) };
   }
@@ -4917,10 +6209,119 @@ ipcMain.handle('load-extension', async (_e, extPath) => {
   }
 });
 
-ipcMain.handle('open-extension-popup', async (e, { extPath, x, y } = {}) => {
+
+// Extensions see Privoo as a single browser window. The id only has to be
+// stable and non-zero so "currentWindow" filtering has something to match.
+const PRIVOO_EXT_WINDOW_ID = 1;
+
+/**
+ * Privoo's open tabs, in the shape chrome.tabs.query returns. Tab ids are real
+ * webContents ids, which is what Electron's own tabs methods use, so anything
+ * the shim does not cover still lines up.
+ */
+function privooTabSnapshot(parentWin, activeTabId) {
+  const out = [];
+  let index = 0;
+  for (const wc of webContents.getAllWebContents()) {
+    try {
+      if (wc.isDestroyed() || wc.getType() !== 'webview') continue;
+      // Only the tabs belonging to the window the popup was opened from.
+      if (parentWin && wc.hostWebContents && wc.hostWebContents.id !== parentWin.webContents.id) continue;
+      const url = wc.getURL() || '';
+      if (!url || url.startsWith('chrome-extension://') || url === 'about:blank') continue;
+      out.push({
+        id: wc.id,
+        index: index++,
+        windowId: PRIVOO_EXT_WINDOW_ID,
+        url,
+        pendingUrl: url,
+        title: wc.getTitle() || '',
+        favIconUrl: '',
+        active: wc.id === activeTabId,
+        highlighted: wc.id === activeTabId,
+        selected: wc.id === activeTabId,
+        incognito: false,
+        pinned: false,
+        audible: typeof wc.isCurrentlyAudible === 'function' ? wc.isCurrentlyAudible() : false,
+        mutedInfo: { muted: typeof wc.isAudioMuted === 'function' ? wc.isAudioMuted() : false },
+        status: wc.isLoading() ? 'loading' : 'complete',
+        discarded: false,
+        autoDiscardable: true,
+        groupId: -1,
+        openerTabId: undefined,
+        width: 0,
+        height: 0,
+      });
+    } catch { /* a guest that went away mid-enumeration */ }
+  }
+  // The renderer should have told us which tab is active; if it did not, the
+  // first one is a better answer than none.
+  if (out.length && !out.some((t) => t.active)) {
+    out[0].active = out[0].highlighted = out[0].selected = true;
+  }
+  return out;
+}
+
+// Chrome sizes an extension popup to whatever its page lays out to, capped at
+// 800x600. Privoo used a fixed 380x540 window, which left small popups adrift
+// in a large empty panel — uBlock Origin Lite's popup is 273x223, so two thirds
+// of the window was blank. Measure the page and fit the window to it.
+const POPUP_MAX_W = 800;
+const POPUP_MAX_H = 600;
+const POPUP_MIN_W = 180;
+const POPUP_MIN_H = 80;
+
+const POPUP_MEASURE_JS = `(() => {
+  const b = document.body;
+  if (!b) return null;
+  const cs = getComputedStyle(b);
+  const r = b.getBoundingClientRect();
+  const mw = (parseFloat(cs.marginLeft) || 0) + (parseFloat(cs.marginRight) || 0);
+  const mh = (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0);
+  return [
+    Math.ceil(Math.max(b.scrollWidth, r.width + mw)),
+    Math.ceil(Math.max(b.scrollHeight, r.height + mh)),
+  ];
+})()`;
+
+/**
+ * Poll the popup's content size for a moment and keep the window matched to it.
+ * Polling rather than measuring once because extension popups almost always
+ * populate asynchronously — they render a shell, then fill it in once their
+ * service worker answers, and the final size is only knowable after that.
+ */
+function fitPopupToContent(win) {
+  let stable = 0;
+  let last = '';
+  const deadline = Date.now() + 4000;
+
+  const tick = async () => {
+    if (!win || win.isDestroyed()) return;
+    let size = null;
+    try { size = await win.webContents.executeJavaScript(POPUP_MEASURE_JS); }
+    catch { return; /* navigated away or closed */ }
+    if (!win || win.isDestroyed()) return;
+
+    if (Array.isArray(size) && size.length === 2) {
+      const w = Math.min(POPUP_MAX_W, Math.max(POPUP_MIN_W, Math.round(size[0])));
+      const h = Math.min(POPUP_MAX_H, Math.max(POPUP_MIN_H, Math.round(size[1])));
+      try {
+        const [cw, ch] = win.getContentSize();
+        if (Math.abs(cw - w) > 2 || Math.abs(ch - h) > 2) win.setContentSize(w, h);
+      } catch { /* window went away mid-measure */ }
+      const key = w + 'x' + h;
+      stable = key === last ? stable + 1 : 0;
+      last = key;
+    }
+    if (stable < 3 && Date.now() < deadline) setTimeout(tick, 250);
+  };
+  tick();
+}
+
+ipcMain.handle('open-extension-popup', async (e, { extPath, x, y, activeTabId } = {}) => {
   if (!extPath) return { ok: false, error: 'No extension path' };
   const electronId = loadedExtensionIds.get(extPath);
-  if (!electronId) return { ok: false, error: 'Extension is not loaded — enable it first' };
+  if (!electronId) return { ok: false, error: 'Extension is not loaded. Enable it first' };
   const loaded = extensionSession().getExtension(electronId);
   if (!loaded) return { ok: false, error: 'Extension not found in session' };
   const popupRel = extPopupPath(loaded.manifest);
@@ -4966,6 +6367,14 @@ ipcMain.handle('open-extension-popup', async (e, { extPath, x, y } = {}) => {
   // attachment and often disappear immediately. A standalone top-level
   // window with `alwaysOnTop: true` reliably renders above the main window
   // without that focus war.
+  // Privoo's tabs are <webview> guests of the main window, so an extension
+  // popup — its own BrowserWindow — is the only "tab" Electron can see from
+  // inside it. Hand it the real list up front; see extension-tabs-shim.js.
+  const tabSnapshot = {
+    tabs: privooTabSnapshot(parent, activeTabId),
+    windowId: PRIVOO_EXT_WINDOW_ID,
+  };
+
   extensionPopupWin = new BrowserWindow({
     width: POPUP_W,
     height: POPUP_H,
@@ -4980,9 +6389,17 @@ ipcMain.handle('open-extension-popup', async (e, { extPath, x, y } = {}) => {
     backgroundColor: '#ffffff',
     webPreferences: {
       session: session.defaultSession,
-      contextIsolation: true,
+      // The shim has to reach the same `chrome` object the extension's own
+      // scripts use, which means sharing their world. This page is extension
+      // code Privoo already loads and runs; the preload only adds the missing
+      // API surface.
+      contextIsolation: false,
       nodeIntegration: false,
       sandbox: false,
+      preload: path.join(__dirname, 'extension-popup-preload.js'),
+      additionalArguments: [
+        '--privoo-ext-tabs=' + Buffer.from(JSON.stringify(tabSnapshot), 'utf8').toString('base64'),
+      ],
     },
   });
   extensionPopupWin.setMenuBarVisibility(false);
@@ -4994,41 +6411,55 @@ ipcMain.handle('open-extension-popup', async (e, { extPath, x, y } = {}) => {
   // Belt + braces around the show/blur dance: only arm the blur-to-close
   // handler AFTER ready-to-show fires AND a grace window has elapsed.
   let popupBlurArmed = false;
-  extensionPopupWin.once('ready-to-show', () => {
-    if (extensionPopupWin?.isDestroyed()) return;
-    extensionPopupWin.show();
-    extensionPopupWin.focus();
+  // Local handle: `extensionPopupWin` is module state that the 'closed' handler
+  // sets to null, and every one of these callbacks can fire after that.
+  const popupWin = extensionPopupWin;
+  const popupAlive = () => !!popupWin && !popupWin.isDestroyed();
+
+  popupWin.once('ready-to-show', () => {
+    if (!popupAlive()) return;
+    popupWin.show();
+    popupWin.focus();
     setTimeout(() => {
       popupBlurArmed = true;
-      try { extensionPopupWin?.setAlwaysOnTop(false); } catch {}
+      if (!popupAlive()) return;
+      try { popupWin.setAlwaysOnTop(false); } catch {}
     }, 250);
   });
   // Fallback: if ready-to-show never fires (some MV2 extensions stall on
   // their first paint), force-show 600ms in so the user isn't staring at
   // nothing.
   const forceShowTimer = setTimeout(() => {
-    if (extensionPopupWin && !extensionPopupWin.isDestroyed() && !extensionPopupWin.isVisible()) {
-      extensionPopupWin.show();
-      extensionPopupWin.focus();
+    if (popupAlive() && !popupWin.isVisible()) {
+      popupWin.show();
+      popupWin.focus();
       setTimeout(() => { popupBlurArmed = true; }, 200);
     }
   }, 600);
 
-  extensionPopupWin.on('blur', () => {
-    if (!popupBlurArmed) return;
-    if (extensionPopupWin && !extensionPopupWin.isDestroyed() && !extensionPopupWin.webContents.isDevToolsOpened()) {
-      extensionPopupWin.close();
-    }
+  popupWin.on('blur', () => {
+    if (!popupBlurArmed || !popupAlive()) return;
+    try {
+      if (!popupWin.webContents.isDestroyed() && !popupWin.webContents.isDevToolsOpened()) {
+        popupWin.close();
+      }
+    } catch { /* window went away between the check and the call */ }
   });
-  extensionPopupWin.on('closed', () => {
+  popupWin.on('closed', () => {
     clearTimeout(forceShowTimer);
-    extensionPopupWin = null;
+    if (extensionPopupWin === popupWin) extensionPopupWin = null;
   });
+  popupWin.webContents.on('preload-error', (_e, preloadPath, error) => {
+    console.warn('Privoo: extension popup preload failed:', preloadPath, '—', (error && error.message) || error);
+  });
+  popupWin.webContents.once('dom-ready', () => fitPopupToContent(popupWin));
+
   try {
-    await extensionPopupWin.loadURL(popupUrl);
+    await popupWin.loadURL(popupUrl);
+    fitPopupToContent(popupWin);
   } catch (err) {
     clearTimeout(forceShowTimer);
-    if (extensionPopupWin && !extensionPopupWin.isDestroyed()) extensionPopupWin.close();
+    if (popupAlive()) popupWin.close();
     return { ok: false, error: `Popup failed to load: ${err.message || err}` };
   }
   return { ok: true };
@@ -5048,7 +6479,7 @@ ipcMain.handle('choose-browser-profile', async (e) => {
   return !result.canceled && result.filePaths[0] ? result.filePaths[0] : null;
 });
 
-ipcMain.handle('import-browser-data', (_e, options = {}) => {
+ipcMain.handle('import-browser-data', async (_e, options = {}) => {
   const data = browserImport.importFromProfile(options);
   if (!data.ok) return data;
 
@@ -5070,6 +6501,32 @@ ipcMain.handle('import-browser-data', (_e, options = {}) => {
     const imported = historyStore.importEntries(data.history);
     result.historyImported = imported.imported;
     result.historyTotal = imported.total;
+  }
+
+  // Cookies. Written one at a time because Electron has no bulk API, and a
+  // single malformed row must not abort the whole import - a cookie whose
+  // domain no longer parses is skipped rather than fatal.
+  result.cookiesImported = 0;
+  result.cookiesSkipped = 0;
+  if (options.includeCookies === true && data.cookies?.length) {
+    const jar = session.defaultSession.cookies;
+    for (const c of data.cookies) {
+      try {
+        await jar.set({
+          url: c.url,
+          name: c.name,
+          value: c.value,
+          domain: c.domain,
+          path: c.path,
+          secure: c.secure,
+          httpOnly: c.httpOnly,
+          expirationDate: c.expirationDate,
+        });
+        result.cookiesImported++;
+      } catch {
+        result.cookiesSkipped++;
+      }
+    }
   }
 
   return result;
@@ -5405,6 +6862,9 @@ ipcMain.handle('picker:set-prefs', (_e, patch) => profileStore.savePrefs(patch |
 
 ipcMain.handle('picker:choose', (_e, { id, makeDefault }) => {
   if (makeDefault) profileStore.setDefaultProfileId(id);
+  // Stamped here rather than on window creation: this is the moment somebody
+  // picked this profile, which is what the picker's "last used" line means.
+  try { profileStore.markUsed(id); } catch {}
 
   // If a browser is already running (picker opened from the toolbar), just
   // switch into the chosen profile (relaunch). Otherwise this is the startup
@@ -5524,6 +6984,51 @@ ipcMain.handle('ai-chat-stream', async (event, payload) => {
 });
 ipcMain.handle('ai-detect-ollama', () => aiBrowser.detectOllama());
 
+const aiFiles = require('./ai-files');
+
+// Attach a file to a Privoo AI conversation. Only the EXTRACTED TEXT is
+// returned to the page and, from there, sent to the provider - the bytes
+// never leave this process.
+ipcMain.handle('ai-attach-file', async (e) => {
+  const { dialog } = require('electron');
+  const res = await dialog.showOpenDialog(winOf(e), {
+    title: 'Attach a file',
+    properties: ['openFile'],
+    filters: [
+      // Everything readable, first, so the common case needs no choosing.
+      { name: 'Everything Privoo AI can read', extensions: [
+        'png','jpg','jpeg','bmp','gif','tif','tiff','webp',
+        'pdf','docx','xlsx','pptx','txt','md','csv','json','html','xml','log','rtf',
+        'js','ts','jsx','tsx','py','rb','go','rs','java','c','cpp','h','cs','php','sh','sql','yml','yaml',
+      ] },
+      // Images were missing entirely, which made the OCR that has been in
+      // ai-ocr.js all along reachable only by switching to "All files".
+      { name: 'Images', extensions: ['png','jpg','jpeg','bmp','gif','tif','tiff','webp'] },
+      { name: 'Documents & text', extensions: ['pdf','docx','xlsx','pptx','txt','md','csv','json','html','xml','log','rtf'] },
+      { name: 'Code', extensions: ['js','ts','jsx','tsx','py','rb','go','rs','java','c','cpp','h','cs','php','sh','sql','yml','yaml'] },
+      { name: 'All files', extensions: ['*'] },
+    ],
+  });
+  if (res.canceled || !res.filePaths[0]) return null;
+  // Anything thrown here surfaces in the page as a rejected invoke, which the
+  // AI page could only report as "could not open the file picker" — blaming the
+  // dialog for a problem reading the file. Return the failure as data instead.
+  try {
+    return await aiFiles.extractText(res.filePaths[0]);
+  } catch (err) {
+    return { ok: false, error: 'Could not read that file: ' + (err.message || 'unknown error') };
+  }
+});
+
+// Same, for a path that arrived by drag-and-drop.
+ipcMain.handle('ai-extract-file', async (_e, filePath) => {
+  try {
+    return await aiFiles.extractText(String(filePath || ''));
+  } catch (err) {
+    return { ok: false, error: 'Could not read that file: ' + (err.message || 'unknown error') };
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Identities — multi-identity form autofill (name/address/phone/etc, separate
 // from the encrypted password vault above). Ollama assists field-matching
@@ -5577,13 +7082,6 @@ ipcMain.handle('open-ai-window', () => {
       return { ok: true };
     }
     const aiSettings = settingsStore.load();
-    const aiWantsTransparency = !!aiSettings.increaseTransparency;
-    const aiTransparencyOpts = {};
-    if (aiWantsTransparency) {
-      if (process.platform === 'win32')      aiTransparencyOpts.backgroundMaterial = 'acrylic';
-      else if (process.platform === 'darwin') aiTransparencyOpts.vibrancy = 'sidebar';
-      else                                    aiTransparencyOpts.transparent = true;
-    }
     aiWindow = new BrowserWindow({
       width: 460,
       height: 720,
@@ -5591,15 +7089,10 @@ ipcMain.handle('open-ai-window', () => {
       minHeight: 480,
       frame: false,
       roundedCorners: true,
-      // Transparent fill when Increase Transparency is on so the acrylic
-      // material shows through; otherwise a neutral theme-matched fill so the
-      // window doesn't flash before the page applies its own styling.
-      backgroundColor: aiWantsTransparency ? '#00000000'
-                       : (aiSettings.darkMode ? '#1c1d20' : '#f6f7f9'),
+      backgroundColor: aiSettings.darkMode ? '#1c1d20' : '#f6f7f9',
       title: 'Privoo AI',
       icon: resolveIcon(),
       skipTaskbar: false,
-      ...aiTransparencyOpts,
       webPreferences: {
         preload: path.join(__dirname, 'webview-preload.js'),
         contextIsolation: true,

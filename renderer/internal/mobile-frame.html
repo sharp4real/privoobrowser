@@ -8,7 +8,11 @@
 
 body {
   width: 100vw; height: 100vh;
-  background: transparent;
+  /* A defined stage, not the desktop showing through. The soft radial lift
+     behind the phone keeps it from looking pasted onto a flat rectangle. */
+  background:
+    radial-gradient(900px 620px at 50% 42%, #24262d 0%, rgba(36,38,45,0) 70%),
+    linear-gradient(180deg, #1a1b20 0%, #101116 100%);
   display: flex; align-items: center; justify-content: center;
   overflow: hidden;
   -webkit-app-region: drag;
@@ -100,6 +104,7 @@ body.device-samsung .punch-hole { display: block; }
 body.device-samsung .dynamic-island { display: none; }
 body.device-samsung .phone { border-radius: 34px; }
 body.device-samsung .screen { border-radius: 26px; }
+body.device-samsung { background: #15161a; }
 
 /* ── Content webview ─────────────────────────────────────────── */
 webview {

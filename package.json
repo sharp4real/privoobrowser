@@ -1,10 +1,11 @@
 {
   "name": "privoo-browser",
-  "version": "6.0.3",
+  "version": "6.0.4",
   "description": "Privacy focused browser built on Chromium.",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "dev": "electron . --privoo-profile=dev --privoo-skip-picker",
     "dist": "electron-builder --win --publish never",
     "dist:mac": "electron-builder --mac --x64 --arm64 --publish never",
     "dist:linux": "electron-builder --linux --publish never",
@@ -83,10 +84,6 @@
         "to": "wallpaper.png"
       },
       {
-        "from": "incognitowallpaper.png",
-        "to": "incognitowallpaper.png"
-      },
-      {
         "from": "privoovpn.png",
         "to": "privoovpn.png"
       },
@@ -95,60 +92,16 @@
         "to": "privoovpnbanner.png"
       },
       {
+        "from": "privoomediadownloader.png",
+        "to": "privoomediadownloader.png"
+      },
+      {
         "from": "privooshield.png",
         "to": "privooshield.png"
       },
       {
         "from": "logo.ico",
         "to": "logo.ico"
-      },
-      {
-        "from": "lightbg.svg",
-        "to": "lightbg.svg"
-      },
-      {
-        "from": "lightbgindigo.svg",
-        "to": "lightbgindigo.svg"
-      },
-      {
-        "from": "lightbgblue.svg",
-        "to": "lightbgblue.svg"
-      },
-      {
-        "from": "lightbgorange.svg",
-        "to": "lightbgorange.svg"
-      },
-      {
-        "from": "lightbgpink.svg",
-        "to": "lightbgpink.svg"
-      },
-      {
-        "from": "lightbgred.svg",
-        "to": "lightbgred.svg"
-      },
-      {
-        "from": "darkbg.svg",
-        "to": "darkbg.svg"
-      },
-      {
-        "from": "darkbgindigo.svg",
-        "to": "darkbgindigo.svg"
-      },
-      {
-        "from": "darkbgblue.svg",
-        "to": "darkbgblue.svg"
-      },
-      {
-        "from": "darkbgorange.svg",
-        "to": "darkbgorange.svg"
-      },
-      {
-        "from": "darkbgpink.svg",
-        "to": "darkbgpink.svg"
-      },
-      {
-        "from": "darkbgred.svg",
-        "to": "darkbgred.svg"
       }
     ],
     "files": [
@@ -181,19 +134,7 @@
       "bin/**/*",
       "renderer/**/*",
       "logo.png",
-      "logo.ico",
-      "lightbg.svg",
-      "lightbgindigo.svg",
-      "lightbgblue.svg",
-      "lightbgorange.svg",
-      "lightbgpink.svg",
-      "lightbgred.svg",
-      "darkbg.svg",
-      "darkbgindigo.svg",
-      "darkbgblue.svg",
-      "darkbgorange.svg",
-      "darkbgpink.svg",
-      "darkbgred.svg"
+      "logo.ico"
     ],
     "win": {
       "icon": "logo.ico",

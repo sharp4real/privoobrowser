@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Download</title>
+<meta name="description" content="Download Privoo 6.0.4, or build it from source. Free, MIT licensed, no account required.">
+<link rel="icon" href="./logo.png">
+<script>try{var t=localStorage.getItem('privoo-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;}catch(e){}</script>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="./index.html">
+      <img src="./logo.png" alt=""><span>Privoo</span><span class="tag">6.0.4</span>
+    </a>
+    <nav class="nav" id="nav">
+      <a href="./features.html">Features</a>
+      <a href="./privacy.html">Privacy</a>
+      <a href="./shortcuts.html">Shortcuts</a>
+      <a href="./faq.html">FAQ</a>
+      <a href="https://github.com/sharp4real/privoobrowser">Source</a>
+      <a class="btn btn-primary btn-sm" href="./download.html" aria-current="page">Download</a>
+    </nav>
+    <button class="icon-btn" id="theme-btn" type="button" aria-label="Switch theme">
+      <svg class="moon" viewBox="0 0 24 24"><path d="M12.3 3a9 9 0 1 0 8.7 11.3A7.4 7.4 0 0 1 12.3 3z"/></svg>
+      <svg class="sun" viewBox="0 0 24 24"><path d="M12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-13.4V1h0v2.6zM12 23v-2.6 2.6zM3.6 12H1h2.6zM23 12h-2.6H23zM5.2 5.2 3.4 3.4l1.8 1.8zm15.4 15.4-1.8-1.8 1.8 1.8zM5.2 18.8l-1.8 1.8 1.8-1.8zM20.6 3.4l-1.8 1.8 1.8-1.8z"/></svg>
+    </button>
+    <button class="icon-btn menu-btn" id="menu-btn" type="button" aria-label="Menu" aria-expanded="false">
+      <svg viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="page">
+  <div class="wrap">
+    <div class="page-head">
+      <h1>Download Privoo</h1>
+      <p>
+        Version 6.0.4. Free and MIT licensed, no account, and it updates itself
+        from then on.
+      </p>
+    </div>
+
+    <div class="grid grid-3" style="margin-bottom:22px">
+      <a class="card" href="https://github.com/sharp4real/privoobrowser/releases/latest">
+        <h3>Windows</h3>
+        <p>An installer for Windows 10 and 11, 64-bit. This is the platform Privoo is built and tested on.</p>
+      </a>
+      <a class="card" href="https://github.com/sharp4real/privoobrowser/releases/latest">
+        <h3>macOS</h3>
+        <p>Built from the same source. Unsigned, so macOS will ask you to allow it the first time.</p>
+      </a>
+      <a class="card" href="https://github.com/sharp4real/privoobrowser/releases/latest">
+        <h3>Linux</h3>
+        <p>An AppImage. Mark it executable and run it. There is nothing to install.</p>
+      </a>
+    </div>
+
+    <div class="note" style="max-width:760px;margin-bottom:52px">
+      <b>All three come from the same page.</b> Releases are published on GitHub
+      with checksums, so you can verify what you downloaded before you run it.
+      <a href="https://github.com/sharp4real/privoobrowser/releases/latest">Go to the latest release →</a>
+    </div>
+
+    <div class="prose">
+      <h2>First run</h2>
+      <p>
+        Privoo offers to bring your bookmarks, history and saved passwords over
+        from Chrome, Edge, Firefox or Brave. It reads them from the other
+        browser's own profile folder on your disk. Nothing is uploaded, and
+        you can skip it entirely.
+      </p>
+      <p>
+        Everything else is already configured. Blocking, HTTPS upgrades,
+        encrypted DNS and fingerprint protection are on before the first tab
+        opens; there is no setup wizard to click through.
+      </p>
+
+      <h2>Building from source</h2>
+      <p>Node.js 16 or newer, and npm.</p>
+      <pre><code>git clone https://github.com/sharp4real/privoobrowser
+cd privoobrowser
+
+npm install      # install dependencies
+npm start        # run it
+npm run dist     # build an installer for your platform</code></pre>
+      <p>
+        <code>npm run dist</code> produces an installer in <code>dist/</code>
+        for whichever platform you are on. Cross-building is not set up.
+      </p>
+
+      <h2>Updates</h2>
+      <p>
+        Privoo checks for a new version on launch and installs it when you quit.
+        The check is a single request to the GitHub releases API and sends
+        nothing about you; it can be turned off in
+        <b>Settings → About → Automatic updates</b>, in which case you can
+        update by downloading a release yourself.
+      </p>
+
+      <h2>Uninstalling</h2>
+      <p>
+        Remove Privoo the way you remove anything else on your platform. That
+        leaves your profile behind in case you come back. To delete that too,
+        remove the folder listed on the <a href="./privacy.html">privacy page</a>.
+      </p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="brand" href="./index.html"><img src="./logo.png" alt=""><span>Privoo</span></a>
+      </div>
+      <div class="foot-col">
+        <h4>Links</h4>
+        <a href="./features.html">Features</a>
+        <a href="./privacy.html">Privacy</a>
+        <a href="./download.html">Download</a>
+        <a href="./shortcuts.html">Shortcuts</a>
+        <a href="./faq.html">FAQ</a>
+        <a href="https://github.com/sharp4real/privoobrowser">GitHub</a>
+        <a href="https://discord.gg/WweUzF3YCQ">Discord</a>
+      </div>
+    </div>
+    <div class="foot-base">
+      <span>MIT licensed. No telemetry, no tracking, no data collection.</span>
+      <span>6.0.4</span>
+    </div>
+  </div>
+</footer>
+
+<script src="./site.js"></script>
+</body>
+</html>

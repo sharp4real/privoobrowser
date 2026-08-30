@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Features</title>
+<meta name="description" content="Everything Privoo ships with: blocking, tabs, split view, Privoo AI, built-in extensions, .mariana Tor hosting, profiles and customisation.">
+<link rel="icon" href="./logo.png">
+<script>try{var t=localStorage.getItem('privoo-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;}catch(e){}</script>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="./index.html">
+      <img src="./logo.png" alt=""><span>Privoo</span><span class="tag">6.0.4</span>
+    </a>
+    <nav class="nav" id="nav">
+      <a href="./features.html" aria-current="page">Features</a>
+      <a href="./privacy.html">Privacy</a>
+      <a href="./shortcuts.html">Shortcuts</a>
+      <a href="./faq.html">FAQ</a>
+      <a href="https://github.com/sharp4real/privoobrowser">Source</a>
+      <a class="btn btn-primary btn-sm" href="./download.html">Download</a>
+    </nav>
+    <button class="icon-btn" id="theme-btn" type="button" aria-label="Switch theme">
+      <svg class="moon" viewBox="0 0 24 24"><path d="M12.3 3a9 9 0 1 0 8.7 11.3A7.4 7.4 0 0 1 12.3 3z"/></svg>
+      <svg class="sun" viewBox="0 0 24 24"><path d="M12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-13.4V1h0v2.6zM12 23v-2.6 2.6zM3.6 12H1h2.6zM23 12h-2.6H23zM5.2 5.2 3.4 3.4l1.8 1.8zm15.4 15.4-1.8-1.8 1.8 1.8zM5.2 18.8l-1.8 1.8 1.8-1.8zM20.6 3.4l-1.8 1.8 1.8-1.8z"/></svg>
+    </button>
+    <button class="icon-btn menu-btn" id="menu-btn" type="button" aria-label="Menu" aria-expanded="false">
+      <svg viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="page">
+  <div class="wrap">
+    <div class="page-head">
+      <h1>Everything in the box</h1>
+      <p>
+        No add-ons to install, no store to visit and no paid tier. This is what
+        Privoo 6.0.4 does the moment you open it.
+      </p>
+    </div>
+
+    <div class="shot page-shot"><img class="" src="./PrivooEmojiTabReaction.png" width="1571" height="941" alt="A row of Privoo tabs, one of them marked with an emoji reaction." loading="lazy" decoding="async"></div>
+
+    <!-- ── Protection ─────────────────────────────────────────────────── -->
+    <h2 style="font-size:25px;letter-spacing:-.024em;margin-bottom:18px">Protection</h2>
+    <div class="table-wrap" style="margin-bottom:52px">
+      <table>
+        <tbody>
+          <tr><td>Ad &amp; tracker blocking</td><td class="muted">EasyList, EasyPrivacy and uBlock Origin lists, enforced at the network layer</td></tr>
+          <tr><td>Custom filter lists</td><td class="muted">Add your own list URLs, or switch off any built-in default</td></tr>
+          <tr><td>HTTPS-only mode</td><td class="muted">Upgrades insecure <code>http://</code> connections automatically</td></tr>
+          <tr><td>Third-party cookies</td><td class="muted">Blocked, which is what stops the cross-site half of tracking</td></tr>
+          <tr><td>DNS over HTTPS</td><td class="muted">Cloudflare, AdGuard, Quad9, NextDNS, Google, or a resolver of your own</td></tr>
+          <tr><td>Fingerprint protection</td><td class="muted">Canvas noise that is deterministic per origin, a normalised user agent, WebRTC IP-leak protection</td></tr>
+          <tr><td>DNT &amp; Global Privacy Control</td><td class="muted">Both signals sent with every request</td></tr>
+          <tr><td>Tracking-parameter stripping</td><td class="muted">Removes <code>utm_*</code>, <code>fbclid</code>, <code>gclid</code> and the rest; minimises the <code>Referer</code> header</td></tr>
+          <tr><td>Paste protection</td><td class="muted">Checks a pasted link for a name hidden before an <code>@</code>, characters that only look like letters, or a brand on somebody else's domain</td></tr>
+          <tr><td>Pop-up blocking</td><td class="muted">A page may only open a window if you just interacted with it</td></tr>
+          <tr><td>Proxy &amp; Tor</td><td class="muted">Route traffic through a manual proxy or a bundled Tor circuit</td></tr>
+          <tr><td>Profiles &amp; guest mode</td><td class="muted">Fully isolated identities, plus a session that records nothing</td></tr>
+          <tr><td>Family filtering</td><td class="muted">Optional adult-content blocking at the DNS and navigation layers</td></tr>
+          <tr><td>Password vault</td><td class="muted">Encrypted, local-only credentials with autofill</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── Tabs ───────────────────────────────────────────────────────── -->
+    <h2 style="font-size:25px;letter-spacing:-.024em;margin-bottom:18px">Tabs and windows</h2>
+    <div class="grid grid-2" style="margin-bottom:52px">
+      <div class="card">
+        <h3>Hover previews</h3>
+        <p>Rest on a tab and a thumbnail of that page appears underneath it. The capture is taken when you leave a tab, at the moment its picture stops changing, so it is already in hand by the time you hover.</p>
+      </div>
+      <div class="card">
+        <h3>Tab Snooze</h3>
+        <p>A tab you have not looked at in a while releases its page and keeps its title and address. Touching it loads the page back. Never a tab playing audio, one you pinned, or one with something typed into a form.</p>
+      </div>
+      <div class="card">
+        <h3>Reactions and islands</h3>
+        <p>Pin an emoji to a tab to make one of twenty findable. Tabs from the same site gather into an island on their own, without becoming a formal group.</p>
+      </div>
+      <div class="card">
+        <h3>Vertical tabs</h3>
+        <p>A collapsible side panel with an icon rail, an integrated toolbar and a spotlight-style search across every open tab.</p>
+      </div>
+      <div class="card">
+        <h3>Split view</h3>
+        <p>Two pages side by side. Drag a tab onto either half of the window to split instantly.</p>
+      </div>
+      <div class="card">
+        <h3>Groups and drag-to-reorder</h3>
+        <p>Named, coloured tab groups, and Chrome-style shrink-to-fit sizing so the strip never scrolls before it has to.</p>
+      </div>
+      <div class="card">
+        <h3>Reader, Focus and Mobile view</h3>
+        <p>Strip a page down to its text, hide the browser entirely, or render the page as a phone would.</p>
+      </div>
+    </div>
+
+    <!-- ── Built in ───────────────────────────────────────────────────── -->
+    <h2 style="font-size:25px;letter-spacing:-.024em;margin-bottom:6px">Built-in extensions</h2>
+    <p class="muted" style="margin-bottom:18px;max-width:640px">
+      First-party tools that live on the Extensions page. Nothing to install and
+      no third party involved. Third-party <code>.crx</code> and unpacked
+      extensions can be loaded from the same page.
+    </p>
+    <div class="table-wrap" style="margin-bottom:52px">
+      <table>
+        <thead><tr><th>Extension</th><th>Default</th><th>What it adds</th></tr></thead>
+        <tbody>
+          <tr><td>Privacy Shield</td><td class="muted">Always on</td><td class="muted">Ad, tracker and malware blocking</td></tr>
+          <tr><td>Downloads</td><td class="muted">Always on</td><td class="muted">Download manager in the toolbar</td></tr>
+          <tr><td>HTTPS-Only Mode</td><td class="muted">On</td><td class="muted">Automatic secure-connection upgrades</td></tr>
+          <tr><td>Password Vault</td><td class="muted">On</td><td class="muted">Encrypted local logins and autofill</td></tr>
+          <tr><td>Privoo AI</td><td class="muted">On</td><td class="muted">Assistant with saved chat history</td></tr>
+          <tr><td>Notes</td><td class="muted">Off</td><td class="muted">A scratchpad in the toolbar</td></tr>
+          <tr><td>Calculator</td><td class="muted">Off</td><td class="muted">A full calculator in the toolbar</td></tr>
+          <tr><td>Media Downloader</td><td class="muted">Off</td><td class="muted">Save video and audio from pages, via yt-dlp</td></tr>
+          <tr><td>Lucid Mode</td><td class="muted">Off</td><td class="muted">Hover any video for a slider that lifts clarity, colour and depth</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── AI ─────────────────────────────────────────────────────────── -->
+    <h2 style="font-size:25px;letter-spacing:-.024em;margin-bottom:18px">Privoo AI</h2>
+    <div class="grid grid-3" style="margin-bottom:52px">
+      <div class="card">
+        <h3>Your key, your provider</h3>
+        <p>Anthropic, OpenAI, Gemini or DeepSeek on a key you already have. It will also run a model entirely on your own machine through Ollama, in which case nothing leaves it at all.</p>
+      </div>
+      <div class="card">
+        <h3>Privoo is not in the middle</h3>
+        <p>Requests go from your machine to the provider you chose. There is no Privoo relay, and the key is encrypted on disk.</p>
+      </div>
+      <div class="card">
+        <h3>Attachments read locally</h3>
+        <p>Attach a document and the text is extracted on your machine. Only that text is sent, never the file.</p>
+      </div>
+    </div>
+
+    <!-- ── mariana ────────────────────────────────────────────────────── -->
+    <h2 style="font-size:25px;letter-spacing:-.024em;margin-bottom:18px">.mariana hosting</h2>
+    <p class="muted" style="max-width:660px;margin-bottom:16px">
+      Publish a folder from your own computer as a website reachable over Tor.
+      No server to rent, no domain to register, no ports to forward. The
+      browser is the host. Close it and the site is gone.
+    </p>
+    <div class="note" style="max-width:660px;margin-bottom:52px">
+      <b>Worth knowing.</b> Your machine has to be awake and online for the site
+      to answer, and the address is a Tor hidden service, so visitors need Tor
+      to reach it. It is a way to share something directly, not a replacement
+      for hosting.
+    </div>
+
+    <!-- ── New tab ────────────────────────────────────────────────────── -->
+    <h2 style="font-size:25px;letter-spacing:-.024em;margin-bottom:18px">The new tab</h2>
+    <div class="grid grid-2" style="margin-bottom:52px">
+      <div class="card">
+        <h3>A search bar and not much else</h3>
+        <p>Live suggestions and your engine's own icon. Shortcut tiles, a clock, weather and blocking stats are all optional and all off unless you turn them on.</p>
+      </div>
+      <div class="card">
+        <h3>Random wallpaper</h3>
+        <p>A different freely licensed photograph behind every new tab, credited to its photographer in the corner. A batch is fetched once an hour and shared across tabs, so ten new tabs is one download. Off by default.</p>
+      </div>
+    </div>
+
+    <!-- ── Customisation ──────────────────────────────────────────────── -->
+    <h2 style="font-size:25px;letter-spacing:-.024em;margin-bottom:18px">Making it yours</h2>
+    <div class="grid grid-2" style="margin-bottom:44px">
+      <div class="card">
+        <h3>Dark mode that is actually grey</h3>
+        <p>Not pure black. The tab strip, toolbar, panels and page each sit on their own step of one scale, so the window reads as a frame around a page rather than one flat slab.</p>
+      </div>
+      <div class="card">
+        <h3>Accent colour</h3>
+        <p>Recolours the whole interface. The default <b>Mono</b> accent is adaptive, white on the dark interface and ink on the light one, so it is never the brightest thing on screen.</p>
+      </div>
+      <div class="card">
+        <h3>Wallpapers and themes</h3>
+        <p>Your own image or a looping video, optionally stretched behind the tab strip and toolbar, which then go frosted over it. Preset themes are drawn from their own palettes, so there is no image set to download.</p>
+      </div>
+      <div class="card">
+        <h3>Layout and type</h3>
+        <p>Interface font, corner style, compact mode, font scaling and custom CSS. Ten search engines, or one of your own.</p>
+      </div>
+    </div>
+
+    <div class="cta" style="justify-content:flex-start">
+      <a class="btn btn-primary" href="./download.html">Download Privoo</a>
+      <a class="btn btn-ghost" href="./privacy.html">How the privacy works</a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="brand" href="./index.html"><img src="./logo.png" alt=""><span>Privoo</span></a>
+      </div>
+      <div class="foot-col">
+        <h4>Links</h4>
+        <a href="./features.html">Features</a>
+        <a href="./privacy.html">Privacy</a>
+        <a href="./download.html">Download</a>
+        <a href="./shortcuts.html">Shortcuts</a>
+        <a href="./faq.html">FAQ</a>
+        <a href="https://github.com/sharp4real/privoobrowser">GitHub</a>
+        <a href="https://discord.gg/WweUzF3YCQ">Discord</a>
+      </div>
+    </div>
+    <div class="foot-base">
+      <span>MIT licensed. No telemetry, no tracking, no data collection.</span>
+      <span>6.0.4</span>
+    </div>
+  </div>
+</footer>
+
+<script src="./site.js"></script>
+</body>
+</html>

@@ -1,6 +1,8 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const crypto = require('crypto');
+const { execFileSync } = require('child_process');
 
 const CHROME_EPOCH_OFFSET_MS = 11644473600000;
 
@@ -348,6 +350,134 @@ function readFirefoxPlaces(placesFile, limit = 5000) {
   return { history, bookmarks };
 }
 
+// ─── Cookie import ──────────────────────────────────────
+// Chromium stores cookie values encrypted. On Windows the scheme is:
+//   1. `Local State` holds os_crypt.encrypted_key: base64, prefixed "DPAPI".
+//   2. Strip that prefix and DPAPI-unprotect it to get a 256-bit AES key.
+//   3. Each encrypted_value is "v10"/"v11" + 12-byte nonce + ciphertext +
+//      16-byte tag, decrypted with AES-256-GCM using that key.
+// Firefox does not encrypt cookie values, so that path is much shorter.
+
+/** DPAPI unprotect. Node has no binding for this, so shell out to .NET. */
+function dpapiUnprotect(buf) {
+  if (process.platform !== "win32") return null;
+  const b64 = buf.toString("base64");
+  const script =
+    "Add-Type -AssemblyName System.Security; " +
+    "$b=[Convert]::FromBase64String('" + b64 + "'); " +
+    "$p=[Security.Cryptography.ProtectedData]::Unprotect($b,$null,'CurrentUser'); " +
+    "[Convert]::ToBase64String($p)";
+  try {
+    const out = execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script],
+      { encoding: "utf8", windowsHide: true, timeout: 20000, maxBuffer: 1024 * 1024 });
+    return Buffer.from(out.trim(), "base64");
+  } catch { return null; }
+}
+
+/** The AES key Chromium uses for this profile's cookies, or null. */
+let _cookieKeyCache = new Map();
+function chromiumCookieKey(profilePath) {
+  if (_cookieKeyCache.has(profilePath)) return _cookieKeyCache.get(profilePath);
+  // Local State lives in the USER DATA dir, one level above the profile.
+  const candidates = [
+    path.join(path.dirname(profilePath), "Local State"),
+    path.join(profilePath, "Local State"),
+  ];
+  let key = null;
+  for (const f of candidates) {
+    const json = safeReadJson(f);
+    const enc = json && json.os_crypt && json.os_crypt.encrypted_key;
+    if (!enc) continue;
+    let raw;
+    try { raw = Buffer.from(enc, "base64"); } catch { continue; }
+    if (raw.slice(0, 5).toString() !== "DPAPI") continue;
+    const k = dpapiUnprotect(raw.slice(5));
+    if (k && k.length === 32) { key = k; break; }
+  }
+  _cookieKeyCache.set(profilePath, key);
+  return key;
+}
+
+function decryptChromiumValue(encrypted, key) {
+  if (!encrypted || !encrypted.length) return "";
+  const prefix = encrypted.slice(0, 3).toString();
+  if (prefix !== "v10" && prefix !== "v11") {
+    // Pre-v80 cookies were DPAPI-encrypted directly, with no AES layer.
+    const legacy = dpapiUnprotect(encrypted);
+    return legacy ? legacy.toString("utf8") : "";
+  }
+  if (!key) return "";
+  try {
+    const nonce = encrypted.slice(3, 15);
+    const tag = encrypted.slice(encrypted.length - 16);
+    const body = encrypted.slice(15, encrypted.length - 16);
+    const d = crypto.createDecipheriv("aes-256-gcm", key, nonce);
+    d.setAuthTag(tag);
+    return Buffer.concat([d.update(body), d.final()]).toString("utf8");
+  } catch { return ""; }
+}
+
+function readChromiumCookies(profilePath, limit) {
+  const cap = limit || 5000;
+  const modern = path.join(profilePath, "Network", "Cookies");
+  const legacy = path.join(profilePath, "Cookies");
+  const src = fs.existsSync(modern) ? modern : (fs.existsSync(legacy) ? legacy : null);
+  if (!src) return [];
+  const key = chromiumCookieKey(profilePath);
+  const rows = readSqliteTable(src, "cookies", cap);
+  const out = [];
+  for (const row of rows) {
+    const host = String(row.host_key || "").replace(/^\./, "");
+    const name = String(row.name || "");
+    if (!host || !name) continue;
+    let value = String(row.value || "");
+    if (!value && row.encrypted_value) {
+      const buf = Buffer.isBuffer(row.encrypted_value)
+        ? row.encrypted_value
+        : Buffer.from(row.encrypted_value || []);
+      value = decryptChromiumValue(buf, key);
+    }
+    if (!value) continue;   // undecryptable - skip rather than import garbage
+    out.push({
+      url: (row.is_secure ? "https://" : "http://") + host + (row.path || "/"),
+      name,
+      value,
+      domain: String(row.host_key || ""),
+      path: String(row.path || "/"),
+      secure: !!row.is_secure,
+      httpOnly: !!row.is_httponly,
+      expirationDate: (row.has_expires && row.expires_utc)
+        ? Math.floor(chromeTimeToMs(row.expires_utc) / 1000)
+        : undefined,
+    });
+  }
+  return out;
+}
+
+function readFirefoxCookies(profilePath, limit) {
+  const cap = limit || 5000;
+  const file = path.join(profilePath, "cookies.sqlite");
+  if (!fs.existsSync(file)) return [];
+  const rows = readSqliteTable(file, "moz_cookies", cap);
+  const out = [];
+  for (const row of rows) {
+    const host = String(row.host || "").replace(/^\./, "");
+    const name = String(row.name || "");
+    if (!host || !name) continue;
+    out.push({
+      url: (row.isSecure ? "https://" : "http://") + host + (row.path || "/"),
+      name,
+      value: String(row.value || ""),   // Firefox stores these in the clear
+      domain: String(row.host || ""),
+      path: String(row.path || "/"),
+      secure: !!row.isSecure,
+      httpOnly: !!row.isHttpOnly,
+      expirationDate: row.expiry ? Number(row.expiry) : undefined,
+    });
+  }
+  return out;
+}
+
 function profileInfo(kind, browser, profile, profilePath) {
   const types = [];
   if (kind === 'firefox') {
@@ -481,6 +611,10 @@ function importFromProfile(options = {}) {
   const kind = options.kind || inferProfileKind(profilePath);
   const includeBookmarks = options.includeBookmarks !== false;
   const includeHistory = options.includeHistory !== false;
+  // Cookies are opt-IN: importing them carries live signed-in sessions across,
+  // which is powerful but not something to do by default.
+  const includeCookies = options.includeCookies === true;
+  const cookieLimit = Math.max(0, Math.min(Number(options.cookieLimit) || 5000, 20000));
   const bookmarkLimit = Math.max(0, Math.min(Number(options.bookmarkLimit) || 1000, 5000));
   const historyLimit = Math.max(0, Math.min(Number(options.historyLimit) || 5000, 10000));
 
@@ -493,6 +627,7 @@ function importFromProfile(options = {}) {
         kind,
         bookmarks: includeBookmarks ? (data.bookmarks || []).slice(0, bookmarkLimit) : [],
         history: includeHistory ? (data.history || []).slice(0, historyLimit) : [],
+        cookies: includeCookies ? readFirefoxCookies(profilePath, cookieLimit) : [],
       };
     }
 
@@ -504,13 +639,15 @@ function importFromProfile(options = {}) {
     const history = includeHistory && fs.existsSync(historyFile)
       ? readChromiumHistory(historyFile, historyLimit)
       : [];
-    return { ok: true, kind: 'chromium', bookmarks, history };
+    const cookies = includeCookies ? readChromiumCookies(profilePath, cookieLimit) : [];
+    return { ok: true, kind: 'chromium', bookmarks, history, cookies };
   } catch (err) {
     return {
       ok: false,
       error: err && err.message ? err.message : 'Import failed.',
       bookmarks: [],
       history: [],
+      cookies: [],
     };
   }
 }

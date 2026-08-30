@@ -25,6 +25,7 @@ contextBridge.exposeInMainWorld('privoo', {
 
   // Settings
   getSettings:         ()      => ipcRenderer.invoke('get-settings'),
+  captureTabPreview:   (id)    => ipcRenderer.invoke('capture-tab-preview', id),
   setSettings:         (patch) => ipcRenderer.invoke('set-settings', patch),
   chooseDownloadPath:  ()      => ipcRenderer.invoke('choose-download-path'),
   chooseFolder:        ()      => ipcRenderer.invoke('choose-folder'),
@@ -33,6 +34,10 @@ contextBridge.exposeInMainWorld('privoo', {
   chooseNtpLiveWallpaper: ()   => ipcRenderer.invoke('choose-ntp-live-wallpaper'),
   getNtpWallpaperUrl:  ()      => ipcRenderer.invoke('get-ntp-wallpaper-url'),
   clearNtpWallpaper:   ()      => ipcRenderer.invoke('clear-ntp-wallpaper'),
+  // Custom pointer
+  chooseCursorImage:   ()      => ipcRenderer.invoke('choose-cursor-image'),
+  getCursorImageUrl:   ()      => ipcRenderer.invoke('get-cursor-image-url'),
+  clearCursorImage:    ()      => ipcRenderer.invoke('clear-cursor-image'),
   listBrowserProfiles: ()      => ipcRenderer.invoke('list-browser-profiles'),
   chooseBrowserProfile: ()     => ipcRenderer.invoke('choose-browser-profile'),
   importBrowserData:   (opts)  => ipcRenderer.invoke('import-browser-data', opts),
@@ -42,6 +47,33 @@ contextBridge.exposeInMainWorld('privoo', {
 
   // Privacy stats
   getPrivacyStats:   () => ipcRenderer.invoke('privacy-stats'),
+
+  // Privoo AI file attachments — the AI panel lives in the chrome, so it needs
+  // these as much as the full-page privoo://ai does.
+  aiAttachFile:  ()   => ipcRenderer.invoke('ai-attach-file'),
+  aiExtractFile: (fp) => ipcRenderer.invoke('ai-extract-file', fp),
+
+  // Chrome Web Store — the chrome offers an install when you land on a
+  // store listing, so it needs the same two calls the Extensions page uses.
+  webstoreInstall: (input) => ipcRenderer.invoke('webstore-install', input),
+  webstoreParseId: (input) => ipcRenderer.invoke('webstore-parse-id', input),
+
+  // Privoo Guard
+  protectionStatus: ()      => ipcRenderer.invoke('protection-status'),
+  protectionLocate: ()      => ipcRenderer.invoke('protection-locate'),
+  protectionDetect: ()      => ipcRenderer.invoke('protection-detect'),
+  protectionScan:   (opts)  => ipcRenderer.invoke('protection-scan', opts),
+  protectionCancel: ()      => ipcRenderer.invoke('protection-cancel'),
+  protectionInstall: ()     => ipcRenderer.invoke('protection-install'),
+  protectionUpdateSignatures: () => ipcRenderer.invoke('protection-update-signatures'),
+  protectionUninstall: ()   => ipcRenderer.invoke('protection-uninstall'),
+  protectionQuarantineThreat: (path, threat) => ipcRenderer.invoke('protection-quarantine-threat', path, threat),
+  protectionRemoveThreat: (path) => ipcRenderer.invoke('protection-remove-threat', path),
+  protectionRevealThreat: (path) => ipcRenderer.invoke('protection-reveal-threat', path),
+  protectionActOnThreats: (action, items) => ipcRenderer.invoke('protection-act-on-threats', action, items),
+  protectionQuarantineOpen: () => ipcRenderer.invoke('protection-quarantine-open'),
+  onProtectionInstallEvent: (fn) => ipcRenderer.on('protection-install-event', (_e, ev) => fn(ev)),
+  onProtectionScanEvent: (fn) => ipcRenderer.on('protection-scan-event', (_e, ev) => fn(ev)),
   resetPrivacyStats: () => ipcRenderer.invoke('reset-privacy-stats'),
   getPageBlockedCount: (wcId) => ipcRenderer.invoke('page-blocked-count', wcId),
 
@@ -81,6 +113,10 @@ contextBridge.exposeInMainWorld('privoo', {
 
   // yt-dlp (main window)
   ytdlpDownload:      (url, opts) => ipcRenderer.invoke('ytdlp-download', url, opts || {}),
+  ytdlpCancel:        (id)  => ipcRenderer.invoke('ytdlp-cancel', id),
+  ytdlpInspect:       (url) => ipcRenderer.invoke('ytdlp-inspect', url),
+  ytdlpHasFfmpeg:     ()    => ipcRenderer.invoke('ytdlp-has-ffmpeg'),
+  onYtdlpProgress:    (fn)  => ipcRenderer.on('ytdlp-progress', (_e, ev) => fn(ev)),
   ytdlpProbe:         () => ipcRenderer.invoke('ytdlp-probe'),
   chooseYtdlpFolder:  () => ipcRenderer.invoke('choose-folder'),
   // chooseYtdlpBinary removed — yt-dlp is auto-installed; no picker UI.
@@ -108,12 +144,16 @@ contextBridge.exposeInMainWorld('privoo', {
   setupFinished:  () => ipcRenderer.send('setup-finished'),
   isMaximized:    () => ipcRenderer.invoke('window-is-maximized'),
   getPlatform:    () => ipcRenderer.invoke('get-platform'),
+  translucencySupported: () => ipcRenderer.invoke('translucency-supported'),
   getAppVersion:  () => ipcRenderer.invoke('get-app-version'),
   openDevTools:   (guestWcId, opts) => ipcRenderer.invoke('open-devtools', guestWcId, opts),
   closeDevTools:  (guestWcId) => ipcRenderer.invoke('close-devtools', guestWcId),
   updateDevToolsBounds: (guestWcId, bounds) => ipcRenderer.invoke('update-devtools-bounds', guestWcId, bounds),
   setDiscordActivity: (activity) => ipcRenderer.send('discord-rpc-set-activity', activity),
   showContextMenu:(items) => ipcRenderer.invoke('show-context-menu', items),
+  contextCopyImage:(id, x, y) => ipcRenderer.invoke('context-copy-image', id, x, y),
+  openWindow:     (url)      => ipcRenderer.invoke('open-in-new-window', url),
+  addToDictionary:(id, word) => ipcRenderer.invoke('add-to-dictionary', id, word),
   showEmojiPanel: () => ipcRenderer.invoke('show-emoji-panel'),
   captureFullPage:(wcId) => ipcRenderer.invoke('capture-full-page', wcId),
   getCursorPos:       () => ipcRenderer.invoke('get-cursor-pos'),
@@ -153,10 +193,14 @@ contextBridge.exposeInMainWorld('privoo', {
   onWebviewShortcut: (fn) => ipcRenderer.on('webview-shortcut', (_e, k) => fn(k)),
   onWindowState:  (fn) => ipcRenderer.on('window-state',  (_e, max)  => fn(max)),
   onDownloadUpdate: (fn) => ipcRenderer.on('download-update', (_e, d) => fn(d)),
+  onPopupBlocked:   (fn) => ipcRenderer.on('popup-blocked', (_e, d) => fn(d)),
+  onDownloadBoostStarted: (fn) => ipcRenderer.on('download-boost-started', (_e, d) => fn(d)),
+  onTabRendererGone: (fn) => ipcRenderer.on('tab-renderer-gone', (_e, d) => fn(d)),
+  onTabUnresponsive: (fn) => ipcRenderer.on('tab-unresponsive', (_e, d) => fn(d)),
+  onTabResponsive:   (fn) => ipcRenderer.on('tab-responsive', (_e, d) => fn(d)),
   onSettingsChanged: (fn) => ipcRenderer.on('settings-updated', (_e, s) => fn(s)),
   onBrowsingDataCleared: (fn) => ipcRenderer.on('browsing-data-cleared', (_e, r) => fn(r)),
   onPlatform: (fn) => ipcRenderer.on('platform', (_e, p) => fn(p)),
-  onTransparencyState: (fn) => ipcRenderer.on('transparency-state', (_e, on) => fn(on)),
 
   // Profiles
   profilesList:    ()      => ipcRenderer.invoke('profiles:list'),

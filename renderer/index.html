@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <title>Privoo</title>
   <link rel="stylesheet" href="styles.css" />
+  <!-- Finish pass over styles.css: shape, weight, spacing and motion.
+       Must load second — it wins on order, not on !important. -->
+  <link rel="stylesheet" href="theme.css" />
 </head>
 <body class="privoo-one">
 
@@ -19,20 +22,20 @@
    <div class="sw-frame sw-frame-simple">
     <div class="sw-card sw-step sw-intro active">
       <img class="sw-hero-logo" src="privoo://newtab/logo.png" alt="Privoo" draggable="false" onerror="this.style.display='none'"/>
-      <h2 class="sw-headline">Terms, privacy &amp; disclaimer</h2>
-      <p class="sw-sub">Please read this before you start browsing.</p>
+      <h2 class="sw-headline">Before you start</h2>
+      <p class="sw-sub">A few things worth knowing.</p>
       <div class="sw-terms-box">
-        <p class="sw-disc-para"><b>Your data never leaves this device.</b> No accounts, no sync servers, no profiling.</p>
-        <p class="sw-disc-para"><b>Built on open foundations.</b> Chromium, and yt-dlp / Widevine when present — their licenses apply where they're used.</p>
-        <p class="sw-disc-para"><b>Privoo Browser is an independent open-source project</b>, not a registered company or commercial organisation, and has no affiliation with any browser vendor, tech company, or government body.</p>
-        <p class="sw-disc-para">Privoo is provided <b>as-is, with no warranty of any kind.</b> The developer(s) cannot be held liable for data loss, privacy incidents, security vulnerabilities, or any other issues arising from your use of this software. Use it lawfully and at your own risk.</p>
+        <p class="sw-disc-para">Your browsing stays on this device. Privoo has no accounts, no sync servers and does not build a profile of you.</p>
+        <p class="sw-disc-para">Privoo is built on Chromium. Where components such as yt-dlp or Widevine are used, their own licences apply.</p>
+        <p class="sw-disc-para">Privoo is an independent open source project. It is not a company, and it is not affiliated with any browser vendor, tech company or government body.</p>
+        <p class="sw-disc-para">Privoo comes with no warranty of any kind. The developers are not liable for data loss, privacy incidents or security problems. Use it lawfully and at your own risk.</p>
       </div>
       <label class="sw-terms-agree">
         <input type="checkbox" id="sw-disc-check"/>
         <span>I have read and agree to the above.</span>
       </label>
       <div class="sw-actions">
-        <button class="sw-btn primary" id="sw-disc-accept" disabled>Agree &amp; start browsing</button>
+        <button class="sw-btn primary" id="sw-disc-accept" disabled>Agree and start browsing</button>
       </div>
     </div>
    </div>
@@ -56,6 +59,11 @@
     <!-- ── Sidebar web panel — full-height view shown when clicking a rail icon ── -->
     <div id="sidebar-panel" class="sidebar-panel" hidden>
       <div class="sidebar-panel-header">
+        <button type="button" id="sidebar-music-switch" class="sidebar-panel-nav sidebar-music-switch" title="Change music player" hidden>
+          <span id="sidebar-music-switch-ico" class="sb-ms-ico"></span>
+          <span id="sidebar-music-switch-name" class="sb-ms-name"></span>
+          <svg class="sb-ms-caret" viewBox="0 0 20 20" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 5 5 5-5"/></svg>
+        </button>
         <button type="button" id="sidebar-panel-back" class="sidebar-panel-nav" title="Go back">
           <svg viewBox="0 0 24 24" width="16" height="16"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
         </button>
@@ -119,7 +127,7 @@
           <div id="titlebar-trailing-spacer" aria-hidden="true"></div>
         </div>
         <button id="tab-search-btn" class="strip-btn" title="Search tabs (Ctrl+Shift+A)" aria-label="Search tabs">
-          <svg viewBox="0 0 24 24" width="14" height="14"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5 1.49-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.4 15.4 20 20"/></svg>
         </button>
         <div id="window-controls">
           <button id="win-min"   class="win-ctrl" title="Minimize">
@@ -153,16 +161,20 @@
 
         <div id="omnibox-outer">
           <div id="omnibox-wrap">
-            <button type="button" id="site-icon" class="site-icon secure" title="View site information" aria-label="Site information">
-              <svg viewBox="0 0 24 24" width="13" height="13"><path d="M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2zm-6 9a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm3.1-9H8.9V6a3.1 3.1 0 0 1 6.2 0v2z"/></svg>
+            <button type="button" id="site-icon" class="site-icon secure" data-glyph="settings" title="Site settings and permissions" aria-label="Site settings and permissions">
+              <!-- Sliders, matching SITE_ICON_SETTINGS_SVG in renderer.js. This is the
+                   resting state before syncToolbar() first runs; it used to be a
+                   padlock, so a padlock is what the address bar showed. If the
+                   glyph changes in renderer.js it has to change here too. -->
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7.5h5.2"/><path d="M13.8 7.5H19"/><path d="M5 16.5h3.4"/><path d="M12 16.5h7"/><circle cx="12" cy="7.5" r="2.1"/><circle cx="10.2" cy="16.5" r="2.1"/></svg>
             </button>
             <input id="omnibox" type="text" spellcheck="false" autocomplete="off"
-                   placeholder="search or type a url" />
+                   placeholder="Search or enter an address" />
             <button type="button" id="page-shield" class="page-shield" title="Trackers and ads blocked on this page" aria-label="Trackers blocked on this page">
-              <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5z"/></svg>
+              <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2 5.2 6v5.2c0 4.3 2.8 8.1 6.8 9.3 4-1.2 6.8-5 6.8-9.3V6z"/></svg>
             </button>
             <button class="tb-btn round small" id="bookmark-btn" title="Bookmark this tab">
-              <svg viewBox="0 0 24 24" width="16" height="16"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 4.4 2.4 4.8 5.3.8-3.8 3.7.9 5.3-4.8-2.5-4.8 2.5.9-5.3-3.8-3.7 5.3-.8z"/></svg>
             </button>
             <button class="zoom-indicator hidden" id="zoom-indicator" title="Reset zoom (Ctrl+0)" aria-label="Zoom level">100%</button>
           </div>
@@ -179,7 +191,7 @@
               </div>
             </div>
             <div class="ps-foot" id="ps-foot">
-              <span id="ps-foot-host">—</span>
+              <span id="ps-foot-host"></span>
             </div>
           </div>
 
@@ -193,7 +205,7 @@
               </div>
               <div class="si-text">
                 <div id="si-status" class="si-status">Connection is secure</div>
-                <div id="si-host"   class="si-host">—</div>
+                <div id="si-host"   class="si-host"></div>
               </div>
             </div>
             <div id="si-detail" class="si-detail">Your data is encrypted in transit. Information you send to this site (passwords, credit-card numbers, etc.) cannot be read by others on the network.</div>
@@ -205,7 +217,7 @@
         <div id="toolbar-actions">
           <div class="toolbar-anchor" id="audio-anchor">
             <button class="tb-btn round" id="audio-btn" title="Media controls" hidden>
-              <svg viewBox="0 0 24 24" width="18" height="18"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+              <svg viewBox="0 0 24 24" width="18" height="18"><path d="M20 2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm-2 4h-3v5.5a2.5 2.5 0 1 1-1.5-2.29V4h4.5v2zM4 6H2v14a2 2 0 0 0 2 2h14v-2H4V6z"/></svg>
             </button>
             <div id="audio-popover" class="toolbar-popover media-player hidden">
               <div class="mp-header">
@@ -253,35 +265,48 @@
           </div>
           <div class="toolbar-anchor" id="ytdlp-anchor">
             <button class="tb-btn round" id="ytdlp-toolbar-btn" title="Download media (yt-dlp)" hidden>
-              <svg viewBox="0 0 24 24" width="18" height="18"><path d="M10 16.5l6-4.5-6-4.5v9zM8 2h8a2 2 0 0 1 2 2v16l-6-3-6 3V4a2 2 0 0 1 2-2z"/></svg>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.6" y="5.2" width="12.8" height="10.6" rx="2.4"/><path d="M7.5 8.7v3.6l3.1-1.8z" fill="currentColor" stroke="none"/><path d="M19 9.4v8.2m0 0 2.3-2.3M19 17.6l-2.3-2.3"/></svg>
             </button>
             <div id="ytdlp-popover" class="toolbar-popover vpn-pop hidden">
-              <div class="vpn-pop-hero">
-                <div class="vpn-pop-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M10 16.5l6-4.5-6-4.5v9zM8 2h8a2 2 0 0 1 2 2v16l-6-3-6 3V4a2 2 0 0 1 2-2z"/></svg>
+              <img class="vpn-banner-img" src="privoo://newtab/privoomediadownloader.png" alt="" onerror="this.style.display='none'"/>
+              <div class="vpn-pop-body md-body">
+                <div class="md-head">
+                  <div class="vpn-form-title">Media download</div>
+                  <p class="vpn-form-desc">Saves video or audio with yt-dlp.</p>
                 </div>
-                <div>
-                  <div class="vpn-pop-title">Media download</div>
-                  <div class="vpn-pop-sub">Uses yt-dlp to save video or audio to your download folder.</div>
+                <div class="md-field">
+                  <label class="mini-label" for="ytdlp-url">Link</label>
+                  <div class="md-url-row">
+                    <input type="text" id="ytdlp-url" class="vpn-input" spellcheck="false" placeholder="Paste a page or media link" />
+                    <button type="button" class="md-inline-btn" id="ytdlp-paste">Use this tab</button>
+                  </div>
                 </div>
-              </div>
-              <div class="vpn-pop-body">
-                <label class="mini-label" for="ytdlp-url">Target URL</label>
-                <input type="text" id="ytdlp-url" class="vpn-input" spellcheck="false" placeholder="Page URL or direct media link" />
-                <label class="mini-label" for="ytdlp-format">Format</label>
-                <select id="ytdlp-format" class="vpn-select">
-                  <option value="best">Best quality (auto)</option>
-                  <option value="mp4">MP4 (video)</option>
-                  <option value="mp3">MP3 (audio only)</option>
-                </select>
-                <label class="mini-label" for="ytdlp-folder">Save to folder</label>
-                <div class="vpn-folder-row">
-                  <input type="text" id="ytdlp-folder" class="vpn-input" spellcheck="false" placeholder="Default download folder" readonly />
-                  <button type="button" class="vpn-btn secondary" id="ytdlp-choose-folder">Browse…</button>
+                <div class="md-field">
+                  <label class="mini-label" for="ytdlp-format">Quality</label>
+                  <select id="ytdlp-format" class="vpn-select">
+                    <option value="best">Best available</option>
+                    <option value="1080">1080p</option>
+                    <option value="720">720p</option>
+                    <option value="480">480p</option>
+                    <option value="mp4">MP4 video</option>
+                    <option value="mp3">MP3 audio only</option>
+                  </select>
                 </div>
-                <div class="vpn-pop-actions">
-                  <button type="button" class="vpn-btn secondary" id="ytdlp-paste">Paste from tab</button>
-                  <button type="button" class="vpn-btn primary" id="ytdlp-run">Start download</button>
+                <div class="md-field">
+                  <label class="mini-label" for="ytdlp-folder">Save to</label>
+                  <div class="vpn-folder-row">
+                    <input type="text" id="ytdlp-folder" class="vpn-input" spellcheck="false" placeholder="Default download folder" readonly />
+                    <button type="button" class="vpn-btn secondary" id="ytdlp-choose-folder">Browse</button>
+                  </div>
+                </div>
+                <div class="md-actions">
+                  <button type="button" class="vpn-btn primary md-primary" id="ytdlp-run">Download</button>
+                  <button type="button" class="vpn-btn secondary" id="ytdlp-cancel" hidden>Cancel</button>
+                </div>
+                <div id="ytdlp-progress-wrap" class="ytdlp-progress-wrap" hidden>
+                  <div id="ytdlp-title" class="ytdlp-title"></div>
+                  <div class="ytdlp-bar-track"><div id="ytdlp-bar" class="ytdlp-bar"></div></div>
+                  <div id="ytdlp-meta" class="ytdlp-meta"></div>
                 </div>
                 <div id="ytdlp-status" class="vpn-status"></div>
               </div>
@@ -306,26 +331,32 @@
               <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2v3h10V4H7zm.5 5A1.25 1.25 0 1 0 7.5 11.5 1.25 1.25 0 0 0 7.5 9zm4.5 0a1.25 1.25 0 1 0 0 2.5A1.25 1.25 0 0 0 12 9zm4.5 0a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5zM7.5 13a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5zm4.5 0a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5zm4.5 0a1.25 1.25 0 1 0 0 5 1.25 1.25 0 0 0 0-5zM7.5 17a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5zm4.5 0a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5z"/></svg>
             </button>
             <div id="calc-popover" class="toolbar-popover calc-pop hidden" role="dialog" aria-label="Calculator">
-              <div class="calc-display" id="calc-display">0</div>
+              <div class="calc-screen">
+                <div class="calc-expr" id="calc-expr"></div>
+                <button type="button" class="calc-display" id="calc-display" title="Click to copy">0</button>
+              </div>
               <div class="calc-keys">
                 <button class="calc-key calc-fn" data-k="clear">AC</button>
                 <button class="calc-key calc-fn" data-k="sign">±</button>
                 <button class="calc-key calc-fn" data-k="percent">%</button>
-                <button class="calc-key calc-op" data-k="/">÷</button>
+                <button class="calc-key calc-fn" data-k="back" title="Backspace">
+                  <svg viewBox="0 0 24 24" width="17" height="17"><path fill="currentColor" d="M9.2 5h9.3A2.5 2.5 0 0 1 21 7.5v9a2.5 2.5 0 0 1-2.5 2.5H9.2a2 2 0 0 1-1.5-.7l-4.2-5a2 2 0 0 1 0-2.6l4.2-5A2 2 0 0 1 9.2 5zm2.4 4.1-1.3 1.3L12.2 12l-1.9 1.6 1.3 1.3 1.9-1.6 1.9 1.6 1.3-1.3-1.9-1.6 1.9-1.6-1.3-1.3-1.9 1.6z"/></svg>
+                </button>
                 <button class="calc-key" data-k="7">7</button>
                 <button class="calc-key" data-k="8">8</button>
                 <button class="calc-key" data-k="9">9</button>
-                <button class="calc-key calc-op" data-k="*">×</button>
+                <button class="calc-key calc-op" data-k="/">÷</button>
                 <button class="calc-key" data-k="4">4</button>
                 <button class="calc-key" data-k="5">5</button>
                 <button class="calc-key" data-k="6">6</button>
-                <button class="calc-key calc-op" data-k="-">−</button>
+                <button class="calc-key calc-op" data-k="*">×</button>
                 <button class="calc-key" data-k="1">1</button>
                 <button class="calc-key" data-k="2">2</button>
                 <button class="calc-key" data-k="3">3</button>
-                <button class="calc-key calc-op" data-k="+">+</button>
+                <button class="calc-key calc-op" data-k="-">−</button>
                 <button class="calc-key calc-zero" data-k="0">0</button>
                 <button class="calc-key" data-k=".">.</button>
+                <button class="calc-key calc-op" data-k="+">+</button>
                 <button class="calc-key calc-eq" data-k="=">=</button>
               </div>
             </div>
@@ -429,7 +460,7 @@
                   <p class="vpn-intro-desc">Route your browsing through an encrypted proxy tunnel of your choosing, hiding your traffic from your network while you stay in full control of where it goes. This feature is experimental and still being refined.</p>
                   <label class="vpn-terms-row">
                     <input type="checkbox" id="vpn-terms-check"/>
-                    <span>I understand Privoo VPN works by connecting to a proxy server <b>I provide and configure myself</b> — Privoo doesn't operate, host, or vet any proxy servers, and I'm responsible for my proxy provider's terms and legality in my region.</span>
+                    <span>I understand Privoo VPN works by connecting to a proxy server <b>I provide and configure myself</b>. Privoo doesn't operate, host, or vet any proxy servers, and I'm responsible for my proxy provider's terms and legality in my region.</span>
                   </label>
                   <button type="button" class="vpn-btn-primary" id="vpn-agree-btn" disabled>Agree &amp; continue</button>
                 </div>
@@ -457,7 +488,7 @@
                     <div class="vpn-form-title">Configure proxy</div>
                   </div>
                   <div class="vpn-field-row">
-                    <select id="vpn-type">
+                    <select id="vpn-type" class="vpn-select">
                       <option value="http">HTTP</option>
                       <option value="https">HTTPS</option>
                       <option value="socks5">SOCKS5</option>
@@ -484,7 +515,7 @@
                   <div class="vpn-power-addr" id="vpn-status-addr"></div>
                 </div>
                 <div class="vpn-view-body">
-                  <p class="vpn-form-desc">Traffic is routed through your proxy. This isn't a Privoo-run VPN network — it's your own proxy server, tunnelled through Privoo.</p>
+                  <p class="vpn-form-desc">Traffic is routed through your proxy. This isn't a Privoo-run VPN network. It's your own proxy server, tunnelled through Privoo.</p>
                   <div class="vpn-field-row">
                     <button type="button" class="vpn-btn-ghost" id="vpn-edit-btn">Configure</button>
                     <button type="button" class="vpn-btn-ghost vpn-btn-danger" id="vpn-disconnect-btn">Disconnect</button>
@@ -510,8 +541,8 @@
                   </span>
                 </div>
                 <div class="sp-hero-text">
-                  <div class="sp-hero-title">You're protected</div>
-                  <div class="sp-hero-site"><b id="stat-ads">0</b> ads &amp; trackers blocked</div>
+                  <div class="sp-hero-title" id="sp-hero-title">You're protected</div>
+                  <div class="sp-hero-site"><b id="stat-ads">0</b> ads and trackers blocked</div>
                 </div>
               </div>
 
@@ -553,7 +584,7 @@
 
         <div class="toolbar-anchor" id="menu-anchor">
             <button class="tb-btn round" id="menu-btn" title="Customize and control Privoo">
-              <svg viewBox="0 0 20 20" width="18" height="18"><circle cx="10" cy="4" r="1.5"/><circle cx="10" cy="10" r="1.5"/><circle cx="10" cy="16" r="1.5"/></svg>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7h15M4.5 12h15M4.5 17h9"/></svg>
             </button>
             <div id="menu" class="popover hidden" style="min-width:260px;width:auto;">
               <div class="menu-item" data-action="new-tab">
@@ -652,7 +683,7 @@
           </div>
           <div class="mdisc-body">
             <div class="mdisc-title">Mobile view</div>
-            <div class="mdisc-text">This opens the current page in a separate floating phone-frame window simulating a mobile device. The page is re-loaded with a mobile user-agent — some sites may behave differently or ask you to log in again.</div>
+            <div class="mdisc-text">This opens the current page in a separate floating phone-frame window simulating a mobile device. The page is re-loaded with a mobile user-agent. Some sites may behave differently or ask you to log in again.</div>
           </div>
           <div class="mdisc-actions">
             <button type="button" id="mdisc-cancel" class="mdisc-btn ghost">Cancel</button>
@@ -682,8 +713,8 @@
       <div id="overlay-banner" class="overlay-banner hidden" role="dialog" aria-live="polite">
         <img class="ob-logo" src="privoo://newtab/logo.png" alt="" onerror="this.style.display='none'"/>
         <div class="ob-body">
-          <div class="ob-title" id="ob-title">Privoo keeps you safe!</div>
-          <div class="ob-text"  id="ob-text">Ads, trackers, and fingerprinting scripts are blocked by default. No accounts, no sync — your browsing stays on this device.</div>
+          <div class="ob-title" id="ob-title">Ads and trackers are blocked</div>
+          <div class="ob-text"  id="ob-text">Privoo blocks ads, trackers and fingerprinting by default. There is no account to create and nothing syncs to a server.</div>
         </div>
         <div class="ob-actions">
           <button type="button" id="ob-dismiss" class="ob-primary">Okay!</button>
@@ -712,17 +743,28 @@
         <div class="ts-box">
           <div class="ts-search">
             <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
-            <input id="ts-input" type="text" placeholder="Search open tabs by name or address…" spellcheck="false" autocomplete="off"/>
+            <input id="ts-input" type="text" placeholder="Search your open tabs" spellcheck="false" autocomplete="off"/>
           </div>
           <div id="ts-list" class="ts-list"></div>
+          <div class="ts-foot">
+            <span><kbd>&uarr;</kbd><kbd>&darr;</kbd> to move</span>
+            <span><kbd>&crarr;</kbd> to switch</span>
+            <span><kbd>Esc</kbd> to close</span>
+            <span id="ts-count" style="margin-left:auto"></span>
+          </div>
         </div>
       </div>
 
       <div id="views-wrap">
         <!-- Vertical tabs panel — shown when vertical-tabs mode is active -->
         <div id="vtabs-panel" class="vtabs-panel" hidden>
+          <!-- No "TABS" caption. It labelled a column of tabs as tabs, and it
+               was the widest thing in the header, so the two controls that
+               actually do something were pushed to the far edge. -->
           <div class="vtabs-header">
-            <span class="vtabs-header-title">Tabs</span>
+            <button id="vtabs-search" class="vtabs-collapse-btn" title="Search tabs (Ctrl+Shift+A)" aria-label="Search tabs">
+              <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
+            </button>
             <button id="vtabs-collapse" class="vtabs-collapse-btn" title="Collapse panel" aria-label="Collapse tabs panel">
               <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M13 4L7 10l6 6"/></svg>
             </button>
@@ -732,7 +774,6 @@
             <span class="vtabs-new-label">New Tab</span>
           </button>
           <div id="vtabs-list" class="vtabs-list"></div>
-          <div id="vtf-integrated-slot" class="vtf-integrated-slot"></div>
           <div id="vtabs-resize" class="vtabs-resize" title="Drag to resize" role="separator" aria-orientation="vertical"></div>
         </div>
 
@@ -794,7 +835,7 @@
               <div class="ai-bar">
                 <div class="ai-pill ai-pill-no" id="ai-status">
                   <span class="ai-dot"></span>
-                  <span id="ai-status-text">No API key — click Setup</span>
+                  <span id="ai-status-text">No API key. Click Setup</span>
                 </div>
                 <button class="ai-bar-btn" id="ai-cfg-btn" type="button">Setup</button>
               </div>
@@ -802,7 +843,11 @@
                 <div id="ai-chat-inner" class="ai-chat-inner"></div>
               </div>
               <div class="ai-composer">
+                <div id="ai-attachments" class="ai-attachments" hidden></div>
                 <div class="ai-composer-box">
+                  <button type="button" id="ai-attach" class="ai-attach-btn" title="Attach a file" aria-label="Attach a file">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M16.5 6.5v9a4.5 4.5 0 0 1-9 0V5.75a3 3 0 0 1 6 0V15a1.5 1.5 0 0 1-3 0V6.5H9v8.5a3 3 0 0 0 6 0V5.75a4.5 4.5 0 0 0-9 0V15.5a6 6 0 0 0 12 0v-9h-1.5z"/></svg>
+                  </button>
                   <textarea id="ai-input" rows="1" placeholder="Ask Privoo AI anything…"></textarea>
                   <button id="ai-send" type="button" title="Send" aria-label="Send">
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M3 20.5 22 12 3 3.5 3 10l13 2-13 2z"/></svg>
@@ -824,11 +869,11 @@
               <div class="ai-field">
                 <label for="ai-provider">Provider</label>
                 <select id="ai-provider">
-                  <option value="anthropic">Claude — Anthropic</option>
-                  <option value="openai">GPT — OpenAI</option>
+                  <option value="anthropic">Claude. Anthropic</option>
+                  <option value="openai">GPT. OpenAI</option>
                   <option value="deepseek">DeepSeek</option>
-                  <option value="gemini">Gemini — Google</option>
-                  <option value="ollama">Ollama — Local AI (no key)</option>
+                  <option value="gemini">Gemini. Google</option>
+                  <option value="ollama">Ollama. Local AI (no key)</option>
                 </select>
               </div>
               <div class="ai-field">
@@ -840,7 +885,7 @@
               <div class="ai-field" id="ai-apikey-field">
                 <label for="ai-apikey">API key</label>
                 <input id="ai-apikey" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your key"/>
-                <div class="ai-hint">Stored <b>encrypted</b> on this device — never synced.</div>
+                <div class="ai-hint">Stored <b>encrypted</b> on this device and never synced.</div>
               </div>
               <div class="ai-gate-row">
                 <button class="ai-gbtn" id="ai-gate-later" type="button">Later</button>
@@ -861,7 +906,7 @@
 
       <div class="cp-body">
         <section class="cp-section">
-          <h3 class="cp-section-title">Appearance</h3>
+          <h3 class="cp-section-title">Theme</h3>
           <div class="cp-theme-row">
             <button type="button" class="cp-theme-btn" data-theme="light">
               <div class="cp-theme-swatch cp-theme-light"></div>
@@ -875,48 +920,33 @@
         </section>
 
         <section class="cp-section">
-          <h3 class="cp-section-title">New tab background</h3>
-          <div class="cp-wp-row">
-            <button type="button" id="cp-wp-pick" class="cp-card-btn">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm0 14h14V8.41L13.41 14 11 11.59l-6 6V18zm14-12H5v9.17l6-6L13.41 11.59 19 6z"/></svg>
-              <span>Choose image…</span>
-            </button>
-            <button type="button" id="cp-wp-live" class="cp-card-btn">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm0 2v12h16V6H4zm6 2.5 5 3.5-5 3.5v-7z"/></svg>
-              <span>Live wallpaper…</span>
-            </button>
-            <button type="button" id="cp-wp-wave" class="cp-card-btn">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 9c2.5-3 5-3 7.5 0S15 12 17.5 9 22 6 22 6M2 15c2.5-3 5-3 7.5 0s5 3 7.5 0 4.5-3 4.5-3"/></svg>
-              <span>Theme…</span>
-            </button>
-            <button type="button" id="cp-wp-clear" class="cp-card-btn ghost">
-              <span>Remove wallpaper</span>
-            </button>
+          <h3 class="cp-section-title">Accent</h3>
+          <div class="cp-accent-row" id="cp-accent-row" role="group" aria-label="Accent colour"></div>
+        </section>
+
+        <section class="cp-section">
+          <h3 class="cp-section-title">New tab</h3>
+          <!-- A live preview of the background, so this section shows what it
+               is talking about instead of describing it. -->
+          <div class="cp-wp-preview" id="cp-wp-preview">
+            <div class="cp-wp-preview-art" id="cp-wp-preview-art"></div>
+            <div class="cp-wp-preview-chrome" aria-hidden="true">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="cp-wp-preview-label" id="cp-wp-preview-label">No wallpaper</div>
           </div>
           <div class="cp-row">
-            <span>Stretch over whole browser</span>
-            <label class="switch"><input type="checkbox" id="cp-wp-full"><span class="slider"></span></label>
+            <div class="cp-row-text">
+              <span>Random wallpaper</span>
+              <small>A new photo behind every tab, credited in the corner.</small>
+            </div>
+            <label class="switch"><input type="checkbox" id="cp-random-wp"><span class="slider"></span></label>
           </div>
-          <div class="cp-row">
-            <span>Live wallpaper sound</span>
-            <label class="switch"><input type="checkbox" id="cp-wp-sound"><span class="slider"></span></label>
-          </div>
-          <div class="cp-row">
-            <span>Animate Wallpaper</span>
-            <label class="switch"><input type="checkbox" id="cp-wp-animated"><span class="slider"></span></label>
-          </div>
+          <button type="button" class="cp-link-row" id="cp-wp-choose"><span>Choose a wallpaper</span><span class="cp-chevron" aria-hidden="true">›</span></button>
         </section>
 
         <section class="cp-section">
           <h3 class="cp-section-title">Layout</h3>
-          <div class="cp-row">
-            <span>Show Home button</span>
-            <label class="switch"><input type="checkbox" id="cp-show-home"><span class="slider"></span></label>
-          </div>
-          <div class="cp-row">
-            <span>Show bookmarks bar</span>
-            <label class="switch"><input type="checkbox" id="cp-show-bookmarks"><span class="slider"></span></label>
-          </div>
           <div class="cp-row cp-row-stack">
             <span>Shortcuts sidebar</span>
             <div class="cp-seg" id="cp-sidebar-mode" role="group" aria-label="Shortcuts sidebar visibility">
@@ -930,18 +960,126 @@
             <label class="switch"><input type="checkbox" id="cp-vertical-tabs"><span class="slider"></span></label>
           </div>
           <div class="cp-row">
+            <span>Bookmarks bar</span>
+            <label class="switch"><input type="checkbox" id="cp-show-bookmarks"><span class="slider"></span></label>
+          </div>
+          <div class="cp-row">
+            <span>Home button</span>
+            <label class="switch"><input type="checkbox" id="cp-show-home"><span class="slider"></span></label>
+          </div>
+          <div class="cp-row">
             <span>Notes button</span>
             <label class="switch"><input type="checkbox" id="cp-show-notes"><span class="slider"></span></label>
           </div>
         </section>
 
-        <section class="cp-section">
-          <h3 class="cp-section-title">More</h3>
-          <button type="button" class="cp-link-row" data-action="settings"><span>Open all settings</span><span class="cp-chevron">›</span></button>
-          <button type="button" class="cp-link-row" data-action="extensions"><span>Manage extensions</span><span class="cp-chevron">›</span></button>
+        <section class="cp-section cp-section-links">
+          <button type="button" class="cp-link-row" data-action="settings"><span>All settings</span><span class="cp-chevron" aria-hidden="true">›</span></button>
+          <button type="button" class="cp-link-row" data-action="extensions"><span>Extensions</span><span class="cp-chevron" aria-hidden="true">›</span></button>
         </section>
       </div>
         </aside>
+      </div>
+    </div>
+  </div>
+
+  <!-- A quiet one-time note along the bottom of the window. Not a toast:
+       no icon, no panel, no dismiss button, nothing to action. It fades in,
+       sits for ten seconds and goes, and is never shown again. -->
+  <div id="chrome-note" class="chrome-note" hidden></div>
+
+  <!-- Tab hover preview. Firefox-style: rest on a tab and a thumbnail of
+       that page appears under it, so you can tell twelve identical-looking
+       tabs apart without clicking through them. Lives at the top level rather
+       than inside the tab so it can overhang the strip. -->
+  <div id="tab-preview" class="tab-preview" hidden>
+    <div class="tab-preview-shot">
+      <img id="tab-preview-img" alt="" />
+      <div id="tab-preview-fallback" class="tab-preview-fallback">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M3 9h18"/>
+        </svg>
+      </div>
+    </div>
+    <div class="tab-preview-meta">
+      <div class="tab-preview-title" id="tab-preview-title"></div>
+      <div class="tab-preview-host" id="tab-preview-host"></div>
+    </div>
+  </div>
+
+  <!-- Paste protection. Shown when a pasted link looks like it is pretending
+       to be somewhere else. -->
+  <div id="paste-warn" class="paste-warn hidden" role="dialog" aria-modal="true" aria-labelledby="paste-warn-title">
+    <div class="paste-warn-backdrop" id="paste-warn-backdrop"></div>
+    <div class="paste-warn-card">
+      <div class="paste-warn-ico">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3.3 3.6 18.2a1.4 1.4 0 0 0 1.2 2.1h14.4a1.4 1.4 0 0 0 1.2-2.1z"/>
+          <path d="M12 9.6v4.2"/><path d="M12 17.1h.01"/>
+        </svg>
+      </div>
+      <h2 id="paste-warn-title">This link looks suspicious</h2>
+      <p class="paste-warn-sub" id="paste-warn-reason"></p>
+      <div class="paste-warn-url" id="paste-warn-url"></div>
+      <div class="paste-warn-actions">
+        <button type="button" class="paste-warn-btn" id="paste-warn-cancel">Don't open it</button>
+        <button type="button" class="paste-warn-btn danger" id="paste-warn-go">Open anyway</button>
+      </div>
+      <button type="button" class="paste-warn-off" id="paste-warn-off">Turn off paste protection</button>
+    </div>
+  </div>
+
+  <!-- Wallpaper chooser. Opened from the Customize panel; a small sheet
+       rather than a jump straight into a file dialog, because "choose a
+       wallpaper" has three different answers and picking between them is the
+       actual decision. -->
+  <div id="wp-chooser" class="wp-chooser hidden" role="dialog" aria-modal="true" aria-labelledby="wp-chooser-title">
+    <div class="wp-chooser-backdrop" id="wp-chooser-backdrop"></div>
+    <div class="wp-chooser-card">
+      <h2 id="wp-chooser-title">Choose a wallpaper</h2>
+      <p class="wp-chooser-sub">What goes behind your new tab.</p>
+
+      <button type="button" class="wp-opt" id="wp-opt-image">
+        <span class="wp-opt-ico">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m4 17 4.5-4.5a2 2 0 0 1 2.8 0L20 20"/></svg>
+        </span>
+        <span class="wp-opt-text">
+          <b>An image</b>
+          <small>A picture from this device. Copied into your profile, never uploaded.</small>
+        </span>
+        <span class="cp-chevron" aria-hidden="true">›</span>
+      </button>
+
+      <button type="button" class="wp-opt" id="wp-opt-live">
+        <span class="wp-opt-ico">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m10.5 9.5 5 2.5-5 2.5z" fill="currentColor" stroke="none"/></svg>
+        </span>
+        <span class="wp-opt-text">
+          <b>A live wallpaper</b>
+          <small>A looping video. Pauses on its own whenever the tab is not visible.</small>
+        </span>
+        <span class="cp-chevron" aria-hidden="true">›</span>
+      </button>
+
+      <button type="button" class="wp-opt" id="wp-opt-random">
+        <span class="wp-opt-ico">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="m15 15 6 6"/><path d="M4 4l5 5"/></svg>
+        </span>
+        <span class="wp-opt-text">
+          <b>Random photos</b>
+          <small>A different freely licensed photo on every new tab, credited to its photographer.</small>
+        </span>
+        <span class="wp-opt-state" id="wp-opt-random-state"></span>
+      </button>
+
+      <div class="wp-chooser-foot">
+        <button type="button" class="wp-opt wp-opt-quiet" id="wp-opt-none">
+          <span class="wp-opt-text"><b>No wallpaper</b></span>
+        </button>
+        <button type="button" class="wp-chooser-link" id="wp-opt-library">
+          Preview your wallpaper library in Settings
+          <span class="cp-chevron" aria-hidden="true">›</span>
+        </button>
       </div>
     </div>
   </div>
@@ -1030,7 +1168,7 @@
     <div class="ty-card">
       <svg class="ty-logo" viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
       <div class="ty-title">Join our community</div>
-      <div class="ty-text">Get updates, share feedback, and hang out with other Privoo users.</div>
+      <div class="ty-text">New builds land in the Discord first. It's the best place to report a bug or ask for a feature.</div>
       <div class="ty-actions">
         <button class="ty-btn-secondary" id="discord-dismiss">Maybe later</button>
         <button class="ty-btn" id="discord-join">Join Discord</button>
@@ -1038,13 +1176,41 @@
     </div>
   </div>
 
-  <div id="thankyou-popup" class="ty-popup hidden" role="dialog" aria-modal="true" aria-label="Thank you for using Privoo">
+  <!-- One-time statement of intent. Shown once, after the thank-you and Discord
+       popups have had their turn, so the three never stack. -->
+  <div id="ownbrowsing-popup" class="ty-popup hidden" role="dialog" aria-modal="true" aria-label="Your browsing belongs to you">
+    <div class="ty-card">
+      <svg class="ty-logo" viewBox="0 0 24 24" width="40" height="40" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="M12 2.6 4.5 5.9v6.4c0 5.3 3.2 9.9 7.5 11.1 4.3-1.2 7.5-5.8 7.5-11.1V5.9z"/><path d="m8.8 12.2 2.3 2.3 4.1-4.6"/></svg>
+      <div class="ty-title">Your browsing stays on this device</div>
+      <div class="ty-text">There is no account to create and nothing syncs to a server. Ad and tracker blocking is on from the start.</div>
+      <button class="ty-btn" id="ownbrowsing-ok">Continue</button>
+    </div>
+  </div>
+
+  <div id="thankyou-popup" class="ty-popup hidden" role="dialog" aria-modal="true" aria-label="Thanks for trying Privoo">
     <div class="ty-card">
       <img class="ty-logo" src="privoo://newtab/logo.png" width="40" height="40" alt="Privoo" draggable="false"/>
-      <div class="ty-title">Thank you for using Privoo</div>
-      <div class="ty-text">We built Privoo to put your privacy first, no accounts, no tracking, no compromise. We hope it serves you well.</div>
+      <div class="ty-title">Thanks for trying Privoo</div>
+      <div class="ty-text">Privoo is a small independent project. No accounts, no telemetry, nothing sold on.</div>
       <button class="ty-btn" id="thankyou-ok">Continue</button>
     </div>
+  </div>
+
+  <!-- Night light. Above everything including the guest pages, and inert to
+       the pointer, so it tints without ever being in the way. -->
+  <div id="night-light" hidden></div>
+
+  <!-- The distance break. A card, not a modal: it interrupts nothing, and if
+       it is ignored it leaves on its own. -->
+  <div id="eye-break" hidden>
+    <div class="eb-ring"><svg viewBox="0 0 40 40"><circle class="eb-track" cx="20" cy="20" r="17"/><circle class="eb-fill" cx="20" cy="20" r="17"/></svg><span id="eb-count">20</span></div>
+    <div class="eb-text">
+      <div class="eb-title">Look at something far away</div>
+      <div class="eb-sub">Out of a window if you can, for twenty seconds.</div>
+    </div>
+    <button class="eb-close" id="eb-close" type="button" aria-label="Dismiss">
+      <svg viewBox="0 0 24 24"><path d="M6.2 4.8 4.8 6.2 10.6 12l-5.8 5.8 1.4 1.4L12 13.4l5.8 5.8 1.4-1.4L13.4 12l5.8-5.8-1.4-1.4L12 10.6z"/></svg>
+    </button>
   </div>
 
   <script src="emoji-data.js"></script>

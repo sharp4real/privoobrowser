@@ -7,52 +7,31 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --accent:#8ab4f8; --accent-hover:#a0c2fa; --on-accent:#202124;
+  --accent:#8ab4f8; --accent-hover:#a0c2fa; --on-accent:#1e1e21;
   --accent-soft:rgba(138,180,248,.18);
-  --bg:#f8f9fa; --surface:#fff; --text:#202124; --muted:#5f6368;
-  --border:#e8eaed; --hover:#f1f3f4;
+  --bg:#f8f9fa; --surface:#fff; --text:#1e1e21; --muted:#4d4d57;
+  --border:#ededf0; --hover:#f1f3f4;
 }
 body.dark{
-  --bg:#202124; --surface:#292a2d; --text:#e8eaed; --muted:#9aa0a6;
+  --bg:#1e1e21; --surface:#28282c; --text:#ededf0; --muted:#b0b0b8;
   --border:#3c4043; --hover:#3c4043;
 }
 /* ── Privoo studio palette ── */
 :root{ --accent:#4f46e5; --accent-hover:#6058ea; --accent-soft:rgba(79,70,229,.13);
   --bg:#f3f3f7; --surface:#ffffff; --text:#17171f; --muted:#6c6c78; --border:rgba(23,23,31,.09); --hover:rgba(23,23,31,.05); }
 body.dark{ --accent:#948ef2; --accent-hover:#a29cf5; --accent-soft:rgba(148,142,242,.18);
-  --bg:#17181c; --surface:#1f2024; --text:#f1f1f4; --muted:#97979f; --border:rgba(255,255,255,.08); --hover:rgba(255,255,255,.06); }
-/* html stays transparent — the body's solid fill covers it normally, and
-   in transparency mode the see-through html lets the OS material reach
-   every edge. (A `body.transparent-ui html` selector can't work — html is
-   the ancestor of body.) */
+  --bg:#1e1e21; --surface:#28282c; --text:#ededf0; --muted:#b0b0b8; --border:rgba(255,255,255,.08); --hover:rgba(255,255,255,.06); }
 html{height:100%;background:transparent}
 body{height:100%;font-family:"Inter","Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);user-select:none;display:flex;flex-direction:column}
 body.dark{color-scheme:dark}
-body.transparent-ui{background:transparent !important;}
-body.transparent-ui main,body.transparent-ui header{background:transparent !important;}
-body.transparent-ui header{
-  backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);
-  background:rgba(255,255,255,.60) !important;border-color:rgba(0,0,0,.08) !important;
-}
-body.transparent-ui.dark header{background:rgba(32,33,36,.50) !important;border-color:rgba(255,255,255,.08) !important;}
-body.transparent-ui nav.side{background:transparent !important;border-color:rgba(0,0,0,.09) !important;}
-body.transparent-ui.dark nav.side{background:transparent !important;border-color:rgba(255,255,255,.07) !important;}
-body.transparent-ui .side-btn:hover{background:rgba(0,0,0,.06)!important;}
-body.transparent-ui .side-btn.active{background:rgba(138,180,248,.18)!important;}
-body.transparent-ui .hist-item{
-  background:rgba(255,255,255,.55);
-  backdrop-filter:blur(10px) saturate(160%);-webkit-backdrop-filter:blur(10px) saturate(160%);
-  border-radius:10px;margin-bottom:2px;
-}
-body.transparent-ui.dark .hist-item{background:rgba(41,42,45,.55);}
 button,input{font:inherit;cursor:default;background:none;border:none;color:inherit}
 
 /* Custom scrollbar — matches the rest of the app */
 ::-webkit-scrollbar{width:12px;height:12px}
 ::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:#dadce0;border-radius:12px;border:3px solid transparent;background-clip:padding-box}
-::-webkit-scrollbar-thumb:hover{background:#bdc1c6;background-clip:padding-box;border:3px solid transparent}
-body.dark ::-webkit-scrollbar-thumb{background:#5f6368;background-clip:padding-box;border:3px solid transparent}
+::-webkit-scrollbar-thumb{background:#d8d8de;border-radius:12px;border:3px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:#b0b0b8;background-clip:padding-box;border:3px solid transparent}
+body.dark ::-webkit-scrollbar-thumb{background:#4d4d57;background-clip:padding-box;border:3px solid transparent}
 
 header{
   background:var(--surface);border-bottom:1px solid var(--border);
@@ -70,7 +49,7 @@ header{
   padding:0 16px 0 38px;font-size:13.5px;outline:none;background:var(--hover);
   color:var(--text);user-select:text;transition:background .15s,border-color .15s,box-shadow .15s;
 }
-#search:focus{background:var(--surface);border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+#search:focus{background:var(--surface);border-color:var(--border-2,var(--border))}
 
 .hdr-btn{
   height:36px;padding:0 16px;border-radius:10px;border:1px solid var(--border);
@@ -126,7 +105,7 @@ main{flex:1;overflow-y:auto;background:var(--bg);min-width:0}
 .hist-item:hover{background:var(--hover)}
 
 .pick{
-  width:16px;height:16px;flex-shrink:0;accent-color:var(--accent);
+  width:16px;height:16px;flex-shrink:0;
   display:none;cursor:pointer;
 }
 body.selecting .pick{display:block}
@@ -174,21 +153,19 @@ body.dark .act-btn:hover{color:#f28b82}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
 .modal-bg.open{display:flex}
 .modal{width:min(420px,100%);background:var(--surface);color:var(--text);border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.22);padding:22px;border:1px solid var(--border)}
-body.transparent-ui .modal{background:rgba(255,255,255,.72) !important;backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);}
-body.transparent-ui.dark .modal{background:rgba(38,40,46,.72) !important;}
 .modal h3{font-size:17px;font-weight:500;margin-bottom:16px}
 .modal-field{margin-bottom:14px}
 .modal-field select{
   width:100%;height:36px;border:1px solid var(--border);border-radius:12px;
-  padding:0 12px;background:var(--surface);color:inherit;outline:none;
+  padding:0 12px;background-color:var(--surface);color:inherit;outline:none;
   appearance:none;-webkit-appearance:none;
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235f6368'><path d='M7 10l5 5 5-5z'/></svg>");
   background-repeat:no-repeat;background-position:right 8px center;background-size:16px;
 }
-.modal-field select:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.modal-field select:focus{border-color:var(--border-2,var(--border))}
 .check-grid{display:grid;gap:10px;font-size:13.5px}
 .check-grid label{display:flex;align-items:center;gap:10px;cursor:default}
-.check-grid input{accent-color:var(--accent);cursor:pointer;width:16px;height:16px}
+.check-grid input{cursor:pointer;width:16px;height:16px}
 .modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
 .mbtn{height:36px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:0 18px;font-size:13px;font-weight:500;transition:background .12s}
 .mbtn:hover{background:var(--hover)}
@@ -197,10 +174,70 @@ body.transparent-ui.dark .modal{background:rgba(38,40,46,.72) !important;}
 body.dark .mbtn.danger{color:#f28b82;border-color:rgba(242,139,130,.4)}
 body.dark .mbtn.danger:hover{background:rgba(242,139,130,.12)}
 
-#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#303134;color:#fff;border-radius:12px;padding:10px 18px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .18s;z-index:80;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#37373f;color:#fff;border-radius:12px;padding:10px 18px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .18s;z-index:80;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.3)}
 #toast.show{opacity:1}
-body.dark #toast{background:#e8eaed;color:#202124}
+body.dark #toast{background:#ededf0;color:#1e1e21}
+
+/* ── Motion ───────────────────────────────────────────────────────────
+   A history page is a list of things that happened in order, so it arrives
+   in order: rows fade up one after another, a few milliseconds apart. The
+   whole cascade is under a third of a second — long enough to read as
+   deliberate, short enough that it never delays anyone.
+
+   Everything here is opt-out under prefers-reduced-motion, at the bottom. */
+@keyframes hist-in {
+  from { opacity: 0; transform: translateY(7px); }
+  to   { opacity: 1; transform: none; }
+}
+.hist-item {
+  animation: hist-in .34s cubic-bezier(.2,.8,.25,1) both;
+  animation-delay: calc(var(--i, 0) * 18ms);
+}
+@keyframes hist-head-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: none; }
+}
+.day-header { animation: hist-head-in .3s cubic-bezier(.2,.8,.25,1) both; }
+
+/* Removing a row collapses it rather than snapping the list shut. */
+.hist-item.removing {
+  animation: none;
+  opacity: 0;
+  transform: translateX(-14px);
+  transition: opacity .16s ease, transform .16s ease;
+  pointer-events: none;
+}
+
+/* The row lifts very slightly under the pointer, and its favicon comes up
+   to meet you — enough to feel live without anything actually moving far. */
+.hist-item {
+  transition: background .13s ease, transform .13s cubic-bezier(.16,1,.3,1);
+}
+.hist-item:hover { transform: translateX(2px); }
+.fav-wrap { transition: transform .16s cubic-bezier(.16,1,.3,1); }
+.hist-item:hover .fav-wrap { transform: scale(1.12); }
+
+/* Action buttons slide in rather than blinking on. */
+.hist-actions {
+  transform: translateX(4px);
+  transition: opacity .14s ease, transform .14s cubic-bezier(.16,1,.3,1);
+}
+.hist-item:hover .hist-actions { transform: none; }
+.act-btn { transition: background .12s ease, color .12s ease, transform .12s cubic-bezier(.16,1,.3,1); }
+.act-btn:active { transform: scale(.9); }
+
+/* The empty state gets one gentle entrance so it does not simply appear. */
+#empty { animation: hist-in .4s cubic-bezier(.2,.8,.25,1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hist-item, .day-header, #empty { animation: none !important; }
+  .hist-item:hover, .hist-item:hover .fav-wrap, .hist-actions { transform: none !important; }
+  .hist-item.removing { transition: opacity .1s linear; transform: none; }
+}
 </style>
+<!-- Shared finish pass: one palette across every Privoo page. Loads last so
+     it wins on order; the block above still owns this page's layout. -->
+<link rel="stylesheet" href="page-theme.css" />
 </head>
 <body>
 
@@ -280,10 +317,30 @@ function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 function showToast(t){ const el=document.getElementById('toast'); el.textContent=t; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),1800); }
 function applyTheme(s){
   document.body.classList.toggle('dark', !!s?.darkMode);
-  document.body.classList.toggle('transparent-ui', !!s?.increaseTransparency);
   applyAccent(s?.accentColor);
 }
-function applyAccent(hex){const r=document.documentElement;if(!hex){r.style.removeProperty('--accent');r.style.removeProperty('--accent-hover');r.style.removeProperty('--accent-soft');return;}r.style.setProperty('--accent',hex);const m=hex.replace('#','').match(/.{2}/g);if(m){const[rv,g,b]=m.map(x=>parseInt(x,16));const h=`rgb(${Math.min(255,Math.round(rv+(255-rv)*.18))},${Math.min(255,Math.round(g+(255-g)*.18))},${Math.min(255,Math.round(b+(255-b)*.18))})`;r.style.setProperty('--accent-hover',h);r.style.setProperty('--accent-soft',`rgba(${rv},${g},${b},.18)`);} }
+// Mirrors applyAccentTriad() in renderer.js, so this page shows the same
+// accent as the browser around it. Two rules it has to honour:
+//   - '#ffffff' is the adaptive "Mono" accent, not literally white: it means
+//     white on the dark UI and near-black on the light one. Written through
+//     unmapped it painted white on white in light mode.
+//   - --on-accent comes from the accent's own luminance, so a toggle knob or
+//     button label on top of it always contrasts with it.
+function applyAccent(hex){
+  const r = document.documentElement;
+  const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
+  let c = (hex && /^#[0-9a-f]{6}$/i.test(hex)) ? hex : (isDark ? '#ffffff' : '#101014');
+  if (c.toLowerCase() === '#ffffff' && !isDark) c = '#101014';
+  r.style.setProperty('--accent', c);
+  const [rv, g, b] = c.replace('#','').match(/.{2}/g).map(x => parseInt(x, 16));
+  const lum = (0.2126*rv + 0.7152*g + 0.0722*b) / 255;
+  // A near-white accent has no headroom to brighten into, so hover darkens.
+  const mix = lum > 0.72 ? 0 : 255, k = lum > 0.72 ? 0.12 : 0.18;
+  r.style.setProperty('--accent-hover',
+    `rgb(${Math.round(rv+(mix-rv)*k)},${Math.round(g+(mix-g)*k)},${Math.round(b+(mix-b)*k)})`);
+  r.style.setProperty('--on-accent', lum > 0.6 ? '#1b1b1e' : '#ffffff');
+  r.style.setProperty('--accent-soft', `rgba(${rv},${g},${b},${isDark ? '.16' : '.13'})`);
+}
 function fmtTime(ts){ return new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
 function dayKey(ts){ return new Date(ts).toDateString(); }
 function dayLabel(k){
@@ -313,6 +370,10 @@ function render(){
   const groups = new Map();
   for(const h of filtered){ const k=dayKey(h.visitTime); if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(h); }
 
+  // Runs across the whole list, not per day-group, so the cascade reads as
+  // one motion down the page rather than restarting at every date heading.
+  let rowIndex = 0;
+
   for(const [k, items] of groups){
     const grp = document.createElement('div');
     grp.className='day-group';
@@ -325,6 +386,9 @@ function render(){
 
       const item=document.createElement('div');
       item.className='hist-item';
+      // The stagger is capped at 14 rows: past that the delay would be
+      // longer than anyone is willing to watch, and the rest simply arrive.
+      item.style.setProperty('--i', String(Math.min(rowIndex++, 14)));
       item.innerHTML=
         `<input class="pick" type="checkbox" ${selected.has(h.visitTime)?'checked':''}>` +
         `<div class="fav-wrap"><span class="fav-letter">${esc(letter)}</span>${fav?`<img src="${esc(fav)}" alt="" decoding="async"/>`:''}  </div>` +
@@ -342,9 +406,14 @@ function render(){
         const action=e.target.closest('[data-act]');
         if(action){
           if(action.dataset.act==='remove'){
+            // Collapse the row before re-rendering. Deleting one entry out of
+            // fifty otherwise just makes the list jump, and you lose track of
+            // where you were.
+            item.classList.add('removing');
             await api?.removeHistory(h.visitTime);
             all=all.filter(x=>x.visitTime!==h.visitTime);
             selected.delete(h.visitTime);
+            await new Promise(r=>setTimeout(r,180));
             render(); return;
           }
           if(action.dataset.act==='site'){

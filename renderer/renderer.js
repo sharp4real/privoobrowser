@@ -7,6 +7,7 @@ const DOWNLOADS_URL  = 'privoo://downloads/';
 const HISTORY_URL    = 'privoo://history/';
 const EXTENSIONS_URL = 'privoo://extensions/';
 const BOOKMARKS_URL  = 'privoo://bookmarks/';
+const AI_URL         = 'privoo://ai/';
 
 // Default favicon shown for internal pages and when a real favicon fails to load
 const VTAB_DEFAULT_FAVICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='16' height='16'%3E%3Cpath fill='%235f6368' d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z'/%3E%3C/svg%3E";
@@ -222,15 +223,46 @@ const LUCID_MODE_JS = String.raw`(function(){
   function get(){ var v=parseFloat(localStorage.getItem(KEY)); return isNaN(v)?0:Math.max(0,Math.min(1,v)); }
   function set(v){ try{ localStorage.setItem(KEY,String(v)); }catch(e){} }
   function css(s){ if(s<=0) return ''; return 'contrast('+(1+0.20*s).toFixed(3)+') saturate('+(1+0.35*s).toFixed(3)+') brightness('+(1+0.06*s).toFixed(3)+')'; }
-  function applyAll(){ var f=css(get()); document.querySelectorAll('video').forEach(function(v){ if(v.style.filter!==f) v.style.filter=f; }); }
+  // The filter lives in a stylesheet rule with !important, NOT in the video's
+  // inline style. YouTube's player rewrites the <video> style attribute on every
+  // resize/quality change/SPA navigation, which silently wiped an inline filter
+  // (and there was no attribute observer to put it back) — that is why Lucid
+  // appeared to do nothing on YouTube. A stylesheet rule survives all of that.
+  var styleEl=null;
+  function applyAll(){
+    var f=css(get());
+    if(!styleEl||!styleEl.isConnected){
+      styleEl=document.getElementById('__pl_css');
+      if(!styleEl){
+        styleEl=document.createElement('style'); styleEl.id='__pl_css';
+        (document.head||document.documentElement).appendChild(styleEl);
+      }
+    }
+    var rule=f?('video{filter:'+f+' !important}'):'';
+    if(styleEl.textContent!==rule) styleEl.textContent=rule;
+    // Clear any inline filter left behind by an older build of this script.
+    document.querySelectorAll('video[style*="filter"]').forEach(function(v){ v.style.filter=''; });
+  }
   var star=document.createElement('div'); star.id='__pl_star';
   star.style.cssText='position:fixed;z-index:2147483000;width:34px;height:34px;border-radius:9px;display:none;align-items:center;justify-content:center;cursor:pointer;background:rgba(18,20,18,.72);color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.45);opacity:0;transition:opacity .16s';
   star.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2l2.9 6.9L22 9.3l-5.5 4.8L18.2 21 12 17.3 5.8 21l1.7-6.9L2 9.3l7.1-.4z"/></svg>';
   var panel=document.createElement('div'); panel.id='__pl_panel';
   panel.style.cssText='position:fixed;z-index:2147483000;display:none;flex-direction:column;gap:7px;padding:10px 12px;border-radius:11px;background:rgba(18,20,18,.9);color:#fff;font:600 11px/1.2 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);width:186px';
   panel.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><span>Lucid Mode</span><span id="__pl_v"></span></div><input id="__pl_r" type="range" min="0" max="100" step="1" style="width:100%;accent-color:#4f46e5">';
-  (document.body||document.documentElement).appendChild(star);
-  (document.body||document.documentElement).appendChild(panel);
+  // Mount into the fullscreen element when one is active. A position:fixed node
+  // parented to <body> is NOT rendered while another element is fullscreen, so
+  // without this the star vanished the moment you went fullscreen on YouTube.
+  function mountRoot(){
+    return document.fullscreenElement || document.webkitFullscreenElement || document.body || document.documentElement;
+  }
+  function mount(){
+    var root=mountRoot(); if(!root) return;
+    if(star.parentNode!==root) root.appendChild(star);
+    if(panel.parentNode!==root) root.appendChild(panel);
+  }
+  mount();
+  document.addEventListener('fullscreenchange', mount, true);
+  document.addEventListener('webkitfullscreenchange', mount, true);
   var range=panel.querySelector('#__pl_r'), valEl=panel.querySelector('#__pl_v');
   function syncPanel(){ var s=get(); range.value=Math.round(s*100); valEl.textContent=s<=0?'Off':Math.round(s*100)+'%'; star.style.color=s>0?'#beb3ff':'#fff'; }
   range.addEventListener('input',function(){ set(range.value/100); syncPanel(); applyAll(); });
@@ -248,9 +280,13 @@ const LUCID_MODE_JS = String.raw`(function(){
   function show(){
     if(!cur||!cur.isConnected){ hide(); return; }
     var r=cur.getBoundingClientRect();
-    star.style.left=(r.left+r.width/2-17)+'px'; star.style.top=(r.top+12)+'px';
+    // Top-LEFT of the video, not centred: YouTube parks its own title/channel
+    // overlay dead centre at the top of the player, and a centred star landed
+    // underneath it (and on top of the title, which is worse).
+    var sx=Math.max(6,Math.min(r.left+14,window.innerWidth-40));
+    star.style.left=sx+'px'; star.style.top=(r.top+12)+'px';
     star.style.display='flex'; star.style.opacity='1'; star.style.color=get()>0?'#beb3ff':'#fff';
-    if(panel.style.display==='flex'){ panel.style.left=Math.max(6,Math.min(r.left+r.width/2-93,window.innerWidth-192))+'px'; panel.style.top=(r.top+52)+'px'; }
+    if(panel.style.display==='flex'){ panel.style.left=Math.max(6,Math.min(sx,window.innerWidth-192))+'px'; panel.style.top=(r.top+52)+'px'; }
   }
   function hide(){ star.style.opacity='0'; star.style.display='none'; panel.style.display='none'; cur=null; }
   // Show only while the cursor is over the TOP band of a video (or over our own
@@ -259,15 +295,14 @@ const LUCID_MODE_JS = String.raw`(function(){
     var t=e.target;
     if(t===star||star.contains(t)||t===panel||panel.contains(t)) return; // keep while on our UI
     var v=videoAt(e.clientX,e.clientY);
-    if(v){ var r=v.getBoundingClientRect(); if(e.clientY<=r.top+Math.min(90,r.height*0.28)){ cur=v; show(); return; } }
+    if(v){ var r=v.getBoundingClientRect(); if(e.clientY<=r.top+Math.max(64,Math.min(130,r.height*0.3))){ cur=v; show(); return; } }
     if(panel.style.display!=='flex') hide();
   },true);
   // Keep the star glued to the video while it's shown (scroll / resize). Also
   // re-attach our nodes if the page tore them out — YouTube is an SPA and swaps
   // large parts of the DOM on navigation, which was silently removing the star.
   function follow(){
-    var root=document.body||document.documentElement;
-    if(root){ if(!star.isConnected) root.appendChild(star); if(!panel.isConnected) root.appendChild(panel); }
+    mount();
     if(cur&&(star.style.display==='flex'||panel.style.display==='flex')){ if(!cur.isConnected) hide(); else show(); }
     requestAnimationFrame(follow);
   }
@@ -282,7 +317,7 @@ const LUCID_MODE_JS = String.raw`(function(){
 const LUCID_CLEANUP_JS = String.raw`(function(){ try{
   window.__privooLucid=0;
   document.querySelectorAll('video').forEach(function(v){ v.style.filter=''; });
-  ['__pl_star','__pl_panel','__pl_svg'].forEach(function(id){ var e=document.getElementById(id); if(e) e.remove(); });
+  ['__pl_star','__pl_panel','__pl_svg','__pl_css'].forEach(function(id){ var e=document.getElementById(id); if(e) e.remove(); });
 }catch(e){} })();`;
 
 // ── YouTube black-frame fix ──────────────────────────────────────────────────
@@ -292,21 +327,259 @@ const LUCID_CLEANUP_JS = String.raw`(function(){ try{
 // GPU. This nudges the video's own compositing layer right after playback
 // starts (a couple of times, because the first frame is the flaky one), which
 // forces that missing paint — clearing the black frame WITHOUT a reload.
+// ── YouTube ad skipper ───────────────────────────────────────────────────────
+// Network filters cannot remove modern YouTube ads. They are stitched into the
+// SAME stream as the video, described in the /youtubei/v1/player response, which
+// we deliberately allowlist because blocking it breaks playback outright. So the
+// ad arrives as part of the legitimate video and has to be dealt with in-page.
+//
+// Three things happen here, in order of preference:
+//   1. Click the real Skip button the moment it appears.
+//   2. For unskippable ads, seek to the end of the ad segment. YouTube treats a
+//      seek past the ad duration as the ad having been watched, and moves on.
+//   3. Mute while an ad is on screen, restoring the previous state after, so a
+//      seek that lands mid-roll never blasts audio.
+const YOUTUBE_ADSKIP_JS = String.raw`(function(){
+  if(window.__privooYtAds) return; window.__privooYtAds=1;
+
+  // ── 1. Cosmetic: the ad slots that are just page furniture ──────────────
+  // These are same-origin YouTube components, so the network blocker never
+  // sees them — they have to be removed here or not at all.
+  var CSS = [
+    "ytd-ad-slot-renderer",
+    "ytd-in-feed-ad-layout-renderer",
+    "ytd-display-ad-renderer",
+    "ytd-promoted-sparkles-web-renderer",
+    "ytd-promoted-sparkles-text-search-renderer",
+    "ytd-promoted-video-renderer",
+    "ytd-companion-slot-renderer",
+    "ytd-action-companion-ad-renderer",
+    "ytd-banner-promo-renderer",
+    "ytd-statement-banner-renderer",
+    "ytd-primetime-promo-renderer",
+    "ytd-merch-shelf-renderer",
+    "ytd-engagement-panel-section-list-renderer[target-id='engagement-panel-ads']",
+    "ytd-rich-item-renderer:has(ytd-ad-slot-renderer)",
+    "ytd-reel-video-renderer:has(.ytd-ad-slot-renderer)",
+    "#masthead-ad",
+    "#player-ads",
+    "#panels-full-bleed-container ytd-ad-slot-renderer",
+    ".ytp-ad-module",
+    ".ytp-ad-overlay-slot",
+    ".ytd-video-masthead-ad-v3-renderer",
+    "ytm-promoted-video-renderer"
+  ].join(",") + "{display:none !important}";
+  try{
+    var st = document.createElement("style");
+    st.id = "privoo-yt-ads";
+    st.textContent = CSS;
+    (document.head || document.documentElement).appendChild(st);
+  }catch(e){}
+
+  // ── 2. In-stream: skip, seek past, or outrun the ad ─────────────────────
+  var SKIP_SELECTORS = [
+    ".ytp-ad-skip-button-modern",
+    ".ytp-skip-ad-button",
+    ".ytp-ad-skip-button",
+    ".ytp-ad-skip-button-slot button",
+    "button.ytp-ad-skip-button-modern",
+    ".ytp-ad-survey-answer-selector-skip-button"
+  ];
+  var OVERLAY_SELECTORS = [
+    ".ytp-ad-overlay-close-button",
+    ".ytp-ad-overlay-slot .ytp-ad-overlay-close-container",
+    ".ytp-ad-visit-advertiser-button + .ytp-ad-overlay-close-button"
+  ];
+
+  var wasMuted = null;
+  var wasRate  = null;
+
+  function player(){ return document.querySelector("#movie_player") || document.querySelector(".html5-video-player"); }
+  function video(){ return document.querySelector(".html5-main-video") || document.querySelector("video"); }
+
+  function adShowing(){
+    var p = player();
+    if(!p) return false;
+    return p.classList.contains("ad-showing")
+        || p.classList.contains("ad-interrupting")
+        || !!document.querySelector(".ytp-ad-player-overlay, .ytp-ad-player-overlay-layout");
+  }
+
+  function clickFirst(sels){
+    for(var i=0;i<sels.length;i++){
+      var el = document.querySelector(sels[i]);
+      if(el && el.offsetParent !== null){ try{ el.click(); return true; }catch(e){} }
+    }
+    return false;
+  }
+
+  function tick(){
+    clickFirst(OVERLAY_SELECTORS);
+
+    var v = video();
+    if(!v) return;
+
+    if(adShowing()){
+      // Silence and speed it up first — that alone disposes of most ads
+      // before the skip button is even eligible.
+      if(wasMuted === null){ wasMuted = v.muted; wasRate = v.playbackRate; }
+      v.muted = true;
+      try{ if(v.playbackRate < 16) v.playbackRate = 16; }catch(e){}
+
+      if(clickFirst(SKIP_SELECTORS)) return;
+
+      // Unskippable: jump to the end. Guarded on a finite duration so this
+      // can never seek the real video and never touches a live stream.
+      var d = v.duration;
+      if(isFinite(d) && d > 0 && v.currentTime < d - 0.15){
+        try{ v.currentTime = d; }catch(e){}
+      }
+      return;
+    }
+
+    // Back to real content: undo everything, restoring the user's own rate
+    // rather than assuming it was 1x.
+    if(wasMuted !== null){
+      try{ v.muted = wasMuted; }catch(e){}
+      try{ v.playbackRate = (wasRate && isFinite(wasRate)) ? wasRate : 1; }catch(e){}
+      wasMuted = null; wasRate = null;
+    }
+  }
+
+  // A short interval beats MutationObserver here: the ad state lives in a class
+  // on the player, which changes without any DOM mutation we could observe
+  // cheaply. 200ms is fast enough that an ad is gone before it registers.
+  setInterval(tick, 200);
+  tick();
+
+  // ── 3. The "ad blockers violate YouTube Terms" interstitial ─────────────
+  // It pauses playback until acknowledged, so it has to go promptly.
+  setInterval(function(){
+    var dlg = document.querySelector("tp-yt-paper-dialog, ytd-enforcement-message-view-model, ytd-popup-container tp-yt-paper-dialog");
+    if(!dlg) return;
+    var txt = (dlg.innerText||"").toLowerCase();
+    if(txt.indexOf("ad blocker") === -1 && txt.indexOf("ad blockers") === -1) return;
+    var btn = dlg.querySelector("button, tp-yt-paper-button, yt-button-shape button");
+    if(btn){ try{ btn.click(); }catch(e){} }
+    try{ dlg.remove(); }catch(e){}
+    // The overlay leaves the page scroll-locked behind it.
+    try{ document.body.style.overflow = ""; }catch(e){}
+    var v = video();
+    if(v && v.paused){ try{ v.play(); }catch(e){} }
+  }, 1000);
+
+  // YouTube is a single-page app: the player survives navigation, so the
+  // loops above keep running — but re-assert the stylesheet, because a route
+  // change can rebuild <head> and drop it.
+  window.addEventListener("yt-navigate-finish", function(){
+    if(!document.getElementById("privoo-yt-ads")){
+      try{
+        var s2 = document.createElement("style");
+        s2.id = "privoo-yt-ads";
+        s2.textContent = CSS;
+        (document.head || document.documentElement).appendChild(s2);
+      }catch(e){}
+    }
+  }, true);
+})`;
+
 const YOUTUBE_FIX_JS = String.raw`(function(){
   if(window.__privooYtFix) return; window.__privooYtFix=1;
+
+  // Cheap recovery: bounce the video's compositing layer.
   function poke(v){ if(!v||!v.isConnected) return; var t=v.style.transform||'';
     v.style.transform='translateZ(0)';
     requestAnimationFrame(function(){ requestAnimationFrame(function(){ v.style.transform=t; }); }); }
+
+  // Hard recovery, for when the layer bounce wasn't enough. Detaching the
+  // element from layout and re-attaching forces Chromium to build a brand new
+  // compositing layer, and a sub-frame seek forces a fresh decode + paint into
+  // it. Together these clear a stuck black frame without reloading the page
+  // (and without losing playback position).
+  function hardPoke(v){
+    if(!v||!v.isConnected) return;
+    try{
+      var d=v.style.display;
+      v.style.display='none';
+      void v.offsetHeight;          // force the style/layout flush
+      v.style.display=d;
+    }catch(e){}
+    try{
+      if(v.seekable && v.seekable.length && v.duration && isFinite(v.duration)){
+        var t=v.currentTime;
+        if(t>0.2){ v.currentTime=Math.max(0,t-0.04); }
+      }
+    }catch(e){}
+  }
+
+  // Is the visible frame actually black? Sampling is the only way to know —
+  // decode can be running perfectly while nothing reaches the screen. Reading
+  // the canvas throws on DRM/tainted video, in which case we just skip
+  // detection and fall back to the blind pokes below.
+  var probe=null;
+  function looksBlack(v){
+    try{
+      if(!v.videoWidth||!v.videoHeight) return false;
+      if(!probe){ probe=document.createElement('canvas'); probe.width=32; probe.height=18; }
+      var c=probe.getContext('2d',{willReadFrequently:true});
+      if(!c) return false;
+      c.drawImage(v,0,0,probe.width,probe.height);
+      var d=c.getImageData(0,0,probe.width,probe.height).data, sum=0;
+      for(var i=0;i<d.length;i+=4){ sum+=d[i]+d[i+1]+d[i+2]; }
+      // Mean channel value across the thumbnail. Real frames — even dark
+      // scenes and letterboxed content — sit well above this.
+      return (sum/(d.length/4)/3) < 3;
+    }catch(e){ return false; }   // tainted canvas (DRM) — cannot tell
+  }
+
   var handled=null;
   function attach(){
     var v=document.querySelector('.html5-main-video')||document.querySelector('video');
     if(!v||v===handled) return;
     handled=v;
-    function onPlay(){ poke(v); setTimeout(function(){poke(v);},150); setTimeout(function(){poke(v);},600); setTimeout(function(){poke(v);},1400); }
+
+    // Blind pokes right after playback starts: the very first frame is the
+    // flaky one, and this costs nothing when the video is already fine.
+    function onPlay(){
+      poke(v);
+      setTimeout(function(){poke(v);},150);
+      setTimeout(function(){poke(v);},600);
+      setTimeout(function(){poke(v);},1400);
+      watch(v);
+    }
     v.addEventListener('playing', onPlay);
     v.addEventListener('loadeddata', function(){ setTimeout(function(){poke(v);},80); });
+    // Returning to a backgrounded tab, and entering/leaving fullscreen, both
+    // rebuild the video layer and are common ways to land on a black frame.
+    document.addEventListener('visibilitychange', function(){
+      if(!document.hidden){ setTimeout(function(){ poke(v); watch(v); },120); }
+    });
+    document.addEventListener('fullscreenchange', function(){
+      setTimeout(function(){ poke(v); watch(v); },160);
+    });
     if(v.readyState>=2 && !v.paused) onPlay();
   }
+
+  // Escalating watchdog: sample a few times over ~6s and only act when the
+  // frame really is black while decode is advancing. Stops as soon as a real
+  // frame appears, so a healthy video is left completely alone.
+  var watching=0;
+  function watch(v){
+    if(watching) clearInterval(watching);
+    var tries=0, lastFrames=-1, escalated=false;
+    watching=setInterval(function(){
+      if(!v.isConnected||v.paused||++tries>12){ clearInterval(watching); watching=0; return; }
+      var frames=-1;
+      try{ frames=v.getVideoPlaybackQuality?v.getVideoPlaybackQuality().totalVideoFrames:-1; }catch(e){}
+      var decoding = frames<0 || frames!==lastFrames;
+      lastFrames=frames;
+      if(!decoding) return;               // still buffering, not our problem
+      if(!looksBlack(v)){ clearInterval(watching); watching=0; return; }
+      if(!escalated){ escalated=true; poke(v); }
+      else { hardPoke(v); }
+    },500);
+  }
+
   attach();
   // YouTube is a single-page app — re-attach when the watched video changes.
   document.addEventListener('yt-navigate-finish', function(){ handled=null; setTimeout(attach,400); }, true);
@@ -449,6 +722,20 @@ if (tabsEl) {
 const viewsEl      = document.getElementById('views');
 const omnibox      = document.getElementById('omnibox');
 const siteIcon         = document.getElementById('site-icon');
+const SITE_ICON_STROKE = 'fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"';
+// Sliders, not a padlock and not an "i".
+//
+// A padlock overstates what it knows: HTTPS says the connection is encrypted,
+// not that the site is safe or honest, and every phishing page has one too —
+// which is why Chrome and Safari both dropped theirs.
+//
+// An "i" was the first replacement here, and it undersold the control: it
+// reads as a footnote, something to hover for a definition, when the thing it
+// opens is where you grant or revoke this site's camera, location and
+// notifications. Sliders say "settings for this page", which is what the panel
+// actually is, and it is the glyph Chrome settled on for the same reason.
+const SITE_ICON_SETTINGS_SVG = `<svg viewBox="0 0 24 24" width="15" height="15" ${SITE_ICON_STROKE}><path d="M5 7.5h5.2"/><path d="M13.8 7.5H19"/><path d="M5 16.5h3.4"/><path d="M12 16.5h7"/><circle cx="12" cy="7.5" r="2.1"/><circle cx="10.2" cy="16.5" r="2.1"/></svg>`;
+const SITE_ICON_SHIELD_SVG = `<svg viewBox="0 0 24 24" width="15" height="15" ${SITE_ICON_STROKE}><path d="M12 3.2 5.2 6v5.2c0 4.3 2.8 8.1 6.8 9.3 4-1.2 6.8-5 6.8-9.3V6z"/></svg>`;
 const siteInfoPopover  = document.getElementById('site-info-popover');
 const backBtn      = document.getElementById('back');
 const forwardBtn   = document.getElementById('forward');
@@ -581,16 +868,20 @@ let tabGroups   = [];
 let nextGroupId = 1;
 // Chrome's tab-group palette: 9 distinct hues that stay readable on both
 // light and dark tab strips. Cycle through them when the user creates groups.
+// Island colours. New islands take these in order, so the first two you make
+// are always visibly different from each other. Grey is last on purpose: as
+// the opening colour it made a new island indistinguishable from the strip it
+// was drawn on, which rather defeated the point.
 const GROUP_COLORS = [
-  { name: 'grey',   solid: '#5f6368', tint: 'rgba(95,99,104,.18)'  },
-  { name: 'blue',   solid: '#1a73e8', tint: 'rgba(26,115,232,.18)' },
-  { name: 'red',    solid: '#ea4335', tint: 'rgba(234,67,53,.18)'  },
-  { name: 'yellow', solid: '#fbbc04', tint: 'rgba(251,188,4,.22)'  },
-  { name: 'green',  solid: '#34a853', tint: 'rgba(52,168,83,.18)'  },
-  { name: 'pink',   solid: '#ff6d8a', tint: 'rgba(255,109,138,.20)' },
-  { name: 'purple', solid: '#a142f4', tint: 'rgba(161,66,244,.18)' },
-  { name: 'cyan',   solid: '#24c1e0', tint: 'rgba(36,193,224,.20)' },
-  { name: 'orange', solid: '#ff8a65', tint: 'rgba(255,138,101,.20)' },
+  { name: 'blue',   solid: '#4d8df6', tint: 'rgba(77,141,246,.22)'  },
+  { name: 'green',  solid: '#4ade80', tint: 'rgba(74,222,128,.20)'  },
+  { name: 'purple', solid: '#a78bfa', tint: 'rgba(167,139,250,.22)' },
+  { name: 'orange', solid: '#fb923c', tint: 'rgba(251,146,60,.22)'  },
+  { name: 'pink',   solid: '#f472b6', tint: 'rgba(244,114,182,.22)' },
+  { name: 'cyan',   solid: '#2dd4bf', tint: 'rgba(45,212,191,.22)'  },
+  { name: 'red',    solid: '#f87171', tint: 'rgba(248,113,113,.22)' },
+  { name: 'yellow', solid: '#fbbf24', tint: 'rgba(251,191,36,.24)'  },
+  { name: 'grey',   solid: '#8e8e99', tint: 'rgba(142,142,153,.20)' },
 ];
 let ctxTabId    = null;
 let saveSessionTimer = null;
@@ -599,21 +890,53 @@ let saveSessionTimer = null;
 async function loadSettings() {
   const data = await window.privoo.getSettings();
   settings = data.settings;
+  // Retire the old generated themes and their soundscapes. Keep a user's
+  // wallpaper, chosen accent and dark mode; only the bundled theme system is
+  // removed.
+  if (settings?.ntpWaveEnabled || (settings?.ntpThemeMusic && settings.ntpThemeMusic !== 'none') || settings?.accentBeforeTheme) {
+    const patch = {
+      ntpWaveEnabled: false, ntpThemeId: '', ntpThemeMusic: 'none', vibeEnabled: false,
+      accentColor: settings.accentBeforeTheme || settings.accentColor,
+      accentBeforeTheme: '',
+    };
+    Object.assign(settings, patch);
+    // setSettings, not saveSettings — there has never been a saveSettings on
+    // the bridge, so the optional call quietly did nothing and this migration
+    // re-ran on every launch.
+    window.privoo.setSettings?.(patch)?.catch?.(() => {});
+  }
   searchEngines = data.searchEngines;
   applyAppSettings();
   paintFeatures();
   initBgMusic();
 }
 
+document.getElementById('eb-close')?.addEventListener('click', dismissEyeBreak);
+
+/* Right-click the AI button to unpin it. The moment somebody wants a button
+   off a toolbar is the moment they are looking at that button, not the moment
+   they think to go and find the page it is configured on. The Extensions page
+   still has the switch, and turning it back on lives there. */
+document.getElementById('ai-btn')?.addEventListener('contextmenu', async (e) => {
+  e.preventDefault();
+  const pick = await showHtmlMenu([
+    { id: 'unpin', label: 'Unpin from toolbar' },
+    { type: 'separator' },
+    { id: 'manage', label: 'Manage extensions' },
+  ], e.clientX, e.clientY);
+  if (pick === 'unpin') {
+    await saveBrowserSetting({ showAiButton: false });
+    privooToast('Privoo AI unpinned. Turn it back on in Extensions.');
+  } else if (pick === 'manage') {
+    createTab(EXTENSIONS_URL);
+  }
+});
+
 function applyAppSettings() {
   if (!settings) return;
   const isDark = !!settings.darkMode;
   document.body.classList.toggle('dark', isDark);
   document.documentElement.classList.toggle('dark', isDark);
-  // Aero gradient — only meaningful while transparency is on; the body class
-  // gates the CSS overlay either way so toggling transparency off cleanly
-  // hides the gradient without needing a second toggle.
-  document.body.classList.toggle('aero-ui', !!settings.aeroGradient);
   // Privoo One skin — floating content island + navy chrome (default on).
   // Privoo One is the browser's design language — always on (no legacy look).
   document.body.classList.add('privoo-one');
@@ -630,7 +953,7 @@ function applyAppSettings() {
   document.body.classList.toggle('vibe-chrome-only', settings.vibeOverPages === false);
   // Themed mode (a colour Theme is active) — extends the Vibe chrome tint up to
   // the tab strip so the whole browser shifts with the theme.
-  document.body.classList.toggle('themed', !!settings.ntpWaveEnabled);
+  document.body.classList.toggle('themed', false);
   // Chrome saturation follows the palette, so greyscale themes (Mono) stay grey
   // instead of picking up a hue tint from an arbitrary "vivid" colour.
   {
@@ -666,7 +989,7 @@ function applyAppSettings() {
   } else if (engName === 'Custom…') {
     engName = 'the web';
   }
-  omnibox.placeholder = `Search ${engName} or type a URL`;
+  omnibox.placeholder = `Search ${engName} or enter an address`;
   // Lucid Mode — apply or remove live on toggle so it takes effect without a
   // page reload (the inject/cleanup scripts are idempotent).
   {
@@ -684,8 +1007,15 @@ function applyAppSettings() {
   paintToolbarWidgets();
   applyVerticalTabs(!!settings.verticalTabs);
   document.body.classList.toggle('vtabs-collapsed', !!settings.vtabsCollapsed);
-  applyVtabsIntegrated(!!settings.verticalTabs && !!settings.vtabsIntegrated);
   document.body.classList.toggle('wobbly-windows', !!settings.wobblyWindows);
+  const _translucent = !!settings.semiTransparent && _translucencyOk;
+  applyCursorStyle(settings);
+  applyVisionSettings(settings);
+  applyNightLight(settings);
+  applyEyeBreaks(settings);
+  applyReadAloud(settings);
+  document.documentElement.classList.toggle('semi-transparent-host', _translucent);
+  document.body.classList.toggle('semi-transparent', _translucent);
   document.body.classList.toggle('low-end-device', !!settings.lowEndDevice);
   // Address-bar style: explicit searchBarStyle, else legacy newSearchBarStyle.
   const _sbs = settings.searchBarStyle || (settings.newSearchBarStyle ? 'soft' : 'classic');
@@ -698,17 +1028,8 @@ function applyAppSettings() {
   document.body.classList.toggle('sp-no-glass', settings.searchPopupGlass === false);
   // Tab style customization removed — Privoo One's tab design is the only look.
   document.body.classList.remove('tabs-pill', 'tabs-underline', 'tabs-chrome', 'tabs-modern');
-  document.body.classList.toggle('newtab-circle', !!settings.newTabBtnCircle);
-  document.body.classList.toggle('vtabs-centered', !!settings.vtabsCenterIcons);
-  // Transparency glass style (only takes effect when transparency is on).
-  document.body.classList.remove('tstyle-liquid', 'tstyle-acrylic', 'tstyle-clear');
-  const _tst = settings.transparencyStyle || 'frosted';
-  if (_tst !== 'frosted') document.body.classList.add('tstyle-' + _tst);
-  // Whole-UI style controls (corner roundness + density). Font + custom CSS are
-  // applied via an injected stylesheet in applyStyleCustomizations().
-  document.body.classList.remove('ui-sharp', 'ui-round');
-  const _round = settings.uiRoundness || 'default';
-  if (_round === 'sharp' || _round === 'round') document.body.classList.add('ui-' + _round);
+  // Font and custom CSS are applied via an injected stylesheet in
+  // applyStyleCustomizations().
   applyStyleCustomizations();
   applyChromeWallpaper();
   applyThemeMusic();
@@ -766,10 +1087,10 @@ function themeVisualClass(id) {
 let _chromeWpReqId = 0;
 async function applyChromeWallpaper() {
   const full    = !!settings?.ntpWallpaperFullBrowser;
-  const wave    = full && !!settings?.ntpWaveEnabled;
+  const wave    = false;
   const wpPath  = settings?.ntpWallpaperPath;
-  const wantsDefaultBg = settings?.ntpApplyPrivooBackground !== false;
-  const hasWp   = wpPath !== '' && !(wpPath == null && !wantsDefaultBg);
+  // No shipped default any more: a wallpaper shows only if the user set one.
+  const hasWp   = !!wpPath;
   const on      = full && (wave || hasWp);
   const isVideo = on && !wave && settings?.ntpWallpaperType === 'video';
   const imgEl  = document.getElementById('chrome-wallpaper');
@@ -777,6 +1098,13 @@ async function applyChromeWallpaper() {
   const waveEl = document.getElementById('chrome-wave');
   document.documentElement.classList.toggle('wallpaper-chrome-host', on);
   document.body.classList.toggle('wallpaper-chrome', on);
+  // True whenever the new tab page has ANY custom background, whether or not it
+  // is stretched over the chrome. Used to stop #views painting a near-black
+  // fill behind a loading new tab, which flashed against a live wallpaper.
+  document.body.classList.toggle(
+    'ntp-has-wallpaper',
+    !!settings?.ntpWaveEnabled || hasWp
+  );
   document.body.classList.toggle('wallpaper-chrome-video', !!isVideo);
   document.body.classList.toggle('wallpaper-chrome-wave', !!wave);
 
@@ -790,7 +1118,7 @@ async function applyChromeWallpaper() {
       const id = settings?.ntpThemeId;
       if (id) {
         waveEl.className = '';
-        waveEl.style.background = "url('privoo://newtab/themes/" + id + ".png') center/cover no-repeat, linear-gradient(135deg, " + cols.join(',') + ")";
+        waveEl.style.background = "linear-gradient(135deg, " + cols.join(',') + ")";
       } else {
         waveEl.style.background = '';
         const st = settings?.ntpThemeStyle || 'aurora';
@@ -1137,19 +1465,10 @@ document.addEventListener('keydown', (e) => {
 // Drive the soundscape from settings. Music only plays while a theme is active.
 let _musicGestureHooked = false;
 function applyThemeMusic() {
-  const mood = settings?.ntpThemeMusic;
-  const want = !!settings?.ntpWaveEnabled && mood && mood !== 'none';
-  const vol = Math.max(0, Math.min(1, typeof settings?.ntpThemeMusicVolume === 'number' ? settings.ntpThemeMusicVolume : 0.4));
-  if (!want) { ThemeAudio.stop(); return; }
-  ThemeAudio.start(mood, vol);
-  // Browsers gate audio until a user gesture — if it didn't start, resume on the
-  // next click/keypress anywhere in the chrome.
-  if (!_musicGestureHooked) {
-    const kick = () => { if (settings?.ntpWaveEnabled && settings?.ntpThemeMusic && settings.ntpThemeMusic !== 'none') ThemeAudio.start(settings.ntpThemeMusic, vol); };
-    document.addEventListener('pointerdown', kick, true);
-    document.addEventListener('keydown', kick, true);
-    _musicGestureHooked = true;
-  }
+  // Themes and their ambient soundscapes were removed. This is kept as a
+  // no-op that actively stops playback, so any profile still carrying an old
+  // ntpThemeMusic value goes quiet instead of looping forever.
+  try { ThemeAudio.stop(); } catch { /* audio graph may not exist yet */ }
 }
 
 function onSettingsChanged(next) {
@@ -1168,11 +1487,16 @@ function onSettingsChanged(next) {
     if (tab.ready) applyInjections(tab.wv);
     // Forward settings to NTP tabs — settings-updated IPC only reaches the
     // main renderer, not webview guest processes, so we push via executeJavaScript.
-    if (tab.url === NEWTAB_URL && tab.wv) {
+    // `tab.ready` matters as much as `tab.wv` here: before the guest attaches,
+    // executeJavaScript is not yet a function on the element, so calling it
+    // throws synchronously and the .catch() never gets the chance to run.
+    if (tab.url === NEWTAB_URL && tab.ready && typeof tab.wv?.executeJavaScript === 'function') {
       const payload = JSON.stringify(settings);
-      tab.wv.executeJavaScript(
-        `if(typeof window.__privooApplySettings==='function')window.__privooApplySettings(${payload});`
-      ).catch(() => {});
+      try {
+        tab.wv.executeJavaScript(
+          `if(typeof window.__privooApplySettings==='function')window.__privooApplySettings(${payload});`
+        ).catch(() => {});
+      } catch { /* guest went away mid-call */ }
     }
   }
 }
@@ -1203,6 +1527,9 @@ function bookmarkFaviconUrl(url) {
 function renderBookmarksBar() {
   if (!bookmarksBar || !settings) return;
   bookmarksBar.hidden = !settings.showBookmarksBar;
+  // A hidden element measures as zero, so the bar has to be re-indented once
+  // it is actually on screen.
+  if (typeof syncVtabsToolbarIndent === 'function') syncVtabsToolbarIndent();
   bookmarksBar.innerHTML = '';
   if (bookmarksBar.hidden) return;
 
@@ -1273,10 +1600,20 @@ function renderPinnedExtensions() {
       e.stopPropagation();
       closePopovers();
       const rect = btn.getBoundingClientRect();
+      // The popup is its own window, so it cannot work out which page the
+      // user is looking at — tell it.
+      let activeTabId = null;
+      try {
+        const active = tabs.find((t) => t.id === activeId);
+        if (active && active.wv && !active.wv.isDestroyed?.()) {
+          activeTabId = active.wv.getWebContentsId();
+        }
+      } catch { /* guest not attached yet */ }
       const res = await window.privoo.openExtensionPopup({
         extPath: ext.path,
         x: rect.left,
         y: rect.bottom + 4,
+        activeTabId,
       });
       if (!res?.ok) createTab(EXTENSIONS_URL);
     });
@@ -1293,6 +1630,17 @@ function paintToolbarWidgets() {
   if (ytdlpToolbarBtn) ytdlpToolbarBtn.hidden = !settings.showYtdlpToolbar;
   // Show/hide geo toolbar button based on settings
   if (geoToolbarBtn) geoToolbarBtn.hidden = !settings.showGeoToolbar;
+  // Downloads is a permanent toolbar control by default: it is the home for
+  // active and completed file transfers, not a temporary notification. It can
+  // be switched off in Extensions, and `=== false` (rather than a truthiness
+  // check) is what makes a profile that has never seen the setting show it.
+  const dlBtnEl = document.getElementById('downloads-btn');
+  const dlAnchorEl = document.getElementById('dl-anchor');
+  const showDl = settings.showDownloadsButton !== false;
+  if (dlBtnEl) dlBtnEl.hidden = !showDl;
+  if (dlAnchorEl) dlAnchorEl.hidden = !showDl;
+  const extBtnEl = document.getElementById('extensions-btn');
+  if (extBtnEl) extBtnEl.hidden = settings.showExtensionsButton !== true;
   // Notes button — off by default, enable via the Notes extension
   if (notesBtn) notesBtn.hidden = !settings.showNotesButton;
   // Calculator button — off by default, enable via the Calculator extension
@@ -1305,7 +1653,9 @@ function paintToolbarWidgets() {
   if (translateBtnEl) translateBtnEl.hidden = !settings.showTranslateButton;
   // AI toolbar button — on by default, can be hidden in Settings → Features
   const aiAnchor = document.getElementById('ai-anchor');
-  if (aiAnchor) aiAnchor.hidden = settings.showAiButton === false;
+  if (aiAnchor) aiAnchor.hidden = settings.showAiButton !== true;
+  const vpnAnchorEl = document.getElementById('vpn-anchor') || vpnBtn;
+  if (vpnAnchorEl) vpnAnchorEl.hidden = settings.showVpnButton !== true;
   // Shortcuts sidebar — three modes: off, always on, or reveal on hover.
   // sidebarMode is the source of truth; showSidebar is kept in sync as a
   // simple on/off mirror for any code that only cares about visibility.
@@ -1386,6 +1736,121 @@ const SIDEBAR_QUICK_ACCESS = [
   { url: SETTINGS_URL,  title: 'Settings',  icon: 'M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z' },
 ];
 
+const MUSIC_PLAYERS = [
+  { id: 'spotify', name: 'Spotify', url: 'https://open.spotify.com',
+    icon: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#1DB954"/><path d="M6.9 16.4c3.2-1 7-.8 9.8.9" stroke="#000" stroke-width="1.7" stroke-linecap="round" fill="none"/><path d="M6.2 12.7c3.9-1.3 8.7-1.1 12 1" stroke="#000" stroke-width="1.9" stroke-linecap="round" fill="none"/><path d="M5.6 8.9c4.5-1.6 10.3-1.3 14.1 1.1" stroke="#000" stroke-width="2.1" stroke-linecap="round" fill="none"/></svg>' },
+  { id: 'ytmusic', name: 'YouTube Music', url: 'https://music.youtube.com',
+    icon: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#FF0033"/><circle cx="12" cy="12" r="6.4" fill="none" stroke="#fff" stroke-width="1.3"/><path d="M10.4 9.2 15 12l-4.6 2.8z" fill="#fff"/></svg>' },
+  { id: 'apple', name: 'Apple Music', url: 'https://music.apple.com',
+    icon: '<svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="url(#am-g)"/><defs><linearGradient id="am-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FB5C74"/><stop offset="1" stop-color="#FA233B"/></linearGradient></defs><path fill="#fff" d="M17 5.4v8.9a2.5 2.5 0 1 1-1.6-2.33V8.2l-5.6 1.24v6.66a2.5 2.5 0 1 1-1.6-2.33V7.6L17 5.4z"/></svg>' },
+  { id: 'amazon', name: 'Amazon Music', url: 'https://music.amazon.com',
+    icon: '<svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#25D1DA"/><path fill="#0B2E36" d="M16.5 6v7.6a2.2 2.2 0 1 1-1.5-2.09V8.1l-4.8 1.06v5.9a2.2 2.2 0 1 1-1.5-2.09V7.9l7.8-1.9z"/></svg>' },
+  { id: 'deezer', name: 'Deezer', url: 'https://www.deezer.com',
+    icon: '<svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#111"/><g fill="#A238FF"><rect x="14" y="6" width="6" height="2.2" rx="1"/><rect x="14" y="9.6" width="6" height="2.2" rx="1"/><rect x="6.5" y="9.6" width="6" height="2.2" rx="1"/><rect x="14" y="13.2" width="6" height="2.2" rx="1"/><rect x="6.5" y="13.2" width="6" height="2.2" rx="1"/><rect x="14" y="16.8" width="6" height="2.2" rx="1"/><rect x="6.5" y="16.8" width="6" height="2.2" rx="1"/><rect x="-1" y="16.8" width="6" height="2.2" rx="1" transform="translate(5)"/></g></svg>' },
+  { id: 'tidal', name: 'Tidal', url: 'https://listen.tidal.com',
+    icon: '<svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#0B0B0B"/><g fill="#fff"><path d="m7 8.4 2.1-2.1 2.1 2.1-2.1 2.1z"/><path d="m12.8 8.4 2.1-2.1L17 8.4l-2.1 2.1z"/><path d="m9.9 11.3 2.1-2.1 2.1 2.1-2.1 2.1z"/><path d="m9.9 14.2 2.1 2.1 2.1-2.1L12 12.1z" opacity=".85"/></g></svg>' },
+  { id: 'soundcloud', name: 'SoundCloud', url: 'https://soundcloud.com',
+    icon: '<svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#FF5500"/><g fill="#fff"><rect x="4.5" y="11" width="1.5" height="6" rx=".75"/><rect x="7" y="9" width="1.5" height="8" rx=".75"/><rect x="9.5" y="7.5" width="1.5" height="9.5" rx=".75"/><rect x="12" y="9" width="1.5" height="8" rx=".75"/><path d="M15 8.6c2.4-.5 4.5 1.1 4.5 3.5 0 2.6-1.9 4.9-4.5 4.9z"/></g></svg>' },
+];
+const MUSIC_ICON_SVG = '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M20 3.5v11.2a3.3 3.3 0 1 1-2-3.03V7.2l-7 1.55v8.45a3.3 3.3 0 1 1-2-3.03V6.4l11-2.9z"/></svg>';
+const COG_ICON_SVG = '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8zm8.5 3.4c0 .5 0 1-.1 1.4l2 1.5-2 3.4-2.3-1a7.7 7.7 0 0 1-2.4 1.4l-.3 2.4h-4l-.3-2.4a7.7 7.7 0 0 1-2.4-1.4l-2.3 1-2-3.4 2-1.5a8.6 8.6 0 0 1 0-2.8l-2-1.5 2-3.4 2.3 1a7.7 7.7 0 0 1 2.4-1.4l.3-2.4h4l.3 2.4c.9.3 1.7.8 2.4 1.4l2.3-1 2 3.4-2 1.5c.1.4.1.9.1 1.4z"/></svg>';
+
+function isMusicSidebarLink(link) {
+  return !!(link && (link.music || link.url === 'privoo://music'));
+}
+
+function currentMusicPlayer() {
+  return MUSIC_PLAYERS.find((p) => p.id === settings?.sidebarMusicPlayer) || null;
+}
+
+let _musicPickPop = null, _musicPickBackdrop = null;
+function closeMusicPicker() {
+  _musicPickPop?.remove(); _musicPickPop = null;
+  _musicPickBackdrop?.remove(); _musicPickBackdrop = null;
+}
+
+function pickSidebarMusicPlayer(anchorBtn) {
+  closeMusicPicker();
+  return new Promise((resolve) => {
+    const pop = document.createElement('div');
+    pop.className = 'music-pick';
+    const curId = settings?.sidebarMusicPlayer || '';
+    pop.innerHTML =
+      '<div class="music-pick-head">Music player</div>' +
+      '<div class="music-pick-sub">Opens in the sidebar. You stay signed in to whichever you pick.</div>' +
+      '<div class="music-pick-grid">' +
+      MUSIC_PLAYERS.map((p) =>
+        `<button type="button" class="music-pick-item${p.id === curId ? ' active' : ''}" data-id="${p.id}">` +
+        `<span class="music-pick-ico">${p.icon}</span>` +
+        `<span class="music-pick-name">${esc(p.name)}</span>` +
+        // A tick on the current one rather than a coloured row: colour on a
+        // row of brand logos reads as another brand, not as "this is yours".
+        `<span class="music-pick-tick" aria-hidden="true"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5 9.5 18 20 6.5"/></svg></span>` +
+        '</button>'
+      ).join('') +
+      '</div>';
+    const backdrop = document.createElement('div');
+    backdrop.className = 'music-pick-backdrop';
+    document.body.appendChild(backdrop);
+    _musicPickBackdrop = backdrop;
+    document.body.appendChild(pop);
+    // Drop from under the anchor, aligned to its left edge — the standard
+    // menu placement. It used to be pinned to the anchor's RIGHT edge, which
+    // is right for the narrow icon rail but wrong for the switcher button in
+    // the music panel's header: from there the menu flew off to the side of a
+    // wide panel instead of opening under the control that spawned it.
+    const r = anchorBtn.getBoundingClientRect();
+    const M = 8;                                    // keep clear of the window edge
+    const w = pop.offsetWidth, h = pop.offsetHeight;
+    const left = Math.max(M, Math.min(r.left, window.innerWidth - w - M));
+    // Below by default; flip above when there isn't room, so the menu never
+    // hangs off the bottom of the window.
+    const below = r.bottom + 6;
+    const top = (below + h + M <= window.innerHeight)
+      ? below
+      : Math.max(M, r.top - h - 6);
+    pop.style.left = `${Math.round(left)}px`;
+    pop.style.top = `${Math.round(top)}px`;
+    _musicPickPop = pop;
+
+    let settled = false;
+    const finish = (player) => {
+      if (settled) return;
+      settled = true;
+      document.removeEventListener('pointerdown', onOutside, true);
+      closeMusicPicker();
+      resolve(player);
+    };
+    function onOutside(ev) { if (!pop.contains(ev.target)) finish(null); }
+    // Two dismissal paths, because neither covers everything on its own:
+    //  - the backdrop catches clicks over the page, which a <webview> would
+    //    otherwise swallow without ever notifying this document;
+    //  - the document listener catches clicks on the browser chrome, which
+    //    sits ABOVE the backdrop in z-order.
+    backdrop.addEventListener('pointerdown', () => finish(null));
+    setTimeout(() => document.addEventListener('pointerdown', onOutside, true), 0);
+    pop.querySelectorAll('.music-pick-item').forEach((item) => {
+      item.addEventListener('click', async (ev) => {
+        ev.stopPropagation();
+        const player = MUSIC_PLAYERS.find((p) => p.id === item.dataset.id);
+        if (!player) return finish(null);
+        await saveBrowserSetting({ sidebarMusicPlayer: player.id });
+        finish(player);
+        renderSidebarRail();
+      });
+    });
+  });
+}
+
+async function openSidebarMusic(anchorBtn, forcePick) {
+  let player = forcePick ? null : currentMusicPlayer();
+  if (!player) player = await pickSidebarMusicPlayer(anchorBtn);
+  // `music: true` is what makes openSidebarPanel show the player switcher in
+  // the panel header. Without it the panel opened Spotify and offered no way
+  // to get to anything else.
+  if (player) openSidebarPanel({ url: player.url, title: player.name, music: true });
+}
+
 function renderSidebarRail() {
   if (!sidebarRail) return;
   sidebarRail.innerHTML = '';
@@ -1420,10 +1885,20 @@ function renderSidebarRail() {
     // Known catalog apps use an embedded brand SVG — no network lookup, and
     // it can never come back wrong. Everything else falls back to <img> +
     // letter (favicon service, then DDG, then the letter avatar).
-    const brandSvg = brandIconSvgFor(link.url);
+    const isMusic = isMusicSidebarLink(link);
+    const brandSvg = isMusic
+      ? (currentMusicPlayer()?.icon || MUSIC_ICON_SVG)
+      : brandIconSvgFor(link.url);
     if (brandSvg) {
       btn.innerHTML = brandSvg;
       btn.classList.add('loaded');
+      if (isMusic) {
+        btn.classList.add('sb-music-btn');
+        btn.title = currentMusicPlayer()?.name || 'Music';
+        // No cog on hover any more - switching players lives in the panel
+        // header once the panel is open, which is where you actually are when
+        // you decide you want a different service.
+      }
     } else {
       btn.innerHTML =
         `<img alt="" />` +
@@ -1442,7 +1917,8 @@ function renderSidebarRail() {
     }
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      openSidebarPanel(link);
+      if (isMusic) void openSidebarMusic(btn, false);
+      else openSidebarPanel(link);
     });
     // Hover: if a tab from this site is playing audio, show a tiny rounded
     // "Playing" pill with the track title and a pause/resume button.
@@ -1451,13 +1927,18 @@ function renderSidebarRail() {
     btn.addEventListener('contextmenu', async (e) => {
       e.preventDefault();
       const idx = links.indexOf(link);
-      const action = await showHtmlMenu([
+      const action = await showHtmlMenu(isMusic ? [
+        { id: 'sb-music',  label: 'Change music player…' },
+        { type: 'separator' },
+        { id: 'sb-remove', label: 'Remove shortcut' },
+      ] : [
         { id: 'sb-open',   label: 'Open in new tab' },
         { id: 'sb-copy',   label: 'Copy link' },
         { type: 'separator' },
         { id: 'sb-remove', label: 'Remove shortcut' },
       ], e.clientX, e.clientY);
-      if (action === 'sb-open') createTab(link.url);
+      if (action === 'sb-music') void openSidebarMusic(btn, true);
+      else if (action === 'sb-open') createTab(link.url);
       else if (action === 'sb-copy') navigator.clipboard.writeText(link.url).catch(() => {});
       else if (action === 'sb-remove') {
         const next = sidebarLinkList().slice();
@@ -1550,34 +2031,64 @@ function openSidebarPanel(link) {
   }
   // Comfortable desktop-panel width. A phone-narrow strip (~400px) clips
   // desktop layouts, so default wider when the user hasn't set a width.
-  let w = settings?.sidebarPanelWidth || 560;
-  const titleEl = document.getElementById('sidebar-panel-title');
-  let linkHost = '';
-  try { linkHost = new URL(link.url).hostname; } catch {}
-  if (titleEl) titleEl.textContent = linkHost ? linkHost.replace(/^www\./, '') : (link.title || link.url);
+  const w = clampSidebarPanelWidth(settings?.sidebarPanelWidth || 880);
   sidebarPanel.style.width = `${w}px`;
   // Deliberately NOT marking this as a mobile webview: the panel now uses the
   // default desktop identity across all of Electron's UA layers.
-  sidebarWv.src = link.url;
+  // Re-pointing src reloads the guest, which would kill anything it is
+  // playing — only navigate when the panel isn't already on that site.
+  let liveUrl = '';
+  try { liveUrl = sidebarWv.getURL() || ''; } catch {}
+  const sameSite = (() => {
+    try { return !!liveUrl && new URL(liveUrl).hostname === new URL(link.url).hostname; }
+    catch { return false; }
+  })();
+  if (!sameSite) sidebarWv.src = link.url;
+  const wasTucked = sidebarPanel.classList.contains('sp-tucked');
   sidebarPanel.hidden = false;
+  sidebarPanel.classList.remove('sp-tucked');
   sidebarOverlay?.classList.remove('hidden');
-  // Trigger slide-in animation
+  // Slide-in animation only on a true first open. Re-opening a tucked panel
+  // already animates back via the .sp-tucked transform transition, and running
+  // both at once double-animates it.
+  syncSidebarMusicSwitch(link);
   sidebarPanel.classList.remove('sp-enter');
-  requestAnimationFrame(() => sidebarPanel.classList.add('sp-enter'));
-  // Keep title current as the page navigates
-  sidebarWv.addEventListener('page-title-updated', (e) => {
-    if (titleEl) {
-      try { titleEl.textContent = new URL(sidebarWv.getURL()).hostname.replace(/^www\./, ''); }
-      catch { titleEl.textContent = e.title || ''; }
-    }
-  });
+  if (!wasTucked) requestAnimationFrame(() => sidebarPanel.classList.add('sp-enter'));
 }
+
+// Closing only tucks the panel out of view — the guest stays attached and keeps
+// running, so music carries on playing while you browse. It must NOT be hidden
+// with `hidden`/display:none: that detaches the <webview>'s guest WebContents
+// and kills playback (this is exactly why Spotify stopped on click-away).
+// The panel header carries the player switcher while the music player is open.
+// It is populated on every open so it reflects the current choice.
+function syncSidebarMusicSwitch(link) {
+  const btn  = document.getElementById('sidebar-music-switch');
+  if (!btn) return;
+  const isMusic = isMusicSidebarLink(link);
+  btn.hidden = !isMusic;
+  if (!isMusic) return;
+  const cur = currentMusicPlayer();
+  const ico  = document.getElementById('sidebar-music-switch-ico');
+  const name = document.getElementById('sidebar-music-switch-name');
+  if (ico)  ico.innerHTML  = cur?.icon || MUSIC_ICON_SVG;
+  if (name) name.textContent = cur?.name || 'Music';
+}
+
+document.getElementById('sidebar-music-switch')?.addEventListener('click', async (e) => {
+  e.stopPropagation();
+  const btn = e.currentTarget;
+  const player = await pickSidebarMusicPlayer(btn);
+  if (!player) return;
+  openSidebarPanel({ url: player.url, title: player.name, music: true });
+  renderSidebarRail();
+});
 
 function closeSidebarPanel() {
   if (!sidebarPanel) return;
-  sidebarPanel.hidden = true;
+  sidebarPanel.classList.remove('sp-enter');
+  sidebarPanel.classList.add('sp-tucked');
   sidebarOverlay?.classList.add('hidden');
-  if (sidebarWv) sidebarWv.src = 'about:blank';
 }
 
 // Sidebar panel header buttons
@@ -1597,7 +2108,7 @@ sidebarResizeHandle?.addEventListener('pointerdown', (e) => {
   e.preventDefault();
   _sidebarResizing = true;
   _sidebarResizeStart = e.clientX;
-  _sidebarResizeW = sidebarPanel ? parseInt(sidebarPanel.style.width) || 480 : 480;
+  _sidebarResizeW = sidebarPanel ? parseInt(sidebarPanel.style.width) || 880 : 880;
   document.body.classList.add('sidebar-resizing');
   // Pointer capture: move/up are delivered to the handle even when the
   // cursor crosses the <webview>, which never forwards mouse events to this
@@ -1613,11 +2124,15 @@ sidebarResizeHandle?.addEventListener('pointerdown', (e) => {
 window.addEventListener('blur', _onSidebarResizeEnd);
 document.addEventListener('pointerup', _onSidebarResizeEnd);
 
+function clampSidebarPanelWidth(w) {
+  const max = Math.max(320, window.innerWidth - 120);
+  return Math.max(260, Math.min(max, Math.round(w)));
+}
+
 function _onSidebarResize(e) {
   if (!_sidebarResizing || !sidebarPanel) return;
   const delta = e.clientX - _sidebarResizeStart;
-  const newW = Math.max(180, Math.min(760, _sidebarResizeW + delta));
-  sidebarPanel.style.width = `${newW}px`;
+  sidebarPanel.style.width = `${clampSidebarPanelWidth(_sidebarResizeW + delta)}px`;
 }
 
 async function _onSidebarResizeEnd() {
@@ -1628,7 +2143,7 @@ async function _onSidebarResizeEnd() {
   sidebarResizeHandle?.removeEventListener('pointerup', _onSidebarResizeEnd);
   sidebarResizeHandle?.removeEventListener('lostpointercapture', _onSidebarResizeEnd);
   if (sidebarPanel) {
-    const w = parseInt(sidebarPanel.style.width) || 480;
+    const w = clampSidebarPanelWidth(parseInt(sidebarPanel.style.width) || 880);
     await saveBrowserSetting({ sidebarPanelWidth: w });
   }
 }
@@ -1640,10 +2155,14 @@ function serializeSession() {
     activeIndex: tabs.length ? Math.min(activeIndex, tabs.length - 1) : 0,
     groups: tabGroups.slice(),
     tabs: tabs.map((t) => ({
-      url: t.url || NEWTAB_URL,
+      // A sleeping tab is parked on about:blank — snoozedUrl is where it
+      // really goes. Persisting t.url here would turn every sleeping tab
+      // into a blank one on the next launch.
+      url: t.snoozedUrl || t.url || NEWTAB_URL,
       title: t.title || 'Tab',
       pinned: !!t.pinned,
       groupId: t.groupId || null,
+      reaction: t.reaction || null,
     })),
   };
 }
@@ -1732,6 +2251,7 @@ function enforcePinnedFirst() {
 // Keeps grouped tabs visually contiguous behind their group chip.
 function renderTabStrip() {
   if (!tabsEl) return;
+  syncNoTabsClass();
   // Remove any existing chips
   tabsEl.querySelectorAll('.tab-group-chip').forEach(el => el.remove());
 
@@ -1757,9 +2277,145 @@ function renderTabStrip() {
     if (g) tabsEl.appendChild(makeGroupChip(g));
     for (const t of buckets.get(gid)) tabsEl.appendChild(t.tabEl);
   }
+  markIslandCaps();
   applySplitTabStripJoin();
   requestAnimationFrame(resizeTabs);
   renderVtabs();
+}
+
+// An island is drawn as one continuous tinted capsule: the chip caps its left
+// end, the last tab caps the right, and everything between has square edges so
+// there is no seam down the middle of it. Only the right cap needs marking,
+// and it has to be re-marked whenever the run's membership changes — including
+// on close, which does not re-render the strip.
+function markIslandCaps() {
+  const runs = new Map();
+  for (const t of tabs) {
+    if (t.pinned || !t.groupId) continue;
+    if (!runs.has(t.groupId)) runs.set(t.groupId, []);
+    runs.get(t.groupId).push(t);
+  }
+  for (const t of tabs) t.tabEl?.classList.remove('island-last');
+  for (const run of runs.values()) {
+    run[run.length - 1]?.tabEl?.classList.add('island-last');
+  }
+}
+
+/* ── Tab reactions ────────────────────────────────────────────────────
+   An emoji pinned to a tab. It carries no behaviour at all — it exists
+   because a row of twenty tabs that all say "Google Docs" is unnavigable,
+   and a red dot on the one you actually want solves that instantly.
+
+   Hovering a tab reveals a small face button; clicking it opens a strip of
+   the eight most-used reactions plus a "+" into the full emoji picker.
+   ──────────────────────────────────────────────────────────────────────── */
+
+// Deliberately eight, and deliberately these eight: enough range to mean
+// something, few enough to pick from without reading. Anything else is one
+// click further, behind the "+".
+const QUICK_REACTIONS = ['⭐', '❗', '✅', '🔥', '👀', '💡', '🐛', '❤️'];
+
+function paintTabReaction(tab) {
+  const el = tab.tabEl?.querySelector('.tab-reaction');
+  if (el) {
+    el.textContent = tab.reaction || '';
+    el.hidden = !tab.reaction;
+  }
+  tab.tabEl?.classList.toggle('has-reaction', !!tab.reaction);
+  // Vertical tabs render from the same tab objects, so they follow along.
+  const vt = document.querySelector(`.vtab[data-tab-id="${tab.id}"] .vtab-reaction`);
+  if (vt) {
+    vt.textContent = tab.reaction || '';
+    vt.hidden = !tab.reaction;
+  }
+}
+
+function setTabReaction(tab, emoji) {
+  // Clicking the reaction that is already set removes it — the same gesture
+  // both ways, so there is no separate "remove" to go looking for.
+  tab.reaction = (emoji && emoji !== tab.reaction) ? emoji : null;
+  paintTabReaction(tab);
+  scheduleSaveSession();
+}
+
+let _reactionBar = null, _reactionBackdrop = null;
+function closeReactionBar() {
+  _reactionBar?.remove();
+  _reactionBar = null;
+  _reactionBackdrop?.remove();
+  _reactionBackdrop = null;
+  document.removeEventListener('pointerdown', _onReactionOutside, true);
+}
+function _onReactionOutside(e) {
+  if (_reactionBar && !_reactionBar.contains(e.target)) closeReactionBar();
+}
+
+function openReactionBar(tab, anchorEl) {
+  closeReactionBar();
+  closePopovers();
+
+  const bar = document.createElement('div');
+  bar.className = 'reaction-bar';
+
+  for (const emoji of QUICK_REACTIONS) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'reaction-chip' + (tab.reaction === emoji ? ' active' : '');
+    b.textContent = emoji;
+    b.title = tab.reaction === emoji ? 'Remove reaction' : 'React with ' + emoji;
+    b.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setTabReaction(tab, emoji);
+      closeReactionBar();
+    });
+    bar.appendChild(b);
+  }
+
+  const more = document.createElement('button');
+  more.type = 'button';
+  more.className = 'reaction-chip reaction-more';
+  more.textContent = '+';
+  more.title = 'All emoji';
+  more.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeReactionBar();
+    openEmojiPicker(null, null, (glyph) => setTabReaction(tab, glyph));
+  });
+  bar.appendChild(more);
+
+  if (tab.reaction) {
+    const clear = document.createElement('button');
+    clear.type = 'button';
+    clear.className = 'reaction-chip reaction-clear';
+    clear.title = 'Remove reaction';
+    clear.innerHTML = '<svg viewBox="0 0 14 14" width="10" height="10"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>';
+    clear.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setTabReaction(tab, null);
+      closeReactionBar();
+    });
+    bar.appendChild(clear);
+  }
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'reaction-backdrop';
+  backdrop.addEventListener('pointerdown', () => closeReactionBar());
+  document.body.appendChild(backdrop);
+  _reactionBackdrop = backdrop;
+
+  document.body.appendChild(bar);
+  _reactionBar = bar;
+
+  // Centre under the button it came from, clamped to the window so the strip
+  // never hangs off the edge on the last tab in the row.
+  const r = anchorEl.getBoundingClientRect();
+  const M = 8;
+  const left = Math.max(M, Math.min(r.left + r.width / 2 - bar.offsetWidth / 2,
+                                    window.innerWidth - bar.offsetWidth - M));
+  bar.style.left = `${Math.round(left)}px`;
+  bar.style.top = `${Math.round(r.bottom + 6)}px`;
+
+  setTimeout(() => document.addEventListener('pointerdown', _onReactionOutside, true), 0);
 }
 
 function makeGroupChip(g) {
@@ -1775,7 +2431,7 @@ function makeGroupChip(g) {
 
   const name = document.createElement('span');
   name.className = 'tg-name';
-  name.textContent = g.name || `Group ${g.id}`;
+  name.textContent = g.name || `Island ${g.id}`;
   name.spellcheck = false;
   chip.appendChild(name);
 
@@ -1803,11 +2459,11 @@ async function openGroupContextMenu(groupId, x = 0, y = 0) {
     checked: g.paletteName === p.name,
   }));
   const items = [
-    { id: 'g-rename',  label: 'Rename group' },
+    { id: 'g-rename',  label: 'Rename island' },
     { label: 'Color',  submenu: colorSubmenu },
     { type: 'separator' },
-    { id: 'g-ungroup', label: 'Ungroup' },
-    { id: 'g-close',   label: 'Close all tabs in group' },
+    { id: 'g-ungroup', label: 'Dissolve island' },
+    { id: 'g-close',   label: 'Close all tabs in island' },
   ];
   const action = await showHtmlMenu(items, x, y);
   if (!action) return;
@@ -1852,7 +2508,7 @@ function renameGroupInline(g) {
     nameEl.contentEditable = 'false';
     if (save) {
       const t = nameEl.textContent.trim();
-      g.name = t || `Group ${g.id}`;
+      g.name = t || `Island ${g.id}`;
       scheduleSaveSession();
     }
     nameEl.textContent = g.name;
@@ -1876,7 +2532,7 @@ function applyGroupStyle(tab) {
   } else {
     tab.tabEl.style.removeProperty('--group-color');
     tab.tabEl.style.removeProperty('--group-tint');
-    tab.tabEl.classList.remove('grouped');
+    tab.tabEl.classList.remove('grouped', 'island-last');
   }
 }
 
@@ -1886,21 +2542,49 @@ function resizeTabs() {
   if (!strip) return;
   const stripW = strip.clientWidth;
   if (stripW <= 0) return; // not laid out yet — a later trigger will re-run us
-  // Measure the whole STRIP (a stable width) — NOT #tabs-scroll, which is now
-  // content-sized (reading it would be circular). Reserve room for the "+" and
-  // the trailing drag gap, generously, so the tabs are always a touch narrower
-  // than the space and NEVER overflow-clip before they truly need to scroll.
-  const btnW = (newTabBtn ? newTabBtn.offsetWidth : 30) + 12;
-  const pinnedW = tabs.filter(t => t.pinned).length * 42;
-  const reserve = btnW + pinnedW + 56;
-  const available = stripW - reserve;
+
   const unpinned = tabs.filter(t => !t.pinned);
   if (!unpinned.length) return;
-  // Chrome-style: each tab is (space / count), capped at 240 (a few tabs stay
-  // full width, "+" right beside the last) and floored at 76 (then it scrolls).
+  const pinnedCount = tabs.filter(t => t.pinned).length;
+
+  // flex-basis sets the CONTENT box only. Every tab also carries horizontal
+  // margins (3px a side in the current chrome) and the scroll box has its own
+  // padding — none of which used to be subtracted here. With a dozen tabs that
+  // unaccounted margin came to ~70px, so the row was laid out wider than the
+  // viewport and the last tab was clipped mid-title. Read the real values off
+  // the DOM rather than hard-coding them, because several theme variants
+  // change the tab metrics.
+  const sample = unpinned[0].tabEl;
+  const cs = sample ? getComputedStyle(sample) : null;
+  const perTab = cs
+    ? (parseFloat(cs.marginLeft) || 0) + (parseFloat(cs.marginRight) || 0)
+    : 0;
+  const scrollEl = document.getElementById('tabs-scroll');
+  const scrollPad = scrollEl
+    ? (() => {
+        const s = getComputedStyle(scrollEl);
+        return (parseFloat(s.paddingLeft) || 0) + (parseFloat(s.paddingRight) || 0);
+      })()
+    : 0;
+  // The CSS cap can be tighter than the 240 this function used to assume
+  // (220 in the current chrome). Honouring it keeps the two in agreement.
+  const capW = cs ? (parseFloat(cs.maxWidth) || 240) : 240;
+  const minW = cs ? (parseFloat(cs.minWidth) || 88) : 88;
+
+  // Measure the whole STRIP (a stable width) — NOT #tabs-scroll, which is
+  // content-sized, so reading it would be circular. The reserve covers the
+  // "+" button and the trailing drag region that shares the strip.
+  const btnW = (newTabBtn ? newTabBtn.offsetWidth : 30) + 12;
+  const pinnedW = pinnedCount * (42 + perTab);
+  const reserve = btnW + pinnedW + scrollPad + perTab * unpinned.length + 56;
+  const available = stripW - reserve;
+
+  // Chrome-style: each tab is (space / count), capped so a few tabs stay full
+  // width with the "+" right beside the last, and floored so that past a
+  // certain count the strip scrolls instead of shrinking to nothing.
   const w = available > 0
-    ? Math.min(240, Math.max(76, Math.floor(available / unpinned.length)))
-    : 76;
+    ? Math.min(capW, Math.max(minW, Math.floor(available / unpinned.length)))
+    : minW;
   for (const t of unpinned) {
     if (t.tabEl) t.tabEl.style.flexBasis = w + 'px';
   }
@@ -1911,7 +2595,7 @@ function ensureNewGroupForTab(tab) {
   const palette = GROUP_COLORS[(id - 1) % GROUP_COLORS.length];
   const g = {
     id,
-    name: `Group ${id}`,
+    name: `Island ${id}`,
     color: palette.solid,  // legacy field for session persistence
     solid: palette.solid,
     tint:  palette.tint,
@@ -1935,7 +2619,7 @@ async function restoreSession(data) {
   const list = [...data.tabs].sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned));
   for (const spec of list) {
     const gid = spec.groupId && tabGroups.some((g) => g.id === spec.groupId) ? spec.groupId : null;
-    const tab = createTab(spec.url || NEWTAB_URL, false, { pinned: !!spec.pinned, groupId: gid });
+    const tab = createTab(spec.url || NEWTAB_URL, false, { pinned: !!spec.pinned, groupId: gid, reaction: spec.reaction });
     if (spec.title) {
       tab.title = spec.title;
       const te = tab.tabEl.querySelector('.tab-title');
@@ -1970,7 +2654,6 @@ function ensureDisclaimer() {
       window.privoo.setupFinished?.();
       document.body.classList.remove('setup-mode');
       setupOverlay.setAttribute('hidden', '');
-      try { createTab('privoo://news/'); } catch {}
       resolve();
     });
   });
@@ -2081,6 +2764,9 @@ function createTab(url = defaultNewTabUrl(), activate = true, opts = {}) {
   }
   wv.setAttribute('src', url);
   wv.setAttribute('allowpopups', 'true');
+  // Set before the first paint, not on did-navigate: otherwise a new tab
+  // flashes the opaque page colour for a frame before losing it again.
+  wv.classList.toggle('is-ntp', isNewTabPage(url));
   viewsEl.appendChild(wv);
 
   const tabEl = document.createElement('div');
@@ -2090,23 +2776,18 @@ function createTab(url = defaultNewTabUrl(), activate = true, opts = {}) {
   tabEl.className = 'tab tab-in';
   requestAnimationFrame(() =>
     requestAnimationFrame(() => tabEl.classList.remove('tab-in')));
-  tabEl.draggable = true;
+  // NOT draggable. HTML5 drag-and-drop is what made Chromium take a
+  // translucent snapshot of the tab and drag that around instead of the tab
+  // itself; wireDrag() runs a pointer-driven reorder instead.
+  tabEl.draggable = false;
   tabEl.innerHTML =
     `<span class="favicon tab-fav"></span>` +
     `<span class="tab-title">${newTabLabel()}</span>` +
+    `<span class="tab-reaction" hidden></span>` +
+    `<span class="tab-react-btn" title="Add a reaction"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0" stroke-linecap="round"/><circle cx="9" cy="10" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r="1" fill="currentColor" stroke="none"/></svg></span>` +
     `<span class="tab-audio-ind" title="Audio playing, click to mute"><svg viewBox="0 0 24 24" width="12" height="12"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg></span>` +
     `<span class="tab-close" title="Close tab"><svg viewBox="0 0 14 14" width="10" height="10"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></span>`;
   tabsEl.appendChild(tabEl);
-  // Tab widths are un-animated now, so the strip's final layout exists this
-  // frame: re-spread immediately, then (next frame, and only if it genuinely
-  // overflows) reveal the new tab. No settling delay, no clipped edge.
-  resizeTabs();
-  requestAnimationFrame(() => {
-    const sc = document.getElementById('tabs-scroll');
-    if (sc && sc.scrollWidth > sc.clientWidth + 2) {
-      try { tabEl.scrollIntoView({ inline: 'end', block: 'nearest' }); } catch {}
-    }
-  });
 
   const tab = {
     id,
@@ -2116,6 +2797,10 @@ function createTab(url = defaultNewTabUrl(), activate = true, opts = {}) {
     tabEl,
     pinned: !!opts.pinned,
     groupId: (opts.groupId && tabGroups.some((g) => g.id === opts.groupId)) ? opts.groupId : null,
+    // An emoji the user pinned to this tab. Purely a marker — it changes
+    // nothing about the page, it just makes one tab findable in a row of
+    // twenty that all say the same thing.
+    reaction: typeof opts.reaction === 'string' ? opts.reaction : null,
     isPlayingAudio: false,
     isMuted: false,
     volume: 1,
@@ -2126,6 +2811,18 @@ function createTab(url = defaultNewTabUrl(), activate = true, opts = {}) {
   };
   tabs.push(tab);
 
+  // Tab widths are un-animated, so the strip's final layout exists this frame:
+  // re-spread immediately — now that this tab is IN `tabs` and will actually
+  // be sized — then (next frame, and only if it genuinely overflows) reveal it.
+  // No settling delay, no clipped edge.
+  resizeTabs();
+  requestAnimationFrame(() => {
+    const sc = document.getElementById('tabs-scroll');
+    if (sc && sc.scrollWidth > sc.clientWidth + 2) {
+      try { tabEl.scrollIntoView({ inline: 'end', block: 'nearest' }); } catch {}
+    }
+  });
+
   // Paint the Privoo page icon immediately — don't wait for onNav to fire
   // (avoids a flash of the generic favicon on internal pages).
   if (tab.faviconUrl) {
@@ -2135,9 +2832,19 @@ function createTab(url = defaultNewTabUrl(), activate = true, opts = {}) {
 
   if (tab.pinned) tabEl.classList.add('pinned');
   applyGroupStyle(tab);
+  paintTabReaction(tab);
+
+  tabEl.querySelector('.tab-react-btn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openReactionBar(tab, e.currentTarget);
+  });
 
   tabEl.addEventListener('mousedown', (e) => {
-    if (e.button === 0 && !e.target.closest('.tab-close')) activateTab(id);
+    if (e.button !== 0) return;
+    // Neither the close button nor the reaction button should switch tabs on
+    // the way to doing their own job.
+    if (e.target.closest('.tab-close, .tab-react-btn')) return;
+    activateTab(id);
   });
   tabEl.addEventListener('auxclick', (e) => { if (e.button === 1 && !tab.pinned) closeTab(id); });
   tabEl.addEventListener('contextmenu', (e) => {
@@ -2161,6 +2868,14 @@ function createTab(url = defaultNewTabUrl(), activate = true, opts = {}) {
   // privoo:// pages (new tab, settings): use opacity:0 until dom-ready
   // instead of a solid fill — they load in <50 ms and this avoids flashing
   // an opaque panel over a transparent window.
+  // Set once the guest has actually painted something. activateTab() reads it
+  // to decide whether it is safe to hide the page underneath yet.
+  wv._privooPainted = false;
+  const markPainted = () => {
+    if (wv._privooPainted) return;
+    wv._privooPainted = true;
+    wv.dispatchEvent(new CustomEvent('privoo-painted'));
+  };
   if (!url.startsWith('privoo://')) {
     wv.classList.add('first-paint');
   } else {
@@ -2169,10 +2884,19 @@ function createTab(url = defaultNewTabUrl(), activate = true, opts = {}) {
     const clearNtpLoading = () => {
       if (_ntpDone) return;
       _ntpDone = true;
-      requestAnimationFrame(() => wv.classList.remove('ntp-loading'));
+      // Two frames, not one: at dom-ready the page's own background (wallpaper,
+      // theme gradient) has not necessarily painted yet, and revealing on the
+      // very next frame showed the bare default fill underneath it first.
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        wv.classList.remove('ntp-loading');
+        markPainted();
+      }));
     };
-    wv.addEventListener('dom-ready', clearNtpLoading, { once: true });
-    setTimeout(clearNtpLoading, 600);
+    // did-stop-loading rather than dom-ready — a privoo:// page is local and
+    // settles in a few ms either way, and waiting for it means the new tab
+    // fades in already showing its wallpaper instead of flashing a blank frame.
+    wv.addEventListener('did-stop-loading', clearNtpLoading, { once: true });
+    setTimeout(clearNtpLoading, 700);
   }
   let _fpCleared = false;
   const clearFirstPaint = () => {
@@ -2180,6 +2904,7 @@ function createTab(url = defaultNewTabUrl(), activate = true, opts = {}) {
     _fpCleared = true;
     requestAnimationFrame(() => requestAnimationFrame(() => {
       wv.classList.remove('first-paint');
+      markPainted();
     }));
   };
   wv.addEventListener('did-stop-loading', clearFirstPaint, { once: true });
@@ -2228,17 +2953,62 @@ function nudgeMediaRepaint(tab) {
   }));
 }
 
+// Hold the outgoing page on screen, underneath, until the incoming one has
+// painted. Hiding it immediately exposed the empty #views fill for the frame or
+// two before the new page drew — the black flash when opening a new tab (most
+// obvious against a live wallpaper, where the surrounding chrome keeps moving
+// while the content area blinks out).
+function releaseUnderlay(under) {
+  if (!under) return;
+  under.classList.remove('underlay');
+  // Only actually hide it if it is still not the active tab.
+  if (activeTab()?.wv !== under) under.classList.add('inactive');
+}
+
 function activateTab(id) {
   const tab = getTab(id);
   if (!tab) return;
+  // Both halves of Tab Snooze hang off this: the tab you are leaving starts
+  // its clock, and the one you are arriving at gets its page back.
+  const leaving = activeTab();
+  if (leaving && leaving !== tab) {
+    leaving.lastSeenAt = Date.now();
+    // …and its hover preview is taken here, on the way out. This is the one
+    // moment the tab is certainly rendered and its picture has stopped
+    // changing, so the capture is free and the card is instant later.
+    warmTabPreview(leaving, true);
+  }
+  tab.lastSeenAt = Date.now();
+  wakeTab(tab);
   // In Split View, activating one of the two pane tabs keeps the split and
   // just moves "focus" to that pane; activating any other tab ends it.
   if (typeof splitExitOnActivate === 'function') splitExitOnActivate(id);
+  const prevWv = activeTab()?.wv || null;
   activeId = id;
+  // Only worth an underlay when there IS an outgoing page and the incoming one
+  // has nothing to show yet.
+  // Never in Split View: both panes are meant to be on screen at once, and an
+  // underlay would sit over/under them and fight layoutSplit() for visibility.
+  const inSplit = typeof isSplit === 'function' && isSplit();
+  const useUnderlay = !inSplit && !!prevWv && prevWv !== tab.wv && tab.wv._privooPainted === false;
   for (const t of tabs) {
     const on = t.id === id;
     t.tabEl.classList.toggle('active', on);
+    if (!on && useUnderlay && t.wv === prevWv) {
+      t.wv.classList.add('underlay');
+      continue;
+    }
+    t.wv.classList.remove('underlay');
     t.wv.classList.toggle('inactive', !on);
+  }
+  if (useUnderlay) {
+    // Whichever comes first: the incoming page paints, or a hard cap so a page
+    // that never settles can't pin the old one on screen indefinitely.
+    const timer = setTimeout(() => releaseUnderlay(prevWv), 1400);
+    tab.wv.addEventListener('privoo-painted', () => {
+      clearTimeout(timer);
+      releaseUnderlay(prevWv);
+    }, { once: true });
   }
   // The loop above hid every non-active webview — if a split is still up,
   // re-apply its layout so both panes stay visible and positioned.
@@ -2261,6 +3031,9 @@ function activateTab(id) {
   scheduleSaveSession();
   renderVtabs();
   updateDiscordActivity();
+  // A new tab coming to the front is the one moment the "after fifteen sites"
+  // note has somewhere to belong, so that is when it is offered the chance.
+  void maybeNoteOnNewTab();
 }
 
 function closeTab(id) {
@@ -2305,40 +3078,185 @@ function closeTab(id) {
   if (activeId === id) activateTab(tabs[Math.min(idx, tabs.length - 1)].id);
   else resizeTabs();
   try { tab.wv.remove(); } catch (_) {}
+  // The strip is not re-rendered here (that would fight the closing
+  // animation), so the island's end cap has to be moved by hand.
+  markIslandCaps();
   renderVtabs();
   scheduleSaveSession();
 }
 
 // ─── Tab drag-to-reorder ─────────────────────────────────────────────────────
+// See the long note above wireDrag() for why this is pointer-driven rather
+// than HTML5 drag-and-drop.
+const DRAG_THRESHOLD = 4;        // px of movement before it is a drag
+
+let _drag = null;                // the live gesture, or null
+
 function wireDrag(tab) {
   const { tabEl } = tab;
-  tabEl.addEventListener('dragstart', (e) => { tabEl.classList.add('dragging'); beginTabDrag(tab.id, e); });
-  tabEl.addEventListener('dragend',   () => {
-    tabEl.classList.remove('dragging');
-    endTabDrag();
-    const order = [...tabsEl.children].map((el) => tabs.find((t) => t.tabEl === el)).filter(Boolean);
-    const pinned = order.filter((t) => t.pinned);
-    const rest = order.filter((t) => !t.pinned);
-    tabs = [...pinned, ...rest];
-    renderTabStrip();
-    scheduleSaveSession();
+  // draggable=true is what makes Chromium take over the gesture and draw its
+  // own drag image. It has to be off for a pointer-driven drag to work.
+  tabEl.draggable = false;
+
+  tabEl.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    // These are buttons that happen to live on a tab, not handles for it.
+    if (e.target.closest('.tab-close, .tab-react-btn, .tab-audio-ind')) return;
+    startDragArm(tab, e);
   });
 }
-tabsEl.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  const dragging = tabsEl.querySelector('.tab.dragging');
-  if (!dragging) return;
-  const after = [...tabsEl.querySelectorAll('.tab:not(.dragging)')].find((el) => {
-    return e.clientX < el.getBoundingClientRect().left + el.getBoundingClientRect().width / 2;
+
+function startDragArm(tab, e) {
+  const strip = tab.tabEl.parentElement;
+  if (!strip) return;
+
+  // Only the run of tabs on the same side of the pinned divide can be
+  // reordered against each other.
+  const peers = tabs.filter((t) => !!t.pinned === !!tab.pinned && t.tabEl.parentElement === strip);
+  const index = peers.indexOf(tab);
+  if (index < 0) return;
+
+  _drag = {
+    tab, peers, strip,
+    from: index,
+    to: index,
+    startX: e.clientX,
+    moved: false,
+    // Every peer's resting position, measured once. Nothing is re-measured
+    // during the gesture, so the numbers cannot drift as things animate.
+    slots: peers.map((t) => {
+      const r = t.tabEl.getBoundingClientRect();
+      return { left: r.left, width: r.width, mid: r.left + r.width / 2 };
+    }),
+  };
+
+  try { tab.tabEl.setPointerCapture(e.pointerId); } catch { /* not fatal */ }
+  tab.tabEl.addEventListener('pointermove', onDragMove);
+  tab.tabEl.addEventListener('pointerup', onDragEnd);
+  tab.tabEl.addEventListener('pointercancel', onDragEnd);
+}
+
+function onDragMove(e) {
+  if (!_drag) return;
+  const dx = e.clientX - _drag.startX;
+
+  if (!_drag.moved) {
+    if (Math.abs(dx) < DRAG_THRESHOLD) return;
+    _drag.moved = true;
+    _drag.tab.tabEl.classList.add('dragging');
+    document.body.classList.add('tab-reordering');
+    beginTabDrag(_drag.tab.id, null);
+    hideTabPreview();
+  }
+
+  const { slots, from } = _drag;
+  const self = slots[from];
+
+  // Where the grabbed tab's centre is now, clamped to the run it belongs to.
+  const minX = slots[0].left - self.left;
+  const maxX = slots[slots.length - 1].left + slots[slots.length - 1].width - (self.left + self.width);
+  const clamped = Math.max(minX, Math.min(dx, maxX));
+  _drag.tab.tabEl.style.transform = 'translateX(' + clamped + 'px)';
+
+  // Which slot is it over? The first one whose centre it has passed.
+  const centre = self.mid + clamped;
+  let to = from;
+  for (let i = 0; i < slots.length; i++) {
+    if (i === from) continue;
+    if (i < from && centre < slots[i].mid) { to = Math.min(to, i); }
+    if (i > from && centre > slots[i].mid) { to = Math.max(to, i); }
+  }
+  if (to !== _drag.to) {
+    _drag.to = to;
+    paintDragShift();
+  }
+
+  // Dragged down onto the page: offer to split. The dropzones are only
+  // reachable this way now, since a pointer drag fires no dragover.
+  _drag.splitSide = splitSideAt(e.clientX, e.clientY);
+  paintSplitTarget(_drag.splitSide);
+}
+
+// Which half of the page area the pointer is over, or null if it is still up
+// in the tab strip.
+function splitSideAt(x, y) {
+  if (tabs.length < 2) return null;            // nothing to split against
+  const wrap = document.getElementById('views');
+  if (!wrap) return null;
+  const r = wrap.getBoundingClientRect();
+  if (y < r.top + 40 || y > r.bottom || x < r.left || x > r.right) return null;
+  return x < r.left + r.width / 2 ? 'left' : 'right';
+}
+
+function paintSplitTarget(side) {
+  splitDropzones?.querySelectorAll('.split-dz').forEach((dz) => {
+    dz.classList.toggle('drop-active', !!side && dz.dataset.side === side);
   });
-  after ? tabsEl.insertBefore(dragging, after) : tabsEl.appendChild(dragging);
-});
+}
+
+// Slide every OTHER tab by exactly one slot, in the direction that opens a
+// gap where the grabbed tab is going. Transform only — no reflow, so the
+// strip cannot jump under the pointer.
+function paintDragShift() {
+  const { peers, slots, from, to, tab } = _drag;
+  const width = slots[from].width;
+  for (let i = 0; i < peers.length; i++) {
+    if (peers[i] === tab) continue;
+    let shift = 0;
+    if (from < to && i > from && i <= to) shift = -width;
+    else if (from > to && i >= to && i < from) shift = width;
+    peers[i].tabEl.style.transform = shift ? 'translateX(' + shift + 'px)' : '';
+  }
+}
+
+function onDragEnd() {
+  if (!_drag) return;
+  const { tab, peers, from, to, moved, splitSide } = _drag;
+
+  tab.tabEl.removeEventListener('pointermove', onDragMove);
+  tab.tabEl.removeEventListener('pointerup', onDragEnd);
+  tab.tabEl.removeEventListener('pointercancel', onDragEnd);
+  _drag = null;
+
+  // Clear every transform before the DOM changes, or the tabs animate from
+  // wherever the gesture left them to wherever they now belong.
+  for (const t of peers) {
+    t.tabEl.style.transform = '';
+    t.tabEl.classList.remove('dragging');
+  }
+  document.body.classList.remove('tab-reordering');
+  endTabDrag();
+
+  if (!moved) return;              // it was a click; activateTab handles it
+
+  // Released over the page rather than the strip — that is a split, not a
+  // reorder, so the order is left alone.
+  if (splitSide) { dragSplit(tab.id, splitSide); return; }
+
+  if (to === from) return;
+
+  // Reorder the model, then let the strip redraw into the arrangement the
+  // user was already looking at.
+  const moving = peers[from];
+  const reordered = peers.filter((t) => t !== moving);
+  reordered.splice(to, 0, moving);
+
+  // Splice the reordered run back into `tabs` in place, leaving the tabs on
+  // the other side of the pinned divide exactly where they were.
+  const rest = tabs.filter((t) => !peers.includes(t));
+  tabs = moving.pinned ? [...reordered, ...rest] : [...rest, ...reordered];
+
+  renderTabStrip();
+  renderVtabs();
+  scheduleSaveSession();
+}
 
 // ─── Custom HTML context menu ────────────────────────────────────────────────
 let _ctxResolve = null;
 let _ctxFlyout  = null;
 
 function _closeCtxMenu(chosen = null) {
+  _ctxUnbindKeys();
   if (_ctxFlyout) { _ctxFlyout.remove(); _ctxFlyout = null; }
   ctxBackdrop?.classList.add('hidden');
   tabContextMenu?.classList.add('hidden');
@@ -2350,6 +3268,38 @@ function _closeCtxMenu(chosen = null) {
 function _buildCtxRows(container, items) {
   container.innerHTML = '';
   for (const item of items) {
+    /* A strip of quick emoji across the top, the way Chrome does on a text
+       field. The stylesheet has had rules for this since before the item was
+       taken out; this is the code that draws them. */
+    if (item.type === 'emoji') {
+      const row = document.createElement('div');
+      row.className = 'ctx-emoji-row';
+      const pick = (fn) => (e) => {
+        // mousedown, not click: the backdrop dismisses the menu on mousedown,
+        // so a click handler here would never see its own press.
+        e.preventDefault(); e.stopPropagation();
+        _closeCtxMenu(null);
+        try { fn(); } catch { /* the field went away */ }
+      };
+      for (const glyph of QUICK_REACTIONS) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'ctx-emoji';
+        b.textContent = glyph;
+        b.title = glyph;
+        b.addEventListener('mousedown', pick(() => item.onPick(glyph)));
+        row.appendChild(b);
+      }
+      const more = document.createElement('button');
+      more.type = 'button';
+      more.className = 'ctx-emoji ctx-emoji-more';
+      more.textContent = '\u22ef';
+      more.title = 'All emoji';
+      more.addEventListener('mousedown', pick(() => item.onMore()));
+      row.appendChild(more);
+      container.appendChild(row);
+      continue;
+    }
     if (item.type === 'separator') {
       const s = document.createElement('div');
       s.className = 'ctx-sep';
@@ -2359,6 +3309,14 @@ function _buildCtxRows(container, items) {
     const row = document.createElement('div');
     const off = item.enabled === false;
     row.className = 'ctx-item' + (off ? ' disabled' : '');
+    // The pointer and the keyboard have to agree on which row is current, or
+    // arrowing down after hovering jumps back to wherever the keyboard was.
+    if (!off) {
+      row.addEventListener('mouseenter', () => {
+        container.querySelectorAll('.ctx-item.sel').forEach((r) => r.classList.remove('sel'));
+        row.classList.add('sel');
+      });
+    }
     const lbl = document.createElement('span');
     lbl.className = 'ctx-label';
     lbl.textContent = item.label;
@@ -2408,12 +3366,82 @@ function _buildCtxRows(container, items) {
   }
 }
 
+/* Everything a native menu gave for free and an HTML one has to be told. */
+let _ctxKeys = null;
+
+function _ctxRows(target) {
+  return [...target.querySelectorAll('.ctx-item:not(.disabled)')];
+}
+
+function _ctxSelect(target, next) {
+  const rows = _ctxRows(target);
+  if (!rows.length) return;
+  const cur = rows.findIndex((r) => r.classList.contains('sel'));
+  let i;
+  if (next === 'first') i = 0;
+  else if (next === 'last') i = rows.length - 1;
+  // Wrapping, because a menu is a ring: Up on the first row should reach the
+  // last rather than doing nothing.
+  else i = (cur + next + rows.length) % rows.length;
+  rows.forEach((r) => r.classList.remove('sel'));
+  rows[i].classList.add('sel');
+  rows[i].scrollIntoView({ block: 'nearest' });
+}
+
+function _ctxBindKeys(target) {
+  _ctxUnbindKeys();
+  _ctxKeys = (e) => {
+    const k = e.key;
+    if (k === 'Escape')    { e.preventDefault(); _closeCtxMenu(null); return; }
+    if (k === 'ArrowDown') { e.preventDefault(); _ctxSelect(target, 1); return; }
+    if (k === 'ArrowUp')   { e.preventDefault(); _ctxSelect(target, -1); return; }
+    if (k === 'Home')      { e.preventDefault(); _ctxSelect(target, 'first'); return; }
+    if (k === 'End')       { e.preventDefault(); _ctxSelect(target, 'last'); return; }
+    if (k === 'Enter' || k === ' ') {
+      const sel = target.querySelector('.ctx-item.sel');
+      if (!sel) return;
+      e.preventDefault();
+      // A row with a submenu opens it rather than choosing anything, which is
+      // what its arrow has been promising.
+      if (sel.dataset.menuId) _closeCtxMenu(sel.dataset.menuId);
+      else sel.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      return;
+    }
+    // Type-ahead: one printable character, no modifiers.
+    if (k.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      const rows = _ctxRows(target);
+      const at = rows.findIndex((r) => r.classList.contains('sel'));
+      const want = k.toLowerCase();
+      // From the row AFTER the current one, so pressing the same letter again
+      // steps through every item beginning with it.
+      for (let n = 1; n <= rows.length; n++) {
+        const r = rows[(at + n + rows.length) % rows.length];
+        const label = (r.querySelector('.ctx-label') || {}).textContent || '';
+        if (label.trim().toLowerCase().startsWith(want)) {
+          e.preventDefault();
+          rows.forEach((x) => x.classList.remove('sel'));
+          r.classList.add('sel');
+          r.scrollIntoView({ block: 'nearest' });
+          return;
+        }
+      }
+    }
+  };
+  document.addEventListener('keydown', _ctxKeys, true);
+}
+
+function _ctxUnbindKeys() {
+  if (_ctxKeys) document.removeEventListener('keydown', _ctxKeys, true);
+  _ctxKeys = null;
+}
+
 function showHtmlMenu(items, x, y, el) {
   _closeCtxMenu(null);
   const target = el || wvContextMenu;
   if (!target) return Promise.resolve(null);
   return new Promise((resolve) => {
     _ctxResolve = resolve;
+    _ctxBindKeys(target);
     ctxBackdrop?.classList.remove('hidden');
     _buildCtxRows(target, items);
     target.style.left = '0';
@@ -2456,33 +3484,45 @@ async function openTabContextMenu(x, y, tabId) {
   if (!tab) return;
   closePopovers();
 
-  // Build the "Tab group" submenu — Chrome-style nested list of existing
-  // groups, plus "New group" and (when grouped) "Remove from group".
-  const groupSubmenu = [{ id: 'g-new', label: 'New group' }];
+  // Build the "Tab island" submenu — the existing islands, plus a way to
+  // start a new one or leave the current one.
+  const groupSubmenu = [{ id: 'g-new', label: 'New island' }];
   const otherGroups = tabGroups.filter(g => g.id !== tab.groupId);
   if (otherGroups.length) {
     groupSubmenu.push({ type: 'separator' });
     for (const g of otherGroups) {
-      groupSubmenu.push({ id: `g-add-${g.id}`, label: `Add to "${g.name}"` });
+      groupSubmenu.push({ id: `g-add-${g.id}`, label: `Move to "${g.name}"` });
     }
   }
   if (tab.groupId) {
     groupSubmenu.push({ type: 'separator' });
-    groupSubmenu.push({ id: 'g-leave', label: 'Remove from group' });
+    groupSubmenu.push({ id: 'g-leave', label: 'Remove from island' });
   }
+
+  // Quick reactions inline, so the common case is one menu and one click.
+  const reactionSubmenu = QUICK_REACTIONS.map((e) => ({
+    id: 'react-' + e,
+    label: e + '   ' + (tab.reaction === e ? '(remove)' : ''),
+  }));
+  reactionSubmenu.push({ type: 'separator' });
+  reactionSubmenu.push({ id: 'react-more', label: 'All emoji…' });
+  if (tab.reaction) reactionSubmenu.push({ id: 'react-clear', label: 'Remove reaction' });
 
   const items = [
     { id: 'pin',          label: tab.pinned ? 'Unpin tab' : 'Pin tab' },
     { id: 'duplicate',    label: 'Duplicate tab' },
+    { label: 'Reaction',  submenu: reactionSubmenu },
     { type: 'separator' },
     { id: 'mute',         label: tab.isMuted ? 'Unmute tab' : 'Mute tab' },
     { id: 'close',        label: 'Close tab' },
     { id: 'close-others', label: 'Close other tabs', enabled: tabs.length > 1 },
     { type: 'separator' },
-    { label: 'Tab group',   submenu: groupSubmenu },
+    { label: 'Tab island',  submenu: groupSubmenu },
   ];
 
-  const action = await showHtmlMenu(items, x, y, tabContextMenu);
+  // Privoo's own menu, the same as the page menu. Positioned by hand, which
+  // showHtmlMenu already clamps to the viewport so it cannot be clipped.
+  const action = await showHtmlMenu(items, x, y);
   if (!action) return;
 
   switch (action) {
@@ -2509,7 +3549,13 @@ async function openTabContextMenu(x, y, tabId) {
       for (const t of [...tabs]) if (t.id !== tabId) closeTab(t.id);
       break;
     default:
-      if (action === 'g-new') {
+      if (action === 'react-more') {
+        openEmojiPicker(null, null, (glyph) => setTabReaction(tab, glyph));
+      } else if (action === 'react-clear') {
+        setTabReaction(tab, null);
+      } else if (action.startsWith('react-')) {
+        setTabReaction(tab, action.slice(6));
+      } else if (action === 'g-new') {
         const g = ensureNewGroupForTab(tab);
         renderTabStrip();
         scheduleSaveSession();
@@ -2541,9 +3587,14 @@ function wireWebview(tab) {
   wv.addEventListener('dom-ready', () => {
     tab.ready = true;
     applyInjections(wv);
+    // insertCSS does not survive a navigation, so every document gets it.
+    applyGuestCursor(wv);
+    applyGuestVision(wv);
   }, { signal });
 
   wv.addEventListener('page-title-updated', (e) => {
+    // about:blank has no title, and a sleeping tab keeps the one it had.
+    if (tab.snoozed) return;
     tab.title = e.title || tab.url;
     if (titleEl) { titleEl.textContent = tab.title; titleEl.title = tab.title; }
     if (tab.id === activeId) updateBookmarkButton();
@@ -2561,7 +3612,19 @@ function wireWebview(tab) {
   }, { signal });
 
   const onNav = () => {
+    // Parking a sleeping tab on about:blank fires this. Its address is still
+    // the page it will come back to, so leave the model alone.
+    if (tab.snoozed) return;
     tab.url = wv.getURL();
+    // The new tab is the only page allowed to have no backing of its own.
+    wv.classList.toggle('is-ntp', isNewTabPage(tab.url));
+    // A new document, so nothing has been typed into it yet.
+    tab.formDirty = false;
+    // The hover preview caches the last capture per tab, because capturePage()
+    // on a background tab returns its last painted frame and re-taking it on
+    // every hover would be wasted work. A navigation is the one moment that
+    // cache is certainly wrong.
+    tab._previewShot = null;
     if (tab.url.startsWith('privoo://')) {
       const icon = faviconForPrivooUrl(tab.url);
       tab.faviconUrl = icon;
@@ -2578,7 +3641,10 @@ function wireWebview(tab) {
   wv.addEventListener('did-navigate-in-page', onNav, { signal });
 
   wv.addEventListener('did-start-loading', () => {
+    tab.loading = true;
+    tab.tabEl.classList.add('loading');
     faviconEl.classList.add('spin');
+    renderVtabs();
     if (tab.id === activeId) {
       reloadBtn.innerHTML = STOP_ICON;
       // Suggestion dropdown should never linger over a loading page.
@@ -2587,7 +3653,10 @@ function wireWebview(tab) {
     }
   }, { signal });
   wv.addEventListener('did-stop-loading', () => {
+    tab.loading = false;
+    tab.tabEl.classList.remove('loading');
     faviconEl.classList.remove('spin');
+    renderVtabs();
     if (!tab.faviconUrl && !tab.url?.startsWith('privoo://') && !tab.url?.startsWith('about:')) {
       const fb = faviconFallbackForUrl(tab.url);
       if (fb) applyTabFavicon(tab, fb);
@@ -2613,24 +3682,34 @@ function wireWebview(tab) {
 
   wv.addEventListener('did-stop-loading', () => {
     if (tab === activeTab()) refreshPageShield(tab);
+    // Late requests (lazy-loaded ads, XHR beacons) keep getting blocked after
+    // the page reports itself done — catch those without polling forever.
+    setTimeout(() => { if (tab === activeTab()) refreshPageShield(tab); }, 1500);
+    setTimeout(() => { if (tab === activeTab()) refreshPageShield(tab); }, 4000);
   }, { signal });
 
   wv.addEventListener('did-fail-load', (e) => {
-    if (e.errorCode === -3) return;   // -3 = ERR_ABORTED (navigation cancelled, not a real failure)
     if (!e.isMainFrame) return;       // subframe failures (ads, iframes) — ignore
     const failedUrl = e.validatedURL || '';
-    // Don't replace our own internal pages with the error page
-    if (failedUrl.startsWith('privoo://')) return;
 
-    // Download-only tab: a fresh tab that's never rendered anything and just
-    // failed with ERR_FAILED/ERR_ABORTED is almost certainly a window.open()
-    // that resolved to a Content-Disposition: attachment. The download
-    // already kicked off via the session's will-download handler — just
-    // close the empty tab instead of showing the error page.
+    // Download-only tab: a fresh tab that has never rendered anything and
+    // failed with ERR_FAILED / ERR_ABORTED is a window.open() that resolved
+    // to a Content-Disposition: attachment. The download is already running
+    // via the session's will-download handler, so close the empty tab rather
+    // than leaving it on a blank page.
+    //
+    // This check has to come BEFORE the ERR_ABORTED early-return below.
+    // ERR_ABORTED (-3) is exactly what this case reports — the navigation is
+    // cancelled the instant the response turns out to be an attachment — so
+    // while the return came first, the tab could never be closed.
     if (!tab.everLoaded && (e.errorCode === -2 || e.errorCode === -3)) {
       closeTab(tab.id);
       return;
     }
+
+    if (e.errorCode === -3) return;   // -3 = ERR_ABORTED (navigation cancelled, not a real failure)
+    // Don't replace our own internal pages with the error page
+    if (failedUrl.startsWith('privoo://')) return;
 
     titleEl.textContent = tab.title = 'Nothing here';
     const code = e.errorDescription || '';
@@ -2693,6 +3772,11 @@ function wireWebview(tab) {
       if (tab.id === activeId) closePopovers();
       return;
     }
+    if (e.channel === 'form-dirty') {
+      // This page has been typed into — Tab Snooze leaves it alone from here.
+      tab.formDirty = true;
+      return;
+    }
     if (e.channel === 'google-auth-done') {
       try { tab.wv.reload(); } catch { /* ignore */ }
       return;
@@ -2710,7 +3794,7 @@ function wireWebview(tab) {
       return;
     }
     if (e.channel === 'file-picker-request') {
-      void showFilePickerPopover(tab);
+      void showFilePickerPopover(tab, e.args?.[0] || {});
       return;
     }
     if (e.channel === 'open-customize-panel') {
@@ -2895,6 +3979,11 @@ function applyInjections(wv) {
   try {
     if (/(?:^|\.)(youtube\.com|youtube-nocookie\.com)$/.test(new URL(url).hostname)) {
       wv.executeJavaScript(YOUTUBE_FIX_JS).catch(() => {});
+      // Ad skipping is gated on the ad blocker being on, so switching it off
+      // really does mean ads play.
+      if (settings?.adBlocking !== false) {
+        wv.executeJavaScript(YOUTUBE_ADSKIP_JS + '()').catch(() => {});
+      }
     }
   } catch { /* invalid URL — skip */ }
   const geo = geoCoordsFromSettings(settings);
@@ -3070,29 +4159,88 @@ function fpRelativeTime(ms) {
   return Math.floor(hrs / 24) + 'd ago';
 }
 
-async function showFilePickerPopover(tab) {
+// One glyph per file category. Colour comes from CSS so they pick up the
+// theme rather than being baked in here.
+const FP_ICONS = {
+  image:   '<svg viewBox="0 0 24 24"><path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5l3.5-4.5z"/></svg>',
+  video:   '<svg viewBox="0 0 24 24"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z"/></svg>',
+  audio:   '<svg viewBox="0 0 24 24"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>',
+  pdf:     '<svg viewBox="0 0 24 24"><path d="M6 2h8l6 6v14a0 0 0 0 1 0 0H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm7 1.5V9h5.5L13 3.5zM8 13h8v1.6H8V13zm0 3.2h8v1.6H8v-1.6z"/></svg>',
+  doc:     '<svg viewBox="0 0 24 24"><path d="M6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm7 1.5V9h5.5L13 3.5zM8 12h8v1.5H8V12zm0 3h8v1.5H8V15zm0 3h5v1.5H8V18z"/></svg>',
+  sheet:   '<svg viewBox="0 0 24 24"><path d="M4 4h16v16H4V4zm2 2v3h4V6H6zm6 0v3h6V6h-6zM6 11v3h4v-3H6zm6 0v3h6v-3h-6zM6 16v2h4v-2H6zm6 0v2h6v-2h-6z"/></svg>',
+  slides:  '<svg viewBox="0 0 24 24"><path d="M2 3h20v13H13v3l3 3h-2l-2-2-2 2H8l3-3v-3H2V3zm2 2v9h16V5H4z"/></svg>',
+  archive: '<svg viewBox="0 0 24 24"><path d="M4 3h16v4H4V3zm1 6h14v12H5V9zm6 2v2h2v-2h-2zm0 3v2h2v-2h-2z"/></svg>',
+  code:    '<svg viewBox="0 0 24 24"><path d="M9.4 16.6 4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0 4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>',
+  text:    '<svg viewBox="0 0 24 24"><path d="M6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm7 1.5V9h5.5L13 3.5zM8 12h8v1.5H8V12zm0 3h8v1.5H8V15z"/></svg>',
+  file:    '<svg viewBox="0 0 24 24"><path d="M6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm7 1.5V9h5.5L13 3.5z"/></svg>',
+};
+
+function fpFormatSize(bytes) {
+  const n = Number(bytes) || 0;
+  if (n < 1024) return n + " B";
+  if (n < 1024 * 1024) return (n / 1024).toFixed(0) + " KB";
+  if (n < 1024 * 1024 * 1024) return (n / 1048576).toFixed(1) + " MB";
+  return (n / 1073741824).toFixed(1) + " GB";
+}
+
+// Honour the input's accept="" so a page asking for images does not get a
+// list full of spreadsheets.
+function fpMatchesAccept(file, accept) {
+  if (!accept) return true;
+  const parts = String(accept).split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+  if (!parts.length) return true;
+  const name = String(file.name || "").toLowerCase();
+  const ext = name.slice(name.lastIndexOf("."));
+  const kind = file.kind || "file";
+  for (const a of parts) {
+    if (a.startsWith(".")) { if (ext === a) return true; continue; }
+    if (a === "image/*") { if (kind === "image") return true; continue; }
+    if (a === "video/*") { if (kind === "video") return true; continue; }
+    if (a === "audio/*") { if (kind === "audio") return true; continue; }
+    if (a === "application/pdf") { if (kind === "pdf") return true; continue; }
+    if (a === "*/*") return true;
+  }
+  return false;
+}
+
+async function showFilePickerPopover(tab, req) {
   if (settings?.easyFilesEnabled === false || !window.privoo?.recentFilesList) return;
   closeFilePickerPopover();
-
-  let vx = 200, vy = 200;
-  try {
-    const c = await window.privoo.getCursorPos();
-    if (c && c.x >= 0 && c.y >= 0) { vx = c.x; vy = c.y; }
-  } catch { /* fall back to default position */ }
 
   let files = [];
   try { files = await window.privoo.recentFilesList(); } catch { files = []; }
 
   const pop = document.createElement('div');
   pop.className = 'fp-pop';
-  pop.style.left = Math.min(vx, window.innerWidth - 300) + 'px';
-  pop.style.top = Math.min(vy, window.innerHeight - 260) + 'px';
 
-  const rows = files.length
-    ? files.map((f) => `<button type="button" class="fp-item" data-path="${esc(f.path)}"><span class="fp-item-name">${esc(f.name)}</span><span class="fp-item-time">${fpRelativeTime(f.mtimeMs)}</span></button>`).join('')
-    : '<div class="fp-empty">No recent files yet</div>';
+  const accept = (req && req.accept) || "";
+  // Cap the row rather than letting it scroll forever — past about eight,
+  // scanning the strip is slower than opening the folder, which is what the
+  // button on the end is for.
+  const shown = files.filter((f) => fpMatchesAccept(f, accept)).slice(0, 8);
+  const rows = shown.length
+    ? shown.map((f) => (
+        '<button type="button" class="fp-item" data-path="' + esc(f.path) + '" title="' + esc(f.path) + '">' +
+          '<span class="fp-item-ico fp-k-' + esc(f.kind || "file") + '">' + (FP_ICONS[f.kind] || FP_ICONS.file) + '</span>' +
+          '<span class="fp-item-main">' +
+            '<span class="fp-item-name">' + esc(f.name) + '</span>' +
+            '<span class="fp-item-meta">' + fpFormatSize(f.size) + ' · ' + fpRelativeTime(f.mtimeMs) + '</span>' +
+          '</span>' +
+        '</button>'
+      )).join("")
+    : '<div class="fp-empty">No recent files' + (accept ? " of that type" : "") + '</div>';
 
-  pop.innerHTML = '<h4>Recent files</h4>' + rows + '<button type="button" class="fp-browse" id="fp-browse">Browse for a file…</button>';
+  pop.innerHTML =
+    '<div class="fp-head">' +
+      '<span class="fp-title">Recent files</span>' +
+      '<span class="fp-hint">Pick one, or view more to browse</span>' +
+    '</div>' +
+    '<div class="fp-row">' + rows + '</div>' +
+    '<button type="button" class="fp-browse" id="fp-browse">' +
+      '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M3.5 6.5a1.6 1.6 0 0 1 1.6-1.6h3.4l1.8 2.2h7.9a1.6 1.6 0 0 1 1.6 1.6v8.8a1.6 1.6 0 0 1-1.6 1.6H5.1a1.6 1.6 0 0 1-1.6-1.6z"/></svg>' +
+      '<span>View more</span>' +
+    '</button>';
   document.body.appendChild(pop);
   _fpPop = pop;
   pop.dataset.justOpened = '1';
@@ -3177,7 +4325,20 @@ function syncToolbar() {
   const isHttp     = tab.url?.startsWith('http://') && !isInternal;
 
   siteIcon.className = 'site-icon ' + (isInternal ? 'internal' : isSecure ? 'secure' : 'insecure');
-  siteIcon.title = isInternal ? 'Privoo internal page' : isSecure ? 'Connection is secure' : 'Connection is not secure';
+  // The tooltip leads with what clicking does and reports the connection
+  // second — the icon is a control, not a verdict on the site.
+  siteIcon.title = isInternal
+    ? 'Privoo internal page'
+    : isSecure
+      ? 'Site settings and permissions — the connection is encrypted'
+      : 'Site settings and permissions — the connection is NOT encrypted';
+  // Internal pages have no site permissions to manage and no connection to
+  // report, so they get the shield instead.
+  const wantIcon = isInternal ? 'shield' : 'settings';
+  if (siteIcon.dataset.glyph !== wantIcon) {
+    siteIcon.dataset.glyph = wantIcon;
+    siteIcon.innerHTML = wantIcon === 'shield' ? SITE_ICON_SHIELD_SVG : SITE_ICON_SETTINGS_SVG;
+  }
   updateSiteInfoPopover(tab.url, isInternal, isSecure, isHttp);
   refreshPageShield(tab);
 
@@ -3189,6 +4350,7 @@ function syncToolbar() {
   }
   updateBookmarkButton();
   updateZoomIndicator();
+  updatePipBtn();
 }
 
 function isBlockedHttp(url) {
@@ -3238,6 +4400,9 @@ function navigate(input, bypassHttpCheck = false, targetTab) {
 
 // ─── Suggestions ─────────────────────────────────────────────────────────────
 let suggestTimer = null;
+// The text the user actually typed, kept so arrowing back above the first
+// row can restore it.
+let _sugTyped = '';
 // Monotonic generation counter. Bumped on every hide/Enter/blur so that a
 // suggestion fetch in flight when the user navigates can't render its
 // results on top of the new page.
@@ -3247,18 +4412,37 @@ function debounce(fn, ms) {
   return (...args) => { clearTimeout(suggestTimer); suggestTimer = setTimeout(() => fn(...args), ms); };
 }
 
+// How many of each kind survive into the list. History is capped low on
+// purpose: the point of a history row is "you have been here", and if you
+// have been to four matching places the top one is almost always the one.
+const SUG_MAX_HISTORY = 3;
+const SUG_MAX_SEARCH  = 5;
+
+// Two URLs are the same suggestion if they differ only by scheme, www. or a
+// trailing slash. Without this, typing a site you visit daily listed it
+// twice — once from history, once from the search engine guessing the same.
+function sugKey(text) {
+  return String(text || '')
+    .trim()
+    .toLowerCase()
+    .replace(/^[a-z][a-z0-9+.-]*:\/\//, '')
+    .replace(/^www\./, '')
+    .replace(/\/+$/, '');
+}
+
 const triggerSuggest = debounce(async (q) => {
   if (!q.trim() || q.startsWith('privoo://')) { hideSuggestions(); return; }
   const myGen = _sugGen;
 
   // History matches (local, fast)
-  const hist = await window.privoo.historyAutocomplete(q);
+  let hist = [];
+  try { hist = await window.privoo.historyAutocomplete(q) || []; } catch {}
   if (myGen !== _sugGen) return;
 
   // Search suggestions (remote, proxied)
   let remote = [];
   if (settings?.searchSuggestions !== false) {
-    remote = await window.privoo.getSuggestions(q, settings?.searchEngine);
+    try { remote = await window.privoo.getSuggestions(q, settings?.searchEngine) || []; } catch {}
   }
   if (myGen !== _sugGen) return;
 
@@ -3267,21 +4451,55 @@ const triggerSuggest = debounce(async (q) => {
   if (document.activeElement !== omnibox) return;
   if (omnibox.value !== q) return;
 
-  const items = [
-    ...hist.map((h) => ({ text: h.url, label: h.title || h.url, type: 'history' })),
-    ...remote.map((r) => ({ text: r.text, label: r.text, type: 'search' })),
-  ];
-  renderSuggestions(items);
+  const typed = q.trim();
+  const items = [];
+  const seen = new Set();
+  const push = (it) => {
+    const k = sugKey(it.text);
+    if (!k || seen.has(k)) return;
+    seen.add(k);
+    items.push(it);
+  };
+
+  // No row for what you just typed. Enter already does that, and a row
+  // repeating your own query back at you took the top slot away from the
+  // first real suggestion.
+  for (const h of hist.slice(0, SUG_MAX_HISTORY)) {
+    push({ text: h.url, label: h.title || h.url, type: 'history' });
+  }
+  for (const r of remote.slice(0, SUG_MAX_SEARCH)) {
+    push({ text: r.text, label: r.text, type: 'search' });
+  }
+
+  renderSuggestions(items, typed);
 }, 180);
 
 const SUG_SEARCH_SVG = `<svg viewBox="0 0 24 24" width="14" height="14"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5 1.49-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg>`;
 const SUG_CLOCK_SVG  = `<svg viewBox="0 0 24 24" width="14" height="14"><path d="M13 3a9 9 0 1 0 2.8 17.5l-1.4-1.4A7 7 0 1 1 19 12h-3l4 4-4 4v-3a9 9 0 0 0-3-17z"/></svg>`;
 const SUG_DOMAIN_RE = /^(?:https?:\/\/)?(?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)+(?:\/\S*)?$/i;
 
-function renderSuggestions(items) {
+// Bold the part of a row that matches what has been typed, so it is obvious
+// at a glance why the row is in the list at all. Escaping happens here
+// because the match has to be found in the raw text, before any entities
+// exist to confuse the offsets.
+function sugHighlight(text, query) {
+  const raw = String(text || '');
+  const q = String(query || '').trim();
+  if (!q) return esc(raw);
+  const at = raw.toLowerCase().indexOf(q.toLowerCase());
+  if (at < 0) return esc(raw);
+  return esc(raw.slice(0, at))
+       + '<b>' + esc(raw.slice(at, at + q.length)) + '</b>'
+       + esc(raw.slice(at + q.length));
+}
+
+function renderSuggestions(items, query) {
   if (!items.length) { hideSuggestions(); return; }
   sugItems = items;
   sugIndex = -1;
+  // What was in the field before any arrow key moved through the list, so
+  // arrowing back past the top can put it back.
+  _sugTyped = query != null ? query : omnibox.value;
   suggestEl.innerHTML = '';
 
   for (let i = 0; i < items.length; i++) {
@@ -3296,11 +4514,13 @@ function renderSuggestions(items) {
     // real DOM node so the onerror handler can be a function reference —
     // the previous inline onerror embedded an SVG whose double quotes broke
     // out of the attribute string, leaving the broken-image glyph behind.
+    el.classList.add('sug-' + it.type);
     el.innerHTML =
       `<span class="sug-icon"></span>` +
       `<div class="sug-body">` +
-        `<div class="sug-title">${esc(it.label)}</div>` +
-        (it.type === 'history' && it.text !== it.label ? `<div class="sug-url">${esc(it.text)}</div>` : '') +
+        `<div class="sug-title">${sugHighlight(it.label, query)}</div>` +
+        (it.type === 'history' && it.text !== it.label
+          ? `<div class="sug-url">${sugHighlight(displayUrl(it.text), query)}</div>` : '') +
       `</div>`;
 
     const iconSlot = el.querySelector('.sug-icon');
@@ -3344,10 +4564,18 @@ function renderSuggestions(items) {
 
 function highlightSug(idx) {
   sugIndex = idx;
-  suggestEl.querySelectorAll('.sug-item').forEach((el, i) => {
-    el.classList.toggle('active', i === idx);
-  });
-  if (idx >= 0 && sugItems[idx]) omnibox.value = sugItems[idx].text;
+  const rows = suggestEl.querySelectorAll('.sug-item');
+  rows.forEach((el, i) => el.classList.toggle('active', i === idx));
+  if (idx >= 0 && sugItems[idx]) {
+    omnibox.value = sugItems[idx].text;
+    // Keep the highlighted row on screen when the list is long enough to
+    // scroll — arrowing into a row you cannot see is the same as no row.
+    rows[idx]?.scrollIntoView({ block: 'nearest' });
+  } else {
+    // Back above the first row: restore what was actually typed, rather
+    // than leaving the last suggestion sitting in the field.
+    omnibox.value = _sugTyped;
+  }
 }
 
 function hideSuggestions() {
@@ -3356,6 +4584,7 @@ function hideSuggestions() {
   suggestEl.classList.add('hidden');
   sugItems = [];
   sugIndex = -1;
+  _sugTyped = '';
 }
 
 // ─── Download progress ───────────────────────────────────────────────────────
@@ -3363,10 +4592,18 @@ function hideSuggestions() {
 // toolbar download popover (and the privoo://downloads page).
 function onDownloadUpdate(dl) {
   activeDls.set(dl.id, dl);
+  // Only the very first broadcast for a download carries initiatorId, which is
+  // exactly when the leftover tab still exists.
+  if (dl.initiatorId) closeDownloadOnlyTab(dl.initiatorId);
   if (dl.state === 'progressing') dlBadge.classList.add('show');
   else if ([...activeDls.values()].every(d => d.state !== 'progressing')) {
     dlBadge.classList.remove('show');
   }
+  // A transfer in flight always brings the button back, even for someone who
+  // has turned the permanent one off.
+  if (dlBtn) dlBtn.hidden = false;
+  const dlAnchor = document.getElementById('dl-anchor');
+  if (dlAnchor) dlAnchor.hidden = false;
   if (dlPopover && !dlPopover.classList.contains('hidden')) fillDlPopover();
 
   // Forward the update into any open downloads tab so it refreshes live
@@ -3425,32 +4662,71 @@ function dlPopFileType(fn) {
   return DL_POP_TYPES[ext] || 'generic';
 }
 
+// Human sizes. Downloads report bytes; nobody reads bytes.
+// A tab that exists only because a site opened it to serve a file. It has
+// loaded nothing, it is showing nothing, and every other browser closes it.
+//
+// "Loaded nothing" is the whole test: everLoaded is set by did-stop-loading,
+// so a tab the user is actually reading is never a candidate no matter what
+// it downloads.
+function closeDownloadOnlyTab(initiatorId) {
+  if (!initiatorId) return;
+  const tab = tabs.find((t) => {
+    try { return t.wv?.getWebContentsId?.() === initiatorId; } catch { return false; }
+  });
+  if (!tab || tab.everLoaded) return;
+  if (tabs.length <= 1) return;          // never leave the window with no tabs
+  const url = String(tab.url || '');
+  if (url && !/^about:blank$/i.test(url) && !url.startsWith('privoo://')) {
+    // It navigated somewhere real before the download; leave it be.
+    if (tab.everLoaded) return;
+  }
+  closeTab(tab.id);
+}
+
+function dlPopSize(n) {
+  if (!n || n < 0) return '';
+  const u = ['B', 'KB', 'MB', 'GB'];
+  let i = 0, v = n;
+  while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+  return (v >= 10 || i === 0 ? Math.round(v) : v.toFixed(1)) + ' ' + u[i];
+}
+
 async function fillDlPopover() {
   if (!dlPopoverList) return;
   let items = [];
   try { items = await window.privoo.getDownloads(); } catch { /* ignore */ }
   const recent = (items || []).slice(0, 12);
   dlPopoverList.innerHTML = '';
+
   if (!recent.length) {
     const empty = document.createElement('div');
-    empty.className = 'dl-pop-row dl-pop-empty';
-    empty.textContent = 'No downloads yet';
+    empty.className = 'dl-pop-empty';
+    empty.innerHTML =
+      '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>' +
+      '<b>Nothing downloaded yet</b>' +
+      '<span>Files you download will show up here.</span>';
     dlPopoverList.appendChild(empty);
     return;
   }
+
   for (const d of recent) {
+    const inProgress = d.state === 'progressing';
+    const failed = d.state === 'cancelled' || d.state === 'interrupted' || d.state === 'failed';
+
     const row = document.createElement('div');
-    row.className = 'dl-pop-row';
+    row.className = 'dl-pop-row' + (inProgress ? ' is-progressing' : '') + (failed ? ' is-failed' : '');
 
     const t = dlPopFileType(d.filename);
     const icon = document.createElement('div');
     icon.className = 'dl-pop-icon';
     icon.style.background = DL_POP_COLORS[t] || DL_POP_COLORS.generic;
     icon.innerHTML = DL_POP_ICONS[t] || DL_POP_ICONS.generic;
-    // Swap in the real OS file icon for any completed download — Windows
-    // gives us the associated app icon (Word doc → Word icon, .exe → its
-    // own artwork, etc). The colored category SVG stays as the fallback
-    // while the download is still in progress or if extraction fails.
+    // Swap in the real OS file icon for any completed download - Windows
+    // gives us the associated app icon (Word doc -> Word icon, .exe -> its
+    // own artwork). The coloured category SVG stays as the fallback while
+    // the download is still running or if extraction fails.
     if (d.state === 'completed' && d.savePath && window.privoo.getFileIcon) {
       window.privoo.getFileIcon(d.savePath).then((url) => {
         if (!url) return;
@@ -3469,34 +4745,85 @@ async function fillDlPopover() {
     name.className = 'dl-pop-name';
     name.textContent = d.filename || '';
     name.title = d.filename || '';
+    main.appendChild(name);
+
     const meta = document.createElement('div');
     meta.className = 'dl-pop-meta';
-    meta.textContent = d.state === 'progressing'
-      ? `${Math.round(d.totalBytes > 0 ? (d.receivedBytes / d.totalBytes) * 100 : 0)}%`
-      : (d.state === 'completed' ? 'Done' : String(d.state || ''));
-    main.appendChild(name);
+    if (inProgress) {
+      // "12.4 MB of 80 MB" says more than a bare percentage, and the bar
+      // below already carries the percentage visually.
+      const got = dlPopSize(d.receivedBytes);
+      const tot = d.totalBytes > 0 ? dlPopSize(d.totalBytes) : '';
+      meta.textContent = tot ? (got + ' of ' + tot) : (got || 'Downloading');
+    } else if (failed) {
+      meta.textContent = d.state === 'cancelled' ? 'Cancelled' : 'Failed';
+    } else {
+      meta.textContent = dlPopSize(d.totalBytes || d.receivedBytes) || 'Done';
+    }
     main.appendChild(meta);
 
+    if (inProgress) {
+      const track = document.createElement('div');
+      track.className = 'dl-pop-bar';
+      const fill = document.createElement('div');
+      fill.className = 'dl-pop-bar-fill';
+      const pct = d.totalBytes > 0 ? (d.receivedBytes / d.totalBytes) * 100 : 0;
+      // No known total (a chunked response) means no honest percentage, so
+      // the bar loops rather than lying about progress.
+      if (d.totalBytes > 0) fill.style.width = Math.max(2, Math.min(100, pct)) + '%';
+      else track.classList.add('is-indeterminate');
+      track.appendChild(fill);
+      main.appendChild(track);
+    }
+
+    // Actions are icons, and only while the row is hovered. Two labelled
+    // buttons on every row made a list of five downloads read as a list of
+    // ten buttons.
     const actions = document.createElement('div');
     actions.className = 'dl-pop-actions';
-    const openB = document.createElement('button');
-    openB.type = 'button';
-    openB.className = 'dl-pop-action-btn';
-    openB.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg><span>Open</span>';
-    openB.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      if (d.savePath) window.privoo.openDownload(d.savePath);
-    });
-    const folderB = document.createElement('button');
-    folderB.type = 'button';
-    folderB.className = 'dl-pop-action-btn';
-    folderB.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg><span>Folder</span>';
-    folderB.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      if (d.savePath) window.privoo.showInFolder(d.savePath);
-    });
-    actions.appendChild(openB);
-    actions.appendChild(folderB);
+    if (!inProgress && !failed) {
+      const openB = document.createElement('button');
+      openB.type = 'button';
+      openB.className = 'dl-pop-action-btn';
+      openB.title = 'Open';
+      openB.setAttribute('aria-label', 'Open ' + (d.filename || 'file'));
+      openB.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>';
+      openB.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        if (d.savePath) window.privoo.openDownload(d.savePath);
+      });
+      actions.appendChild(openB);
+
+      const folderB = document.createElement('button');
+      folderB.type = 'button';
+      folderB.className = 'dl-pop-action-btn';
+      folderB.title = 'Show in folder';
+      folderB.setAttribute('aria-label', 'Show in folder');
+      folderB.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>';
+      folderB.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        if (d.savePath) window.privoo.showInFolder(d.savePath);
+      });
+      actions.appendChild(folderB);
+
+      // The whole row opens the file; the icons cover the rarer case.
+      row.addEventListener('click', () => {
+        if (d.savePath) window.privoo.openDownload(d.savePath);
+      });
+      row.classList.add('is-openable');
+    } else if (inProgress) {
+      const cancelB = document.createElement('button');
+      cancelB.type = 'button';
+      cancelB.className = 'dl-pop-action-btn';
+      cancelB.title = 'Cancel';
+      cancelB.setAttribute('aria-label', 'Cancel download');
+      cancelB.innerHTML = '<svg viewBox="0 0 14 14" width="11" height="11"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.7" fill="none"/></svg>';
+      cancelB.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        try { window.privoo.cancelDownload(d.id); } catch { /* already gone */ }
+      });
+      actions.appendChild(cancelB);
+    }
 
     row.appendChild(icon);
     row.appendChild(main);
@@ -3526,7 +4853,7 @@ function updateTabAudioIndicator(tab) {
   const show = tab.isPlayingAudio || tab.isMuted;
   ind.classList.toggle('visible', show);
   ind.classList.toggle('muted', !!tab.isMuted);
-  ind.title = tab.isMuted ? 'Muted — click to unmute' : 'Playing audio — click to mute';
+  ind.title = tab.isMuted ? 'Muted. Click to unmute' : 'Playing audio. Click to mute';
   const svg = ind.querySelector('svg');
   if (svg) {
     svg.innerHTML = tab.isMuted
@@ -3538,7 +4865,9 @@ function updateTabAudioIndicator(tab) {
 function updateAudioButton() {
   const tab = activeTab();
   if (!audioBtn) return;
-  const anyPlaying = tabs.some(t => t.isPlayingAudio || t.isMuted);
+  // Sidebar music counts as "something is playing" even though it is not a tab.
+  const anyPlaying = tabs.some(t => t.isPlayingAudio || t.isMuted)
+    || (musicInToolbarEnabled() && !!sidebarMediaWv());
   audioBtn.hidden = !anyPlaying;
   const isMuted = tab?.isMuted || false;
   const volIcon = document.getElementById('mp-vol-icon');
@@ -3552,11 +4881,42 @@ function updateAudioButton() {
   if (volSlider) volSlider.value = Math.round((tab?.volume ?? 1) * 100);
 }
 
-async function pollMediaInfo() {
-  const tab = activeTab();
-  if (!tab || !tab.wv || !tab.ready) { stopMediaPolling(); return; }
+// The toolbar media dropdown can be driven by two different guests: a normal
+// tab, or the sidebar music panel. The sidebar is not in `tabs`, so it used to
+// be invisible to this whole subsystem and music playing there never appeared
+// in the toolbar at all.
+//
+// Once the sidebar guest has been audible we keep treating it as a media
+// source even while paused, otherwise the controls would disappear the moment
+// you hit pause - which is exactly when you want them.
+let _sidebarMediaSeen = false;
+function sidebarMediaWv() {
+  if (!sidebarWv) return null;
   try {
-    const info = await tab.wv.executeJavaScript(`(function(){
+    const u = sidebarWv.getURL?.() || "";
+    if (!u || u === "about:blank" || u.startsWith("privoo://")) return null;
+    if (sidebarWv.isCurrentlyAudible?.()) _sidebarMediaSeen = true;
+    return _sidebarMediaSeen ? sidebarWv : null;
+  } catch { return null; }
+}
+
+// The guest the media popover should read from and control.
+function mediaTarget() {
+  const sb = musicInToolbarEnabled() ? sidebarMediaWv() : null;
+  if (sb) return { wv: sb, tabEl: null, isSidebar: true };
+  const t = activeTab();
+  if (t && t.wv && t.ready) return { wv: t.wv, tabEl: t.tabEl, isSidebar: false };
+  return null;
+}
+
+function musicInToolbarEnabled() { return settings?.musicInToolbar !== false; }
+
+async function pollMediaInfo() {
+  const target = mediaTarget();
+  if (!target) { stopMediaPolling(); return; }
+  const tab = target.isSidebar ? null : activeTab();
+  try {
+    const info = await target.wv.executeJavaScript(`(function(){
       try {
         const ms = navigator.mediaSession;
         const meta = ms && ms.metadata;
@@ -3591,7 +4951,7 @@ async function pollMediaInfo() {
       artworkEl.style.backgroundSize = 'cover';
       artworkEl.innerHTML = '';
     } else if (artworkEl) {
-      const tabFavBg = tab.tabEl.querySelector('.favicon')?.style.backgroundImage;
+      const tabFavBg = tab?.tabEl?.querySelector('.favicon')?.style.backgroundImage;
       if (tabFavBg) {
         artworkEl.style.backgroundImage = tabFavBg;
         artworkEl.style.backgroundSize = '32px 32px';
@@ -3605,10 +4965,10 @@ async function pollMediaInfo() {
       }
     }
     try {
-      const tabUrl = tab.wv.getURL();
+      const tabUrl = target.wv.getURL();
       if (tabUrl && !tabUrl.startsWith('privoo://') && siteRow) {
         const host = new URL(tabUrl).hostname;
-        const tabFavBg = tab.tabEl.querySelector('.favicon')?.style.backgroundImage;
+        const tabFavBg = tab?.tabEl?.querySelector('.favicon')?.style.backgroundImage;
         if (siteFav && tabFavBg) siteFav.style.backgroundImage = tabFavBg;
         if (siteHost) siteHost.textContent = host;
         siteRow.hidden = false;
@@ -3635,12 +4995,30 @@ async function pollMediaInfo() {
 function startMediaPolling() {
   if (mediaPollingTimer) return;
   mediaPollingTimer = setInterval(pollMediaInfo, 500);
+  // Polling stops with the window; nothing reads the result while hidden.
   pollMediaInfo();
 }
+
+// Sidebar playback raises no tab-level events, so nothing would ever call
+// updateAudioButton() for it. A slow poll keeps the toolbar button honest.
+visibleInterval(() => { try { updateAudioButton(); } catch {} }, 1500);
 
 function stopMediaPolling() {
   if (mediaPollingTimer) { clearInterval(mediaPollingTimer); mediaPollingTimer = null; }
 }
+
+// The 500ms media poll is the most expensive timer in the shell. Suspend it
+// while the window is hidden and pick it up again on return.
+let _mediaPollWasActive = false;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    _mediaPollWasActive = !!mediaPollingTimer;
+    stopMediaPolling();
+  } else if (_mediaPollWasActive) {
+    _mediaPollWasActive = false;
+    startMediaPolling();
+  }
+});
 
 // Toolbar audio button
 if (audioBtn) {
@@ -3714,17 +5092,10 @@ document.getElementById('mp-volume')?.addEventListener('input', function() {
 
 // ─── Background music ─────────────────────────────────────────────────────────
 function initBgMusic() {
-  if (!bgMusic || !settings) return;
-  if (settings.musicEnabled && settings.musicPath) {
-    const url = new URL('file://' + settings.musicPath.replace(/\\/g, '/')).href;
-    if (bgMusic.src !== url) {
-      bgMusic.src = url;
-      bgMusic.volume = typeof settings.musicVolume === 'number' ? settings.musicVolume : 0.5;
-    }
-    bgMusic.play().catch(() => {});
-  } else {
-    bgMusic.pause();
-  }
+  // The background-music feature was removed. Stop and detach anything a
+  // previously-saved musicPath might still be playing.
+  if (!bgMusic) return;
+  try { bgMusic.pause(); bgMusic.removeAttribute('src'); } catch { /* ignore */ }
 }
 
 // ─── Privacy panel ───────────────────────────────────────────────────────────
@@ -3743,6 +5114,15 @@ function paintFeatures() {
     if (!el) continue;
     el.classList.toggle('off', !on);
   }
+  // The hero must not keep claiming "You're protected" once the user has
+  // switched ad blocking off — that was the panel telling them the opposite of
+  // what the setting says.
+  const heroTitle = document.getElementById('sp-hero-title');
+  const heroEl = heroTitle?.closest('.sp-hero');
+  if (heroTitle) {
+    heroTitle.textContent = settings.adBlocking ? "You're protected" : 'Ad blocking is off';
+  }
+  if (heroEl) heroEl.classList.toggle('sp-hero-off', !settings.adBlocking);
   // Update hero subtitle with the active site host (or a generic message
   // for internal pages where there is no real site).
   const siteEl = document.getElementById('sp-hero-site');
@@ -3758,23 +5138,29 @@ function paintFeatures() {
   }
 }
 
-const fmtStat = (n) => (n > 999999 ? '999k+' : String(n ?? 0));
+// Group the thousands so a big lifetime number still reads at a glance.
+const fmtStat = (n) => {
+  const v = Number(n) || 0;
+  return v >= 1000 ? v.toLocaleString() : String(v);
+};
+
 
 async function refreshStats() {
+  let s;
   try {
-    const s = await window.privoo.getPrivacyStats();
-    // The toolbar shield is icon-only now, so shieldCount may not exist.
-    // It must not throw here: this same function paints the panel's numbers,
-    // and a throw would leave them stuck at zero.
-    if (shieldCount) {
-      const total = (s.blockedAds || 0) + (s.blockedCookies || 0);
-      shieldCount.textContent = total > 9999 ? '9999+' : String(total);
-    }
-    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = fmtStat(v); };
-    set('stat-ads', s.blockedAds);
-    set('stat-cookies', s.blockedCookies);
-    set('stat-https', s.upgradedHttps);
-  } catch { /* ignore */ }
+    s = await window.privoo.getPrivacyStats();
+  } catch { return; }
+  if (!s) return;
+  // Painting is deliberately OUTSIDE the try that wraps the IPC call. It used
+  // to be inside, so any single bad element reference aborted the whole repaint
+  // and every counter stayed frozen at zero with no error surfaced.
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = fmtStat(v); };
+  set('stat-ads', s.blockedAds);
+  // The toolbar shield is icon-only now, so shieldCount may legitimately be null.
+  if (shieldCount) {
+    const total = (s.blockedAds || 0) + (s.blockedCookies || 0);
+    shieldCount.textContent = fmtStat(total);
+  }
 }
 
 async function refreshPageShield(tab) {
@@ -3826,7 +5212,7 @@ function updateSiteInfoPopover(url, isInternal, isSecure, isHttp) {
     icon.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5z"/></svg>`;
     status.textContent = 'Privoo internal page';
     host.textContent   = url || 'privoo://';
-    detail.textContent = 'This page is part of Privoo and is served locally — no network connection is involved.';
+    detail.textContent = 'This page is part of Privoo and is served locally. No network connection is involved.';
   } else if (isSecure) {
     icon.className = 'si-icon';
     icon.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2zm-6 9a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm3.1-9H8.9V6a3.1 3.1 0 0 1 6.2 0v2z"/></svg>`;
@@ -3838,7 +5224,7 @@ function updateSiteInfoPopover(url, isInternal, isSecure, isHttp) {
     icon.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2 1 21h22L12 2zm0 6 7.5 13H4.5L12 8zm-1 4v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>`;
     status.textContent = 'Connection is not secure';
     host.textContent   = hostname;
-    detail.textContent = 'This site is using an unencrypted HTTP connection. Anyone on your network can see what you send — don’t enter passwords or credit-card info here.';
+  detail.textContent = 'This site is using an unencrypted HTTP connection. Anyone on your network can see what you send, so do not enter passwords or card details here.';
   } else {
     icon.className = 'si-icon';
     icon.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M11 17h2v-6h-2v6zm1-15C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm-1-11h2V7h-2v2z"/></svg>`;
@@ -3850,6 +5236,7 @@ function updateSiteInfoPopover(url, isInternal, isSecure, isHttp) {
 }
 
 function closePopovers() {
+  hideTabPreview();
   shieldPanel.classList.add('hidden');
   vpnPanel?.classList.add('hidden');
   menuEl.classList.add('hidden');
@@ -3867,6 +5254,9 @@ function closePopovers() {
     audioPopover.classList.add('hidden');
     stopMediaPolling();
   }
+  document.getElementById('profile-panel')?.classList.add('hidden');
+  closeWallpaperChooser();
+  closeReactionBar();
   hideTabContextMenu();
   hideWvContextMenu();
   hideSidebarFlyout();
@@ -3924,8 +5314,352 @@ function nextAnimationFrame() {
   return new Promise(resolve => requestAnimationFrame(resolve));
 }
 
+/* ── Read aloud, over the browser itself ─────────────────────────────────
+   Pages are handled by the guest preload. This is the other half: the tab
+   strip, the toolbar, the menus. A browser that reads web pages aloud and
+   then goes silent the moment you point at one of its own buttons has only
+   done half the job, and the half it skipped is the one you need in order to
+   reach the pages.
+
+   Controls here are mostly icons, so the label matters more than the text.
+   ─────────────────────────────────────────────────────────────────────── */
+const RA_TARGETS = '.tab, .vtab, button, a, .menu-item, .sug-item, .bookmark, ' +
+                   '[role="button"], [aria-label], [title]';
+let _raOn = false, _raRate = 1, _raTimer = null, _raCurrent = null;
+
+function raTextOf(el) {
+  if (!el) return '';
+  const label = el.getAttribute('aria-label') || el.getAttribute('title') || '';
+  const text = (el.innerText || '').replace(/\s+/g, ' ').trim();
+  // The visible text first: a tab's label attribute is often the full URL
+  // while its text is the page title, and the title is what you want read.
+  const out = text || label.trim();
+  return out.length > 300 ? out.slice(0, 300) + '\u2026' : out;
+}
+
+function raSay(el) {
+  const text = raTextOf(el);
+  if (!text) return;
+  try { speechSynthesis.cancel(); } catch { return; }
+  _raCurrent = el;
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = _raRate;
+  try { speechSynthesis.speak(u); } catch {}
+}
+
+function raOver(e) {
+  clearTimeout(_raTimer);
+  _raTimer = setTimeout(() => {
+    // A <webview> is an element in THIS document, so pointing at a page also
+    // raises mouseover here. The page has its own reader in the guest preload,
+    // and without this the two would speak over each other.
+    if (e.target?.closest?.('webview')) return;
+    const el = e.target?.closest?.(RA_TARGETS);
+    if (el && el !== _raCurrent) raSay(el);
+  }, 260);
+}
+
+function applyReadAloud(settings) {
+  const want = !!settings?.readAloud;
+  _raRate = Math.max(0.5, Math.min(2, (Number(settings?.readAloudRate) || 100) / 100));
+  if (want === _raOn) return;
+  _raOn = want;
+  if (want) {
+    document.addEventListener('mouseover', raOver, true);
+  } else {
+    document.removeEventListener('mouseover', raOver, true);
+    clearTimeout(_raTimer);
+    _raCurrent = null;
+    try { speechSynthesis.cancel(); } catch {}
+  }
+}
+
+/* ── Night light ─────────────────────────────────────────────────────────
+   A warm overlay across the whole window, chrome included. Doing this as a
+   filter on each page would leave the toolbar and the tab strip cold, and a
+   warm page in a blue-white frame is more jarring than no night light at
+   all.
+
+   It multiplies rather than tints. Multiply leaves black at black and pulls
+   the blues down out of everything else, which is what warming a display
+   means; a flat translucent orange laid over the top would wash the whole
+   picture grey instead.
+   ─────────────────────────────────────────────────────────────────────── */
+const NIGHT_ALPHA = [0, 0.13, 0.26, 0.42];   // off, low, medium, high
+let _nightTimer = null;
+
+function nightLightWanted(s) {
+  const level = Math.max(0, Math.min(3, Number(s && s.nightLight) || 0));
+  if (!level) return 0;
+  if (!(s && s.nightLightAuto)) return level;
+  // A window that wraps past midnight (21 to 7) is the normal case, so this
+  // has to handle from > to rather than assuming a simple range.
+  const h = new Date().getHours();
+  const from = Number(s.nightLightFrom) || 21, to = Number(s.nightLightTo) || 7;
+  const on = from === to ? true : (from < to ? (h >= from && h < to) : (h >= from || h < to));
+  return on ? level : 0;
+}
+
+function applyNightLight(settings) {
+  const el = document.getElementById('night-light');
+  if (!el) return;
+  const level = nightLightWanted(settings);
+  el.hidden = !level;
+  el.style.opacity = level ? String(NIGHT_ALPHA[level]) : '0';
+
+  // The schedule needs re-checking as the clock moves, but only while a
+  // schedule is actually set. Otherwise this is a timer running all day for a
+  // feature nobody turned on.
+  clearInterval(_nightTimer); _nightTimer = null;
+  if (settings && settings.nightLightAuto && Number(settings.nightLight) > 0) {
+    _nightTimer = setInterval(() => applyNightLight(settings), 60000);
+  }
+}
+
+/* ── Distance breaks ─────────────────────────────────────────────────────
+   The honest version of "stop shortsightedness". Nothing a browser can do
+   prevents myopia, and claiming otherwise would be a lie printed in a
+   settings page. What is actually supported is breaking up long stretches at
+   one fixed close distance by focusing far away, the 20-20-20 rule, and a
+   browser is well placed to help, because it is the program that knows you
+   have been reading for an hour.
+
+   Rules it keeps: it never blocks the page, it never steals focus, and it
+   does not fire at a window you are not looking at. A reminder that goes off
+   at a browser you walked away from only teaches you to ignore it.
+   ─────────────────────────────────────────────────────────────────────── */
+let _eyeTimer = null, _eyeCount = null;
+
+function eyeBreakDue() {
+  const card = document.getElementById('eye-break');
+  if (!card || !card.hidden) return;
+  if (document.hidden) return;            // not in front of you, so not now
+
+  card.hidden = false;
+  card.classList.add('in');
+
+  let left = 20;
+  const num = document.getElementById('eb-count');
+  const fill = card.querySelector('.eb-fill');
+  if (num) num.textContent = String(left);
+  if (fill) { fill.style.transition = 'none'; fill.style.strokeDashoffset = '0'; }
+  // A frame between the reset and the animation, or the two get collapsed
+  // into one style recalculation and the ring never moves.
+  requestAnimationFrame(() => {
+    if (fill) { fill.style.transition = 'stroke-dashoffset 20s linear'; fill.style.strokeDashoffset = '107'; }
+  });
+
+  clearInterval(_eyeCount);
+  _eyeCount = setInterval(() => {
+    left -= 1;
+    if (num) num.textContent = String(Math.max(0, left));
+    if (left <= 0) { clearInterval(_eyeCount); _eyeCount = null; dismissEyeBreak(); }
+  }, 1000);
+}
+
+function dismissEyeBreak() {
+  const card = document.getElementById('eye-break');
+  if (!card) return;
+  clearInterval(_eyeCount); _eyeCount = null;
+  card.classList.remove('in');
+  setTimeout(() => { card.hidden = true; }, 220);
+}
+
+function applyEyeBreaks(settings) {
+  clearInterval(_eyeTimer); _eyeTimer = null;
+  const mins = Math.max(0, Number(settings && settings.eyeBreakMinutes) || 0);
+  if (!mins) { dismissEyeBreak(); return; }
+  _eyeTimer = setInterval(eyeBreakDue, mins * 60000);
+}
+
+/* ── Vision assistance ───────────────────────────────────────────────────
+   Half of this is body classes on Privoo's own chrome; the other half is a
+   stylesheet pushed into every page, because enlarging the toolbar and
+   leaving the page at 11px helps nobody. The page half rides the same
+   insertCSS path as the custom cursor.
+   ─────────────────────────────────────────────────────────────────────── */
+let _guestVisionCss = '';
+const _guestVisionKeys = new WeakMap();
+
+function guestVisionCss(settings) {
+  const parts = [];
+  const min = Number(settings?.visionMinFontSize) || 0;
+  if (min > 0) {
+    // A floor, not a scale: text already larger than the floor is left
+    // alone, so a page's own hierarchy survives. !important because the
+    // pages that set 11px body text are exactly the ones that set it hard.
+    parts.push(
+      'html, body, p, li, td, th, span, a, div, label, input, button, select, textarea {'
+      + ' font-size: max(' + min + 'px, 1em) !important;'
+      + ' line-height: 1.5 !important; }'
+    );
+  }
+  if (settings?.readAloud) {
+    // Marks the block currently being spoken. The preload sets the attribute;
+    // the appearance is decided here so a page's CSP cannot suppress it.
+    parts.push(
+      '[data-privoo-reading] { outline: 2px solid #6ea8ff !important;'
+      + ' outline-offset: 2px !important;'
+      + ' background: rgba(110,168,255,.14) !important;'
+      + ' border-radius: 3px !important; }'
+    );
+  }
+  if (settings?.visionUnderlineLinks) {
+    // Colour alone is not a distinction you can rely on. Underlines are.
+    parts.push('a[href] { text-decoration: underline !important; text-underline-offset: 2px !important; }');
+  }
+  return parts.join('\n');
+}
+
+async function applyGuestVision(wv) {
+  if (!wv) return;
+  const prev = _guestVisionKeys.get(wv);
+  if (prev) {
+    try { await wv.removeInsertedCSS(prev); } catch { /* page already gone */ }
+    _guestVisionKeys.delete(wv);
+  }
+  if (!_guestVisionCss) return;
+  try {
+    const key = await wv.insertCSS(_guestVisionCss);
+    _guestVisionKeys.set(wv, key);
+  } catch { /* not loaded yet; dom-ready will do it */ }
+}
+
+function applyVisionSettings(settings) {
+  const b = document.body;
+  if (!b) return;
+
+  b.classList.toggle('vision-contrast',  !!settings?.visionHighContrast);
+  b.classList.toggle('vision-bold',      !!settings?.visionBoldText);
+  b.classList.toggle('vision-focus',     !!settings?.visionFocusRings);
+  b.classList.toggle('vision-still',     !!settings?.visionReduceMotion);
+
+  // The interface scale is a root font-size multiplier rather than a zoom:
+  // zooming the window would scale the PAGE too, which has its own control.
+  const scale = Math.min(200, Math.max(100, Number(settings?.visionUiScale) || 100));
+  document.documentElement.style.setProperty('--ui-scale', (scale / 100).toFixed(3));
+  b.classList.toggle('vision-scaled', scale !== 100);
+
+  _guestVisionCss = guestVisionCss(settings);
+  for (const t of tabs) applyGuestVision(t.wv);
+}
+
+/* ── Pointer style ───────────────────────────────────────────────────────
+   Applies to the chrome AND to the pages inside it. It used to be the chrome
+   only, which meant that after choosing a cursor you saw it over the tab
+   strip and the toolbar and then lost it the moment the pointer crossed onto
+   a web page — i.e. everywhere you actually look. A cursor that only works
+   over the furniture is not a working cursor.
+
+   Pages get it by injected stylesheet, one per webview, removed and
+   re-inserted when the setting changes so switching back really does give
+   the page its own cursors again.
+   ─────────────────────────────────────────────────────────────────────── */
+const CURSOR_LARGE_URL = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cpath d='M6 3l24 15-10 2 6 11-5 3-6-11-9 7z' fill='%23fff' stroke='%23000' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E\") 5 3, auto";
+const CURSOR_PRECISE_URL = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'%3E%3Cg stroke='%23000' stroke-width='3'%3E%3Cpath d='M13 1v9M13 16v9M1 13h9M16 13h9'/%3E%3C/g%3E%3Cg stroke='%23fff' stroke-width='1.4'%3E%3Cpath d='M13 1v9M13 16v9M1 13h9M16 13h9'/%3E%3C/g%3E%3C/svg%3E\") 13 13, crosshair";
+
+// The stylesheet currently pushed into guests, and the key insertCSS gave us
+// for it per webview so it can be taken out again.
+let _guestCursorCss = '';
+const _guestCursorKeys = new WeakMap();
+
+function guestCursorCss(style, url) {
+  let value = '';
+  if (style === 'large') value = CURSOR_LARGE_URL;
+  else if (style === 'precise') value = CURSOR_PRECISE_URL;
+  else if (style === 'custom' && url) value = 'url("' + url + '") 4 4, auto';
+  if (!value) return '';
+  // `* ` as well as html/body: a page that sets its own cursor on an element
+  // would otherwise win over a rule on the root.
+  return 'html, body, * { cursor: ' + value + ' !important; }';
+}
+
+async function applyGuestCursor(wv) {
+  if (!wv) return;
+  const prev = _guestCursorKeys.get(wv);
+  if (prev) {
+    try { await wv.removeInsertedCSS(prev); } catch { /* page already gone */ }
+    _guestCursorKeys.delete(wv);
+  }
+  if (!_guestCursorCss) return;
+  try {
+    const key = await wv.insertCSS(_guestCursorCss);
+    _guestCursorKeys.set(wv, key);
+  } catch { /* not loaded yet; dom-ready will do it */ }
+}
+
+let _cursorUrlCache = null;
+let _cursorPathCache = null;
+function applyCursorStyle(settings) {
+  const style = settings?.cursorStyle || 'system';
+  const b = document.body;
+  if (!b) return;
+  b.classList.toggle('cursor-large',   style === 'large');
+  b.classList.toggle('cursor-precise', style === 'precise');
+  b.classList.toggle('cursor-custom',  style === 'custom');
+
+  const finish = (url) => {
+    _guestCursorCss = guestCursorCss(style, url);
+    for (const t of tabs) applyGuestCursor(t.wv);
+  };
+
+  if (style !== 'custom') {
+    document.documentElement.style.removeProperty('--privoo-cursor');
+    _cursorUrlCache = null;
+    _cursorPathCache = null;
+    finish(null);
+    return;
+  }
+
+  // Re-fetch when the FILE changes, not just when the style does. Keying the
+  // cache on nothing meant picking a second image kept showing the first.
+  const path = settings?.cursorImagePath || '';
+  if (_cursorUrlCache && _cursorPathCache === path) { finish(_cursorUrlCache); return; }
+
+  window.privoo.getCursorImageUrl?.().then((url) => {
+    if (!url) { b.classList.remove('cursor-custom'); finish(null); return; }
+    _cursorUrlCache = url;
+    _cursorPathCache = path;
+    document.documentElement.style.setProperty('--privoo-cursor', 'url("' + url + '") 4 4, auto');
+    finish(url);
+  }).catch(() => { b.classList.remove('cursor-custom'); finish(null); });
+}
+
+// Repeating work that only matters while the window is on screen. Minimised
+// or hidden, the timer is stopped entirely rather than left running.
+// Windows 11 and macOS can show the desktop through the chrome; nothing else
+// can. Painting the translucent styles anywhere else just washes the UI out
+// over an opaque window.
+let _translucencyOk = true;
+window.privoo.translucencySupported?.().then((ok) => {
+  _translucencyOk = !!ok;
+  if (!ok) {
+    document.documentElement.classList.remove('semi-transparent-host');
+    document.body.classList.remove('semi-transparent');
+  }
+}).catch(() => {});
+
+function visibleInterval(fn, ms) {
+  let id = null;
+  const start = () => { if (id === null) id = setInterval(fn, ms); };
+  const stop  = () => { if (id !== null) { clearInterval(id); id = null; } };
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { stop(); return; }
+    try { fn(); } catch { /* keep the timer alive */ }
+    start();
+  });
+  if (!document.hidden) start();
+  return { stop };
+}
+function isPrivooInternalPage(url) {
+  const u = String(url || '');
+  return u.startsWith('privoo://') || u.startsWith('devtools://');
+}
+
 async function openDockedDevTools(tab, inspectX, inspectY) {
   if (!tab?.wv) return;
+  // Privoo's own pages are part of the app, not content to inspect.
+  try { if (isPrivooInternalPage(tab.wv.getURL())) return; } catch { return; }
   const hasCoords = Number.isFinite(inspectX) && Number.isFinite(inspectY);
   const guestId = tab.wv.getWebContentsId?.() || 0;
   try {
@@ -3977,6 +5711,9 @@ async function closeDockedDevTools() {
 
 // ─── Standalone emoji picker (Chrome/Edge-style) ────────────────────────────
 const emojiPickerEl    = document.getElementById('emoji-picker');
+// Set while the picker is open on behalf of a caller that wants the glyph
+// handed back (tab reactions) rather than typed into a page.
+let emojiOnPick = null;
 const emojiSearchInp   = document.getElementById('emoji-search');
 const emojiCloseBtn    = document.getElementById('emoji-close');
 const emojiCategoriesEl= document.getElementById('emoji-categories');
@@ -4059,7 +5796,7 @@ function renderEmojiGrid() {
   if (!entries.length) {
     const empty = document.createElement('div');
     empty.className = 'ep-empty';
-    empty.textContent = q ? `No emojis match "${q}"` : 'Nothing here yet — pick an emoji to add it to Recent';
+    empty.textContent = q ? `No emojis match "${q}"` : 'Nothing here yet. Pick an emoji to add it to Recent';
     emojiGridEl.replaceChildren(empty);
     return;
   }
@@ -4088,6 +5825,16 @@ function updateEmojiPreview(glyph, name) {
 
 function selectEmoji(glyph) {
   pushRecent(glyph);
+  // A caller can ask for the glyph instead of having it typed somewhere —
+  // that is how tab reactions reuse this picker rather than shipping a second
+  // one. Picking closes it, because unlike inserting emoji into a message you
+  // only ever want one.
+  if (emojiOnPick) {
+    const cb = emojiOnPick;
+    closeEmojiPicker();
+    try { cb(glyph); } catch { /* the caller's problem, not the picker's */ }
+    return;
+  }
   if (emojiTargetInput) {
     const input = emojiTargetInput;
     input.focus();
@@ -4104,11 +5851,12 @@ function selectEmoji(glyph) {
   // Keep picker open — matches Chrome/Edge so users can insert several.
 }
 
-function openEmojiPicker(wv, inputEl) {
+function openEmojiPicker(wv, inputEl, onPick) {
   if (!emojiPickerEl) return;
   closePopovers();
-  emojiTargetInput = inputEl || null;
-  emojiTargetWv = inputEl ? null : (wv || activeTab()?.wv || null);
+  emojiOnPick = typeof onPick === 'function' ? onPick : null;
+  emojiTargetInput = emojiOnPick ? null : (inputEl || null);
+  emojiTargetWv = (emojiOnPick || inputEl) ? null : (wv || activeTab()?.wv || null);
   // Snapshot the focused element in the webview BEFORE focus moves to the
   // picker UI — we re-focus it when an emoji is clicked so insertText works.
   if (emojiTargetWv) {
@@ -4140,6 +5888,7 @@ function closeEmojiPicker() {
   emojiPickerEl?.classList.add('hidden');
   emojiTargetWv = null;
   emojiTargetInput = null;
+  emojiOnPick = null;
 }
 
 emojiCloseBtn?.addEventListener('click', (e) => { e.stopPropagation(); closeEmojiPicker(); });
@@ -4227,8 +5976,8 @@ const OB_LEAVING_DISMISSED = new Set();
 // True while the Chrome Web Store notice is up for the current visit — reset
 // when the user navigates away, so it shows again on the next visit.
 let obWebStoreActive = false;
-// Hosts where we show a friendly "Are you leaving Privoo?" nudge. Entries
-// without a slash match the bare host (and any subdomain via endsWith).
+// Hosts that get a nudge before the user leaves for another browser.
+// An entry without a slash matches the bare host and any subdomain.
 // Entries WITH a slash require pathLower to start with the needle — used for
 // generic vendor sites (apple.com, microsoft.com) where only specific
 // product pages should trigger.
@@ -4346,26 +6095,16 @@ function maybeShowOverlayBanner(url) {
   const bareHost = host.replace(/^www\./, '');
   const pathLow  = pathname.toLowerCase();
 
-  // Chrome Web Store — Privoo can't install extensions directly from it, so
-  // let the user know and point them at the Extensions page.
+  // Chrome Web Store — nothing to say here any more. The listing's own button
+  // is relabelled "Add to Privoo" and installs directly (see the content
+  // script in webview-preload.js), so a banner on top of it would just be
+  // telling the user about a button they are already looking at.
   const isWebStore = bareHost === 'chromewebstore.google.com'
     || (bareHost === 'chrome.google.com' && pathLow.startsWith('/webstore'));
   if (isWebStore) {
-    // Show once per visit. Don't hide on the follow-up did-stop-loading /
-    // in-page navigations the store fires — that was killing the banner the
-    // instant it appeared.
-    if (!obWebStoreActive) {
-      obWebStoreActive = true;
-      showOverlayBanner(
-        "Chrome Web Store isn't supported",
-        "Privoo can't install extensions straight from the Chrome Web Store. Download the extension's .crx file and add it from Privoo's Extensions page instead.",
-        'Open Extensions page',
-        () => { createTab(EXTENSIONS_URL); },
-      );
-    }
+    hideOverlayBanner();
     return;
   }
-  obWebStoreActive = false;
 
   const isRival = !onSearch && RIVAL_BROWSER_HOSTS.some(needle => {
     if (needle.includes('/')) {
@@ -4380,8 +6119,8 @@ function maybeShowOverlayBanner(url) {
   if (isRival) {
     if (!OB_LEAVING_DISMISSED.has(host)) {
       showOverlayBanner(
-        'Are you leaving Privoo… 🥺',
-        "We'll miss you! Privoo blocks ads, trackers, and fingerprinting by default and keeps everything on your device.",
+        'Before you go',
+        'Privoo blocks ads, trackers and fingerprinting by default, and keeps your browsing on this device.',
         'Stay with Privoo',
         () => { OB_LEAVING_DISMISSED.add(host); },
       );
@@ -4398,10 +6137,10 @@ async function showWvContextMenu(tab, params, vx = 200, vy = 200) {
   const flags = params?.editFlags || {};
   const can = (k) => flags[k] !== false;
 
-  // The webview context menu uses the OS-native menu (Menu.popup via the
-  // show-context-menu IPC). A native menu always renders above the webview
-  // surface and its clicks always register — an HTML overlay positioned
-  // over a <webview> can't be relied on for either.
+  // Privoo's own menu, drawn in the chrome. It paints over the guest because
+  // a <webview> is an ordinary element in this document, and the click that
+  // dismisses it is caught by .ctx-backdrop, which sits above the guest and
+  // below the menu.
   const items = [];
   const actions = {};
   let seq = 0;
@@ -4413,7 +6152,26 @@ async function showWvContextMenu(tab, params, vx = 200, vy = 200) {
   const sep = () => items.push({ type: 'separator' });
 
   if (params?.isEditable) {
-    add('Emojis', () => openEmojiPicker(wv));
+    // Remember which field was right-clicked, now, while the guest still has
+    // focus. By the time a glyph is chosen the menu has been open for a while
+    // and document.activeElement in the guest may have moved on; the insert
+    // falls back to this. openEmojiPicker() does the same thing for the same
+    // reason, so this is the proven form rather than a new guess.
+    try {
+      wv.executeJavaScript(
+        '(function(){var el=document.activeElement;if(el&&el!==document.body&&el!==document.documentElement)window.__privooEmojiTarget=el;})();'
+      ).catch(() => {});
+    } catch { /* the tab went away */ }
+    // Quick emoji across the top, the way Chrome does on a text field. This
+    // does not replace the Windows panel on Win+period — but a shortcut you
+    // may not know, that this menu has no way to mention, is not an answer to
+    // right-clicking a text box.
+    items.push({
+      type: 'emoji',
+      onPick: (glyph) => insertEmojiInWebview(wv, glyph),
+      onMore: () => openEmojiPicker(wv, null, null),
+    });
+    sep();
     if (settings?.identityAutofillEnabled === true) {
       add('Autofill identity', () => requestIdentityAutofill(tab));
     }
@@ -4424,13 +6182,41 @@ async function showWvContextMenu(tab, params, vx = 200, vy = 200) {
   add('Forward', () => wv.goForward(), { accel: 'Alt+Right', disabled: !wv.canGoForward() });
   add('Reload',  () => wv.reload(),    { accel: 'CmdOrCtrl+R' });
 
+  // Spelling first, above the edit commands — that is where Chrome puts it,
+  // because when you right-click a red-underlined word the correction is the
+  // only thing you wanted.
+  const misspelled = params?.misspelledWord;
+  const suggestions = (misspelled && params.dictionarySuggestions) || [];
+  if (misspelled) {
+    sep();
+    if (suggestions.length) {
+      suggestions.slice(0, 5).forEach((w) => add(w, () => wv.replaceMisspelling?.(w)));
+    } else {
+      add('No spelling suggestions', () => {}, { disabled: true });
+    }
+    sep();
+    add('Add to dictionary', () => {
+      try { window.privoo.addToDictionary(wv.getWebContentsId(), misspelled); } catch {}
+    });
+  }
+
   const hasEdit = can('canCut') || can('canCopy') || can('canPaste')
     || can('canSelectAll') || params?.selectionText || params?.isEditable;
   if (hasEdit) {
     sep();
+    if (params?.isEditable) {
+      add('Undo', () => wv.undo(), { accel: 'CmdOrCtrl+Z', disabled: !can('canUndo') });
+      add('Redo', () => wv.redo(), { accel: 'CmdOrCtrl+Shift+Z', disabled: !can('canRedo') });
+      sep();
+    }
     if (can('canCut'))                            add('Cut',   () => wv.cut(),   { accel: 'CmdOrCtrl+X' });
     if (can('canCopy') || params?.selectionText)  add('Copy',  () => wv.copy(),  { accel: 'CmdOrCtrl+C' });
-    if (can('canPaste') || params?.isEditable)    add('Paste', () => wv.paste(), { accel: 'CmdOrCtrl+V' });
+    if (can('canPaste') || params?.isEditable) {
+      add('Paste', () => wv.paste(), { accel: 'CmdOrCtrl+V' });
+      // Chrome's "Paste as plain text" — drops the formatting that comes with
+      // anything copied out of a rich editor.
+      add('Paste as plain text', () => wv.pasteAndMatchStyle(), { accel: 'CmdOrCtrl+Shift+V' });
+    }
     if (can('canSelectAll'))                      add('Select all', () => wv.selectAll(), { accel: 'CmdOrCtrl+A' });
   }
 
@@ -4442,32 +6228,51 @@ async function showWvContextMenu(tab, params, vx = 200, vy = 200) {
 
   if (params?.linkURL) {
     sep();
-    add('Open link in new tab', () => createTab(params.linkURL));
-    add('Copy link address',    () => navigator.clipboard.writeText(params.linkURL).catch(() => {}));
+    add('Open link in new tab',    () => createTab(params.linkURL));
+    add('Open link in new window', () => { window.privoo.openWindow(params.linkURL).catch(() => createTab(params.linkURL)); });
+    add('Save link as…',           () => { try { wv.downloadURL(params.linkURL); } catch {} });
+    add('Copy link address',       () => navigator.clipboard.writeText(params.linkURL).catch(() => {}));
+    if (params.linkText) {
+      add('Copy link text', () => navigator.clipboard.writeText(params.linkText).catch(() => {}));
+    }
   }
   if (params?.srcURL && params.mediaType === 'image') {
     sep();
     add('Open image in new tab', () => createTab(params.srcURL));
-    add('Copy image address',    () => navigator.clipboard.writeText(params.srcURL).catch(() => {}));
     add('Save image as…',        () => { try { wv.downloadURL(params.srcURL); } catch {} });
+    // The bitmap, not the address — only the guest's own webContents can put
+    // decoded pixels on the clipboard, so this goes through main.
+    add('Copy image', () => {
+      try { window.privoo.contextCopyImage(wv.getWebContentsId(), params.x, params.y); } catch {}
+    });
+    add('Copy image address',    () => navigator.clipboard.writeText(params.srcURL).catch(() => {}));
   }
-  if (params?.srcURL && params.mediaType === 'video') {
+  if (params?.srcURL && (params.mediaType === 'video' || params.mediaType === 'audio')) {
+    const kind = params.mediaType === 'audio' ? 'audio' : 'video';
     sep();
-    add('Open video in new tab', () => createTab(params.srcURL));
-  }
-
-  const suggestions = (params?.misspelledWord && params.dictionarySuggestions) || [];
-  if (suggestions.length) {
-    sep();
-    suggestions.slice(0, 4).forEach(w => add(w, () => wv.replaceMisspelling?.(w)));
+    add('Open ' + kind + ' in new tab', () => createTab(params.srcURL));
+    add('Save ' + kind + ' as…',        () => { try { wv.downloadURL(params.srcURL); } catch {} });
+    add('Copy ' + kind + ' address',    () => navigator.clipboard.writeText(params.srcURL).catch(() => {}));
   }
 
   sep();
   add('Open in mobile view', () => openMobileView());
   add('Print…',           () => wv.print(),                                              { accel: 'CmdOrCtrl+P' });
-  add('View page source', () => { const u = wv.getURL(); if (u) createTab(`view-source:${u}`); });
-  add('Inspect',          () => openDockedDevTools(tab, params?.x, params?.y),           { accel: 'F12' });
+  // Privoo's own pages are part of the app, so no source view or inspector.
+  if (!isPrivooInternalPage(wv.getURL?.())) {
+    add('View page source', () => { const u = wv.getURL(); if (u) createTab(`view-source:${u}`); });
+    add('Inspect',          () => openDockedDevTools(tab, params?.x, params?.y),           { accel: 'F12' });
+  }
 
+  // Privoo's own menu, drawn in the chrome. A <webview> is an ordinary
+  // element in this document, so a fixed layer at z-index 15000 paints over
+  // it; and the click that DISMISSES the menu — the one the guest would
+  // otherwise swallow — is caught by .ctx-backdrop, which showHtmlMenu()
+  // raises at inset:0 above the guest and below the menu.
+  //
+  // vx/vy are the real cursor position in chrome coordinates, worked out by
+  // the context-menu listener from getCursorPos() with the guest's own
+  // compositor coordinates as a fallback.
   let chosen = null;
   try { chosen = await showHtmlMenu(items, vx, vy); } catch { chosen = null; }
   if (chosen && typeof actions[chosen] === 'function') {
@@ -4611,14 +6416,15 @@ document.getElementById('extensions-btn')?.addEventListener('click', (e) => {
 
 // ─── Customize side panel (right-side, opens from menu) ─────────────────────
 const CP_ACCENTS = [
-  { name: 'lavender', value: '#4f46e5' },  // default
-  { name: 'blue',     value: '#8ab4f8' },
-  { name: 'teal',     value: '#4dd0e1' },
-  { name: 'green',    value: '#81c995' },
-  { name: 'yellow',   value: '#fdd663' },
-  { name: 'orange',   value: '#fcad70' },
-  { name: 'red',      value: '#f28b82' },
-  { name: 'pink',     value: '#f48fb1' },
+  { name: 'Mono',     value: '#ffffff' },  // default — adapts to light/dark
+  { name: 'Blue',     value: '#4d8df6' },
+  { name: 'Teal',     value: '#2dd4bf' },
+  { name: 'Green',    value: '#4ade80' },
+  { name: 'Amber',    value: '#fbbf24' },
+  { name: 'Orange',   value: '#fb923c' },
+  { name: 'Red',      value: '#f87171' },
+  { name: 'Pink',     value: '#f472b6' },
+  { name: 'Violet',   value: '#a78bfa' },
 ];
 const cpPanel       = document.getElementById('customize-panel');
 const cpCloseBtn    = document.getElementById('cp-close');
@@ -4627,14 +6433,9 @@ const cpShowHome    = document.getElementById('cp-show-home');
 const cpShowBks     = document.getElementById('cp-show-bookmarks');
 const cpSidebarMode = document.getElementById('cp-sidebar-mode');
 const cpShowNotes      = document.getElementById('cp-show-notes');
+const cpRandomWp       = document.getElementById('cp-random-wp');
 const cpVerticalTabs   = document.getElementById('cp-vertical-tabs');
 // cpShowGreet removed — greeting feature deleted
-const cpWpPickBtn   = document.getElementById('cp-wp-pick');
-const cpWpLiveBtn   = document.getElementById('cp-wp-live');
-const cpWpClearBtn  = document.getElementById('cp-wp-clear');
-const cpWpFull      = document.getElementById('cp-wp-full');
-const cpWpSound     = document.getElementById('cp-wp-sound');
-const cpWpAnimated  = document.getElementById('cp-wp-animated');
 
 function paintAccentSwatches() {
   if (!cpAccentRow) return;
@@ -4646,7 +6447,12 @@ function paintAccentSwatches() {
     sw.type = 'button';
     sw.className = 'cp-accent-swatch';
     sw.style.setProperty('--accent-color', a.value);
+    // Mono is white in dark mode and near-black in light mode, so a flat
+    // swatch of its stored value would vanish against one of the two. It
+    // gets a split black/white chip instead, which reads in both.
+    if (a.value.toLowerCase() === MONO_ACCENT) sw.classList.add('is-mono');
     sw.title = a.name;
+    sw.setAttribute('aria-label', `${a.name} accent`);
     if (a.value.toLowerCase() === current) sw.classList.add('active');
     sw.addEventListener('click', async () => {
       // Apply IMMEDIATELY so the user sees the change without waiting for
@@ -4672,19 +6478,43 @@ function applyAccentColor(hex) {
 // feels themed rather than always defaulting back to indigo. Chrome
 // surfaces (titlebar/toolbar/omnibox) stay neutral regardless — only
 // buttons, focus rings, links and the active-tab underline use the accent.
+// Ships as the settings-store default too — turning a theme off falls back
+// here when no pre-theme accent was stashed.
+const DEFAULT_ACCENT = '#ffffff';
+
+// The monochrome accent is a *role*, not a colour: it always resolves to the
+// opposite of the surface it sits on — white on the black chrome, near-black
+// on the light one. Storing it as plain #ffffff keeps the settings file
+// readable and keeps every other accent path (swatches, extensions, themes)
+// working unchanged; only this one value is re-read per mode.
+const MONO_ACCENT = '#ffffff';
+const MONO_ACCENT_LIGHT = '#101014';   // what "mono" means when the UI is light
+
 function applyAccentTriad(themeHex) {
   const isDark = document.body.classList.contains('dark');
-  const fallback = isDark ? '#948ef2' : '#4f46e5';
-  const hex = (themeHex && /^#[0-9a-f]{6}$/i.test(themeHex)) ? themeHex : fallback;
+  const fallback = isDark ? MONO_ACCENT : MONO_ACCENT_LIGHT;
+  let hex = (themeHex && /^#[0-9a-f]{6}$/i.test(themeHex)) ? themeHex : fallback;
+  if (hex.toLowerCase() === MONO_ACCENT && !isDark) hex = MONO_ACCENT_LIGHT;
   document.documentElement.style.setProperty('--accent', hex);
   const { r, g, b } = hexToRgb(hex);
+  // Hover normally brightens. A white accent has no headroom to brighten
+  // into, so above ~72% luminance we darken instead — otherwise hovering the
+  // primary button did visibly nothing.
+  const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  const mix = lum > 0.72 ? 0 : 255;   // pull toward black when already bright
+  const k = lum > 0.72 ? 0.12 : 0.18;
   const hover = rgbToHex(
-    Math.min(255, Math.round(r + (255 - r) * 0.18)),
-    Math.min(255, Math.round(g + (255 - g) * 0.18)),
-    Math.min(255, Math.round(b + (255 - b) * 0.18)),
+    Math.round(r + (mix - r) * k),
+    Math.round(g + (mix - g) * k),
+    Math.round(b + (mix - b) * k),
   );
   document.documentElement.style.setProperty('--accent-hover', hover);
-  document.documentElement.style.setProperty('--accent-soft', `rgba(${r},${g},${b},.18)`);
+  // Text/icons drawn ON the accent follow its luminance, so a light accent
+  // never gets light text on it (which is what made a white accent unusable).
+  document.documentElement.style.setProperty('--on-accent', lum > 0.6 ? '#1b1b1e' : '#ffffff');
+  // The soft wash sits on the chrome, not on the accent, so it needs more
+  // presence on black than the .18 that read fine over a light surface.
+  document.documentElement.style.setProperty('--accent-soft', `rgba(${r},${g},${b},${isDark ? '.16' : '.13'})`);
   document.documentElement.style.removeProperty('--strip');
   document.documentElement.style.removeProperty('--toolbar');
   document.documentElement.style.removeProperty('--omni-bg');
@@ -4719,9 +6549,9 @@ function paintCustomizePanel() {
   }
   if (cpVerticalTabs)   cpVerticalTabs.checked   = !!settings?.verticalTabs;
   if (cpShowNotes)      cpShowNotes.checked      = !!settings?.showNotesButton;
-  if (cpWpFull)         cpWpFull.checked         = !!settings?.ntpWallpaperFullBrowser;
-  if (cpWpSound)        cpWpSound.checked        = !!settings?.ntpWallpaperSound;
-  if (cpWpAnimated)     cpWpAnimated.checked     = settings?.ntpWallpaperAnimated !== false;
+  if (cpRandomWp)       cpRandomWp.checked       = !!settings?.ntpRandomWallpaper;
+  paintWpPreview();
+  paintWpChooser();
 }
 
 function openCustomizePanel() {
@@ -4766,27 +6596,101 @@ cpVerticalTabs?.addEventListener('change', async () => {
   await saveBrowserSetting(patch);
 });
 cpShowNotes?.addEventListener('change',   () => saveBrowserSetting({ showNotesButton:   cpShowNotes.checked }));
+cpRandomWp?.addEventListener('change',    () => saveBrowserSetting({ ntpRandomWallpaper: cpRandomWp.checked }));
 
-cpWpPickBtn?.addEventListener('click', async () => {
-  // Picking an image/video wins over the wave — turn the wave off so it shows.
-  try { const r = await window.privoo.chooseNtpWallpaper?.(); if (r) saveBrowserSetting({ ntpWaveEnabled: false }); } catch {}
+/* ── Wallpaper chooser ───────────────────────────────────────────────────
+   "Choose a wallpaper" used to drop you straight into Settings. But there
+   are three different answers to it — a picture, a video, or let Privoo pick
+   one — and choosing between them IS the decision. A file dialog cannot ask
+   that question, so this sheet asks it first and then opens the right one.
+   ─────────────────────────────────────────────────────────────────────── */
+const wpChooser = document.getElementById('wp-chooser');
+
+function openWallpaperChooser() {
+  if (!wpChooser) return;
+  paintWpChooser();
+  wpChooser.classList.remove('hidden');
+  // Focus the first option so the sheet is usable from the keyboard the
+  // moment it appears.
+  wpChooser.querySelector('.wp-opt')?.focus();
+}
+function closeWallpaperChooser() {
+  wpChooser?.classList.add('hidden');
+}
+function paintWpChooser() {
+  const st = document.getElementById('wp-opt-random-state');
+  if (st) {
+    const on = !!settings?.ntpRandomWallpaper && !settings?.ntpWallpaperPath;
+    st.textContent = on ? 'On' : '';
+    st.hidden = !on;
+  }
+}
+
+document.getElementById('cp-wp-choose')?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  openWallpaperChooser();
 });
-cpWpLiveBtn?.addEventListener('click', async () => {
-  try { const r = await window.privoo.chooseNtpLiveWallpaper?.(); if (r) saveBrowserSetting({ ntpWaveEnabled: false }); } catch {}
+document.getElementById('wp-chooser-backdrop')?.addEventListener('click', closeWallpaperChooser);
+
+document.getElementById('wp-opt-image')?.addEventListener('click', async () => {
+  closeWallpaperChooser();
+  try { await window.privoo.chooseNtpWallpaper?.(); } catch { /* cancelled */ }
 });
-cpWpClearBtn?.addEventListener('click', async () => {
-  try { await window.privoo.clearNtpWallpaper?.(); } catch {}
-  saveBrowserSetting({ ntpWaveEnabled: false });   // "Remove" clears any custom background
+document.getElementById('wp-opt-live')?.addEventListener('click', async () => {
+  closeWallpaperChooser();
+  try { await window.privoo.chooseNtpLiveWallpaper?.(); } catch { /* cancelled */ }
 });
-cpWpSound?.addEventListener('change', () => {
-  saveBrowserSetting({ ntpWallpaperSound: cpWpSound.checked });
+document.getElementById('wp-opt-random')?.addEventListener('click', async () => {
+  closeWallpaperChooser();
+  // Random photos and a file of your own are mutually exclusive, and the file
+  // wins wherever both are set — so turning random on clears the file rather
+  // than leaving a setting switched on that visibly does nothing.
+  try { await window.privoo.clearNtpWallpaper?.(); } catch { /* ignore */ }
+  await saveBrowserSetting({ ntpRandomWallpaper: true });
 });
-cpWpAnimated?.addEventListener('change', () => {
-  saveBrowserSetting({ ntpWallpaperAnimated: cpWpAnimated.checked });
+document.getElementById('wp-opt-none')?.addEventListener('click', async () => {
+  closeWallpaperChooser();
+  try { await window.privoo.clearNtpWallpaper?.(); } catch { /* ignore */ }
+  await saveBrowserSetting({ ntpRandomWallpaper: false });
 });
-cpWpFull?.addEventListener('change', () => {
-  saveBrowserSetting({ ntpWallpaperFullBrowser: cpWpFull.checked });
+document.getElementById('wp-opt-library')?.addEventListener('click', () => {
+  closeWallpaperChooser();
+  closeCustomizePanel();
+  createTab(SETTINGS_URL + '#wallpaper-card');
 });
+
+/* A thumbnail of the actual background, so the panel shows what it is
+   talking about. The chrome bars drawn over it are three grey lines — enough
+   to read as "a browser window", cheap enough to be pure CSS. */
+async function paintWpPreview() {
+  const art = document.getElementById('cp-wp-preview-art');
+  const label = document.getElementById('cp-wp-preview-label');
+  if (!art || !label) return;
+
+  const path = settings?.ntpWallpaperPath;
+  const isVideo = settings?.ntpWallpaperType === 'video';
+
+  if (path) {
+    // The chrome renderer runs from file://, so it needs a URL it can
+    // actually load rather than the raw path.
+    let url = '';
+    try { url = await window.privoo.getNtpWallpaperUrl?.() || ''; } catch { /* ignore */ }
+    art.style.backgroundImage = url && !isVideo ? `url("${url.replace(/"/g, '%22')}")` : '';
+    art.classList.toggle('is-video', isVideo);
+    label.textContent = isVideo ? 'Your video' : 'Your image';
+  } else if (settings?.ntpRandomWallpaper) {
+    art.style.backgroundImage = '';
+    art.classList.remove('is-video');
+    label.textContent = 'Random photos';
+  } else {
+    art.style.backgroundImage = '';
+    art.classList.remove('is-video');
+    label.textContent = 'No wallpaper';
+  }
+  art.classList.toggle('is-empty', !path);
+  art.classList.toggle('is-random', !path && !!settings?.ntpRandomWallpaper);
+}
+
 
 // ── Theme gallery + colour picker ──────────────────────────────────────────
 (function initThemePopup() {
@@ -4868,7 +6772,7 @@ cpWpFull?.addEventListener('change', () => {
     const matched = THEME_LIST.find(t => sameColors(colors, t.colors) && style === t.style);
     if (matched) {
       preview.className = 'wave-hero';
-      preview.style.background = "url('privoo://newtab/themes/" + matched.id + ".png') center/cover no-repeat, linear-gradient(135deg, " + colors.join(',') + ")";
+      preview.style.background = "linear-gradient(135deg, " + colors.join(',') + ")";
     } else {
       preview.style.background = '';
       preview.className = 'wave-hero wave-bg ts-' + style + ((animChk && !animChk.checked) ? ' wave-static' : '');
@@ -4935,8 +6839,16 @@ cpWpFull?.addEventListener('change', () => {
       ntpWaveAnimate: animChk ? animChk.checked : true,
       // Picking a theme retunes the whole UI: the accent follows the theme's
       // most saturated colour. Greyscale themes keep the existing accent so
-      // the UI never ends up with an unusable grey accent.
-      ...(maxSat >= 0.12 ? { accentColor: best } : {}),
+      // the UI never ends up with an unusable grey accent. The accent in use
+      // before the first theme is stashed so turning the theme off restores it.
+      ...(maxSat >= 0.12
+        ? {
+          accentColor: best,
+          ...(settings?.accentBeforeTheme
+            ? {}
+            : { accentBeforeTheme: settings?.accentColor || DEFAULT_ACCENT }),
+        }
+        : {}),
       // Greyscale palettes (Mono) leave Vibe off so the chrome stays neutral grey
       // instead of picking up the saturated hue glow.
       vibeEnabled: maxSat >= 0.12,
@@ -4952,10 +6864,11 @@ cpWpFull?.addEventListener('change', () => {
     THEME_LIST.forEach(t => {
       const b = document.createElement('button');
       b.type = 'button';
-      // Cover = the theme's generated image, with the palette gradient as fallback.
+      // Cover = the theme's own palette. It used to be a rendered PNG per
+      // theme with this gradient as the fallback behind it.
       b.className = 'theme-tile';
       b.dataset.id = t.id; b.title = t.name;
-      b.style.background = "url('privoo://newtab/themes/" + t.id + ".png') center/cover no-repeat, linear-gradient(135deg, " + t.colors.join(',') + ")";
+      b.style.background = "linear-gradient(135deg, " + t.colors.join(',') + ")";
       b.innerHTML = '<span class="tt-name"></span>';
       b.querySelector('.tt-name').textContent = t.name;
       b.addEventListener('click', () => selectTheme(t));
@@ -5017,7 +6930,11 @@ cpWpFull?.addEventListener('change', () => {
   applyBtn?.addEventListener('click', () => applyCurrent(true));   // "Use theme" = apply + close
   offBtn?.addEventListener('click', () => {
     ThemeAudio.stop();
-    saveBrowserSetting({ ntpWaveEnabled: false, vibeEnabled: false, ntpThemeMusic: 'none', ntpThemeId: '' });
+    saveBrowserSetting({
+      ntpWaveEnabled: false, vibeEnabled: false, ntpThemeMusic: 'none', ntpThemeId: '',
+      accentColor: settings?.accentBeforeTheme || DEFAULT_ACCENT,
+      accentBeforeTheme: '',
+    });
     popup.classList.add('hidden');
   });
 })();
@@ -5044,16 +6961,9 @@ window.privoo?.getAppVersion?.().then((v) => {
   if (el && v) el.textContent = 'Privoo v' + v;
   if (!v) return;
   try {
-    const seen = settings?.newsSeenVersion || '';
-    const isFreshInstall = !settings?.disclaimerAccepted;
-    if (seen !== v) {
-      // Only auto-open on a genuine update (we've seen a prior version and the
-      // user is past first-run setup). Otherwise just record the version.
-      if (seen && !isFreshInstall) {
-        setTimeout(() => { try { createTab('privoo://news/'); } catch {} }, 900);
-      }
-      saveBrowserSetting({ newsSeenVersion: v });
-    }
+    // Nothing opens by itself after an update any more. Release notes live
+    // on GitHub, and a tab appearing unasked to tell you the browser changed
+    // is the thing people close without reading.
   } catch {}
 }).catch(() => {});
 
@@ -5062,10 +6972,27 @@ siteIcon?.addEventListener('click', (e) => {
   togglePopover(siteInfoPopover);
 });
 
+// Blocking carries on for as long as the page keeps making requests, so a
+// count read once at open goes stale immediately — poll while it's on screen.
+let _psPollTimer = 0;
+function stopShieldPolling() { clearInterval(_psPollTimer); _psPollTimer = 0; }
+function startShieldPolling() {
+  stopShieldPolling();
+  _psPollTimer = setInterval(() => {
+    if (!pageShieldPopover || pageShieldPopover.classList.contains('hidden')) {
+      stopShieldPolling();
+      return;
+    }
+    refreshPageShield();
+  }, 900);
+}
+
 pageShieldBtn?.addEventListener('click', (e) => {
   e.stopPropagation();
   refreshPageShield();
   togglePopover(pageShieldPopover);
+  if (pageShieldPopover && !pageShieldPopover.classList.contains('hidden')) startShieldPolling();
+  else stopShieldPolling();
 });
 
 document.getElementById('devtools-close')?.addEventListener('click', () => closeDockedDevTools());
@@ -5230,49 +7157,157 @@ notesBtn?.addEventListener('click', (e) => {
 }
 
 // ── Sidebar now-playing flyout ───────────────────────────────────────────────
-let _sbNp = null, _sbNpHide = 0;
+let _sbNp = null, _sbNpHide = 0, _sbNpPoll = 0;
 function hideSidebarNowPlaying(force) {
   clearTimeout(_sbNpHide);
-  if (force) { _sbNp?.remove(); _sbNp = null; return; }
+  const drop = () => {
+    clearInterval(_sbNpPoll); _sbNpPoll = 0;
+    _sbNp?.remove(); _sbNp = null;
+  };
+  if (force) { drop(); return; }
   // grace period so the cursor can travel from the icon into the pill
-  _sbNpHide = setTimeout(() => { if (_sbNp && !_sbNp.matches(':hover')) { _sbNp.remove(); _sbNp = null; } }, 250);
+  _sbNpHide = setTimeout(() => { if (_sbNp && !_sbNp.matches(':hover')) drop(); }, 250);
 }
-async function showSidebarNowPlaying(btn, link) {
-  let host; try { host = new URL(link.url).hostname.replace(/^(www|web|open)\./, ''); } catch { return; }
-  const tab = tabs.find(t => {
-    if (!t.isPlayingAudio || !t.wv) return false;
+const NP_META_JS = `(function(){try{
+  var m = navigator.mediaSession && navigator.mediaSession.metadata;
+  var els = Array.prototype.slice.call(document.querySelectorAll('video,audio'));
+  var a = els.filter(function(x){ return !x.paused; })[0] || els[0];
+  var art = '';
+  if (m && m.artwork && m.artwork.length) art = m.artwork[m.artwork.length - 1].src || '';
+  return JSON.stringify({
+    title: (m && m.title) || '',
+    artist: (m && m.artist) || '',
+    art: art,
+    paused: a ? !!a.paused : true,
+    live: !!(m || a)
+  });
+} catch (e) { return null; } })()`;
+
+const NP_ICON_PAUSE = '<svg viewBox="0 0 24 24"><path d="M7 5h3.4v14H7zm6.6 0H17v14h-3.4z"/></svg>';
+const NP_ICON_PLAY  = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+const NP_ICON_PREV  = '<svg viewBox="0 0 24 24"><path d="M7 6h2.2v12H7zm11 0v12l-8.2-6z"/></svg>';
+const NP_ICON_NEXT  = '<svg viewBox="0 0 24 24"><path d="M14.8 6H17v12h-2.2zM6 6l8.2 6L6 18z"/></svg>';
+
+function npClickJs(selectors) {
+  return `(function(){try{
+    var sels = ${JSON.stringify(selectors)};
+    for (var i = 0; i < sels.length; i++) {
+      var el = document.querySelector(sels[i]);
+      if (el) { el.click(); return true; }
+    }
+  } catch (e) {} return false; })()`;
+}
+const NP_NEXT_JS = npClickJs([
+  '[data-testid="control-button-skip-forward"]',
+  'button[aria-label*="Next" i]',
+  '.ytmusic-player-bar .next-button',
+  '.skipControl__next',
+]);
+const NP_PREV_JS = npClickJs([
+  '[data-testid="control-button-skip-back"]',
+  'button[aria-label*="Previous" i]',
+  '.ytmusic-player-bar .previous-button',
+  '.skipControl__previous',
+]);
+const NP_TOGGLE_JS = `(function(){try{
+  var els = Array.prototype.slice.call(document.querySelectorAll('video,audio'));
+  var a = els.filter(function(x){ return !x.paused; })[0] || els[0];
+  if (a) { if (a.paused) { a.play(); return 'playing'; } a.pause(); return 'paused'; }
+  var sels = ['[data-testid="control-button-playpause"]', 'button[aria-label*="Play" i]', 'button[aria-label*="Pause" i]'];
+  for (var i = 0; i < sels.length; i++) { var el = document.querySelector(sels[i]); if (el) { el.click(); return 'toggled'; } }
+} catch (e) {} return null; })()`;
+
+// The player can live in the sidebar panel (kept alive while you browse) or
+// in a normal tab — hover reads whichever of the two is on that host.
+function findMediaGuest(host) {
+  try {
+    const u = sidebarWv?.getURL?.();
+    if (u && new URL(u).hostname.includes(host)) return sidebarWv;
+  } catch { /* ignore */ }
+  const tab = tabs.find((t) => {
+    if (!t.wv) return false;
     try { return new URL(t.wv.getURL()).hostname.includes(host); } catch { return false; }
   });
-  if (!tab) return;
-  let title = tab.title || host;
-  try {
-    const meta = await tab.wv.executeJavaScript(
-      '(function(){try{var m=navigator.mediaSession&&navigator.mediaSession.metadata;return m?(m.title||"")+(m.artist?" — "+m.artist:""):null}catch(e){return null}})()');
-    if (meta) title = meta;
-  } catch {}
+  return tab?.wv || null;
+}
+
+async function showSidebarNowPlaying(btn, link) {
+  // With the toolbar dropdown enabled, now-playing lives there instead. Two
+  // competing surfaces for the same information is worse than either alone.
+  if (musicInToolbarEnabled()) return;
+  let target = link;
+  if (isMusicSidebarLink(link)) {
+    target = currentMusicPlayer();
+    if (!target) return;
+  }
+  let host; try { host = new URL(target.url).hostname.replace(/^(www|web|open)\./, ''); } catch { return; }
+  const wv = findMediaGuest(host);
+  if (!wv) return;
+
+  let meta = null;
+  try { meta = JSON.parse(await wv.executeJavaScript(NP_META_JS) || 'null'); } catch { /* ignore */ }
+  if (!meta) return;
+  // A loaded player with nothing playing still gets a pill — hovering the icon
+  // and having nothing at all happen reads as broken. It just has no transport.
+  const idle = !meta.live;
+
+  const title = meta.title || target.name || target.title || host;
+  const artist = meta.artist || '';
   hideSidebarNowPlaying(true);
   const pill = document.createElement('div');
-  pill.className = 'sb-nowplaying';
+  pill.className = 'sb-nowplaying' + (idle ? ' is-idle' : '');
   pill.innerHTML =
-    '<span class="sb-np-badge">Playing</span>' +
-    `<span class="sb-np-title">${esc(title)}</span>` +
-    '<button type="button" class="sb-np-btn" title="Pause / resume"><svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg></button>';
+    (meta.art ? `<img class="sb-np-art" src="${esc(meta.art)}" alt="" />` : '<span class="sb-np-art sb-np-art-ph">' + MUSIC_ICON_SVG + '</span>') +
+    '<span class="sb-np-meta">' +
+      `<span class="sb-np-title">${esc(title)}</span>` +
+      `<span class="sb-np-artist">${esc(artist || (idle ? 'Nothing playing' : meta.paused ? 'Paused' : 'Playing'))}</span>` +
+    '</span>' +
+    '<span class="sb-np-controls">' +
+      `<button type="button" class="sb-np-btn ghost" data-np="prev" title="Previous">${NP_ICON_PREV}</button>` +
+      `<button type="button" class="sb-np-btn" data-np="toggle" title="Play / pause">${meta.paused ? NP_ICON_PLAY : NP_ICON_PAUSE}</button>` +
+      `<button type="button" class="sb-np-btn ghost" data-np="next" title="Next">${NP_ICON_NEXT}</button>` +
+    '</span>';
   const r = btn.getBoundingClientRect();
-  pill.style.top = Math.max(8, r.top + r.height / 2 - 22) + 'px';
+  pill.style.top = Math.max(8, Math.min(r.top + r.height / 2 - 34, window.innerHeight - 90)) + 'px';
   document.body.appendChild(pill);
   _sbNp = pill;
   pill.addEventListener('mouseleave', () => hideSidebarNowPlaying(false));
-  pill.querySelector('.sb-np-btn').addEventListener('click', (e) => {
-    e.stopPropagation();
-    const svg = pill.querySelector('.sb-np-btn svg');
-    tab.wv.executeJavaScript(`(function(){
-      try{var m=Array.from(document.querySelectorAll('video,audio'));
-      var a=m.find(x=>!x.paused)||m[0];
-      if(a){if(a.paused){a.play();return 'playing';}a.pause();return 'paused';}}catch(e){} return null;
-    })()`).then((st) => {
-      if (st === 'paused') svg.innerHTML = '<path d="M8 5v14l11-7z"/>';
-      else if (st === 'playing') svg.innerHTML = '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>';
-    }).catch(() => {});
+
+  const refresh = async () => {
+    try {
+      const m = JSON.parse(await wv.executeJavaScript(NP_META_JS) || 'null');
+      if (!m || !_sbNp) return;
+      const tEl = pill.querySelector('.sb-np-title');
+      const aEl = pill.querySelector('.sb-np-artist');
+      const bEl = pill.querySelector('[data-np="toggle"]');
+      const artEl = pill.querySelector('img.sb-np-art');
+      const nowIdle = !m.live;
+      pill.classList.toggle('is-idle', nowIdle);
+      if (tEl && m.title) tEl.textContent = m.title;
+      if (aEl) aEl.textContent = m.artist || (nowIdle ? 'Nothing playing' : m.paused ? 'Paused' : 'Playing');
+      if (bEl) bEl.innerHTML = m.paused ? NP_ICON_PLAY : NP_ICON_PAUSE;
+      // Artwork changes with the track, so follow it too.
+      if (artEl && m.art && artEl.getAttribute('src') !== m.art) artEl.setAttribute('src', m.art);
+    } catch { /* ignore */ }
+  };
+
+  // Poll while the pill is on screen so a track change (or a play/pause from
+  // the page itself) is reflected live, instead of freezing on whatever was
+  // playing at the moment you hovered.
+  clearInterval(_sbNpPoll);
+  _sbNpPoll = setInterval(() => {
+    if (!_sbNp || !_sbNp.isConnected) { clearInterval(_sbNpPoll); _sbNpPoll = 0; return; }
+    void refresh();
+  }, 1000);
+
+  pill.querySelectorAll('.sb-np-btn').forEach((b) => {
+    b.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const kind = b.dataset.np;
+      const js = kind === 'next' ? NP_NEXT_JS : kind === 'prev' ? NP_PREV_JS : NP_TOGGLE_JS;
+      try { await wv.executeJavaScript(js); } catch { /* ignore */ }
+      setTimeout(refresh, kind === 'toggle' ? 120 : 700);
+    });
   });
 }
 
@@ -5280,7 +7315,7 @@ async function showSidebarNowPlaying(btn, link) {
 // Known web apps offered as one-click sidebar toggles in Customize.
 const SIDEBAR_APP_CATALOG = [
   { title: 'Snapchat',  url: 'https://web.snapchat.com' },
-  { title: 'Spotify',   url: 'https://open.spotify.com' },
+  { title: 'Music',     url: 'privoo://music', music: true },
   { title: 'Discord',   url: 'https://discord.com/app' },
   { title: 'Instagram', url: 'https://www.instagram.com' },
   { title: 'Messenger', url: 'https://www.messenger.com' },
@@ -5299,17 +7334,24 @@ function openSidebarCustomize() {
     `<label class="sb-cz-row">${inner}` +
     `<span class="sb-cz-sw"><input type="checkbox" ${attrs} ${checked ? 'checked' : ''}/><i></i></span></label>`;
   const curMode = settings?.sidebarMode || (settings?.showSidebar === false ? 'off' : 'on');
-  pop.innerHTML = '<h4>Customize sidebar</h4>' +
+  pop.innerHTML =
+    '<div class="sb-cz-head">' +
+      '<div class="sb-cz-head-title">Sidebar</div>' +
+      '<div class="sb-cz-head-sub">Choose when it shows and what sits on it.</div>' +
+    '</div>' +
+    '<div class="sb-cz-body">' +
+    '<h4>Visibility</h4>' +
     '<div class="sb-cz-modes" id="sb-cz-modes">' +
       ['off', 'on', 'hover'].map((m) =>
         `<button type="button" class="sb-cz-mode-btn${m === curMode ? ' active' : ''}" data-mode="${m}">${m === 'off' ? 'Off' : m === 'on' ? 'Always on' : 'On hover'}</button>`
       ).join('') +
     '</div>' +
-    swRow('<span class="sb-cz-name">Quick access <small>Downloads, History…</small></span>',
+    '<h4 style="margin-top:12px">Shortcuts</h4>' +
+    swRow('<span class="sb-cz-name">Quick access <small>Downloads, history and more</small></span>',
           settings?.sidebarQuickAccess !== false, 'id="sb-cz-qa"') +
     '<h4 style="margin-top:12px">Apps</h4>' +
     SIDEBAR_APP_CATALOG.map((a, i) => {
-      const brandSvg = brandIconSvgFor(a.url);
+      const brandSvg = isMusicSidebarLink(a) ? MUSIC_ICON_SVG : brandIconSvgFor(a.url);
       const fav = faviconForSidebar(a.url);
       const icon = brandSvg
         ? `<span class="sb-cz-fav">${brandSvg}</span>`
@@ -5318,7 +7360,10 @@ function openSidebarCustomize() {
           : `<span class="sb-cz-fav sb-cz-letter">${esc(a.title[0])}</span>`;
       return swRow(icon + `<span class="sb-cz-name">${esc(a.title)}</span>`, has(a.url), `data-app="${i}"`);
     }).join('') +
-    '<button type="button" class="sb-cz-add" id="sb-cz-add">Add a custom site…</button>';
+    '</div>' +
+    '<div class="sb-cz-foot">' +
+      '<button type="button" class="sb-cz-add" id="sb-cz-add">Add a site</button>' +
+    '</div>';
   document.body.appendChild(pop);
   _sbCustomizePop = pop;
 
@@ -5340,7 +7385,7 @@ function openSidebarCustomize() {
       const app = SIDEBAR_APP_CATALOG[Number(cb.dataset.app)];
       const cur = sidebarLinkList();
       const next = cb.checked
-        ? [...cur, { title: app.title, url: app.url }]
+        ? [...cur, app.music ? { title: app.title, url: app.url, music: true } : { title: app.title, url: app.url }]
         : cur.filter(l => l.url !== app.url);
       void saveBrowserSetting({ sidebarLinks: next }).then(renderSidebarRail);
     });
@@ -5664,7 +7709,11 @@ omnibox.addEventListener('blur', () => {
 
 omnibox.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowDown') { e.preventDefault(); highlightSug(Math.min(sugIndex + 1, sugItems.length - 1)); return; }
-  if (e.key === 'ArrowUp')   { e.preventDefault(); highlightSug(Math.max(sugIndex - 1, -1)); if (sugIndex < 0) omnibox.value = displayUrl(activeTab()?.url) || ''; return; }
+  // highlightSug() restores what was typed when the index goes back to -1.
+  // This used to put the CURRENT PAGE's url in the field instead, which meant
+  // arrowing down and back up silently replaced your query with the address of
+  // the page you were trying to leave.
+  if (e.key === 'ArrowUp')   { e.preventDefault(); highlightSug(Math.max(sugIndex - 1, -1)); return; }
   if (e.key === 'Backspace' || e.key === 'Delete') {
     // Play delete sound
     if (settings?.ntpWaveEnabled && settings?.ntpThemeId) {
@@ -5695,7 +7744,9 @@ reloadBtn.addEventListener('click',  () => {
   if (!w) return;
   if (w.isLoading()) w.stop(); else w.reload();
 });
-homeBtn.addEventListener('click', () => navigate(settings?.homePage || NEWTAB_URL));
+// The new tab page, always. The setting that let this point somewhere else
+// has been removed, so there is nothing left for it to read.
+homeBtn.addEventListener('click', () => navigate(NEWTAB_URL));
 newTabBtn.addEventListener('click', () => {
   if (document.body.classList.contains('vertical-tabs') && vtabsSearchPopupEnabled()) showSearchPopup();
   else createTab();
@@ -5725,6 +7776,17 @@ ytdlpToolbarBtn?.addEventListener('click', (e) => {
     const u = activeTab()?.url || '';
     if (ytdlpUrlInput && u && !u.startsWith('privoo://')) ytdlpUrlInput.value = u;
     ytdlpStatusEl && (ytdlpStatusEl.textContent = '');
+    // Clear any progress left from a previous run.
+    ytdlpResetUi();
+    // MP3 needs ffmpeg. Say so up front rather than after a failed download.
+    window.privoo.ytdlpHasFfmpeg?.().then((has) => {
+      const sel = document.getElementById('ytdlp-format');
+      const mp3 = sel?.querySelector('option[value="mp3"]');
+      if (mp3) {
+        mp3.disabled = !has;
+        mp3.textContent = has ? 'MP3 (audio only)' : 'MP3 (needs ffmpeg)';
+      }
+    }).catch(() => { /* leave the option as-is */ });
     const folderInput = document.getElementById('ytdlp-folder');
     if (folderInput && !folderInput.value && settings?.downloadPath) {
       folderInput.value = settings.downloadPath;
@@ -5762,7 +7824,10 @@ geoToolbarBtn?.addEventListener('click', (e) => {
   const btn     = document.getElementById('calc-btn');
   const popover = document.getElementById('calc-popover');
   const display = document.getElementById('calc-display');
+  const exprEl  = document.getElementById('calc-expr');
   if (!btn || !popover || !display) return;
+
+  const OP_SIGN = { '+': '+', '-': '−', '*': '×', '/': '÷' };
 
   let acc = null;      // running total
   let op = null;       // pending operator
@@ -5775,7 +7840,24 @@ geoToolbarBtn?.addEventListener('click', (e) => {
     if (s.length > 12) s = Number(n).toPrecision(10).replace(/\.?0+$/, '');
     return s;
   };
-  const show = () => { display.textContent = cur.length > 12 ? Number(cur).toPrecision(8) : cur; };
+  const group = (s) => {
+    const [int, dec] = String(s).split('.');
+    const sign = int.startsWith('-') ? '-' : '';
+    const digits = sign ? int.slice(1) : int;
+    if (!/^\d+$/.test(digits)) return s;
+    return sign + digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (dec !== undefined ? '.' + dec : '');
+  };
+  function show() {
+    display.textContent = cur.length > 12 ? Number(cur).toPrecision(8) : group(cur);
+    if (exprEl) {
+      exprEl.textContent = op !== null && acc !== null
+        ? `${group(fmt(acc))} ${OP_SIGN[op]}${fresh ? '' : ' ' + group(cur)}`
+        : '';
+    }
+    popover.querySelectorAll('.calc-op').forEach((k) => {
+      k.classList.toggle('armed', fresh && k.dataset.k === op);
+    });
+  }
 
   function apply(a, b, o) {
     switch (o) { case '+': return a + b; case '-': return a - b; case '*': return a * b; case '/': return b === 0 ? NaN : a / b; }
@@ -5789,15 +7871,19 @@ geoToolbarBtn?.addEventListener('click', (e) => {
   }
   function chooseOp(o) {
     const v = parseFloat(cur);
-    if (op !== null && !fresh) { acc = apply(acc, v, op); cur = fmt(acc); show(); }
+    if (op !== null && !fresh) { acc = apply(acc, v, op); cur = fmt(acc); }
     else { acc = v; }
     op = o; fresh = true;
+    show();
   }
   function equals() {
     if (op === null) return;
     const v = parseFloat(cur);
-    acc = apply(acc, v, op); cur = fmt(acc); show();
+    const done = `${group(fmt(acc))} ${OP_SIGN[op]} ${group(fmt(v))}`;
+    acc = apply(acc, v, op); cur = fmt(acc);
     op = null; fresh = true;
+    show();
+    if (exprEl) exprEl.textContent = done;
   }
   function press(k) {
     if (/^[0-9.]$/.test(k)) return inputDigit(k);
@@ -5806,25 +7892,47 @@ geoToolbarBtn?.addEventListener('click', (e) => {
     if (k === 'clear') { acc = null; op = null; cur = '0'; fresh = true; return show(); }
     if (k === 'sign') { cur = fmt(parseFloat(cur) * -1); return show(); }
     if (k === 'percent') { cur = fmt(parseFloat(cur) / 100); fresh = true; return show(); }
+    if (k === 'back') {
+      if (fresh) return;
+      cur = cur.length > 1 ? cur.slice(0, -1) : '0';
+      if (cur === '-' || cur === '') cur = '0';
+      return show();
+    }
+  }
+  // Flash the on-screen key so typing on the keyboard reads back visually.
+  function flash(k) {
+    const el = popover.querySelector(`.calc-key[data-k="${CSS.escape(k)}"]`);
+    if (!el) return;
+    el.classList.add('pressed');
+    setTimeout(() => el.classList.remove('pressed'), 110);
   }
 
   popover.querySelectorAll('.calc-key').forEach((k) => {
     k.addEventListener('click', (e) => { e.stopPropagation(); press(k.dataset.k); });
   });
+  display.addEventListener('click', (e) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(cur).then(() => {
+      display.classList.add('copied');
+      setTimeout(() => display.classList.remove('copied'), 500);
+    }).catch(() => {});
+  });
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
     const wasOpen = !popover.classList.contains('hidden');
     closePopovers();
-    if (!wasOpen) popover.classList.remove('hidden');
+    if (!wasOpen) { popover.classList.remove('hidden'); show(); }
   });
   // Keyboard input while the calculator is open.
   document.addEventListener('keydown', (e) => {
     if (popover.classList.contains('hidden')) return;
-    if (/^[0-9.]$/.test(e.key)) { press(e.key); e.preventDefault(); }
-    else if (['+','-','*','/'].includes(e.key)) { press(e.key); e.preventDefault(); }
-    else if (e.key === 'Enter' || e.key === '=') { press('='); e.preventDefault(); }
-    else if (e.key === 'Escape') { press('clear'); }
-    else if (e.key === 'Backspace') { cur = cur.length > 1 ? cur.slice(0, -1) : '0'; show(); }
+    const k = e.key === 'x' || e.key === 'X' ? '*' : e.key;
+    if (/^[0-9.]$/.test(k)) { press(k); flash(k); e.preventDefault(); }
+    else if (['+','-','*','/'].includes(k)) { press(k); flash(k); e.preventDefault(); }
+    else if (k === 'Enter' || k === '=') { press('='); flash('='); e.preventDefault(); }
+    else if (k === 'Escape') { press('clear'); flash('clear'); }
+    else if (k === 'Backspace') { press('back'); flash('back'); e.preventDefault(); }
+    else if (k === '%') { press('percent'); flash('percent'); e.preventDefault(); }
   });
 })();
 
@@ -5900,7 +8008,11 @@ function enhanceNativeSelect(select) {
 
   const list = document.createElement('div');
   list.className = 'csel-list';
-  wrap.appendChild(list);
+  // On <body>, not in the wrap. Every one of these lives inside a
+  // .toolbar-popover, and a popover is overflow:hidden — an absolutely
+  // positioned list inside one is clipped by it, which is why the media
+  // downloader's dropdown appeared to do nothing at all.
+  document.body.appendChild(list);
 
   function syncLabel() {
     const opt = select.options[select.selectedIndex];
@@ -5923,18 +8035,69 @@ function enhanceNativeSelect(select) {
       list.appendChild(item);
     });
   }
+  /* Placed from the trigger's own rectangle, in viewport coordinates. No
+     ancestor can clip it and no ancestor's scrolling can move it out from
+     under the control it belongs to. */
+  function positionList() {
+    const r = trigger.getBoundingClientRect();
+    list.style.minWidth = r.width + 'px';
+    list.style.left = '0px';
+    list.style.top = '0px';
+    const h = list.offsetHeight;
+    const below = window.innerHeight - r.bottom - 8;
+    // Open upward when there is not room below. The format picker sits near
+    // the bottom of a tall panel, so this is the normal case there, not the
+    // edge case.
+    const up = below < h && r.top > below;
+    list.style.left = Math.max(8, Math.min(r.left, window.innerWidth - list.offsetWidth - 8)) + 'px';
+    list.style.top = (up ? Math.max(8, r.top - h - 6) : r.bottom + 6) + 'px';
+  }
+
   function openList() {
     document.querySelectorAll('.csel-list.open').forEach((l) => l.classList.remove('open'));
     buildList();
     list.classList.add('open');
     trigger.classList.add('open');
+    positionList();
   }
   function closeList() { list.classList.remove('open'); trigger.classList.remove('open'); }
+  // A fixed list does not travel with the thing it is attached to, so it is
+  // closed rather than left floating somewhere the control no longer is.
+  window.addEventListener('resize', closeList);
+  window.addEventListener('scroll', closeList, true);
+
+  /* The list lives on <body> so no panel can clip it — which also means no
+     panel can hide it. Closing the popover used to take the list with it
+     because the list was inside it; now the list has to notice.
+
+     Watching the panel's attributes rather than hooking whatever closes it:
+     these panels are opened and closed from several places, and a dropdown
+     that only closes when someone remembered to tell it is a dropdown that
+     will be left on screen again. */
+  const panel = trigger.closest('.toolbar-popover, .vpn-panel, .sidebar-panel');
+  if (panel) {
+    const gone = () => panel.classList.contains('hidden') || panel.hidden;
+    try {
+      new MutationObserver(() => { if (gone()) closeList(); })
+        .observe(panel, { attributes: true, attributeFilter: ['class', 'hidden'] });
+    } catch { /* no observer: the checks below still cover the common cases */ }
+  }
+  // Belt and braces for a panel taken off screen some other way — a tab
+  // change, a window resize, a view swapped inside the panel.
+  const wasVisible = () => !!(trigger.offsetParent || trigger.getClientRects().length);
+  document.addEventListener('mousedown', () => {
+    if (list.classList.contains('open') && !wasVisible()) closeList();
+  }, true);
   trigger.addEventListener('click', (e) => {
     e.stopPropagation();
     list.classList.contains('open') ? closeList() : openList();
   });
-  document.addEventListener('click', (e) => { if (!wrap.contains(e.target)) closeList(); });
+  document.addEventListener('click', (e) => {
+    // The list is on <body> now, so "outside" has to mean outside BOTH the
+    // control and the list — testing the wrap alone would close the list on
+    // the click that was choosing from it.
+    if (!wrap.contains(e.target) && !list.contains(e.target)) closeList();
+  });
   for (const prop of ['value', 'selectedIndex']) {
     const desc = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, prop);
     if (!desc) continue;
@@ -5947,26 +8110,123 @@ function enhanceNativeSelect(select) {
   syncLabel();
 }
 enhanceNativeSelect(document.getElementById('ytdlp-format'));
+// The translate popover's language list. It was the last native <select> in
+// the chrome, which meant one dropdown in the whole browser opened an
+// OS-drawn list in the OS's own colours inside a themed popover.
+enhanceNativeSelect(document.getElementById('translate-lang'));
+// The proxy type in the VPN panel's config view. It had no class on it at
+// all, so it was the one dropdown in the browser that opened the operating
+// system's list, in the operating system's colours, inside a themed panel.
+enhanceNativeSelect(document.getElementById('vpn-type'));
 
 const YTDLP_DISCLAIMER_KEY = 'privoo:ytdlp-rights-shown';
+
+// Friendly text for the failure modes people actually hit, instead of dumping
+// four kilobytes of yt-dlp log into a popover.
+function ytdlpErrorText(r) {
+  const code = r?.error || '';
+  if (code === 'not-found')   return 'yt-dlp is not installed yet. It downloads automatically on first launch, so try again in a moment.';
+  if (code === 'invalid-url') return 'That does not look like a link. Paste a page URL or a direct media link.';
+  if (code === 'no-ffmpeg')   return 'Converting to MP3 needs ffmpeg, which is not installed. Install ffmpeg, or pick a video format instead.';
+  if (code === 'cancelled')   return 'Cancelled.';
+  const log = String(r?.log || '');
+  // Pull the one meaningful ERROR line out of the log rather than showing it all.
+  const m = log.match(/^ERROR:s*(.+)$/m);
+  if (m) {
+    let msg = m[1].trim();
+    if (/private video/i.test(msg))          return 'That video is private.';
+    if (/members-only/i.test(msg))           return 'That video is members-only.';
+    if (/video unavailable/i.test(msg))      return 'That video is unavailable.';
+    if (/sign in|age.?restricted/i.test(msg))return 'That video requires signing in (age-restricted).';
+    if (/unsupported url/i.test(msg))        return 'That site is not supported.';
+    if (msg.length > 180) msg = msg.slice(0, 180) + '…';
+    return msg;
+  }
+  return 'Download failed.';
+}
+
+let _ytdlpJobId = null;
+
+function ytdlpResetUi() {
+  const wrap = document.getElementById('ytdlp-progress-wrap');
+  const cancel = document.getElementById('ytdlp-cancel');
+  if (wrap) wrap.hidden = true;
+  if (cancel) cancel.hidden = true;
+  if (ytdlpRunBtn) ytdlpRunBtn.disabled = false;
+  _ytdlpJobId = null;
+}
+
 async function runYtdlpDownload() {
   const url = (ytdlpUrlInput?.value || '').trim();
-  if (!url) return;
+  if (!url) { ytdlpStatusEl.textContent = 'Paste a link first.'; return; }
   const format = document.getElementById('ytdlp-format')?.value || 'best';
   const folder = (document.getElementById('ytdlp-folder')?.value || '').trim();
+
+  const wrap   = document.getElementById('ytdlp-progress-wrap');
+  const bar    = document.getElementById('ytdlp-bar');
+  const titleEl= document.getElementById('ytdlp-title');
+  const metaEl = document.getElementById('ytdlp-meta');
+  const cancel = document.getElementById('ytdlp-cancel');
+
   ytdlpRunBtn.disabled = true;
-  ytdlpStatusEl.textContent = 'Starting…';
+  if (cancel) cancel.hidden = false;
+  if (wrap) wrap.hidden = false;
+  if (bar) { bar.style.width = '0%'; bar.classList.add('indeterminate'); }
+  if (titleEl) titleEl.textContent = '';
+  if (metaEl) metaEl.textContent = '';
+  ytdlpStatusEl.textContent = '';
+
   try {
     const r = await window.privoo.ytdlpDownload(url, { format, folder: folder || undefined });
-    if (r?.ok) ytdlpStatusEl.textContent = `Finished. Saved to ${folder || 'your download folder'}.`;
-    else ytdlpStatusEl.textContent = r?.error === 'not-found'
-      ? 'yt-dlp not found. Set path in Settings → Media or place binary in bin/.'
-      : (r?.log || r?.error || 'Failed');
+    if (r?.ok) {
+      if (bar) { bar.classList.remove('indeterminate'); bar.style.width = '100%'; }
+      const name = r.file ? r.file.split(/[\/]/).pop() : (r.title || 'File');
+      ytdlpStatusEl.textContent = 'Saved ' + name;
+      if (metaEl) metaEl.textContent = 'Done';
+    } else {
+      ytdlpStatusEl.textContent = ytdlpErrorText(r);
+      if (wrap) wrap.hidden = true;
+    }
   } catch (err) {
     ytdlpStatusEl.textContent = String(err?.message || err);
+    if (wrap) wrap.hidden = true;
   }
+  if (cancel) cancel.hidden = true;
   ytdlpRunBtn.disabled = false;
+  _ytdlpJobId = null;
 }
+
+// Live progress from the main process.
+window.privoo.onYtdlpProgress?.((ev) => {
+  if (!ev) return;
+  const bar    = document.getElementById('ytdlp-bar');
+  const titleEl= document.getElementById('ytdlp-title');
+  const metaEl = document.getElementById('ytdlp-meta');
+  if (ev.jobId) _ytdlpJobId = ev.jobId;
+  if (ev.title && titleEl && !titleEl.textContent) titleEl.textContent = ev.title;
+
+  if (ev.phase === 'download' && typeof ev.percent === 'number') {
+    if (bar) { bar.classList.remove('indeterminate'); bar.style.width = ev.percent + '%'; }
+    if (metaEl) {
+      const bits = [ev.percent.toFixed(1) + '%'];
+      if (ev.total) bits.push('of ' + ev.total);
+      if (ev.speed) bits.push('at ' + ev.speed);
+      if (ev.eta)   bits.push('ETA ' + ev.eta);
+      metaEl.textContent = bits.join('  ');
+    }
+  } else if (ev.phase === 'merge') {
+    if (bar) bar.classList.add('indeterminate');
+    if (metaEl) metaEl.textContent = ev.message || 'Finishing…';
+  } else if (ev.phase === 'probe' && ev.message && metaEl && !metaEl.textContent) {
+    metaEl.textContent = ev.message;
+  }
+});
+
+document.getElementById('ytdlp-cancel')?.addEventListener('click', async () => {
+  try { await window.privoo.ytdlpCancel?.(_ytdlpJobId); } catch { /* already gone */ }
+  ytdlpStatusEl.textContent = 'Cancelled.';
+  ytdlpResetUi();
+});
 
 ytdlpRunBtn?.addEventListener('click', () => {
   let shown = false;
@@ -6008,6 +8268,7 @@ document.getElementById('win-min').addEventListener('click',   () => window.priv
 document.getElementById('win-max').addEventListener('click',   () => window.privoo.toggleMaximize());
 // Opera-style tab search magnifier at the right edge of the tab strip.
 document.getElementById('tab-search-btn')?.addEventListener('click', () => openTabSearch());
+document.getElementById('vtabs-search')?.addEventListener('click', () => openTabSearch());
 document.getElementById('win-close').addEventListener('click', () => window.privoo.close());
 
 // ─── Keyboard shortcuts ──────────────────────────────────────────────────────
@@ -6025,7 +8286,7 @@ function privooToast(msg) {
     el.id = 'privoo-toast';
     el.style.cssText =
       'position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(8px);' +
-      'background:#202124;color:#fff;font:13px/1.4 system-ui,sans-serif;padding:10px 18px;' +
+      'background:#202020;color:#fff;font:13px/1.4 system-ui,sans-serif;padding:10px 18px;' +
       'border-radius:10px;z-index:9000;opacity:0;box-shadow:0 6px 24px rgba(0,0,0,.4);' +
       'transition:opacity .16s,transform .16s;max-width:78vw;text-align:center;pointer-events:none';
     document.body.appendChild(el);
@@ -6202,6 +8463,11 @@ function openTabSearch() {
   if (tabSearchOpen()) { closeTabSearch(); return; }
   closePopovers();
   tabSearchEl.classList.remove('hidden');
+  // Same treatment as the address search popup — otherwise this dialog centres
+  // on the window and sits well left of the tabs it is searching.
+  const pad = contentAreaPadding();
+  tabSearchEl.style.paddingLeft = pad.left + 'px';
+  tabSearchEl.style.paddingRight = pad.right + 'px';
   tsInput.value = '';
   renderTabSearch('');
   setTimeout(() => tsInput.focus(), 0);
@@ -6209,6 +8475,9 @@ function openTabSearch() {
 function closeTabSearch() {
   tabSearchEl?.classList.add('hidden');
 }
+tabSearchEl?.addEventListener('mousedown', (e) => {
+  if (e.target === tabSearchEl) closeTabSearch();
+});
 function renderTabSearch(q) {
   const query = q.trim().toLowerCase();
   tsResults = tabs.filter((t) => {
@@ -6218,6 +8487,8 @@ function renderTabSearch(q) {
   });
   tsSel = 0;
   tsList.innerHTML = '';
+  const countEl = document.getElementById('ts-count');
+  if (countEl) countEl.textContent = tsResults.length + (tsResults.length === 1 ? ' tab' : ' tabs');
   if (!tsResults.length) {
     tsList.innerHTML = '<div class="ts-empty">No matching tabs</div>';
     return;
@@ -6412,6 +8683,8 @@ window.addEventListener('resize', () => { if (isSplit()) layoutSplit(); });
 let _draggingTabId = null;
 const splitDropzones = document.getElementById('split-dropzones');
 
+// `e` is null for the pointer-driven strip drag; it is still a DragEvent for
+// the vertical-tabs list, which has its own HTML5 drag.
 function beginTabDrag(id, e) {
   _draggingTabId = id;
   document.body.classList.add('tab-dragging');
@@ -6587,6 +8860,41 @@ window.privoo.onWindowState((maximized) => {
   document.documentElement.classList.toggle('maximized', !!maximized);
 });
 window.privoo.onDownloadUpdate((dl) => onDownloadUpdate(dl));
+
+let _boostBannerTimer = null;
+// Download Booster tells the user it is working, in the same bottom banner the
+// protection notice uses. It closes itself; there is nothing to act on.
+// A tab whose renderer died shows a blank frame. Offer a reload rather than
+// leaving the user staring at nothing.
+window.privoo.onTabRendererGone?.(({ guestId, reason }) => {
+  const tab = tabs.find((t) => {
+    try { return t.wv && t.wv.getWebContentsId() === guestId; } catch { return false; }
+  });
+  if (!tab) return;
+  privooToast(reason === 'killed'
+    ? 'This tab was closed by the system. Press Ctrl+R to reload it.'
+    : 'This tab stopped responding and was reloaded.');
+  try { tab.wv.reload(); } catch { /* the view is gone */ }
+});
+
+// A hung page: say so instead of letting it look like Privoo has frozen.
+let _unresponsiveToastAt = 0;
+window.privoo.onTabUnresponsive?.(() => {
+  const now = Date.now();
+  if (now - _unresponsiveToastAt < 20000) return;
+  _unresponsiveToastAt = now;
+  privooToast('This page is busy and not responding. Privoo is still running.');
+});
+
+window.privoo.onDownloadBoostStarted?.(() => {
+  showOverlayBanner(
+    'Download Booster is on',
+    "Accelerating your download speed with Privoo's Download Booster.",
+    'Got it',
+  );
+  clearTimeout(_boostBannerTimer);
+  _boostBannerTimer = setTimeout(hideOverlayBanner, 5000);
+});
 window.privoo.onSettingsChanged((next) => onSettingsChanged(next));
 window.privoo.onGoogleAuthDone?.(() => {
   const tab = activeTab();
@@ -6602,16 +8910,6 @@ window.privoo.onPlatform?.((platform) => {
   const wc = document.getElementById('window-controls');
   if (wc) wc.hidden = platform === 'darwin';
 });
-// Increase Transparency — main flips the OS material (acrylic / vibrancy)
-// and sends us this signal so the toolbar / tab strip / popovers can switch
-// to translucent rgba() backgrounds.
-window.privoo.onTransparencyState?.((on) => {
-  document.body.classList.toggle('transparent-ui', !!on);
-  // Also clip the <html> element — without this the rectangular html fill
-  // shows as a hard square just outside the body's rounded corners.
-  document.documentElement.classList.toggle('transparent-ui-host', !!on);
-});
-
 // Incognito window — main fires this once on did-finish-load if the window
 // is private. We flip body.incognito for the purple chrome tint + titlebar
 // pill, and stash the private partition name so every tab/webview created
@@ -6706,6 +9004,30 @@ function applyPlatformChrome(platform) {
       restored = await restoreSession(saved);
     } catch { /* ignore */ }
   }
+  /* Privoo AI, pinned, once ever.
+
+     After the restore so a session that already has it is not given a second
+     one, and before the fallback new tab below so that on a first run the new
+     tab is still what ends up active — this is placed, not opened.
+
+     The flag is written as soon as the tab is placed and nothing ever looks
+     to see whether it is still there. That is the whole point: unpin it,
+     close it, or both, and it does not come back. A default that reappears
+     after you have removed it is not a default. */
+  if (!isIncognitoWin && !settings?.aiTabPinned1Applied) {
+    try {
+      const already = tabs.some((t) => String(t.url || '').startsWith(AI_URL));
+      if (!already) {
+        createTab(AI_URL, false, { pinned: true });
+        enforcePinnedFirst();
+        requestAnimationFrame(resizeTabs);
+      }
+    } catch { /* a tab strip that is not ready is not worth an error here */ }
+    // Written even if the tab was skipped for already existing, so this can
+    // only ever run once.
+    void saveBrowserSetting({ aiTabPinned1Applied: true });
+  }
+
   if (!restored) {
     if (document.body.classList.contains('vertical-tabs')) {
       activeId = null;
@@ -6718,16 +9040,31 @@ function applyPlatformChrome(platform) {
     closeVtabsNewTabPages();
   }
   refreshStats();
-  setInterval(refreshStats, 1500);
+  visibleInterval(refreshStats, 1500);
   // Incognito windows never persist their tab list — that would leak the
   // private session into the saved session restored by normal windows.
   if (!isIncognitoWin) {
-    setInterval(() => { window.privoo.saveTabSession(serializeSession()).catch?.(() => {}); }, 5000);
+    // Writing every five seconds regardless of change was a constant disk hit
+    // for nothing. Serialise, compare, and only write when it differs.
+    let _lastSession = '';
+    setInterval(() => {
+      let snapshot;
+      try { snapshot = serializeSession(); } catch { return; }
+      const key = JSON.stringify(snapshot);
+      if (key === _lastSession) return;
+      _lastSession = key;
+      window.privoo.saveTabSession(snapshot).catch?.(() => {});
+    }, 5000);
   }
   // Observe the STRIP (stable width — only changes on window resize), not the
   // content-sized #tabs-scroll: observing the latter feedback-loops because
   // resizeTabs() changes tab widths, which resizes #tabs-scroll, which fires
   // the observer again — visibly janking the tabs when many are open.
+  // Once the window has settled and the first tab is up. Not before: a note
+  // that appears while the chrome is still assembling itself reads as part of
+  // the loading, not as something said to you.
+  setTimeout(showChromeNote, 1400);
+
   const tabsStripEl = document.getElementById('tabs-strip');
   if (tabsStripEl) {
     let _rt = 0;
@@ -6739,6 +9076,18 @@ function applyPlatformChrome(platform) {
 })();
 
 // ─── Vertical Tabs ───────────────────────────────────────────────────────────
+
+// Two background layers: the site's icon over the generic globe. If the
+// site's fails to load, the globe underneath is what shows — which is what
+// the <img> error handler used to do, without the handler.
+function vtabFaviconImage(el, tab) {
+  const own = tab.faviconUrl;
+  const next = (own ? 'url("' + own + '"), ' : '') + 'url("' + VTAB_DEFAULT_FAVICON + '")';
+  if (el.dataset.fav !== next) {
+    el.dataset.fav = next;
+    el.style.backgroundImage = next;
+  }
+}
 
 function isNewTabPage(url) {
   const u = url || '';
@@ -6761,39 +9110,91 @@ function closeVtabsNewTabPages() {
   for (const t of tabs.filter(t => isNewTabPage(t.url))) closeTab(t.id);
 }
 
+// Mirror the tabs panel's real width onto --vtabs-w. The toolbar uses it to
+// indent past the panel so the strip above the panel stays empty (Zen-style).
+// A ResizeObserver rather than reading the setting: the panel width also comes
+// from the collapse class and from drag-to-resize, and it animates between them.
+// How much air between the panel's edge and the first toolbar control. The
+// panel's own gutter, so the two surfaces sit next to each other rather than
+// either touching or drifting apart.
+const VTABS_TOOLBAR_GAP = 6;
+
+// Indent the toolbar and the bookmarks bar so their contents begin where the
+// page does, instead of in the column the tabs panel occupies below them.
+//
+// Measured, not calculated. The panel's right edge and the toolbar's left
+// edge are both read from the layout, so this holds regardless of what is to
+// the left of either (the shortcuts sidebar, window insets) — and it is
+// written inline, which no stylesheet rule can override.
+function syncVtabsToolbarIndent() {
+  const bar = document.getElementById('toolbar');
+  const bm  = document.getElementById('bookmarks-bar');
+  const on  = document.body.classList.contains('vertical-tabs');
+
+  if (!on || !vtabsPanel || vtabsPanel.hidden) {
+    if (bar) bar.style.paddingLeft = '';
+    if (bm)  bm.style.paddingLeft = '';
+    return;
+  }
+  const panelRight = vtabsPanel.getBoundingClientRect().right;
+  for (const el of [bar, bm]) {
+    if (!el) continue;
+    // Reading left is safe after writing padding — padding does not move an
+    // element's own left edge, so there is no feedback here.
+    const left = el.getBoundingClientRect().left;
+    const indent = Math.max(0, Math.round(panelRight - left)) + VTABS_TOOLBAR_GAP;
+    el.style.paddingLeft = indent + 'px';
+  }
+}
+
+let _vtabsWidthObserver = null;
+function watchVtabsWidth() {
+  if (!vtabsPanel || _vtabsWidthObserver || typeof ResizeObserver !== 'function') return;
+  _vtabsWidthObserver = new ResizeObserver(() => {
+    const w = vtabsPanel.hidden ? 0 : Math.round(vtabsPanel.getBoundingClientRect().width);
+    document.body.style.setProperty('--vtabs-w', w + 'px');
+    syncVtabsToolbarIndent();
+  });
+  _vtabsWidthObserver.observe(vtabsPanel);
+  // #views-wrap as well: the panel does not resize when the shortcuts sidebar
+  // opens or closes, but the toolbar's left edge moves, and the indent is the
+  // distance between the two. Nothing here writes to #views-wrap, so
+  // observing it cannot loop.
+  const wrap = document.getElementById('views-wrap');
+  if (wrap) _vtabsWidthObserver.observe(wrap);
+  window.addEventListener('resize', syncVtabsToolbarIndent);
+}
+
 function applyVerticalTabs(on) {
   document.body.classList.toggle('vertical-tabs', on);
   if (vtabsPanel) vtabsPanel.hidden = !on;
   if (on) {
+    watchVtabsWidth();
+    // Seed immediately — the observer's first callback is a frame away, and
+    // without this the toolbar flashes at zero indent when vtabs is turned on.
+    if (vtabsPanel) {
+      const w = Math.round(vtabsPanel.getBoundingClientRect().width);
+      if (w > 0) document.body.style.setProperty('--vtabs-w', w + 'px');
+    }
+    syncVtabsToolbarIndent();
     closeVtabsNewTabPages();
     renderVtabs();
     // With the popup disabled there's no overlay to fall back on, so make sure
     // there's always at least one real tab open.
     if (!vtabsSearchPopupEnabled() && tabs.length === 0) createTab();
   } else {
+    document.body.style.removeProperty('--vtabs-w');
+    syncVtabsToolbarIndent();      // clears the inline padding
     hideSearchPopup();
     if (tabs.length === 0) createTab();
   }
 }
 
-// ── Vtabs integrated toolbar ─────────────────────────────────────────────────
-const _toolbarActionsEl   = document.getElementById('toolbar-actions');
-const _toolbarActionsHome = _toolbarActionsEl?.parentElement;
-const _toolbarActionsNext = _toolbarActionsEl?.nextElementSibling;
-
-function applyVtabsIntegrated(on) {
-  document.body.classList.toggle('vtabs-integrated', on);
-  const slot = document.getElementById('vtf-integrated-slot');
-  if (!_toolbarActionsEl || !slot) return;
-  if (on) {
-    slot.appendChild(_toolbarActionsEl);
-  } else if (_toolbarActionsHome && !_toolbarActionsHome.contains(_toolbarActionsEl)) {
-    if (_toolbarActionsNext && _toolbarActionsHome.contains(_toolbarActionsNext)) {
-      _toolbarActionsHome.insertBefore(_toolbarActionsEl, _toolbarActionsNext);
-    } else {
-      _toolbarActionsHome.appendChild(_toolbarActionsEl);
-    }
-  }
+// body.no-tabs — every tab closed, which in vertical-tabs mode is a normal
+// resting state (the search popup is how you start a new one). Used by the
+// stylesheet to stop painting a page-coloured slab where there is no page.
+function syncNoTabsClass() {
+  document.body.classList.toggle('no-tabs', tabs.length === 0);
 }
 
 let _vtabsRafPending = false;
@@ -6806,6 +9207,7 @@ function renderVtabs() {
 
 function _doRenderVtabs() {
   _vtabsRafPending = false;
+  syncNoTabsClass();
   if (!vtabsList || !document.body.classList.contains('vertical-tabs')) return;
 
   const pinned    = tabs.filter(t => t.pinned);
@@ -6916,15 +9318,25 @@ function _updateVtabEl(el, tab) {
   const titleEl = el.querySelector('.vtab-title');
   if (titleEl) titleEl.textContent = tab.title || newTabLabel();
   const favEl = el.querySelector('.vtab-favicon');
-  if (favEl) {
-    const newSrc = tab.faviconUrl || VTAB_DEFAULT_FAVICON;
-    if (favEl.src !== newSrc) favEl.src = newSrc;
+  if (favEl) vtabFaviconImage(favEl, tab);
+  // Loading state is re-derived from the model, because renderVtabs()
+  // rebuilds these rows and a class set on the old element is gone.
+  el.classList.toggle('loading', !!tab.loading);
+  const reactEl = el.querySelector('.vtab-reaction');
+  if (reactEl) {
+    reactEl.textContent = tab.reaction || '';
+    reactEl.hidden = !tab.reaction;
   }
 }
 
 function _makeVtabEl(tab) {
   const el = document.createElement('div');
-  el.className = 'vtab' + (tab.id === activeId ? ' active' : '') + (tab.pinned ? ' vtab-pinned' : '');
+  // .snoozed matters here as much as in the horizontal strip — renderVtabs
+  // rebuilds these rows from scratch, so the class has to be re-derived from
+  // the tab rather than left on an element that no longer exists.
+  el.className = 'vtab' + (tab.id === activeId ? ' active' : '')
+    + (tab.pinned ? ' vtab-pinned' : '')
+    + (tab.snoozed ? ' snoozed' : '');
   el.dataset.tabId = String(tab.id);
   el.dataset.vtabKey = `tab-${tab.id}`;
 
@@ -6936,17 +9348,23 @@ function _makeVtabEl(tab) {
     }
   }
 
-  const fav = document.createElement('img');
+  // A span, not an img — see the note by vtabFaviconImage(). An <img>
+  // cannot have its pixels cleared for the loading ring.
+  const fav = document.createElement('span');
   fav.className = 'vtab-favicon';
-  fav.src = tab.faviconUrl || VTAB_DEFAULT_FAVICON;
-  fav.alt = '';
-  fav.addEventListener('error', () => { fav.src = VTAB_DEFAULT_FAVICON; });
+  vtabFaviconImage(fav, tab);
   el.appendChild(fav);
 
   const titleEl = document.createElement('span');
   titleEl.className = 'vtab-title';
   titleEl.textContent = tab.title || newTabLabel();
   el.appendChild(titleEl);
+
+  const reactEl = document.createElement('span');
+  reactEl.className = 'vtab-reaction';
+  reactEl.textContent = tab.reaction || '';
+  reactEl.hidden = !tab.reaction;
+  el.appendChild(reactEl);
 
   if (tab.pinned) {
     const pin = document.createElement('span');
@@ -7019,8 +9437,12 @@ vtabsNewBtn?.addEventListener('click', () => {
 });
 
 document.getElementById('vtabs-collapse')?.addEventListener('click', async () => {
-  document.body.classList.toggle('vtabs-collapsed');
-  await window.privoo?.saveSettings({ vtabsCollapsed: document.body.classList.contains('vtabs-collapsed') });
+  const collapsed = document.body.classList.toggle('vtabs-collapsed');
+  // saveSettings has never existed on the bridge. The optional chain here
+  // guarded `privoo`, not the method, so this threw a TypeError every time
+  // the panel was collapsed — and the state was never written, so it came
+  // back expanded on the next launch.
+  try { await window.privoo?.setSettings?.({ vtabsCollapsed: collapsed }); } catch {}
 });
 
 // ─── Vtabs Search Popup ───────────────────────────────────────────────────────
@@ -7036,13 +9458,51 @@ let _spSugIndex = -1;
 let _spCloseTimer = null;
 let _spForNewTab = true;
 
+// A full-window overlay has to be told where the page actually is: the
+// shortcuts rail and the vertical-tabs panel both eat into the left edge, and
+// centring on the viewport puts the card noticeably off to one side of the
+// content it belongs to. Returns padding that makes `justify-content: center`
+// land on the content area's true centre.
+// Where the page area actually starts, on all four sides. Used to keep the
+// search popup inside it — over the page, never over the chrome or the tabs
+// panel. `top` is the toolbar's lower edge; without it the popup's card sat
+// at the top of the WINDOW, on top of the toolbar.
+function contentAreaPadding() {
+  const views = document.getElementById('views-wrap');
+  if (!views) return { left: 0, right: 0, top: 0 };
+  const r = views.getBoundingClientRect();
+  const panelW = (vtabsPanel && !vtabsPanel.hidden) ? vtabsPanel.offsetWidth : 0;
+  return {
+    left: Math.max(0, Math.round(r.left + panelW)),
+    right: Math.max(0, Math.round(window.innerWidth - r.right)),
+    top: Math.max(0, Math.round(r.top)),
+  };
+}
+
+// The popup is a flex box that centres its card; what it centres the card
+// IN is the page area, described by this padding. It is applied here rather
+// than once on open because the box has to be re-measured whenever the thing
+// being measured could have moved — otherwise the first frame is positioned
+// from a stale rect and the card only looks centred once something else
+// forces a relayout, which in practice was the suggestion list appearing.
+function positionSearchPopup() {
+  if (!searchPopupEl || searchPopupEl.classList.contains('hidden')) return;
+  const pad = contentAreaPadding();
+  searchPopupEl.style.paddingLeft = pad.left + 'px';
+  searchPopupEl.style.paddingRight = pad.right + 'px';
+  // Only with vertical tabs, where the popup is confined to the page area.
+  // With the tab strip on top the card centres in the window as it always did.
+  searchPopupEl.style.paddingTop =
+    document.body.classList.contains('vertical-tabs') ? pad.top + 'px' : '';
+}
+window.addEventListener('resize', positionSearchPopup);
+
 function showSearchPopup(forNewTab = true) {
   if (!searchPopupEl) return;
   _spForNewTab = forNewTab !== false;
   clearTimeout(_spCloseTimer);
   searchPopupEl.classList.remove('hidden', 'sp-closing');
-  const panelW = (vtabsPanel && !vtabsPanel.hidden) ? vtabsPanel.offsetWidth : 0;
-  searchPopupEl.style.paddingLeft = (panelW + 24) + 'px';
+  positionSearchPopup();
   const card = searchPopupEl.querySelector('.search-popup-card');
   for (const el of [searchPopupEl, card]) {
     if (!el) continue;
@@ -7113,6 +9573,8 @@ function _spRenderSugs(items) {
   _spSugItems = items.slice(0, 7);
   _spSugIndex = -1;
   searchPopupSugs.innerHTML = '';
+  // The card just changed height; re-centre it in the same box.
+  requestAnimationFrame(positionSearchPopup);
   const SP_MAGNIFIER = `<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5 1.49-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg>`;
   for (let i = 0; i < _spSugItems.length; i++) {
     const it = _spSugItems[i];
@@ -7308,6 +9770,572 @@ function _anyBlockingOverlayOpen() {
   setTimeout(tryShow, 1400);
 })();
 
+(function initOwnBrowsingPopup() {
+  const popup = document.getElementById('ownbrowsing-popup');
+  if (!popup) return;
+  const ok = document.getElementById('ownbrowsing-ok');
+  const close = () => popup.classList.add('hidden');
+  ok?.addEventListener('click', close);
+  popup.addEventListener('mousedown', (e) => { if (e.target === popup) close(); });
+  // The Discord prompt deliberately never fires (and never sets its flag) on a
+  // first run, so waiting on it unconditionally would wait forever. Cap the
+  // queueing and show anyway once the wait stops being about a visible popup.
+  let waits = 0;
+  const tryShow = () => {
+    if (!settings) { setTimeout(tryShow, 500); return; }
+    if (settings.ownBrowsingShown) return;
+    if (_anyBlockingOverlayOpen()) { setTimeout(tryShow, 800); return; }
+    // Queue behind the other two one-time popups, both pending and on-screen,
+    // so they never stack. Same check-at-show-time approach as the Discord one.
+    const blocked = [['thankyou-popup', 'thankYouShown'], ['discord-popup', 'discordPromptShown']]
+      .some(([id, flag]) => {
+        const el = document.getElementById(id);
+        if (el && !el.classList.contains('hidden')) return true;   // on screen now
+        return !settings[flag] && waits < 12;                      // still pending
+      });
+    if (blocked) { waits++; setTimeout(tryShow, 900); return; }
+    // Mark shown as it appears, so a crash or a quick quit can't bring it back.
+    settings.ownBrowsingShown = true;
+    window.privoo.setSettings?.({ ownBrowsingShown: true });
+    popup.classList.remove('hidden');
+  };
+  setTimeout(tryShow, 2600);
+})();
+
+/* ── Paste protection ────────────────────────────────────────────────────
+   A link you paste is a link someone else wrote. The checks below are
+   deliberately a SHORT list of things that are almost never innocent, because
+   a warning people learn to click through is worse than no warning at all —
+   so no "http is insecure", no "this domain is new", nothing that fires on
+   ordinary browsing.
+
+   What is left is the small set of tricks used to make a URL read as one site
+   while pointing at another.
+   ─────────────────────────────────────────────────────────────────────── */
+
+// Brands worth impersonating. A host that contains one of these but is not
+// actually on that domain is the classic phishing shape:
+// "paypal.secure-login.example.com".
+const PASTE_BRANDS = [
+  'paypal', 'google', 'apple', 'microsoft', 'amazon', 'netflix', 'facebook',
+  'instagram', 'whatsapp', 'discord', 'steampowered', 'roblox', 'binance',
+  'coinbase', 'metamask', 'outlook', 'office365', 'dropbox', 'github',
+];
+
+function looksSuspiciousUrl(raw) {
+  const text = String(raw || '').trim();
+  if (!text || /\s/.test(text.trim()) && !/^[a-z]+:\/\//i.test(text)) return null;
+
+  // Scripts and inline data pretending to be a link. There is no legitimate
+  // reason for either to arrive via the clipboard.
+  if (/^\s*javascript:/i.test(text)) return 'It runs a script instead of opening a page.';
+  if (/^\s*data:/i.test(text)) return 'It embeds a whole page inside the link itself.';
+
+  let u;
+  try { u = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(text) ? text : 'https://' + text); }
+  catch { return null; }
+  if (!/^https?:$/.test(u.protocol)) return null;
+
+  const host = u.hostname.toLowerCase();
+
+  // Credentials in the URL. Browsers hide everything before the @, so
+  // "https://apple.com@evil.example" reads as Apple and goes to evil.example.
+  if (u.username || u.password) {
+    return 'Everything before the @ is ignored — this actually opens ' + host + '.';
+  }
+
+  // Punycode. The only reason to paste an encoded hostname is that the
+  // decoded one looks like a name it is not.
+  if (host.split('.').some((p) => p.startsWith('xn--'))) {
+    return 'The address uses characters that look like ordinary letters but are not.';
+  }
+
+  // A brand name that is not on the brand's domain.
+  const parts = host.split('.');
+  const registrable = parts.slice(-2).join('.');
+  for (const brand of PASTE_BRANDS) {
+    if (host.includes(brand) && !registrable.startsWith(brand + '.')) {
+      return 'It mentions "' + brand + '" but the site is actually ' + registrable + '.';
+    }
+  }
+
+  // A bare IP address where a name belongs — but not one on your own
+  // network. A router admin page at 192.168.1.1 is a normal thing to open,
+  // and warning about it is how a warning becomes noise.
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.startsWith('[')) {
+    const priv = /^(10\.|127\.|0\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host)
+      || host === '[::1]';
+    if (!priv) return 'It points at a raw IP address rather than a named site.';
+  }
+
+  return null;
+}
+
+const pasteWarnEl = document.getElementById('paste-warn');
+let _pasteWarnGo = null;
+
+function closePasteWarn() {
+  pasteWarnEl?.classList.add('hidden');
+  _pasteWarnGo = null;
+}
+
+function showPasteWarn(url, reason, onProceed) {
+  if (!pasteWarnEl) { onProceed(); return; }
+  _pasteWarnGo = onProceed;
+  const r = document.getElementById('paste-warn-reason');
+  const u = document.getElementById('paste-warn-url');
+  if (r) r.textContent = reason;
+  if (u) u.textContent = url;
+  pasteWarnEl.classList.remove('hidden');
+  document.getElementById('paste-warn-cancel')?.focus();
+}
+
+document.getElementById('paste-warn-backdrop')?.addEventListener('click', closePasteWarn);
+document.getElementById('paste-warn-cancel')?.addEventListener('click', () => {
+  // Clear the field too. Leaving the link sitting there invites a second
+  // Enter press, which is the thing we just talked them out of.
+  omnibox.value = displayUrl(activeTab()?.url || '');
+  closePasteWarn();
+});
+document.getElementById('paste-warn-go')?.addEventListener('click', () => {
+  const go = _pasteWarnGo;
+  closePasteWarn();
+  if (go) go();
+});
+document.getElementById('paste-warn-off')?.addEventListener('click', async () => {
+  closePasteWarn();
+  await saveBrowserSetting({ pasteProtection: false });
+  privooToast('Paste protection turned off. You can switch it back on in Settings, Privacy.');
+});
+
+// The check runs on paste, not on Enter: the moment to question a link is
+// while you are still looking at where it came from.
+omnibox?.addEventListener('paste', (e) => {
+  if (settings?.pasteProtection === false) return;
+  const text = (e.clipboardData || window.clipboardData)?.getData('text') || '';
+  const reason = looksSuspiciousUrl(text);
+  if (!reason) return;
+  e.preventDefault();
+  showPasteWarn(text.trim(), reason, () => {
+    omnibox.value = text.trim();
+    omnibox.focus();
+  });
+});
+
+// A page that tried to open a window without the user doing anything.
+window.privoo.onPopupBlocked?.((d) => {
+  privooToast('Blocked a pop-up from ' + (d?.host || 'this page') + '.');
+});
+
+/* ── One-time notes ──────────────────────────────────────────────────────
+   Small text along the bottom of the window, once each, in order.
+
+   These are deliberately not notifications: nothing to click, nothing to
+   dismiss, no icon, and they never return. Something worth saying once in a
+   browser you use every day should cost about as much attention as a line in
+   a footer, and then it should be gone.
+
+   They run through ONE element, strictly one at a time. That is the whole
+   design: the protection line used to be drawn by the new tab page instead,
+   which meant two documents each putting a message at the bottom centre of
+   the same screen with no way to know about each other. They landed on top
+   of one another, letter over letter. Two documents cannot take turns
+   without a handshake, so there is only one document now.
+   ─────────────────────────────────────────────────────────────────────── */
+
+// Filled, still, and small. Not animated: a beating heart is a flourish, and
+// a flourish on a line about people who died is the wrong register.
+const NOTE_HEART = '<svg class="note-heart" viewBox="0 0 24 24" aria-hidden="true">'
+  + '<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 '
+  + '3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 '
+  + '6.86-8.55 11.54L12 21.35z"/></svg>';
+
+const CHROME_NOTES = [
+  {
+    // Bumping this means writing a new settings key alongside it. Reusing the
+    // old one would show the new note only to people who never saw the old.
+    flag: 'noteNepalChinaFloods2026',
+    holdMs: 10000,
+    build: async (el) => {
+      el.append('In memory of those lost to the floods in Nepal and China, and with '
+        + 'hope for the thousands still missing. Our thoughts are with their families. ');
+      el.insertAdjacentHTML('beforeend', NOTE_HEART);
+    },
+  },
+  {
+    // The same key the new tab page used, so anyone who has already seen this
+    // does not meet it again after the move.
+    flag: 'protectedToastSeen',
+    holdMs: 7000,
+    pill: true,
+    build: async (el) => {
+      // A real number they can check, rather than a slogan. If the count is
+      // not available yet, the plain statement is still true.
+      let line = 'Ad and tracker blocking is on.';
+      try {
+        const st = await window.privoo.getPrivacyStats?.();
+        const n = (st?.blockedAds || 0) + (st?.blockedCookies || 0);
+        if (n > 0) line = n.toLocaleString() + ' ads and trackers blocked so far.';
+      } catch { /* keep the plain line */ }
+      el.textContent = line;
+    },
+  },
+  {
+    // Not a first-run note. It waits until somebody has actually used the
+    // browser for a while, because it is a claim about what Privoo is for and
+    // a claim like that means nothing on the first minute of the first day.
+    flag: 'noteInControl',
+    holdMs: 8000,
+    when: (s) => (Number(s.siteVisitCount) || 0) >= 15 && activeTabIsNewTab(),
+    build: async (el) => { el.append('Putting people back in control of their browsing.'); },
+  },
+];
+
+function showOneNote(el, note) {
+  return new Promise((resolve) => {
+    (async () => {
+      el.className = 'chrome-note' + (note.pill ? ' pill' : '');
+      el.textContent = '';
+      await note.build(el);
+      el.hidden = false;
+      // Two frames: one for the element to exist un-hidden at opacity 0, one
+      // for the class change to be a transition rather than a starting value.
+      requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('is-in')));
+
+      // Persist as soon as it is on screen rather than when it finishes. If
+      // the window is closed halfway through, it has still been seen.
+      void saveBrowserSetting({ [note.flag]: true });
+
+      setTimeout(() => {
+        el.classList.remove('is-in');
+        // Match the fade-out in theme.css before taking it out of the layout.
+        setTimeout(() => { el.hidden = true; resolve(); }, 700);
+      }, note.holdMs);
+    })();
+  });
+}
+
+/* The visit count is incremented in the main process on every page added to
+   history, and that write does not broadcast — so the copy of settings this
+   window is holding is stale almost immediately. Reading it directly would
+   mean the note fired on some later launch rather than when the fifteenth
+   site was actually visited.
+
+   The flag is checked BEFORE the round trip, so once this has been shown the
+   whole thing costs nothing at all. Without that it would be an IPC call
+   every time anyone opens a new tab, forever, for a message that has already
+   been read once. */
+async function maybeNoteOnNewTab() {
+  if (!settings || settings.noteInControl) return;
+  if (!activeTabIsNewTab()) return;
+  try {
+    const d = await window.privoo.getSettings();
+    const live = (d && d.settings) || d;
+    if (live && typeof live.siteVisitCount === 'number') {
+      settings.siteVisitCount = live.siteVisitCount;
+    }
+  } catch { /* the count stays as it was; it will be right next time */ }
+  showChromeNote();
+}
+
+function activeTabIsNewTab() {
+  const t = tabs.find((x) => x.id === activeId);
+  return !!t && isNewTabPage(t.url);
+}
+
+// The queue is asynchronous and is now started from more than one place, so
+// it has to be impossible for two runs to overlap — that would put two notes
+// in the one element at once, which is the exact thing this queue exists to
+// prevent.
+let _notesRunning = false;
+
+async function showChromeNote() {
+  const el = document.getElementById('chrome-note');
+  if (!el || !settings || _notesRunning) return;
+  _notesRunning = true;
+  try {
+  for (const note of CHROME_NOTES) {
+    // saveBrowserSetting replaces `settings`, so this reads the live object
+    // each time round rather than a copy taken before the first note ran.
+    if (settings[note.flag]) continue;
+    // A note can also decline for now without being marked as shown, which is
+    // how the third one waits for fifteen sites and a new tab.
+    if (note.when && !note.when(settings)) continue;
+    await showOneNote(el, note);
+    // A breath between them, so the second does not begin the instant the
+    // first has gone and read as one message changing its mind.
+    await new Promise((r) => setTimeout(r, 700));
+  }
+  } finally { _notesRunning = false; }
+}
+
+/* ── Tab Snooze ──────────────────────────────────────────────────────────
+   A background tab is a whole renderer process holding a page nobody is
+   reading. After a while Privoo lets that page go and keeps the tab: its
+   title, its favicon, its address and its place in the strip. Touch it and
+   the page loads back.
+
+   This is Chrome's Memory Saver, and it is the same bargain — a second of
+   reload for the memory. What matters is being conservative about WHEN, so
+   it never costs anyone anything they notice:
+
+     - never the tab you are looking at, or either half of a split
+     - never a tab playing audio, which is a tab being used without being
+       looked at — the whole reason background tabs exist
+     - never a tab you pinned, which is the one signal a person gives that
+       a tab should stay put
+     - never a page that is still loading, and never one already asleep
+     - never a form: a page with something typed into it and not submitted
+       is the one case where a reload loses real work
+
+   The last check is the one worth having. Everything else here is
+   convenience; that one is the difference between a memory feature and a
+   feature that eats what somebody wrote.
+   ─────────────────────────────────────────────────────────────────────── */
+const SNOOZE_SWEEP_MS = 60000;   // how often to look; the delay is a setting
+
+function snoozeDelayMs() {
+  if (!settings || settings.tabSnooze === false) return 0;
+  const mins = Number(settings.tabSnoozeMinutes);
+  return Number.isFinite(mins) && mins > 0 ? mins * 60000 : 0;
+}
+
+function canSnooze(tab) {
+  if (!tab || tab.snoozed || tab.pinned) return false;
+  // Somebody typed into this page and has not navigated since. Reloading it
+  // would throw that away, which is the one cost this feature must never
+  // impose. Set by the 'form-dirty' message from the guest preload.
+  if (tab.formDirty) return false;
+  if (tab.id === activeId) return false;
+  if (tab.isPlayingAudio) return false;
+  // Either half of a split is on screen, so neither is a background tab.
+  if (tab.id === splitLeftId || tab.id === splitRightId) return false;
+  const url = tab.url || '';
+  // Nothing to reclaim from a blank tab, and an internal page is cheap.
+  if (!/^https?:/i.test(url)) return false;
+  try { if (tab.wv.isLoading()) return false; } catch { return false; }
+  return true;
+}
+
+function snoozeTab(tab) {
+  if (!canSnooze(tab)) return false;
+
+  tab.snoozedUrl = tab.url;
+  tab.snoozed = true;
+  tab.tabEl.classList.add('snoozed');
+  tab.tabEl.title = (tab.title || tab.url) + ' — asleep, click to load';
+  try { tab.wv.loadURL('about:blank'); } catch { tab.wv.setAttribute('src', 'about:blank'); }
+  renderVtabs();
+  return true;
+}
+
+function wakeTab(tab) {
+  if (!tab || !tab.snoozed) return;
+  const url = tab.snoozedUrl;
+  tab.snoozed = false;
+  tab.snoozedUrl = null;
+  tab.tabEl.classList.remove('snoozed');
+  tab.tabEl.removeAttribute('title');
+  if (!url) return;
+  try { tab.wv.loadURL(url); } catch { tab.wv.setAttribute('src', url); }
+  renderVtabs();
+}
+
+function sweepSnooze() {
+  const delay = snoozeDelayMs();
+  if (!delay) return;
+  const now = Date.now();
+  for (const tab of tabs) {
+    // A tab that has never been active has no clock yet — start it now
+    // rather than snoozing something the moment it is restored from a
+    // session, which would undo the restore.
+    if (!tab.lastSeenAt) { tab.lastSeenAt = now; continue; }
+    if (now - tab.lastSeenAt < delay) continue;
+    snoozeTab(tab);
+  }
+}
+
+setInterval(sweepSnooze, SNOOZE_SWEEP_MS);
+
+/* ── Tab hover preview ───────────────────────────────────────────────────
+   Rest on a tab and a thumbnail of that page appears beneath it. The point is
+   the case Firefox built theirs for: nine tabs on the same site, all titled
+   the same, and no way to tell them apart except by clicking each one.
+
+   Three things keep it from being annoying:
+
+     - It waits. HOVER_DELAY is long enough that crossing the strip on the way
+       to the address bar never triggers it, and moving between two tabs while
+       one is already open swaps instantly (the delay is only paid once).
+     - It never covers the tab you are pointing at, and it clamps to the
+       window rather than hanging off the edge.
+     - It is pointer-transparent, so it cannot eat the click you were about
+       to make on the tab underneath it.
+
+   Captures are cached per tab and re-taken when the page navigates, because
+   capturePage() on a background tab returns its last painted frame and that
+   does not change while the tab sits there.
+   ─────────────────────────────────────────────────────────────────────── */
+const TAB_PREVIEW_DELAY   = 130;      // ms of stillness before the first one
+const TAB_PREVIEW_MAX_AGE = 20000;    // ms before a cached shot is stale
+
+const tabPreviewEl = document.getElementById('tab-preview');
+let _tpTimer = null;
+let _tpTab = null;
+let _tpToken = 0;
+
+function tabForEl(el) {
+  return tabs.find((t) => t.tabEl === el) || null;
+}
+
+function hideTabPreview() {
+  clearTimeout(_tpTimer);
+  _tpTimer = null;
+  _tpTab = null;
+  _tpToken++;
+  if (tabPreviewEl) {
+    tabPreviewEl.hidden = true;
+    tabPreviewEl.classList.remove('is-in');
+  }
+}
+
+// Position under the tab, centred on it, clamped to the window.
+function placeTabPreview(tabEl) {
+  if (!tabPreviewEl) return;
+  const r = tabEl.getBoundingClientRect();
+  const w = tabPreviewEl.offsetWidth || 260;
+  const margin = 8;
+  let left = r.left + r.width / 2 - w / 2;
+  left = Math.max(margin, Math.min(left, window.innerWidth - w - margin));
+  tabPreviewEl.style.left = Math.round(left) + 'px';
+  tabPreviewEl.style.top = Math.round(r.bottom + 6) + 'px';
+}
+
+async function showTabPreview(tab) {
+  if (!tabPreviewEl || !tab) return;
+  const token = ++_tpToken;
+  _tpTab = tab;
+
+  const titleEl = document.getElementById('tab-preview-title');
+  const hostEl  = document.getElementById('tab-preview-host');
+  const imgEl   = document.getElementById('tab-preview-img');
+  const fbEl    = document.getElementById('tab-preview-fallback');
+
+  if (titleEl) titleEl.textContent = tab.title || newTabLabel();
+  if (hostEl) {
+    let host = '';
+    try {
+      host = tab.url?.startsWith('privoo://')
+        ? 'Privoo'
+        : new URL(tab.url).hostname.replace(/^www\./, '');
+    } catch { host = ''; }
+    hostEl.textContent = host;
+    hostEl.hidden = !host;
+  }
+
+  // Show the card immediately with whatever shot we already have — waiting on
+  // the capture before showing anything makes the whole thing feel broken on
+  // the first hover of every tab.
+  const cached = tab._previewShot && (Date.now() - tab._previewShotAt < TAB_PREVIEW_MAX_AGE)
+    ? tab._previewShot : null;
+  paintTabPreviewShot(cached, imgEl, fbEl);
+
+  tabPreviewEl.hidden = false;
+  placeTabPreview(tab.tabEl);
+  requestAnimationFrame(() => {
+    if (_tpToken === token) tabPreviewEl.classList.add('is-in');
+  });
+
+  if (cached) return;
+
+  let wcId = 0;
+  try { wcId = tab.wv?.getWebContentsId?.() || 0; } catch {}
+  if (!wcId) return;
+  let shot = null;
+  try { shot = await window.privoo.captureTabPreview?.(wcId); } catch {}
+  if (_tpToken !== token) return;      // pointer moved on while we waited
+  if (!shot) return;
+  tab._previewShot = shot;
+  tab._previewShotAt = Date.now();
+  paintTabPreviewShot(shot, imgEl, fbEl);
+  placeTabPreview(tab.tabEl);          // the image changes the card's height
+}
+
+function paintTabPreviewShot(shot, imgEl, fbEl) {
+  if (!imgEl || !fbEl) return;
+  if (shot) {
+    imgEl.src = shot;
+    imgEl.hidden = false;
+    fbEl.hidden = true;
+  } else {
+    imgEl.removeAttribute('src');
+    imgEl.hidden = true;
+    fbEl.hidden = false;
+  }
+}
+
+// Take the capture NOW, before the delay, so the picture is usually already
+// decoded by the time the card is shown. The delay is there to stop the card
+// appearing when you are only passing over the strip — there is no reason for
+// the network-free part of the work to wait for it too.
+function warmTabPreview(tab, force) {
+  if (!tab || tab._previewWarming) return;
+  // On hover: keep what we have. On the way out of a tab: take a new one,
+  // because what is on screen has just changed and the old shot is now a
+  // picture of something you were doing a while ago.
+  if (!force && tab._previewShot) return;
+  let wcId = 0;
+  try { wcId = tab.wv?.getWebContentsId?.() || 0; } catch {}
+  if (!wcId) return;
+  tab._previewWarming = true;
+  Promise.resolve(window.privoo.captureTabPreview?.(wcId))
+    .then((shot) => {
+      tab._previewWarming = false;
+      if (!shot) return;
+      tab._previewShot = shot;
+      tab._previewShotAt = Date.now();
+      // Already on screen with the placeholder? Swap it in.
+      if (_tpTab === tab) {
+        paintTabPreviewShot(shot, document.getElementById('tab-preview-img'),
+          document.getElementById('tab-preview-fallback'));
+        placeTabPreview(tab.tabEl);
+      }
+    })
+    .catch(() => { tab._previewWarming = false; });
+}
+
+function queueTabPreview(tabEl) {
+  const tab = tabForEl(tabEl);
+  if (!tab) return;
+  if (_tpTab === tab) return;                 // already showing this one
+  warmTabPreview(tab);
+  clearTimeout(_tpTimer);
+  // Once one preview is up, moving along the strip swaps without re-waiting.
+  const delay = _tpTab ? 0 : TAB_PREVIEW_DELAY;
+  _tpTimer = setTimeout(() => showTabPreview(tab), delay);
+}
+
+if (tabsEl && tabPreviewEl) {
+  // Delegated, so it survives every re-render of the strip.
+  tabsEl.addEventListener('mouseover', (e) => {
+    if (settings?.tabHoverPreview === false) return;
+    const tabEl = e.target.closest?.('.tab');
+    if (!tabEl || !tabsEl.contains(tabEl)) return;
+    queueTabPreview(tabEl);
+  });
+  tabsEl.addEventListener('mouseleave', hideTabPreview);
+  // Anything that moves the strip, moves the tab, or takes over the window.
+  tabsEl.addEventListener('mousedown', hideTabPreview);
+  tabsEl.addEventListener('wheel', hideTabPreview, { passive: true });
+  document.getElementById('tabs-scroll')?.addEventListener('scroll', hideTabPreview, { passive: true });
+  window.addEventListener('blur', hideTabPreview);
+  window.addEventListener('resize', hideTabPreview);
+  // A guest page taking the pointer means the cursor left the chrome without
+  // the strip ever seeing a mouseleave. That arrives as the 'guest-pointer'
+  // ipc-message, which already routes to closePopovers() — hideTabPreview is
+  // called from there.
+}
+
 // ─── Profile UI ──────────────────────────────────────────────────────────────
 
 (function initProfileUI() {
@@ -7349,7 +10377,7 @@ function _anyBlockingOverlayOpen() {
   function themeColors() {
     const dark = document.body.classList.contains('dark');
     return dark
-      ? { surface: '#2a2b2f', text: '#e8eaed', muted: '#bdc1c6', border: 'rgba(255,255,255,0.14)', hover: 'rgba(255,255,255,0.08)', input: '#202124' }
+      ? { surface: '#2a2b2f', text: '#e8eaed', muted: '#bdc1c6', border: 'rgba(255,255,255,0.14)', hover: 'rgba(255,255,255,0.08)', input: '#202020' }
       : { surface: '#ffffff', text: '#1f1f1f', muted: '#5f6368', border: '#dadce0', hover: '#f1f3f4', input: '#f3f4f6' };
   }
   const ACCENT = () => cssVar('--accent', '#4f46e5');
@@ -7395,8 +10423,19 @@ function _anyBlockingOverlayOpen() {
   // profile follows the browser's accent colour; others get a distinct palette
   // colour so they're easy to tell apart.
   const PALETTE = ['#e05c8a','#28b67a','#e08c2c','#9b59b6','#e74c3c','#1abc9c','#f39c12','#5b7fff'];
+  // Everything drawn on this disc is white, and the Mono accent resolves to
+  // #ffffff, so the built-in profile was white on white. Judged by luminance
+  // rather than by testing for one hex value, because #fafafa would have been
+  // just as invisible and would have come back as a new bug later.
+  function safeDisc(hex) {
+    const m = String(hex).trim().replace('#', '').match(/^([0-9a-f]{6})$/i);
+    if (!m) return hex;
+    const [r, g, b] = m[1].match(/.{2}/g).map((x) => parseInt(x, 16) / 255);
+    return (0.2126 * r + 0.7152 * g + 0.0722 * b) > 0.72 ? '#6b7280' : hex;
+  }
+
   function profileColor(id) {
-    if (id === 'default') return cssVar('--accent', '#4f46e5');
+    if (id === 'default') return safeDisc(cssVar('--accent', '#4f46e5'));
     let h = 0;
     for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
     return PALETTE[h % PALETTE.length];
@@ -7426,7 +10465,7 @@ function _anyBlockingOverlayOpen() {
         `<input id="_czoom" type="range" min="1" max="3" step="0.01" value="1" style="width:100%;accent-color:${ACCENT()};margin-bottom:8px;" />` +
         '<div style="display:flex;gap:10px;margin-top:12px;">' +
           `<button id="_ccancel" style="flex:1;padding:11px;border-radius:10px;border:1px solid ${C.border};background:transparent;color:${C.muted};font-size:13px;font-weight:600;cursor:pointer;">Cancel</button>` +
-          `<button id="_capply" style="flex:1;padding:11px;border-radius:10px;border:none;background:${ACCENT()};color:${cssVar('--on-accent','#202124')};font-size:13px;font-weight:600;cursor:pointer;">Apply</button>` +
+          `<button id="_capply" style="flex:1;padding:11px;border-radius:10px;border:none;background:${ACCENT()};color:${cssVar('--on-accent','#202020')};font-size:13px;font-weight:600;cursor:pointer;">Apply</button>` +
         '</div>';
       back.appendChild(panel);
       document.documentElement.appendChild(back);
@@ -7496,6 +10535,11 @@ function _anyBlockingOverlayOpen() {
       imgEl.src = profile.avatar;
       imgEl.style.display = 'block';
       initialsEl.style.display = 'none';
+    } else if (profile.id === 'default') {
+      // One built-in profile means a letter distinguishes it from nothing.
+      imgEl.style.display = 'none';
+      initialsEl.style.display = '';
+      initialsEl.innerHTML = '<svg class="pp-person" viewBox="0 0 64 64" aria-hidden="true">' + '<circle cx="32" cy="24.5" r="11.2"/>' + '<path d="M32 39.5c-10.2 0-18.5 6.7-18.5 15V64h37v-9.5c0-8.3-8.3-15-18.5-15z"/>' + '</svg>';
     } else {
       imgEl.style.display = 'none';
       initialsEl.style.display = '';
@@ -7513,8 +10557,21 @@ function _anyBlockingOverlayOpen() {
       _activeId = activeId;
       const active = activeProfile();
       renderAvatarInto(avatarCircle, imgEl, initialsEl, active);
-      // Keep CSS var in sync
-      avatarCircle.style.background = profileColor(active.id);
+      // The toolbar button stays monochrome line art unless the profile has a
+      // real picture; the coloured initials still identify it in the panel.
+      if (active.avatar) {
+        avatarCircle.querySelector('.pp-glyph')?.remove();
+        avatarCircle.style.background = profileColor(active.id);
+      } else {
+        initialsEl.style.display = 'none';
+        avatarCircle.style.background = 'transparent';
+        avatarCircle.style.color = 'var(--muted)';
+        if (!avatarCircle.querySelector('.pp-glyph')) {
+          avatarCircle.insertAdjacentHTML('beforeend',
+            `<svg class="pp-glyph" viewBox="0 0 24 24" width="18" height="18" ${SITE_ICON_STROKE}>` +
+            '<circle cx="12" cy="8.4" r="3.6"/><path d="M5.5 19.4a6.5 6.5 0 0 1 13 0"/></svg>');
+        }
+      }
     }).catch(() => {});
   }
 
@@ -7636,7 +10693,7 @@ function _anyBlockingOverlayOpen() {
     if (profilePanel.classList.contains('hidden')) openPanel(); else closePanel();
   });
   document.addEventListener('click', (e) => {
-    if (!profilePanel.classList.contains('hidden') && !profilePanel.contains(e.target) && e.target !== profileBtn) closePanel();
+    if (!profilePanel.classList.contains('hidden') && !profilePanel.contains(e.target) && !profileBtn.contains(e.target)) closePanel();
   });
 
   // ── Profile switch ────────────────────────────────────────────────────────
@@ -7736,7 +10793,7 @@ function _anyBlockingOverlayOpen() {
     cancelBtn.onmouseleave = () => { cancelBtn.style.background = 'transparent'; };
     const saveBtn = document.createElement('button');
     saveBtn.textContent = profile ? 'Save' : 'Create';
-    saveBtn.style.cssText = `flex:1;padding:11px;border-radius:10px;border:none;background:${ACCENT()};color:${cssVar('--on-accent','#202124')};font-size:13.5px;font-weight:600;cursor:pointer;`;
+    saveBtn.style.cssText = `flex:1;padding:11px;border-radius:10px;border:none;background:${ACCENT()};color:${cssVar('--on-accent','#202020')};font-size:13.5px;font-weight:600;cursor:pointer;`;
 
     // Delete (edit only, non-default profiles)
     let deleteBtn = null;
@@ -7818,28 +10875,28 @@ const AI_AVATAR_HTML = '<img class="ai-av-img" src="privoo://newtab/logo.png" al
 
 const AI_MODELS = {
   anthropic: [
-    { id: 'claude-sonnet-4-6',          label: 'Claude Sonnet 4.6 — balanced (recommended)' },
-    { id: 'claude-opus-4-7',            label: 'Claude Opus 4.7 — most capable' },
-    { id: 'claude-haiku-4-5-20251001',  label: 'Claude Haiku 4.5 — fastest' },
+    { id: 'claude-sonnet-4-6',          label: 'Claude Sonnet 4.6, balanced (recommended)' },
+    { id: 'claude-opus-4-7',            label: 'Claude Opus 4.7, most capable' },
+    { id: 'claude-haiku-4-5-20251001',  label: 'Claude Haiku 4.5, fastest' },
     { id: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet' },
     { id: 'claude-3-5-haiku-20241022',  label: 'Claude 3.5 Haiku' },
   ],
   openai: [
-    { id: 'gpt-4o-mini',   label: 'GPT-4o mini — fast & low cost (recommended)' },
-    { id: 'gpt-4o',        label: 'GPT-4o — flagship' },
+    { id: 'gpt-4o-mini',   label: 'GPT-4o mini, fast and low cost (recommended)' },
+    { id: 'gpt-4o',        label: 'GPT-4o, flagship' },
     { id: 'gpt-4-turbo',   label: 'GPT-4 Turbo' },
     { id: 'gpt-4.1-mini',  label: 'GPT-4.1 mini' },
-    { id: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo — cheapest' },
+    { id: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo, cheapest' },
   ],
   deepseek: [
-    { id: 'deepseek-chat',       label: 'DeepSeek V3 — general chat (recommended)' },
-    { id: 'deepseek-v4-flash',   label: 'DeepSeek V4 Flash — fast & low cost' },
-    { id: 'deepseek-v4-pro',     label: 'DeepSeek V4 Pro — most capable' },
-    { id: 'deepseek-reasoner',   label: 'DeepSeek R1 — step-by-step reasoning' },
+    { id: 'deepseek-chat',       label: 'DeepSeek V3, general chat (recommended)' },
+    { id: 'deepseek-v4-flash',   label: 'DeepSeek V4 Flash, fast and low cost' },
+    { id: 'deepseek-v4-pro',     label: 'DeepSeek V4 Pro, most capable' },
+    { id: 'deepseek-reasoner',   label: 'DeepSeek R1, step by step reasoning' },
   ],
   gemini: [
-    { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash — fast (recommended)' },
-    { id: 'gemini-2.5-pro',   label: 'Gemini 2.5 Pro — most capable' },
+    { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash, fast (recommended)' },
+    { id: 'gemini-2.5-pro',   label: 'Gemini 2.5 Pro, most capable' },
     { id: 'gemini-1.5-pro',   label: 'Gemini 1.5 Pro' },
   ],
   // Ollama models are discovered at runtime from the local server.
@@ -7857,7 +10914,7 @@ const AI_KEY_HINTS = {
   openai:    'Get a key from <b>platform.openai.com</b>',
   deepseek:  'Get a key from <b>platform.deepseek.com</b>',
   gemini:    'Get a key from <b>aistudio.google.com</b>',
-  ollama:    'Runs locally — no key needed.',
+  ollama:    'Runs locally. No key needed.',
 };
 const AI_PROVIDER_LABELS = { anthropic: 'Claude', openai: 'GPT (OpenAI)', deepseek: 'DeepSeek', gemini: 'Gemini', ollama: 'Ollama (Local)' };
 
@@ -8001,7 +11058,7 @@ function _aiRenderMd(text) {
 
 function _aiModelLabel(provider, modelId) {
   const m = (AI_MODELS[provider] || []).find(x => x.id === modelId);
-  return m ? m.label.split(' — ')[0] : (modelId || '');
+  return m ? m.label.split(', ')[0] : (modelId || '');
 }
 
 function _aiFillModels(provider, selected) {
@@ -8016,7 +11073,7 @@ function _aiFillModels(provider, selected) {
   }
   if (selected && !list.some(m => m.id === selected)) {
     const o = document.createElement('option');
-    o.value = selected; o.textContent = selected + ' — saved';
+    o.value = selected; o.textContent = selected + ' (saved)';
     sel.appendChild(o);
   }
   sel.value = selected || AI_DEFAULT_MODELS[provider] || (list[0]?.id) || '';
@@ -8038,7 +11095,7 @@ async function _aiLoadOllama(selected) {
     hint.innerHTML = 'Ollama is running, but no models are installed. Run <b>ollama pull llama3.2</b>, then <b>Re-scan</b>.';
   } else {
     const n = AI_MODELS.ollama.length;
-    hint.innerHTML = 'Found <b>' + n + '</b> local model' + (n > 1 ? 's' : '') + ' — runs fully offline on this device.';
+    hint.innerHTML = 'Found <b>' + n + '</b> local model' + (n > 1 ? 's' : '') + '. They run fully offline on this device.';
   }
 }
 
@@ -8057,7 +11114,7 @@ function _aiApplyProviderUI(provider, selected) {
     const hint = _aiEl('ai-model-hint');
     if (hint) hint.innerHTML = AI_KEY_HINTS[provider] || '';
     const keyInp = _aiEl('ai-apikey');
-    if (keyInp) keyInp.placeholder = _aiConfig.hasKeyFor?.[provider] ? 'Key saved — leave blank to keep' : 'Paste your key';
+    if (keyInp) keyInp.placeholder = _aiConfig.hasKeyFor?.[provider] ? 'Key saved. Leave blank to keep it' : 'Paste your key';
   }
 }
 
@@ -8073,7 +11130,7 @@ function _aiRefreshStatus() {
       '<span class="ai-pill-model">' + _aiModelLabel(_aiConfig.provider, _aiConfig.model) + '</span>';
   } else {
     pill.className = 'ai-pill ai-pill-no';
-    text.textContent = 'No API key — click Setup';
+    text.textContent = 'No API key. Click Setup';
   }
 }
 
@@ -8087,18 +11144,33 @@ function _aiRenderChat() {
     e.innerHTML =
       '<div class="ai-empty-mark"><img src="privoo://newtab/logo.png" alt="" draggable="false" onerror="this.style.display=\'none\'"></div>' +
       '<h3>How can I help?</h3>' +
-      '<p>Ask anything — summaries, ideas, code. Your chats are saved on this device.</p>' +
+      '<p>Explanations, summaries, ideas, code. Answered by the AI you chose. Chats stay on this device.</p>' +
       '<div class="ai-chips" id="ai-chips"></div>';
     inner.appendChild(e);
-    ['Explain a concept', 'Summarize text', 'Write some code', 'Brainstorm ideas'].forEach(c => {
+    // Real opening lines, not labels. "Brainstorm ideas: " in the box left
+    // you to write the actual question anyway — the same blank page with an
+    // extra step in front of it.
+    const STARTERS = [
+      ['Explain something', 'Explain how HTTPS actually works, in plain English.'],
+      ['Summarise', 'Summarise this in five bullet points:\n\n'],
+      ['Get unstuck', 'I am trying to '],
+      ['Write some code', 'Write a small script that '],
+    ];
+    for (const [label, prompt] of STARTERS) {
       const b = document.createElement('button');
-      b.className = 'ai-chip'; b.type = 'button'; b.textContent = c;
+      b.className = 'ai-chip'; b.type = 'button'; b.textContent = label;
       b.addEventListener('click', () => {
         const inp = _aiEl('ai-input');
-        if (inp) { inp.value = c + ': '; inp.focus(); }
+        if (!inp) return;
+        inp.value = prompt;
+        inp.focus();
+        // Caret at the end, so a half-written starter can be typed into
+        // rather than selected past first.
+        inp.setSelectionRange(prompt.length, prompt.length);
+        inp.dispatchEvent(new Event('input', { bubbles: true }));
       });
       e.querySelector('#ai-chips').appendChild(b);
-    });
+    }
     return;
   }
   for (const m of _aiMessages) {
@@ -8128,16 +11200,126 @@ function _aiIsAboutPrivoo(text) {
       || /\b(browser|app|who|what|how|tell me|about|is|are|does|do)\b.*\bprivoo\b/.test(t);
 }
 
+const _aiAttached = [];
+
+function _aiFmtChars(n) {
+  return n < 1000 ? n + ' chars' : Math.round(n / 1000) + 'k chars';
+}
+
+function _aiRenderAttachments() {
+  const wrap = _aiEl('ai-attachments');
+  if (!wrap) return;
+  wrap.hidden = _aiAttached.length === 0;
+  wrap.innerHTML = '';
+  _aiAttached.forEach((a, idx) => {
+    const chip = document.createElement('div');
+    chip.className = 'ai-att-chip';
+    const name = document.createElement('span');
+    name.className = 'ai-att-name';
+    name.textContent = a.name;
+    name.title = a.name;
+    const meta = document.createElement('span');
+    meta.className = 'ai-att-meta';
+    meta.textContent = _aiFmtChars(a.chars || (a.text || '').length) + (a.truncated ? ' · trimmed' : '');
+    const x = document.createElement('button');
+    x.type = 'button';
+    x.className = 'ai-att-x';
+    x.textContent = '\u00d7';
+    x.title = 'Remove';
+    x.addEventListener('click', () => { _aiAttached.splice(idx, 1); _aiRenderAttachments(); });
+    chip.append(name, meta, x);
+    wrap.appendChild(chip);
+  });
+}
+
+/** Text block for the attached files, then clears them. */
+function _aiTakeAttachments() {
+  if (!_aiAttached.length) return '';
+  const blocks = _aiAttached.map((a) =>
+    '--- Attached file: ' + a.name + (a.truncated ? ' (trimmed) ' : ' ') + '---\n' + a.text);
+  _aiAttached.length = 0;
+  _aiRenderAttachments();
+  return blocks.join('\n\n') + '\n\n';
+}
+
+function _aiAcceptAttachment(res) {
+  if (!res) return;                       // cancelled
+  if (!res.ok) { _aiAttachError(res.error || 'Could not read that file.'); return; }
+  _aiAttached.push(res);
+  _aiRenderAttachments();
+}
+
+// Failures show as a chip rather than a toast: it sits with the other
+// attachments, where the user is already looking.
+function _aiAttachError(message) {
+  const wrap = _aiEl('ai-attachments');
+  if (!wrap) return;
+  wrap.hidden = false;
+  const chip = document.createElement('div');
+  chip.className = 'ai-att-chip error';
+  const name = document.createElement('span');
+  name.className = 'ai-att-name';
+  name.textContent = message;
+  name.title = message;
+  const x = document.createElement('button');
+  x.type = 'button';
+  x.className = 'ai-att-x';
+  x.textContent = '\u00d7';
+  x.addEventListener('click', () => {
+    chip.remove();
+    if (!_aiAttached.length && !wrap.children.length) wrap.hidden = true;
+  });
+  chip.append(name, x);
+  wrap.appendChild(chip);
+}
+
+function _aiWireAttachments() {
+  const btn = _aiEl('ai-attach');
+  if (btn && !btn._privooWired) {
+    btn._privooWired = true;
+    btn.addEventListener('click', async () => {
+      if (typeof window.privoo?.aiAttachFile !== 'function') {
+        _aiAttachError("File attachments aren't available in this build.");
+        return;
+      }
+      btn.disabled = true;
+      try { _aiAcceptAttachment(await window.privoo.aiAttachFile()); }
+      catch (err) {
+        _aiAttachError('Could not open the file picker' + (err?.message ? ': ' + err.message : '.'));
+      } finally { btn.disabled = false; }
+    });
+  }
+
+  // Drag a file straight onto the composer, same as the full page.
+  const box = document.querySelector('.ai-composer-box');
+  if (box && !box._privooWired) {
+    box._privooWired = true;
+    box.addEventListener('dragover', (e) => { e.preventDefault(); box.classList.add('dropping'); });
+    box.addEventListener('dragleave', () => box.classList.remove('dropping'));
+    box.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      box.classList.remove('dropping');
+      for (const f of Array.from(e.dataTransfer?.files || [])) {
+        const fp = f.path;   // Electron exposes the real path on dropped files
+        if (!fp) { _aiAttachError('Could not read that file.'); continue; }
+        try { _aiAcceptAttachment(await window.privoo.aiExtractFile(fp)); }
+        catch { _aiAttachError('Could not read that file.'); }
+      }
+    });
+  }
+}
+
 async function _aiSend() {
   if (_aiBusy) return;
   const inp = _aiEl('ai-input');
   const text = inp?.value?.trim();
-  if (!text) return;
+  // An attachment on its own is a perfectly good message ("summarise this").
+  if (!text && !_aiAttached.length) return;
 
   // Block questions about Privoo itself — the model will likely make things up.
-  if (_aiIsAboutPrivoo(text)) {
+  if (text && _aiIsAboutPrivoo(text)) {
     _aiMessages.push({ role: 'user', content: text });
-    _aiMessages.push({ role: 'err', content: '⚠ Privoo AI can\'t reliably answer questions about Privoo itself — it uses third-party models that don\'t have accurate info about this browser, so it may make things up. For real answers, check Settings → About or the Privoo website. (Message not sent.)' });
+    _aiMessages.push({ role: 'err', content: '⚠ Privoo AI can\'t reliably answer questions about Privoo itself. It uses third-party models that don\'t have accurate info about this browser, so it may make things up. For real answers, check Settings → About or the Privoo website. (Message not sent.)' });
     if (inp) { inp.value = ''; inp.style.height = 'auto'; }
     _aiRenderChat();
     _aiPersistCurrent();
@@ -8145,12 +11327,15 @@ async function _aiSend() {
   }
 
   if (!_aiConfig.hasKey) {
-    _aiMessages.push({ role: 'err', content: '⚠ Add your API key first — click Setup.' });
+    _aiMessages.push({ role: 'err', content: '⚠ Add your API key first. Click Setup.' });
     _aiRenderChat();
     _aiOpenGate();
     return;
   }
-  _aiMessages.push({ role: 'user', content: text });
+  const attachedNames = _aiAttached.map((a) => a.name);
+  const attachedText = _aiTakeAttachments();
+  const shown = text || ('Attached: ' + attachedNames.join(', '));
+  _aiMessages.push({ role: 'user', content: shown, attachments: attachedNames });
   if (inp) { inp.value = ''; inp.style.height = 'auto'; }
   _aiRenderChat();
   _aiPersistCurrent();
@@ -8158,6 +11343,12 @@ async function _aiSend() {
   const payloadMsgs = _aiMessages
     .filter(m => m.role === 'user' || m.role === 'assistant')
     .map(m => ({ role: m.role, content: m.content }));
+  // Send the file text with THIS message only — the transcript keeps the short
+  // version, so re-sending history does not repeat the whole document.
+  if (attachedText && payloadMsgs.length) {
+    const last = payloadMsgs[payloadMsgs.length - 1];
+    last.content = attachedText + (text || 'Please look at the attached file(s).');
+  }
 
   _aiBusy = true;
   const sendBtn = _aiEl('ai-send');
@@ -8205,7 +11396,7 @@ async function _aiSend() {
     await typer;
     _aiMessages = _aiMessages.filter(m => m !== assistant);   // drop the empty reply bubble
     if (res?.error === 'NO_KEY') {
-      _aiMessages.push({ role: 'err', content: '⚠ Add your API key first — click Setup.' });
+      _aiMessages.push({ role: 'err', content: '⚠ Add your API key first. Click Setup.' });
       _aiOpenGate();
     } else {
       _aiMessages.push({ role: 'err', content: '⚠ ' + (res?.error || 'Request failed.') });
@@ -8284,7 +11475,7 @@ function initAiPanel() {
 
   // Open the AI as a full page (tab) and close the side panel.
   _aiEl('ai-expand')?.addEventListener('click', () => {
-    createTab('privoo://ai/');
+    createTab(AI_URL);
     if (aiPanel && !aiPanel.hidden) toggleAiPanel();
   });
 
@@ -8334,6 +11525,9 @@ function initAiPanel() {
 
   // Send button
   _aiEl('ai-send')?.addEventListener('click', _aiSend);
+
+  // Attach button + drag-and-drop onto the composer.
+  _aiWireAttachments();
 
   // Textarea: Enter sends, Shift+Enter newline; auto-resize
   const inp = _aiEl('ai-input');
@@ -8404,6 +11598,7 @@ focusStripEl?.addEventListener('click', () => { if (_focusMode) toggleFocusMode(
 
 // --- Picture-in-Picture -------------------------------------------------------
 const pipBtn = document.getElementById('pip-btn');
+let _pipProbeToken = 0;
 function togglePiP() {
   const tab = activeTab();
   if (!tab?.wv) return;
@@ -8415,8 +11610,27 @@ function togglePiP() {
 function updatePipBtn() {
   if (!pipBtn) return;
   const tab = activeTab();
-  const show = !!(tab?.url && !tab.url.startsWith('privoo://') && !tab.url.startsWith('about:'));
-  pipBtn.hidden = !show;
+  const eligible = !!(tab?.url && !tab.url.startsWith('privoo://') && !tab.url.startsWith('about:'));
+  if (!eligible) { pipBtn.hidden = true; return; }
+  // Ask the page whether it has a video worth popping out. Sites like YouTube
+  // build the player after first paint and swap it on SPA navigation, so a
+  // URL test alone is either wrong or permanently optimistic — this asks the
+  // DOM, and re-asks on every toolbar sync.
+  const probe = '(function(){try{'
+    + 'var vs=document.querySelectorAll("video");'
+    + 'for(var i=0;i<vs.length;i++){var v=vs[i];'
+    + 'if(v.readyState>0||v.currentSrc||v.src||v.querySelector("source"))return true;}'
+    + 'return false;}catch(e){return false;}})();';
+  const wv = tab.wv;
+  const token = ++_pipProbeToken;
+  try {
+    wv.executeJavaScript(probe).then((has) => {
+      // A slow probe from a tab the user has already left must not decide
+      // the button's state for the tab they are looking at now.
+      if (token !== _pipProbeToken) return;
+      pipBtn.hidden = !has;
+    }).catch(() => { if (token === _pipProbeToken) pipBtn.hidden = true; });
+  } catch { pipBtn.hidden = true; }
 }
 pipBtn?.addEventListener('click', togglePiP);
 
@@ -8558,6 +11772,9 @@ function _cmdpMove(dir) {
 if (cmdPaletteEl) {
   const backdrop = cmdPaletteEl.querySelector('.cmdp-backdrop');
   if (backdrop) backdrop.addEventListener('click', closeCmdPalette);
+  cmdPaletteEl.addEventListener('mousedown', (e) => {
+    if (e.target === cmdPaletteEl) closeCmdPalette();
+  });
   if (cmdpInputEl) {
     cmdpInputEl.addEventListener('input', function() { _renderCmdp(cmdpInputEl.value); });
     cmdpInputEl.addEventListener('keydown', function(e) {
@@ -8611,3 +11828,5 @@ if (spSiteToggle) {
 if (shieldBtn) {
   shieldBtn.addEventListener('click', function() { setTimeout(updateShieldSiteToggle, 60); }, true);
 }
+
+

@@ -1,0 +1,414 @@
+/* ════════════════════════════════════════════════════════════════════════
+   Shared palette for Privoo's own pages.
+
+   privoo://settings, history, downloads, bookmarks, extensions and the rest
+   each grew their own <style> block, their own greys and their own copy of
+   the accent. The result was a browser whose chrome and whose own pages
+   looked like they came from different products.
+
+   This file is the one place their palette is decided. It loads last on
+   every internal page, so it wins on order; each page keeps its own layout
+   and its own components, and only the colour system is shared.
+
+   The values match renderer/theme.css exactly. If you change one there,
+   change it here.
+   ════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --o-bg:        #f2f2f4;   /* page ground                       */
+  --o-surface:   #ffffff;   /* cards, headers, raised rows       */
+  --o-surface-2: #f6f6f8;   /* wells, fields, recessed rows      */
+  --o-text:      #101014;
+  --o-muted:     #64646f;
+  --o-faint:     #9a9aa6;
+  --o-line:      rgba(16,16,20,.10);
+  --o-line-2:    rgba(16,16,20,.18);
+  --o-hover:     rgba(16,16,20,.055);
+  --o-active:    rgba(16,16,20,.10);
+
+  /* Monochrome accent: ink on paper in light mode, near-white in dark.
+     Declared here rather than left to each page's own :root, which is what
+     made half the internal UI indigo and the other half lavender. */
+  --accent:      #101014;
+  --accent-hover:#2a2a34;
+  --on-accent:   #ffffff;
+  --accent-soft: rgba(16,16,20,.09);
+}
+
+/* Same ladder as the chrome: page ground at the bottom, cards a step up,
+   fields a step back down. */
+body.dark,
+body.ntp-dark,
+:root.dark body {
+  --o-bg:        #26262b;
+  --o-surface:   #2d2d33;
+  --o-surface-2: #202024;
+  --o-text:      #ededf0;
+  --o-muted:     #b0b0b8;
+  --o-faint:     #85858e;
+  --o-line:      rgba(255,255,255,.10);
+  --o-line-2:    rgba(255,255,255,.20);
+  --o-hover:     rgba(255,255,255,.07);
+  --o-active:    rgba(255,255,255,.13);
+
+  --accent:      #ffffff;
+  --accent-hover:#e2e2e6;
+  --on-accent:   #202024;
+  --accent-soft: rgba(255,255,255,.14);
+}
+
+/* ── Before the settings arrive ───────────────────────────────────────
+   Every internal page learns which way round it is from an async IPC call,
+   and paints at least one frame before the answer comes back. In a dark
+   browser that frame is white — a flash on every visit to Settings, History,
+   Downloads or News, and a long one on a cold start.
+
+   main.js pins nativeTheme.themeSource to the darkMode setting, so inside a
+   Privoo renderer prefers-color-scheme is not the OS theme: it is an exact,
+   synchronous mirror of the browser's own. That makes it the right thing to
+   guess with. The .dark class still arrives a moment later and still decides;
+   this only covers the gap, and the values are identical either way.
+
+   The list is duplicated from the block above on purpose — a media query
+   cannot be added to an existing selector, and pulling both out into a third
+   place to be referenced by two rules is more indirection than eight
+   colours deserve. If you change one ladder, change the other. */
+@media (prefers-color-scheme: dark) {
+  body:not(.dark) {
+    --o-bg:        #26262b;
+    --o-surface:   #2d2d33;
+    --o-surface-2: #202024;
+    --o-text:      #ededf0;
+    --o-muted:     #b0b0b8;
+    --o-faint:     #85858e;
+    --o-line:      rgba(255,255,255,.10);
+    --o-line-2:    rgba(255,255,255,.20);
+    --o-hover:     rgba(255,255,255,.07);
+    --o-active:    rgba(255,255,255,.13);
+
+    --accent:      #ffffff;
+    --accent-hover:#e2e2e6;
+    --on-accent:   #202024;
+    --accent-soft: rgba(255,255,255,.14);
+
+    color-scheme: dark;
+  }
+}
+
+/* ── The local names ──────────────────────────────────────────────────
+   Every internal page was written before this file existed, and each one
+   declares its own ladder under the same handful of names: --bg, --surface,
+   --text, --muted, --border, --hover. Their values do not agree. Downloads
+   and History ground themselves at #f8f9fa, Blocked and Error at #f1f3f4,
+   News and AI at #f2f2f4, and in dark mode all of them at #1e1e21 against
+   this file's #26262b.
+
+   That did not merely look inconsistent from page to page — it was visibly
+   broken WITHIN a page, because `body { background: var(--o-bg) }` below is
+   a bare type selector that loads after every page's own block and therefore
+   wins. So the ground was painted from this ladder while the cards, the
+   borders, the sticky headings and the hover states drawn on top of it were
+   painted from the page's. In dark mode the News release headings sat in a
+   #1e1e21 band on a #26262b page, and its cards at #28282c were two points
+   off the ground and effectively invisible.
+
+   Rather than edit the same eight ladders into agreement and wait for the
+   ninth page to reintroduce the split, the shared names are simply pointed
+   at the shared values here. Pages keep their own layout and components;
+   they no longer get to have their own greys.
+
+   On the selector list: a page's own dark block is `body.dark { … }`, so
+   matching that specificity and loading later is what makes this win. The
+   bare `body` handles pages that declare theirs on `:root` — a declaration
+   made directly on <body> beats one inherited from <html> regardless of how
+   specific the inherited one was.
+
+   Deliberately NOT aliased: --accent, --accent-hover, --accent-soft and
+   --on-accent. Each page's applyAccent() writes those onto :root as an
+   inline style, and body-level declarations here would override the
+   inherited inline value and pin everyone to monochrome. */
+body,
+body.dark,
+body.ntp-dark,
+:root.dark body {
+  --bg:        var(--o-bg);
+  --surface:   var(--o-surface);
+  --surface-2: var(--o-surface-2);
+  --text:      var(--o-text);
+  --muted:     var(--o-muted);
+  --faint:     var(--o-faint);
+  --border:    var(--o-line);
+  --border-2:  var(--o-line-2);
+  --hover:     var(--o-hover);
+  --active:    var(--o-active);
+}
+
+/* ── Ground ──────────────────────────────────────────────────────────── */
+body {
+  background: var(--o-bg);
+  color: var(--o-text);
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -.006em;
+}
+/* Tell the engine which way round the page is, so native widgets it draws
+   for us — select popups, date pickers, the fallback scrollbar — come back
+   dark instead of a white rectangle punched into the page. */
+body.dark, body.ntp-dark, :root.dark body { background: var(--o-bg); color: var(--o-text); color-scheme: dark; }
+:root:not(.dark) body:not(.dark):not(.ntp-dark) { color-scheme: light; }
+
+/* ── Scrollbars — thin, thumb-only, hover-revealed ────────────────────
+   The `html::`/`body::` variants are not redundant: several pages style the
+   viewport scrollbar as `html::-webkit-scrollbar-thumb`, which carries a type
+   selector and so outranks a bare `::-webkit-scrollbar-thumb` no matter how
+   late this file loads. */
+::-webkit-scrollbar,
+html::-webkit-scrollbar,
+body::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track,
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb,
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+body.dark ::-webkit-scrollbar-thumb,
+body.dark::-webkit-scrollbar-thumb {
+  background: transparent;
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+:hover::-webkit-scrollbar-thumb,
+html:hover::-webkit-scrollbar-thumb,
+body:hover::-webkit-scrollbar-thumb,
+body.dark :hover::-webkit-scrollbar-thumb {
+  background: var(--o-active); background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover,
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover,
+body.dark ::-webkit-scrollbar-thumb:hover {
+  background: var(--o-line-2); background-clip: content-box;
+}
+::-webkit-scrollbar-corner,
+html::-webkit-scrollbar-corner { background: transparent; }
+
+::selection { background: var(--accent); color: var(--on-accent); }
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+
+/* ── Chrome shared by most pages: a sticky header and a side nav ────── */
+header,
+body.dark header,
+.hdr, body.dark .hdr {
+  background: var(--o-bg);
+  border-bottom: 1px solid var(--o-line);
+}
+nav, body.dark nav { border-color: var(--o-line); background: transparent; }
+
+.nav-btn, body.dark .nav-btn {
+  border-radius: 9px;
+  color: var(--o-muted);
+  font-weight: 450;
+}
+.nav-btn:hover, body.dark .nav-btn:hover { background: var(--o-hover); color: var(--o-text); }
+.nav-btn.active, body.dark .nav-btn.active {
+  background: var(--o-active);
+  color: var(--o-text);
+  font-weight: 550;
+}
+
+/* ── Cards / rows / lists ────────────────────────────────────────────
+   Every internal page has some version of "a bordered container full of
+   rows". They get one recipe. */
+.card, body.dark .card,
+.credits-card, body.dark .credits-card,
+.ext-grid > *, body.dark .ext-grid > * {
+  background: var(--o-surface);
+  border: 1px solid var(--o-line);
+  border-radius: 14px;
+  box-shadow: none;
+}
+.row, body.dark .row,
+.control-row + .row { border-color: var(--o-line); }
+.desc, body.dark .desc,
+.dl-meta, body.dark .dl-meta,
+.hist-url, body.dark .hist-url,
+.bm-url, body.dark .bm-url,
+.id-meta, body.dark .id-meta,
+.ext-desc, body.dark .ext-desc,
+.ext-version, body.dark .ext-version { color: var(--o-muted); }
+
+.day-header, body.dark .day-header,
+.card-subhead, body.dark .card-subhead,
+.page-title, body.dark .page-title { color: var(--o-text); }
+
+/* ── Switches ────────────────────────────────────────────────────────
+   A toggle is the one control on these pages whose whole job is to show
+   state at a glance, so it gets the accent solid — no gradient, no glow. */
+.switch .slider, .switch span, body.dark .switch .slider {
+  background: var(--o-active);
+  border-radius: 999px;
+}
+.switch input:checked + .slider,
+.switch input:checked + span { background: var(--accent); }
+.switch .slider::before, .switch span::before { background: #fff; }
+body.dark .switch .slider::before,
+body.dark .switch span::before { background: var(--o-text); }
+body.dark .switch input:checked + .slider::before,
+body.dark .switch input:checked + span::before { background: var(--on-accent); }
+
+/* ── Fields ──────────────────────────────────────────────────────────── */
+input[type="text"], input[type="search"], input[type="password"],
+input[type="number"], input[type="url"], select, textarea,
+body.dark input[type="text"], body.dark input[type="search"],
+body.dark input[type="password"], body.dark input[type="number"],
+body.dark input[type="url"], body.dark select, body.dark textarea {
+  /* background-COLOR, not the shorthand. The shorthand also resets
+     background-image, -repeat, -position and -size, and this rule loads last
+     on every internal page — so it was quietly wiping the dropdown chevron
+     that each page had set up, and restoring `repeat` while doing it. */
+  background-color: var(--o-surface-2);
+  border: 1px solid var(--o-line);
+  border-radius: 10px;
+  color: var(--o-text);
+  transition: border-color .13s ease, box-shadow .13s ease;
+}
+/* Focus firms the hairline and nothing else. A field with the caret in it
+   does not also need a halo, and the halo appeared on a plain mouse click. */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--o-line-2);
+  box-shadow: none;
+}
+input::placeholder, textarea::placeholder { color: var(--o-faint); }
+
+/* The settings search sits in the header and reads as the page's one field. */
+header input.settings-search,
+body.dark header input.settings-search,
+.search-wrap input, body.dark .search-wrap input {
+  background: var(--o-surface-2);
+  border: 1px solid var(--o-line);
+  border-radius: 12px;
+  color: var(--o-text);
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+.btn, .mbtn, .id-btn, .toolbar-btn, .hdr-btn, .act-btn, .header-btn,
+.choose-btn, .open-btn, .dl-act, .modal-btn, .ext-toggle, .ext-remove,
+body.dark .btn, body.dark .mbtn, body.dark .id-btn, body.dark .toolbar-btn,
+body.dark .hdr-btn, body.dark .act-btn, body.dark .header-btn {
+  background: var(--o-hover);
+  color: var(--o-text);
+  border: 1px solid var(--o-line);
+  border-radius: 10px;
+  transition: background .13s ease, border-color .13s ease;
+}
+.btn:hover, .mbtn:hover, .id-btn:hover, .toolbar-btn:hover, .hdr-btn:hover,
+.act-btn:hover, .header-btn:hover, .choose-btn:hover, .open-btn:hover,
+.dl-act:hover, .modal-btn:hover, .ext-toggle:hover, .ext-remove:hover {
+  background: var(--o-active);
+  border-color: var(--o-line-2);
+}
+.btn.primary, .btn-save, .modal-btn.primary, .id-btn.primary,
+.wn-btn.primary, .primary,
+body.dark .btn.primary, body.dark .btn-save, body.dark .primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: transparent;
+  font-weight: 550;
+}
+.btn.primary:hover, .btn-save:hover, .modal-btn.primary:hover,
+.id-btn.primary:hover, .primary:hover { background: var(--accent-hover); }
+.btn.danger, .danger, body.dark .danger { color: #f87171; }
+.btn.danger:hover, .danger:hover { background: rgba(248,113,113,.12); border-color: rgba(248,113,113,.35); }
+
+/* ── Modals ──────────────────────────────────────────────────────────── */
+.modal, .modal-bg > *, #ql-modal, #custom-modal,
+body.dark .modal, body.dark #ql-modal, body.dark #custom-modal {
+  background: var(--o-surface);
+  border: 1px solid var(--o-line);
+  border-radius: 16px;
+  box-shadow: 0 16px 44px -12px rgba(0,0,0,.6), 0 2px 8px rgba(0,0,0,.35);
+  color: var(--o-text);
+}
+.modal-bg, body.dark .modal-bg { background: rgba(0,0,0,.55); backdrop-filter: blur(3px); }
+
+/* ── Per-page corrections ────────────────────────────────────────────
+   Where a page hardcodes a surface its own way and the generic rules above
+   can't reach it. Kept short on purpose — anything longer belongs in the
+   page itself. */
+
+/* History / downloads / bookmarks: the list is the page, so its rows get
+   the hover affordance rather than a permanent card edge. */
+.hist-body > *, .dl-body > * { border-radius: 10px; }
+.hist-body > *:hover, .dl-body > *:hover { background: var(--o-hover); }
+.fav-wrap, .fav-letter, .bm-letter, .file-icon, .id-dot, .ext-icon {
+  background: var(--o-hover);
+  color: var(--o-muted);
+  border-radius: 8px;
+}
+.dl-progress, body.dark .dl-progress { background: var(--o-active); border-radius: 999px; }
+.dl-progress-fill, .dl-progress-bar { background: var(--accent); border-radius: 999px; }
+
+/* Extensions: the tiles are the content, so they read as cards. */
+.ext-header, body.dark .ext-header { border-color: var(--o-line); }
+.compat-warn, .ext-compat-warn, .crx-tip {
+  background: var(--o-surface-2);
+  border: 1px solid var(--o-line);
+  border-radius: 12px;
+  color: var(--o-muted);
+}
+
+/* Pills and badges — one shape, one weight, everywhere. */
+.ext-tag, .id-default-pill, .ollama-badge, .by-privoo, .ext-status {
+  background: var(--o-hover);
+  color: var(--o-muted);
+  border: 1px solid var(--o-line);
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+/* ── Checkboxes ──────────────────────────────────────────────────────
+   Drawn rather than native. `accent-color` hands the tick to the engine,
+   and the engine draws it white — which on the default Mono accent, which
+   is #ffffff in dark mode, is a white tick on a white box.
+
+   --on-accent is computed from the accent's own luminance, so the tick is
+   ink on a light accent and white on a dark one, and there is no accent
+   anybody can pick that makes it disappear. */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin: 0;
+  display: inline-grid;
+  place-content: center;
+  border: 1.5px solid var(--o-line-2);
+  border-radius: 5px;
+  background: transparent;
+  cursor: pointer;
+  transition: background .12s ease, border-color .12s ease;
+}
+input[type="checkbox"]:hover { border-color: var(--o-text); }
+input[type="checkbox"]::before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  background: var(--on-accent, #fff);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M3.2 8.4l3.1 3.1 6.5-6.9' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 14px 14px no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M3.2 8.4l3.1 3.1 6.5-6.9' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 14px 14px no-repeat;
+  transform: scale(0);
+  transition: transform .13s cubic-bezier(.2,.8,.25,1);
+}
+input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: color-mix(in srgb, var(--o-text) 26%, var(--accent));
+}
+input[type="checkbox"]:checked::before { transform: scale(1); }
+input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+input[type="checkbox"]:disabled { opacity: .5; cursor: default; }

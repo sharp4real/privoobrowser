@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Settings - Privoo</title>
+<title>Settings</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%238b7cf7' d='M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z'/%3E%3Cpath fill='%23fff' d='M10.6 15.4 7.4 12.2l1.3-1.3 1.9 1.9 4-4 1.3 1.3z'/%3E%3C/svg%3E"/>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -22,73 +22,43 @@
   body {
     font-family: "Inter", "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
     background: #f1f3f4;
-    color: #202124;
+    color: #1e1e21;
     user-select: none;
   }
   button, input, select { font: inherit; }
   button { cursor: default; }
 
   body.dark {
-    background: #202124;
-    color: #e8eaed;
+    background: #1e1e21;
+    color: #ededf0;
     color-scheme: dark;
   }
 
-
-  /* Increase Transparency — host signals via settings; we drop the body
-     fill and tint cards so the OS material shows through. Inputs stay
-     opaque so text remains legible. !important: body:not(.dark)/body.dark
-     further down this file set an opaque background at equal specificity
-     and later source order, which otherwise silently wins. */
-  body.transparent-ui { background: transparent !important; }
-  body.transparent-ui header {
-    background: rgba(255,255,255,.65) !important;
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    border-color: rgba(0,0,0,.08) !important;
-  }
-  body.transparent-ui.dark header {
-    background: rgba(32,33,36,.52) !important;
-    border-color: rgba(255,255,255,.08) !important;
-  }
-  body.transparent-ui .card {
-    background: rgba(255, 255, 255, .72) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-  }
-  body.transparent-ui.dark .card {
-    background: rgba(41, 42, 45, .68) !important;
-  }
-  body.transparent-ui nav#nav { background: transparent; }
-  body.transparent-ui .nav-btn:hover  { background: rgba(0,0,0,.07); }
-  body.transparent-ui .nav-btn.active { background: rgba(0,0,0,.11); }
-  body.transparent-ui.dark .nav-btn:hover  { background: rgba(255,255,255,.07); }
-  body.transparent-ui.dark .nav-btn.active { background: rgba(255,255,255,.11); }
 
   /* ── Custom scrollbar ──────────────────────────────────────────────
      Thin, rounded, fades in on hover. Replaces the OS-default chunky bar. */
   ::-webkit-scrollbar { width: 12px; height: 12px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb {
-    background: #dadce0;
+    background: #d8d8de;
     border-radius: 12px;
     border: 3px solid transparent;
     background-clip: padding-box;
     min-height: 40px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #bdc1c6;
+    background: #b0b0b8;
     background-clip: padding-box;
     border: 3px solid transparent;
   }
   ::-webkit-scrollbar-corner { background: transparent; }
   body.dark ::-webkit-scrollbar-thumb {
-    background: #5f6368;
+    background: #4d4d57;
     background-clip: padding-box;
     border: 3px solid transparent;
   }
   body.dark ::-webkit-scrollbar-thumb:hover {
-    background: #80868b;
+    background: #8b8b95;
     background-clip: padding-box;
     border: 3px solid transparent;
   }
@@ -96,7 +66,7 @@
   header {
     height: 64px;
     background: #fff;
-    border-bottom: 1px solid #dadce0;
+    border-bottom: 1px solid #d8d8de;
     display: flex;
     align-items: center;
     gap: 22px;
@@ -105,10 +75,10 @@
     top: 0;
     z-index: 20;
   }
-  body.dark header { background: #303134; border-color: #4a4d51; }
+  body.dark header { background: #37373f; border-color: #43434c; }
   .brand { font-size: 21px; font-weight: 600; letter-spacing: 0; white-space: nowrap; }
-  .brand span { color: #5f6368; }
-  body.dark .brand span { color: #bdc1c6; }
+  .brand span { color: #4d4d57; }
+  body.dark .brand span { color: #b0b0b8; }
   .brand-logo {
     height: 36px;
     width: auto;
@@ -131,11 +101,11 @@
     user-select: text;
     transition: background .15s, border-color .15s, box-shadow .15s;
   }
-  header input.settings-search:hover { background: #e8eaed; }
-  header input.settings-search:focus { background: #fff; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
-  body.dark header input.settings-search { background: #303134; border-color: transparent; }
+  header input.settings-search:hover { background: #ededf0; }
+  header input.settings-search:focus { background: #fff; border-color: var(--o-line-2); box-shadow: none; }
+  body.dark header input.settings-search { background: #37373f; border-color: transparent; }
   body.dark header input.settings-search:hover { background: #3c4043; }
-  body.dark header input.settings-search:focus { background: #202124; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+  body.dark header input.settings-search:focus { background: var(--o-surface-2); border-color: var(--o-line-2); box-shadow: none; }
 
   .layout {
     display: flex;
@@ -174,8 +144,8 @@
   .nav-btn { transition: background .15s ease, color .15s ease; }
   .nav-btn:hover { background: #f1f3f4; color: #1f1f1f; }
   .nav-btn.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
-  body.dark .nav-btn { color: #bdc1c6; }
-  body.dark .nav-btn:hover { background: #2a2b2e; color: #e8eaed; }
+  body.dark .nav-btn { color: #b0b0b8; }
+  body.dark .nav-btn:hover { background: #2a2b2e; color: #ededf0; }
   body.dark .nav-btn.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 
   main { flex: 1; min-width: 0; padding: 24px 32px 64px; }
@@ -184,10 +154,10 @@
   h2 { font-size: 16px; font-weight: 500; margin: 0 0 10px; }
   h3.card-subhead {
     font-size: 11px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .06em; color: #5f6368;
+    letter-spacing: .06em; color: #4d4d57;
     padding: 12px 18px 4px; margin: 0;
   }
-  body.dark h3.card-subhead { color: #9aa0a6; }
+  body.dark h3.card-subhead { color: #b0b0b8; }
   .card-subhead + .row { border-top: 0; }
   /* Accent swatches */
   .swatch-row { display: flex; flex-wrap: wrap; gap: 8px; padding: 2px 0; }
@@ -200,7 +170,7 @@
   }
   .accent-swatch:hover { transform: scale(1.15); }
   .accent-swatch.active { border-color: #fff; box-shadow: 0 0 0 2px var(--accent); }
-  body.dark .accent-swatch.active { border-color: #292a2d; }
+  body.dark .accent-swatch.active { border-color: #28282c; }
   /* Custom-colour swatch — native picker styled as a round swatch with a
      rainbow ring so it reads as "pick your own". */
   .accent-custom {
@@ -210,6 +180,46 @@
   .accent-custom::-webkit-color-swatch-wrapper { padding: 0; }
   .accent-custom::-webkit-color-swatch { border: none; border-radius: 50%; }
   /* Themes gallery */
+  .prot-status { font-size: 12.5px; color: var(--muted); }
+  .prot-status.ok { color: #2e9e5b; }
+  .prot-status.missing { color: #c8791f; }
+  .prot-threats { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; max-height: 220px; overflow-y: auto; }
+  .prot-threat { display: flex; flex-direction: column; gap: 7px; padding: 10px; border-radius: 8px; background: rgba(200,60,60,.08); }
+  .prot-threat b { font-size: 12.5px; color: #c0392b; }
+  .prot-threat span { font-size: 11.5px; color: var(--muted); word-break: break-all; }
+  .prot-threat-actions { display:flex; gap:7px; flex-wrap:wrap; }
+  .prot-threat-actions button { font:inherit; font-size:11.5px; padding:5px 8px; border:1px solid var(--border); background:var(--bg); color:var(--text); border-radius:6px; cursor:pointer; }
+  .prot-threat-actions button:hover:not(:disabled) { background:var(--hover, rgba(127,127,127,.12)); }
+  .prot-threat-actions button:disabled { opacity:.45; cursor:default; }
+  .prot-threat-actions button.danger { color:#b3261e; border-color:rgba(179,38,30,.28); }
+  .prot-threat.settled { background: rgba(127,127,127,.09); }
+  .prot-threat.settled b { color: var(--muted); text-decoration: line-through; }
+  .prot-threat-done { font-size:11.5px; color:#2e9e5b; font-weight:600; }
+
+  /* Live scan readout. The bar is the percentage; the line under it is the
+     file currently being examined, so a long stall is visibly a big file
+     rather than a hang. */
+  .prot-progress-wrap { margin-top:10px; display:flex; flex-direction:column; gap:6px; }
+  .prot-bar-track { height:6px; border-radius:99px; background:rgba(127,127,127,.2); overflow:hidden; }
+  .prot-bar { height:100%; width:0%; border-radius:99px; background:#2e9e5b; transition:width .25s linear; }
+  /* No honest percentage yet: sweep instead of sitting at zero. */
+  .prot-bar.indeterminate { width:35%; animation:prot-sweep 1.2s ease-in-out infinite; transition:none; }
+  @keyframes prot-sweep { 0% { margin-left:-35%; } 100% { margin-left:100%; } }
+  @media (prefers-reduced-motion: reduce) { .prot-bar.indeterminate { animation:none; } }
+  .prot-bar.done { background:#2e9e5b; }
+  .prot-bar.found { background:#c0392b; }
+  .prot-progress-line { display:flex; justify-content:space-between; gap:12px; font-size:11.5px; color:var(--muted); }
+  .prot-progress-file { font-size:11px; color:var(--muted); opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; direction:rtl; text-align:left; }
+  .prot-bulk { display:flex; gap:7px; flex-wrap:wrap; margin-top:9px; }
+  .prot-bulk button { font:inherit; font-size:11.5px; padding:5px 9px; border:1px solid var(--border); background:var(--bg); color:var(--text); border-radius:6px; cursor:pointer; }
+  .prot-bulk button.danger { color:#b3261e; border-color:rgba(179,38,30,.28); }
+
+  /* Quarantine list */
+  .prot-quarantine { display:flex; flex-direction:column; gap:6px; margin-top:8px; max-height:220px; overflow-y:auto; }
+  .prot-q-item { display:flex; flex-direction:column; gap:6px; padding:9px 10px; border-radius:8px; border:1px solid var(--border); }
+  .prot-q-name { font-size:12.5px; font-weight:600; }
+  .prot-q-meta { font-size:11px; color:var(--muted); word-break:break-all; }
+  .prot-q-empty { font-size:12px; color:var(--muted); }
   .theme-gallery {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
@@ -267,21 +277,89 @@
     padding: 0 10px; font-size: 13px;
     background: #f4f3fa; color: #26243a;
     appearance: none; -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236d6a85' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    /* One chevron, viewBox'd and round-joined. The old one had neither, so
+       its bottom corner was a mitre spike — the "zigzag". */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' fill='none' stroke='%236d6a85' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 10px center;
+    background-position: right 8px center;
+    background-size: 13px 13px;
     padding-right: 28px;
     cursor: default;
     text-align: left;
     transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
   }
   body.dark .inline-select { background-color: rgba(255,255,255,.06); border-color: rgba(255,255,255,.1); color: #eceaf6;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239aa0a6' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' fill='none' stroke='%239aa0a6' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   }
+  /* Open and focused firm the hairline. No accent ring — clicking a control
+     should not make the page flash, and every other field on this page had
+     that removed. */
   .inline-select:focus,
-  .inline-select.csel-trigger.open { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .inline-select.csel-trigger.open { outline: none; border-color: var(--o-line-2); box-shadow: none; }
 
-  /* ── Fully custom dropdowns ──────────────────────────────────────────
+    /* ── The wallpaper collection ──────────────────────────────────────
+     Tiles at 16:9, which is the shape of the thing they are previews of. */
+  .wp-lib {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(122px, 1fr));
+    gap: 10px;
+    width: 100%;
+  }
+  .wp-lib:empty { display: none; }
+  .wp-tile {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--o-line);
+    background: var(--o-surface-2);
+    cursor: pointer;
+    padding: 0;
+    transition: border-color .13s ease, box-shadow .13s ease;
+  }
+  .wp-tile img, .wp-tile video {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .wp-tile:hover { border-color: var(--o-line-2); }
+  /* The one in use. A ring in the page's own ink rather than the accent,
+     which under Mono is white and would vanish against a pale photograph. */
+  .wp-tile.in-use {
+    border-color: var(--o-text);
+    box-shadow: 0 0 0 2px var(--o-text) inset;
+  }
+  .wp-tile.in-use::after {
+    content: "In use";
+    position: absolute; left: 6px; bottom: 6px;
+    font-size: 10px; font-weight: 600; letter-spacing: .02em;
+    padding: 2px 7px; border-radius: 999px;
+    background: var(--o-text); color: var(--o-bg);
+  }
+  /* Remove. Only on hover, and top-right, so it is never the thing you hit
+     when you meant to choose the wallpaper. */
+  .wp-del {
+    position: absolute; top: 5px; right: 5px;
+    width: 22px; height: 22px;
+    display: grid; place-items: center;
+    border: none; border-radius: 7px;
+    background: rgba(0,0,0,.55); color: #fff;
+    opacity: 0; cursor: pointer;
+    transition: opacity .12s ease, background .12s ease;
+  }
+  .wp-tile:hover .wp-del, .wp-del:focus-visible { opacity: 1; }
+  .wp-del:hover { background: #c5221f; }
+  .wp-del svg { width: 11px; height: 11px; fill: currentColor; }
+  /* A video says so, since a still frame of one looks like a photograph. */
+  .wp-vid {
+    position: absolute; left: 6px; top: 6px;
+    padding: 2px 6px; border-radius: 999px;
+    font-size: 9.5px; font-weight: 600; letter-spacing: .04em;
+    background: rgba(0,0,0,.55); color: #fff;
+  }
+  .wp-lib-empty { font-size: 12.5px; color: var(--o-faint); }
+
+/* ── Fully custom dropdowns ──────────────────────────────────────────
      Native <select> popups are OS-rendered and can't be themed. Every
      select on this page is progressively enhanced (see enhanceSelect() in
      the script below): the native element stays in the DOM as the real
@@ -305,28 +383,34 @@
     box-shadow: 0 20px 50px -14px rgba(38,36,58,.28), 0 4px 14px rgba(38,36,58,.08);
     padding: 6px; z-index: 5000;
     display: none;
-    animation: csel-pop .15s cubic-bezier(.2,.8,.25,1) both;
+    animation: csel-pop .14s cubic-bezier(.2,.8,.25,1) both;
   }
   .csel-list.open { display: block; }
-  @keyframes csel-pop { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: none; } }
-  body.dark .csel-list { background: #292a2d; border-color: rgba(255,255,255,.09); }
+  /* Translate and fade only — no scale. See the note in positionList(). */
+  @keyframes csel-pop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .csel-list { animation: none; } }
+  body.dark .csel-list { background: #28282c; border-color: rgba(255,255,255,.09); }
   .csel-item {
     padding: 8px 12px; border-radius: 9px; font-size: 13px; cursor: default;
     color: #26243a; transition: background .12s ease;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .csel-item:hover { background: rgba(38,36,58,.06); }
-  .csel-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  /* The current value is marked by weight and a tick, not a filled accent
+     row — as an accent fill it was white text on a white block whenever the
+     accent was the default Mono. */
+  .csel-item.active { background: transparent; color: var(--o-text); font-weight: 600; }
+  .csel-item { display: flex; align-items: center; gap: 10px; }
   body.dark .csel-item { color: #eceaf6; }
   body.dark .csel-item:hover { background: rgba(255,255,255,.07); }
-  body.dark .csel-item.active { background: var(--accent-soft); color: var(--accent); }
+  body.dark .csel-item.active { background: transparent; color: var(--o-text); }
 
   /* ── Filter lists ── */
   .filter-lists { display: flex; flex-direction: column; gap: 6px; padding: 6px 0 2px; }
   .filter-list-item {
     display: flex; align-items: center; gap: 12px;
     padding: 9px 12px; border-radius: 10px;
-    border: 1px solid var(--border, #dadce0);
+    border: 1px solid var(--border, #d8d8de);
     background: rgba(0,0,0,.015);
   }
   body.dark .filter-list-item { background: rgba(255,255,255,.03); border-color: #3c4043; }
@@ -348,10 +432,10 @@
   }
   .filter-lists-empty { font-size: 12.5px; color: var(--muted); padding: 4px 2px; }
   .filter-add-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-  .filter-add-row input { height: 36px; border-radius: 12px; border: 1px solid var(--border, #dadce0);
+  .filter-add-row input { height: 36px; border-radius: 12px; border: 1px solid var(--border, #d8d8de);
     background: var(--surface, #fff); color: var(--text); padding: 0 11px; font-size: 13px; outline: none; }
-  body.dark .filter-add-row input { background: #303134; border-color: #5f6368; color: #e8eaed; }
-  .filter-add-row input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+  body.dark .filter-add-row input { background: #37373f; border-color: #4d4d57; color: #ededf0; }
+  .filter-add-row input:focus { border-color: var(--o-line-2); box-shadow: none; }
   #filter-add-name { width: 170px; flex-shrink: 0; }
   #filter-add-url { flex: 1; min-width: 200px; }
   .filter-add-btn {
@@ -377,14 +461,14 @@
     flex: 1; min-width: 76px;
     display: flex; flex-direction: column; align-items: center; gap: 7px;
     cursor: default;
-    border: 1.5px solid #dadce0;
+    border: 1.5px solid #d8d8de;
     background: #fafafa;
     border-radius: 12px;
     padding: 10px 8px;
     transition: border-color .15s, box-shadow .15s, background .15s, transform .12s;
     position: relative;
   }
-  body.dark .vibe-style-btn { border-color: #5f6368; background: #2a2b2e; }
+  body.dark .vibe-style-btn { border-color: #4d4d57; background: #2a2b2e; }
   .vibe-style-btn.active {
     border-color: var(--accent);
     background: color-mix(in srgb, var(--accent) 8%, transparent);
@@ -395,7 +479,7 @@
     border-color: #b3b3b3; background: #f5f5f5;
     transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,.07);
   }
-  body.dark .vibe-style-btn:hover:not(.active) { border-color: #80868b; background: #303134; }
+  body.dark .vibe-style-btn:hover:not(.active) { border-color: #8b8b95; background: #37373f; }
   .vibe-style-thumb {
     width: 72px; height: 44px; border-radius: 10px;
     overflow: hidden; position: relative; flex-shrink: 0;
@@ -429,7 +513,7 @@
     box-shadow: 0 0 0 2.5px var(--accent), 0 2px 8px rgba(0,0,0,.14);
     transform: scale(1.08);
   }
-  body.dark .vibe-preset.active .vibe-preset-swatch { border-color: #303134; }
+  body.dark .vibe-preset.active .vibe-preset-swatch { border-color: #37373f; }
   .vibe-preset-name { font-size: 10.5px; color: var(--muted); letter-spacing: .01em; transition: color .12s; }
   .vibe-preset.active .vibe-preset-name { color: var(--accent); font-weight: 600; }
   /* Sliders */
@@ -451,7 +535,7 @@
     transition: transform .12s, box-shadow .12s;
   }
   .hue-slider::-webkit-slider-thumb:hover { transform: scale(1.18); box-shadow: 0 2px 10px rgba(0,0,0,.28); }
-  body.dark .hue-slider::-webkit-slider-thumb { background: #e8eaed; border-color: rgba(255,255,255,.3); }
+  body.dark .hue-slider::-webkit-slider-thumb { background: #ededf0; border-color: rgba(255,255,255,.3); }
 
   /* ── What's New popup ── */
   .whats-new-overlay {
@@ -469,13 +553,7 @@
     overflow: hidden;
     animation: wn-rise .28s cubic-bezier(.2,0,.2,1) both;
   }
-  body.dark .whats-new-card { background: #303134; border-color: #4a4d51; }
-  body.transparent-ui .whats-new-card {
-    background: rgba(255,255,255,.74) !important;
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
-  }
-  body.transparent-ui.dark .whats-new-card { background: rgba(38,40,46,.74) !important; }
+  body.dark .whats-new-card { background: #37373f; border-color: #43434c; }
   @keyframes wn-rise {
     from { opacity: 0; transform: translateY(16px) scale(.97); }
     to   { opacity: 1; transform: none; }
@@ -509,21 +587,21 @@
   }
   .wn-body { padding: 16px 18px 18px; }
   .wn-desc {
-    font-size: 13px; line-height: 1.55; color: var(--muted, #5f6368);
+    font-size: 13px; line-height: 1.55; color: var(--muted, #4d4d57);
     margin-bottom: 16px;
   }
-  body.dark .wn-desc { color: #9aa0a6; }
+  body.dark .wn-desc { color: #b0b0b8; }
   .wn-actions { display: flex; gap: 8px; justify-content: flex-end; }
   .wn-btn {
     padding: 8px 16px; border-radius: 12px; font-size: 13px; font-weight: 500;
     font-family: inherit; cursor: default;
     border: 1px solid transparent; transition: background .12s;
   }
-  .wn-btn.ghost { color: var(--muted, #5f6368); background: transparent; border-color: #dadce0; }
+  .wn-btn.ghost { color: var(--muted, #4d4d57); background: transparent; border-color: #d8d8de; }
   .wn-btn.ghost:hover { background: #f1f3f4; }
-  body.dark .wn-btn.ghost { border-color: #5f6368; }
+  body.dark .wn-btn.ghost { border-color: #4d4d57; }
   body.dark .wn-btn.ghost:hover { background: #3c4043; }
-  .wn-btn.primary { background: var(--accent); color: #202124; }
+  .wn-btn.primary { background: var(--accent); color: #1e1e21; }
   .wn-btn.primary:hover { background: var(--accent-hover); }
   .wn-overlay-hidden { display: none !important; }
 
@@ -535,7 +613,7 @@
     overflow: hidden;
     margin-bottom: 16px;
   }
-  body.dark .card { background: #292a2d; border-color: rgba(255,255,255,.08); }
+  body.dark .card { background: #28282c; border-color: rgba(255,255,255,.08); }
   .row {
     min-height: 52px;
     display: flex;
@@ -551,18 +629,18 @@
   .row:not(.stack) > div:first-child { flex: 1; min-width: 0; }
   .row:not(.stack) > :not(div:first-child) { flex-shrink: 0; }
   .label { font-size: 13.5px; line-height: 1.35; }
-  .desc { font-size: 12px; color: #5f6368; margin-top: 2px; line-height: 1.35; }
-  body.dark .desc { color: #9aa0a6; }
+  .desc { font-size: 12px; color: #4d4d57; margin-top: 2px; line-height: 1.35; }
+  body.dark .desc { color: #b0b0b8; }
   .control-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .path { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; user-select: text; }
 
   select, input[type="text"], input[type="url"], input[type="search"] {
     min-width: 160px;
     height: 36px;
-    border: 1px solid #dadce0;
+    border: 1px solid #d8d8de;
     border-radius: 12px;
     padding: 0 12px;
-    background: #fff;
+    background-color: #fff;
     color: inherit;
     outline: none;
     user-select: text;
@@ -575,28 +653,28 @@
     -webkit-appearance: none;
     -moz-appearance: none;
     padding-right: 32px;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235f6368'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' fill='none' stroke='%235f6368' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 8px center;
-    background-size: 16px 16px;
+    background-size: 13px 13px;
     cursor: pointer;
   }
   select:hover { border-color: #b3b3b3; }
   input[type="text"], input[type="url"].wide { width: 100%; min-width: 0; }
   body.dark select, body.dark input[type="text"], input[type="url"] {
-    background-color: #202124;
-    border-color: #5f6368;
+    background-color: #1e1e21;
+    border-color: #4d4d57;
     color-scheme: dark;
   }
   body.dark select {
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239aa0a6'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' fill='none' stroke='%239aa0a6' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   }
-  body.dark select:hover { border-color: #80868b; }
-  select:focus, input[type="text"], input[type="url"]:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+  body.dark select:hover { border-color: #8b8b95; }
+  select:focus, input[type="text"]:focus, input[type="url"]:focus { border-color: var(--o-line-2); box-shadow: none; }
 
   .btn {
     height: 32px;
-    border: 1px solid #dadce0;
+    border: 1px solid #d8d8de;
     border-radius: 16px;
     background: #fff;
     color: #1f1f1f;
@@ -608,7 +686,7 @@
   .btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
   .btn.danger { color: #d93025; }
   .btn.danger:hover { background: #fce8e6; }
-  body.dark .btn { background: #303134; border-color: #5f6368; color: #e8eaed; }
+  body.dark .btn { background: #37373f; border-color: #4d4d57; color: #ededf0; }
   body.dark .btn:hover { background: #3c4043; }
   body.dark .btn.danger { color: #f28b82; }
 
@@ -636,12 +714,25 @@
     box-shadow: 0 1px 3px rgba(38,36,58,.3);
     transition: transform .18s cubic-bezier(.4,0,.2,1), background .18s;
   }
-  /* Accent fill when on; round knob slides right. */
-  input:checked + .slider { background: var(--accent); border-color: var(--accent); }
-  input:checked + .slider::before { transform: translateX(18px); }
-  body.dark .slider { background: #5f6368; border-color: rgba(255,255,255,.06); }
-  body.dark input:checked + .slider { background: var(--accent); border-color: var(--accent); }
-  body.dark input:checked + .slider::before { background: #10160f; }
+  /* Accent fill when on; round knob slides right.
+     The knob takes --on-accent rather than a fixed white, and the track keeps
+     a hairline in the page's own ink rather than in the accent. Between them,
+     no accent colour can make the switch vanish into the card behind it —
+     which is exactly what a white accent used to do in light mode. */
+  input:checked + .slider {
+    background: var(--accent);
+    border-color: color-mix(in srgb, var(--o-text, #101014) 22%, var(--accent));
+  }
+  input:checked + .slider::before {
+    transform: translateX(18px);
+    background: var(--on-accent, #fff);
+  }
+  body.dark .slider { background: #4d4d57; border-color: rgba(255,255,255,.10); }
+  body.dark input:checked + .slider {
+    background: var(--accent);
+    border-color: color-mix(in srgb, var(--o-text, #ededf0) 22%, var(--accent));
+  }
+  body.dark input:checked + .slider::before { background: var(--on-accent, #1b1b1e); }
 
   input[type="range"] { color-scheme: light; }
   body.dark input[type="range"] { color-scheme: dark; }
@@ -659,14 +750,13 @@
     border-radius: 12px;
     padding: 11px 12px;
   }
-  body.dark .profile { border-color: #4a4d51; }
+  body.dark .profile { border-color: #43434c; }
   .profile-title { font-size: 13.5px; }
-  .profile-meta { font-size: 12px; color: #5f6368; margin-top: 2px; word-break: break-all; }
-  body.dark .profile-meta { color: #bdc1c6; }
+  .profile-meta { font-size: 12px; color: #4d4d57; margin-top: 2px; word-break: break-all; }
+  body.dark .profile-meta { color: #b0b0b8; }
   .check-row { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; color: #3c4043; }
-  body.dark .check-row { color: #bdc1c6; }
+  body.dark .check-row { color: #b0b0b8; }
   .check-row label { display: flex; align-items: center; gap: 7px; }
-  input[type="checkbox"] { accent-color: #3c4043; }
 
   .summary {
     display: grid;
@@ -678,10 +768,10 @@
     border-radius: 12px;
     padding: 12px;
   }
-  body.dark .metric { border-color: #4a4d51; }
+  body.dark .metric { border-color: #43434c; }
   .metric b { display: block; font-size: 18px; margin-bottom: 2px; }
-  .metric span { font-size: 12px; color: #5f6368; }
-  body.dark .metric span { color: #bdc1c6; }
+  .metric span { font-size: 12px; color: #4d4d57; }
+  body.dark .metric span { color: #b0b0b8; }
 
   .modal-bg {
     position: fixed;
@@ -708,13 +798,7 @@
     from { opacity: 0; transform: translateY(6px) scale(.98); }
     to   { opacity: 1; transform: none; }
   }
-  body.dark .modal { background: #1f2024; color: #f1f1f4; border-color: rgba(255,255,255,.08); }
-  body.transparent-ui .modal {
-    background: rgba(255,255,255,.72) !important;
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
-  }
-  body.transparent-ui.dark .modal { background: rgba(31,32,36,.72) !important; }
+  body.dark .modal { background: #28282c; color: #ededf0; border-color: rgba(255,255,255,.08); }
   .modal h3 { font-size: 18px; font-weight: 500; margin-bottom: 16px; }
   .modal .field { margin-bottom: 14px; }
   .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
@@ -724,7 +808,7 @@
     left: 50%;
     bottom: 22px;
     transform: translateX(-50%);
-    background: #202124;
+    background: #1e1e21;
     color: #fff;
     border-radius: 12px;
     padding: 10px 16px;
@@ -742,7 +826,7 @@
     padding: 14px 20px;
     border-radius: 12px;
   }
-  body.dark #toast { background: #e8eaed; color: #202124; }
+  body.dark #toast { background: #ededf0; color: #1e1e21; }
 
   .vol-row {
     display: flex;
@@ -754,20 +838,20 @@
     flex: 1;
     accent-color: #3c4043;
   }
-  body.dark .vol-range { accent-color: #9aa0a6; }
+  body.dark .vol-range { accent-color: #b0b0b8; }
   .vol-label {
     font-size: 12px;
-    color: #5f6368;
+    color: #4d4d57;
     min-width: 36px;
     text-align: right;
   }
-  body.dark .vol-label { color: #bdc1c6; }
+  body.dark .vol-label { color: #b0b0b8; }
 
   @media (max-width: 820px) {
     header { padding: 0 16px; }
     .layout { flex-direction: column; }
-    nav { position: static; flex-direction: row; overflow-x: auto; width: 100%; min-width: 0; height: auto; padding: 8px 12px; border-bottom: 1px solid #dadce0; }
-    body.dark nav { border-color: #4a4d51; }
+    nav { position: static; flex-direction: row; overflow-x: auto; width: 100%; min-width: 0; height: auto; padding: 8px 12px; border-bottom: 1px solid #d8d8de; }
+    body.dark nav { border-color: #43434c; }
     .nav-btn { flex: 0 0 auto; width: auto; }
     main { padding: 18px 16px 48px; max-width: none; }
     .summary { grid-template-columns: 1fr; }
@@ -879,7 +963,7 @@
     overflow: hidden;
     color: var(--muted);
   }
-  body.dark .pw-fav { background-color: #202124; }
+  body.dark .pw-fav { background-color: #1e1e21; }
   .pw-fav img { width: 20px; height: 20px; object-fit: contain; }
   .pw-fav svg { width: 18px; height: 18px; fill: currentColor; }
 
@@ -986,6 +1070,230 @@
   --accent-soft: rgba(79, 70, 229, .13);
   --on-accent: #ffffff;
 }
+/* ── Beta Features ────────────────────────────────────────────────────
+   A stage and a list, not a settings card. The point of the screen is the
+   sentence in the middle of it; the three entries below are the joke, and
+   they are set quiet enough to read as a footnote to it.
+
+   The names are blurred rather than replaced with blocks: a blur says
+   "there is something here you are not being shown", which is the tease. A
+   row of ▮▮▮ says the page failed to load.
+   ─────────────────────────────────────────────────────────────────────── */
+.beta-stage{
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+  padding:44px 24px 40px;
+  border:1px solid var(--o-line);
+  border-radius:16px;
+  background:var(--o-surface);
+  margin-bottom:14px;
+}
+.beta-eyes{
+  font-size:40px;line-height:1;margin-bottom:16px;
+  animation:beta-peek 7s ease-in-out infinite;
+}
+/* Glance left, glance right, back to staring. Long pauses between, so it
+   catches the eye once rather than fidgeting. */
+@keyframes beta-peek{
+  0%,62%,100%{transform:translateX(0) rotate(0)}
+  68%{transform:translateX(-4px) rotate(-4deg)}
+  76%{transform:translateX(4px) rotate(4deg)}
+  84%{transform:translateX(0) rotate(0)}
+}
+.beta-headline{
+  font-size:19px;font-weight:640;letter-spacing:-.02em;
+  color:var(--o-text);margin-bottom:8px;
+}
+.beta-sub{
+  font-size:13px;line-height:1.6;color:var(--o-muted);
+  max-width:44ch;margin:0;
+}
+
+.beta-list{
+  border:1px solid var(--o-line);
+  border-radius:14px;
+  overflow:hidden;
+  background:var(--o-surface);
+}
+.beta-item{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 18px;
+  position:relative;
+}
+.beta-item + .beta-item{border-top:1px solid var(--o-line)}
+.beta-num{
+  flex-shrink:0;
+  font-family:ui-monospace,"Cascadia Code",Consolas,monospace;
+  font-size:11px;font-weight:600;letter-spacing:.04em;
+  color:var(--o-faint);
+}
+.beta-lines{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+
+.beta-blur{
+  filter:blur(5px);
+  user-select:none;
+  pointer-events:none;
+  display:block;
+  white-space:nowrap;
+  overflow:hidden;
+}
+.beta-blur-title{font-size:13.5px;font-weight:550;color:var(--o-text);opacity:.8}
+.beta-blur-desc{font-size:12px;color:var(--o-muted);opacity:.7}
+
+/* The switches are props. They look like the real ones so the refusal
+   lands, and they never move. */
+.beta-switch{opacity:.5;flex-shrink:0}
+
+/* The refusal. Replaces the row's content in place rather than pushing it
+   around, so nothing below it jumps. */
+.beta-nope{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;justify-content:center;
+  gap:1px;padding:0 18px;
+  background:var(--o-surface);
+  animation:beta-nope-in .16s cubic-bezier(.2,.8,.25,1) both;
+}
+.beta-nope b{font-size:13.5px;font-weight:600;color:var(--o-text)}
+/* The third one is a joke, so it is allowed to move. The emoji is in the
+   text, so this scales the whole line rather than the glyph on its own. */
+.beta-nope.cheeky b{animation:beta-cheeky .42s cubic-bezier(.2,.8,.25,1) both}
+@keyframes beta-cheeky{
+  0%{transform:scale(.9) rotate(-2deg)}
+  55%{transform:scale(1.04) rotate(1.5deg)}
+  100%{transform:none}
+}
+@media (prefers-reduced-motion:reduce){.beta-nope.cheeky b{animation:none}}
+.beta-nope span{font-size:12px;color:var(--o-muted)}
+@keyframes beta-nope-in{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+/* ── More going on ───────────────────────────────────────────────────
+   This page has almost nothing on it by design: three rows with their names
+   blurred out and nothing to press. What is there has to carry it, so the
+   things that ARE drawn move, in ways that mean something rather than for
+   the sake of it. */
+
+/* The stage breathes. A very slow, very small light behind the eyes, so the
+   card is not simply a rectangle that has stopped. */
+.beta-stage{position:relative;overflow:hidden}
+.beta-stage::before{
+  content:'';position:absolute;left:50%;top:-40%;
+  width:min(560px,140%);aspect-ratio:1;
+  transform:translateX(-50%);
+  background:radial-gradient(circle, color-mix(in srgb,var(--accent) 12%,transparent), transparent 62%);
+  animation:beta-breathe 9s ease-in-out infinite;
+  pointer-events:none;
+}
+@keyframes beta-breathe{
+  0%,100%{opacity:.55;transform:translateX(-50%) scale(1)}
+  50%{opacity:1;transform:translateX(-50%) scale(1.12)}
+}
+.beta-stage > *{position:relative}
+
+/* The three rows arrive one after another rather than all at once, which is
+   what makes a list of three read as a list rather than as a block.
+
+   On the row's CHILDREN, not the row. `animation` is a shorthand, so an
+   entrance on .beta-item would be replaced by the shake below rather than
+   joined by it — and then re-run the moment the shake's class came off,
+   fading the row in again two seconds after it was pressed. Keeping the row
+   itself free means the two can never collide. */
+.beta-item > *{
+  animation:beta-row-in .5s cubic-bezier(.2,.8,.25,1) both;
+  animation-delay:calc(var(--n,0) * 90ms + 120ms);
+}
+@keyframes beta-row-in{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+
+/* The blur is the point of the row, so it is the thing that moves: it
+   softens and sharpens very slightly, as if it might resolve and then does
+   not. Never far enough to read — that would give the name away. */
+/* Both animations in one declaration: listing only beta-focus here would
+   drop the entrance the children rule gives it, because they are the same
+   property. */
+.beta-blur{
+  animation:beta-row-in .5s cubic-bezier(.2,.8,.25,1) both,
+            beta-focus 6s ease-in-out infinite;
+  animation-delay:calc(var(--n,0) * 90ms + 120ms), 0s;
+}
+.beta-blur-desc{animation-duration:.5s,7.5s}
+.beta-item:nth-child(2) .beta-blur{animation-delay:210ms,1.1s}
+.beta-item:nth-child(3) .beta-blur{animation-delay:300ms,2.3s}
+@keyframes beta-focus{
+  0%,100%{filter:blur(5px)}
+  46%{filter:blur(3.4px)}
+  54%{filter:blur(3.6px)}
+}
+
+/* The number counts as its row arrives. Monospace already, so it does not
+   shift anything while it changes. */
+/* The number arrives with its row and needs nothing of its own: the
+   children rule already gives it the entrance, so its own keyframes went
+   with the rule that used them. */
+
+/* The prop switch. It leans towards being pressed and comes back, once in a
+   while, on each row in turn — which is the joke the page is already making,
+   made visible. */
+.beta-switch{
+  animation:beta-row-in .5s cubic-bezier(.2,.8,.25,1) both,
+            beta-tease 11s ease-in-out infinite;
+  animation-delay:calc(var(--n,0) * 90ms + 120ms), 0s;
+}
+.beta-item:nth-child(2) .beta-switch{animation-delay:210ms,3.6s}
+.beta-item:nth-child(3) .beta-switch{animation-delay:300ms,7.2s}
+@keyframes beta-tease{
+  0%,86%,100%{transform:translateX(0)}
+  90%{transform:translateX(-2px)}
+  94%{transform:translateX(0)}
+}
+
+/* Pressing one anyway. The row shakes its head — twice, small, and level, so
+   it reads as "no" rather than as an error. */
+.beta-item.refused{animation:beta-shake .34s cubic-bezier(.36,.07,.19,.97) both}
+@keyframes beta-shake{
+  0%,100%{transform:translateX(0)}
+  22%{transform:translateX(-4px)}
+  46%{transform:translateX(3px)}
+  70%{transform:translateX(-2px)}
+}
+
+/* Everything stops. The page still says what it says; it just says it
+   still. */
+@media (prefers-reduced-motion:reduce){
+  .beta-eyes{animation:none}
+  .beta-nope{animation:none}
+  .beta-stage::before{animation:none}
+  .beta-item > *,.beta-blur,.beta-switch{animation:none}
+  .beta-blur{filter:blur(5px)}
+  .beta-item.refused{animation:none}
+}
+
+/* One-time privacy note at the top of the page. A quiet card, not an alert:
+   it is telling you something is already handled, so it uses the page's own
+   surface rather than an accent wash that would read as a warning. */
+.privacy-note{
+  display:flex;align-items:flex-start;gap:13px;
+  margin:0 0 26px;padding:15px 16px;
+  border:1px solid var(--o-line);
+  border-radius:12px;
+  background:var(--o-surface);
+  max-width:1180px;
+}
+.privacy-note[hidden]{display:none}
+.privacy-note-ico{
+  flex-shrink:0;width:26px;height:26px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--o-muted);
+}
+.privacy-note-ico svg{width:19px;height:19px}
+.privacy-note-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.privacy-note-body b{font-size:13.5px;font-weight:600;color:var(--o-text)}
+.privacy-note-body span{font-size:12.5px;line-height:1.5;color:var(--o-muted)}
+.privacy-note-x{
+  flex-shrink:0;width:24px;height:24px;
+  display:flex;align-items:center;justify-content:center;
+  border:none;background:transparent;border-radius:6px;
+  color:var(--o-faint);cursor:pointer;
+  transition:background .12s ease,color .12s ease;
+}
+.privacy-note-x:hover{background:var(--o-hover);color:var(--o-text)}
+
 /* One-time "moved to Extensions" notice. */
 .ext-move-notice{
   display:flex;align-items:center;gap:10px;margin-top:12px;padding:11px 14px;
@@ -1018,6 +1326,7 @@
 #nav .nav-btn[data-target="features"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z'/%3E%3C/svg%3E"); }
 #nav .nav-btn[data-target="search"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5 1.49-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z'/%3E%3C/svg%3E"); }
 #nav .nav-btn[data-target="privacy"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/%3E%3C/svg%3E"); }
+#nav .nav-btn[data-target="protection"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5z'/%3E%3C/svg%3E"); }
 #nav .nav-btn[data-target="safety"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z'/%3E%3C/svg%3E"); }
 #nav .nav-btn[data-target="sitefixes"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z'/%3E%3C/svg%3E"); }
 #nav .nav-btn[data-target="data"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3C7.58 3 4 4.79 4 7s3.58 4 8 4 8-1.79 8-4-3.58-4-8-4zM4 9v3c0 2.21 3.58 4 8 4s8-1.79 8-4V9c0 2.21-3.58 4-8 4s-8-1.79-8-4zm0 5v3c0 2.21 3.58 4 8 4s8-1.79 8-4v-3c0 2.21-3.58 4-8 4s-8-1.79-8-4z'/%3E%3C/svg%3E"); }
@@ -1027,8 +1336,229 @@
 #nav .nav-btn[data-target="system"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z'/%3E%3C/svg%3E"); }
 #nav .nav-btn[data-target="passwords"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z'/%3E%3C/svg%3E"); }
 #nav .nav-btn[data-target="identities"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E"); }
+#nav .nav-btn[data-target="vision"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 5C6.5 5 2.2 9.1 1 12c1.2 2.9 5.5 7 11 7s9.8-4.1 11-7c-1.2-2.9-5.5-7-11-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z'/%3E%3C/svg%3E"); }
+#nav .nav-btn[data-target="beta"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 3h6v2h-1v4.2l4.6 8a2 2 0 0 1-1.7 3H7.1a2 2 0 0 1-1.7-3l4.6-8V5H9V3zm3 3.5V10l-1.6 2.8h3.2L12 10V6.5z'/%3E%3C/svg%3E"); }
 #nav .nav-btn[data-target="about"] { --nav-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z'/%3E%3C/svg%3E"); }
+
+  /* ── Wallpaper source buttons ──────────────────────────────────────── */
+  .wp-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .wp-status { font-size: 12px; color: var(--o-muted, #b0b0b8); margin-top: 8px; min-height: 16px; }
+
+/* ════════════════════════════════════════════════════════════════════════
+   Settings — layout pass
+
+   The page was a 200px list of links beside a column of grey boxes, with a
+   16px heading doing the job of a page title. Three things change:
+
+     1. The nav becomes a real rail — an inset panel, pill rows, and a
+        heading, so it reads as somewhere you are rather than a list of
+        links floating in the margin.
+     2. Every section gets a proper title and one line of explanation, and
+        the cards under it stop competing with it for weight.
+     3. Rows get one height, one padding, and a hairline that stops before
+        the card's rounded corner instead of running into it.
+
+   Last in the file, so it wins over the block above without touching it.
+   ════════════════════════════════════════════════════════════════════════ */
+
+body { background: var(--o-bg, #1e1e21); }
+
+/* ── Header ──────────────────────────────────────────────────────────── */
+/* body.dark header is (0,1,1) and would otherwise keep the old lighter grey
+   while everything below it moved, so this matches that specificity. */
+header,
+body.dark header {
+  height: 60px;
+  padding: 0 24px;
+  gap: 18px;
+  background: var(--o-bg, #1e1e21);
+  border-bottom: 1px solid var(--o-line, rgba(255,255,255,.1));
+  border-color: var(--o-line, rgba(255,255,255,.1));
+}
+.brand-logo { height: 26px; }
+
+/* One field, and it looks like one whether or not you are pointing at it. */
+header input.settings-search,
+body.dark header input.settings-search {
+  flex: 1;
+  max-width: 420px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  background: var(--o-surface-2, #232326);
+  border: 1px solid var(--o-line, rgba(255,255,255,.1));
+  color: var(--o-text, #ededf0);
+  font-size: 13px;
+  transition: border-color .13s ease, box-shadow .13s ease;
+}
+header input.settings-search:hover,
+body.dark header input.settings-search:hover {
+  background: var(--o-surface-2, #232326);
+  border-color: var(--o-line, rgba(255,255,255,.1));
+}
+header input.settings-search:focus,
+body.dark header input.settings-search:focus {
+  background: var(--o-surface-2, #232326);
+  border-color: var(--o-line-2, rgba(255,255,255,.2));
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  outline: none;
+}
+
+/* ── Nav rail ────────────────────────────────────────────────────────── */
+.layout { gap: 0; }
+nav {
+  width: 232px;
+  min-width: 232px;
+  top: 60px;
+  height: calc(100vh - 60px);
+  padding: 18px 12px 40px;
+  gap: 2px;
+  border-right: 1px solid var(--o-line, rgba(255,255,255,.1));
+}
+nav::-webkit-scrollbar { width: 8px; }
+nav::-webkit-scrollbar-thumb { background: transparent; border: 2px solid transparent; border-radius: 999px; background-clip: content-box; }
+nav:hover::-webkit-scrollbar-thumb { background: var(--o-active, rgba(255,255,255,.13)); background-clip: content-box; }
+
+.nav-btn,
+body.dark .nav-btn {
+  height: 38px;
+  border-radius: 9px;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 450;
+  color: var(--o-muted, #b0b0b8);
+  gap: 11px;
+}
+.nav-btn:hover,
+body.dark .nav-btn:hover {
+  background: var(--o-hover, rgba(255,255,255,.07));
+  color: var(--o-text, #ededf0);
+}
+/* Selected is a filled row in the page's own ink, not the accent. With a
+   white accent the accent version was a white block with white text on it. */
+.nav-btn.active,
+body.dark .nav-btn.active {
+  background: var(--o-active, rgba(255,255,255,.13));
+  color: var(--o-text, #ededf0);
+  font-weight: 550;
+}
+#nav .nav-btn::before { opacity: .55; }
+#nav .nav-btn.active::before { opacity: 1; }
+
+/* ── Content ─────────────────────────────────────────────────────────── */
+main { padding: 30px 44px 96px; }
+/* Wide enough to use the window, capped so a maximised display does not
+   stretch a settings row to a metre across. 1180 is roughly where a row
+   stops reading as "label, then its control" and starts reading as two
+   unrelated things at opposite ends of the screen. */
+section { scroll-margin-top: 72px; margin-bottom: 44px; max-width: 1180px; }
+h1 { font-size: 27px; font-weight: 640; letter-spacing: -.028em; margin: 0 0 26px; }
+h2 {
+  font-size: 19px;
+  font-weight: 620;
+  letter-spacing: -.02em;
+  margin: 0 0 14px;
+  color: var(--o-text, #ededf0);
+}
+
+/* ── Cards ───────────────────────────────────────────────────────────── */
+.card,
+body.dark .card {
+  background: var(--o-surface, #28282c);
+  border: 1px solid var(--o-line, rgba(255,255,255,.1));
+  border-radius: 14px;
+  box-shadow: none;
+  /* Kept hidden: it is what rounds the first and last row's fill to the
+     card's corners. Dropdowns escape it by rendering to <body>, which is
+     why they were moved there in the first place. */
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+h3.card-subhead,
+body.dark h3.card-subhead {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .085em;
+  color: var(--o-faint, #85858e);
+  padding: 15px 18px 3px;
+}
+
+/* ── Rows ────────────────────────────────────────────────────────────── */
+.row,
+body.dark .row {
+  min-height: 58px;
+  padding: 14px 18px;
+  gap: 20px;
+  border-top: 1px solid var(--o-line, rgba(255,255,255,.1));
+}
+/* align-items lives on its own rule that EXCLUDES .stack. Setting it on
+   `body.dark .row` (0,2,0, and later in the file) silently overrode
+   `.row.stack { align-items: stretch }`, which is the same specificity and
+   earlier — so in dark mode every stacked row centred and shrank its control
+   instead of stretching it. */
+.row:not(.stack),
+body.dark .row:not(.stack) { align-items: center; }
+.row.stack,
+body.dark .row.stack { align-items: stretch; flex-direction: column; }
+.row:first-child { border-top: 0; }
+/* A subhead is a heading for the rows under it, so the first of those rows
+   must not draw a line back up to it. */
+h3.card-subhead + .row { border-top: 0; }
+.label { font-size: 13.5px; font-weight: 450; color: var(--o-text, #ededf0); }
+.desc,
+body.dark .desc {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--o-muted, #b0b0b8);
+  margin-top: 3px;
+  /* No max-width. The row already has one via the section, and capping the
+     text as well left it as a narrow ribbon with a gulf between it and its
+     own switch. */
+}
+.row.stack { gap: 12px; padding: 16px 18px 18px; }
+
+/* ── Controls ────────────────────────────────────────────────────────── */
+.row .inline-select, .row select, .row .csel-trigger {
+  min-height: 34px;
+  border-radius: 9px;
+  border: 1px solid var(--o-line, rgba(255,255,255,.1));
+  /* background-COLOR. As the shorthand this also reset background-repeat to
+     "repeat" and background-size to "auto", and it outranks the .inline-select
+     rule where those two are set — so the chevron kept its image and lost its
+     placement, and tiled down the whole control. */
+  background-color: var(--o-surface-2, #232326);
+  color: var(--o-text, #ededf0);
+  font-size: 12.5px;
+}
+.row input[type="text"], .row input[type="url"],
+.row input[type="number"], .row input[type="password"], .row textarea {
+  min-height: 36px;
+  border-radius: 9px;
+}
+.row .btn, .row button.btn {
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+/* ── Motion ──────────────────────────────────────────────────────────
+   None on the sections, deliberately. An entrance animation with
+   fill-mode:both holds its first keyframe — opacity 0 — until it actually
+   runs, and this page has two ways that never happens: it lives in a
+   <webview> the tab machinery hides until first paint, and the search box
+   sets display:none on every non-matching section as you type. Either one
+   can leave a section parked at opacity 0 forever, which is a blank page
+   with a working sidebar.
+
+   Hover and focus transitions are safe, because they never own the resting
+   state. */
+nav .nav-btn { transition: background .13s ease, color .13s ease; }
 </style>
+<!-- Shared finish pass: one palette across every Privoo page. Loads last so
+     it wins on order; the block above still owns this page's layout. -->
+<link rel="stylesheet" href="page-theme.css" />
 </head>
 <body>
   <header>
@@ -1042,6 +1572,7 @@
       <button class="nav-btn" data-target="features">Features</button>
       <button class="nav-btn" data-target="search">Search engine</button>
       <button class="nav-btn" data-target="privacy">Privacy</button>
+      <button class="nav-btn" data-target="protection">Guard</button>
       <button class="nav-btn" data-target="safety">Safety</button>
       <button class="nav-btn" data-target="sitefixes">Site fixes</button>
       <button class="nav-btn" data-target="data">Data</button>
@@ -1051,10 +1582,28 @@
       <button class="nav-btn" data-target="system">System</button>
       <button class="nav-btn" data-target="passwords">Passwords</button>
       <button class="nav-btn" data-target="identities">Identities</button>
+      <button class="nav-btn" data-target="vision">Accessibility</button>
+      <button class="nav-btn" data-target="beta">Beta Features</button>
       <button class="nav-btn" data-target="about">About</button>
     </nav>
 
     <main>
+      <!-- Shown once, then never again. It is a statement of what is already
+           true, not a prompt: there is nothing to accept and nothing to turn
+           on, so the only control on it is the one that makes it go away. -->
+      <div class="privacy-note" id="privacy-note" hidden>
+        <span class="privacy-note-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2 5 6v5.4c0 4.5 3 8.5 7 9.6 4-1.1 7-5.1 7-9.6V6z"/><path d="m9.2 12.1 2 2 3.6-3.7"/></svg>
+        </span>
+        <div class="privacy-note-body">
+          <b>Nothing on this page needs turning on.</b>
+          <span>Ad and tracker blocking, HTTPS upgrades, encrypted DNS and fingerprint protection are already running, and none of it is reported anywhere — Privoo has no account and no server to send it to. What is below is for changing your mind, not for switching privacy on.</span>
+        </div>
+        <button type="button" class="privacy-note-x" id="privacy-note-x" title="Dismiss" aria-label="Dismiss">
+          <svg viewBox="0 0 14 14" width="11" height="11"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>
+        </button>
+      </div>
+
       <h1>Settings</h1>
 
       <section id="appearance" data-keywords="dark home bookmark theme appearance weather widget compact accent color font transparency">
@@ -1069,34 +1618,14 @@
           </div>
           <div class="row">
             <div>
-              <div class="label">Force dark on all pages <span style="display:inline-block;font-size:10px;font-weight:600;background:#f1f3f4;color:#5f6368;border-radius:4px;padding:1px 6px;vertical-align:middle;margin-left:4px">Experimental</span></div>
+              <div class="label">Force dark on all pages <span style="display:inline-block;font-size:10px;font-weight:600;background:#f1f3f4;color:#4d4d57;border-radius:4px;padding:1px 6px;vertical-align:middle;margin-left:4px">Experimental</span></div>
               <div class="desc">Inverts page colours to create a dark look on sites that don't support it natively.</div>
             </div>
             <label class="switch"><input type="checkbox" id="forceDarkMode"><span class="slider"></span></label>
           </div>
-          <h3 class="card-subhead">Transparency</h3>
           <div class="row">
-            <div>
-              <div class="label">Increase Transparency</div>
-              <div class="desc">Frosted-glass toolbar, uses Acrylic on Windows 11, Vibrancy on macOS. Some older systems may appear solid white.</div>
-            </div>
-            <label class="switch"><input type="checkbox" id="increaseTransparency"><span class="slider"></span></label>
-          </div>
-          <div class="row">
-            <div><div class="label">Glass style</div><div class="desc">How the translucent chrome looks (when Increase Transparency is on).</div></div>
-            <select id="transparencyStyle" class="inline-select">
-              <option value="frosted">Frosted</option>
-              <option value="liquid">Liquid Glass</option>
-              <option value="acrylic">Acrylic</option>
-              <option value="clear">Clear</option>
-            </select>
-          </div>
-          <div class="row">
-            <div>
-              <div class="label">Aero gradient <span style="display:inline-block;font-size:10px;font-weight:600;background:#f1f3f4;color:#5f6368;border-radius:4px;padding:1px 6px;vertical-align:middle;margin-left:4px">Requires transparency</span></div>
-              <div class="desc">Layer a soft drifting blue/violet gradient behind the chrome for a classic Aero look.</div>
-            </div>
-            <label class="switch"><input type="checkbox" id="aeroGradient"><span class="slider"></span></label>
+            <div><div class="label">Semi-transparent window</div><div class="desc">Blur the desktop through the toolbar and tab strip. Windows 11 and macOS only.</div></div>
+            <label class="switch"><input type="checkbox" id="semiTransparent"><span class="slider"></span></label>
           </div>
           <div class="row">
             <div><div class="label">Wobbly Windows</div><div class="desc">Springy wobble animation when switching tabs.</div></div>
@@ -1130,40 +1659,10 @@
           </div>
         </div>
 
-        <!-- Themes -->
         <div class="card">
-          <h3 class="card-subhead">Themes</h3>
-          <div class="theme-gallery" id="theme-gallery"></div>
           <div class="row">
-            <div><div class="label">Auto-adjust My Vibe to fit theme</div><div class="desc">When you pick a theme, also retune My Vibe's accent glow to match its colours. Off by default — your Vibe setting stays as you left it.</div></div>
-            <label class="switch"><input type="checkbox" id="themeAutoVibe"><span class="slider"></span></label>
-          </div>
-          <div class="row">
-            <div><div class="label">Browser sounds</div><div class="desc">Short blips when you open/close tabs, type and click, tuned to the active theme.</div></div>
+            <div><div class="label">Browser sounds</div><div class="desc">Short blips when you open and close tabs, type and click.</div></div>
             <label class="switch"><input type="checkbox" id="uiSounds"><span class="slider"></span></label>
-          </div>
-          <div class="row">
-            <div><div class="label">Ambient music</div><div class="desc">A soft, generated soundscape that plays while a theme is active.</div></div>
-            <select id="ntpThemeMusic" class="inline-select">
-              <option value="none">Off</option>
-              <option value="drift">Aurora drift</option>
-              <option value="pulse">Neon pulse</option>
-              <option value="warm">Warm glow</option>
-              <option value="solar">Solar rise</option>
-              <option value="rain">Soft rain</option>
-              <option value="mist">Quiet mist</option>
-              <option value="waves">Ocean waves</option>
-              <option value="deep">Deep space</option>
-              <option value="bloom">Orchid bloom</option>
-              <option value="noir">Noir keys</option>
-              <option value="chime">Crystal</option>
-            </select>
-          </div>
-          <div class="row">
-            <div><div class="label">Music volume</div><div class="desc">Adjust the ambient soundscape volume.</div></div>
-            <div class="vol-row">
-              <input type="range" id="ntpThemeMusicVolume" class="vol-range" min="0" max="100" value="40"/>
-            </div>
           </div>
         </div>
 
@@ -1171,16 +1670,12 @@
         <div class="card">
           <h3 class="card-subhead">Layout</h3>
           <div class="row">
-            <div><div class="label">Circle the “+” button</div><div class="desc">Show the new-tab button as a circle.</div></div>
-            <label class="switch"><input type="checkbox" id="newTabBtnCircle"><span class="slider"></span></label>
+            <div><div class="label">Tab previews on hover</div><div class="desc">Rest on a tab to see a thumbnail of that page underneath it. Useful when several tabs are open on the same site and their titles are identical.</div></div>
+            <label class="switch"><input type="checkbox" id="tabHoverPreview"><span class="slider"></span></label>
           </div>
           <div class="row">
             <div><div class="label">Vertical tabs</div><div class="desc">Move tabs to a collapsible panel on the left.</div></div>
             <label class="switch"><input type="checkbox" id="verticalTabs"><span class="slider"></span></label>
-          </div>
-          <div class="row">
-            <div><div class="label">Integrate into vertical tab panel</div><div class="desc">Move toolbar icon buttons into the bottom of the sidebar panel.</div></div>
-            <label class="switch"><input type="checkbox" id="vtabsIntegrated"><span class="slider"></span></label>
           </div>
           <div class="row">
             <div><div class="label">Search popup</div><div class="desc">In vertical-tabs mode, open a centered search overlay when you click New Tab. Turn off to open a normal new tab page instead.</div></div>
@@ -1200,12 +1695,20 @@
             </select>
           </div>
           <div class="row">
-            <div><div class="label">Corner style</div><div class="desc">How rounded the whole interface looks.</div></div>
-            <select id="uiRoundness" class="inline-select">
-              <option value="default">Default</option>
-              <option value="sharp">Sharp</option>
-              <option value="round">Rounded</option>
+            <div><div class="label">Pointer</div><div class="desc">Change the mouse pointer used over Privoo’s own interface. Web pages keep their own pointers.</div></div>
+            <select id="cursorStyle" class="inline-select">
+              <option value="system">System default</option>
+              <option value="large">Large</option>
+              <option value="precise">Precision</option>
+              <option value="custom">Custom image</option>
             </select>
+          </div>
+          <div class="row" id="cursor-custom-row" style="display:none">
+            <div><div class="label">Cursor image</div><div class="desc" id="cursor-custom-desc">Pick a small PNG, GIF, WebP or SVG. Around 32 by 32 pixels works best. The top left of the image is the click point.</div></div>
+            <div class="control-row">
+              <button class="btn" id="cursor-pick">Choose image…</button>
+              <button class="btn danger" id="cursor-clear">Clear</button>
+            </div>
           </div>
           <div class="row stack">
             <div><div class="label">Custom CSS</div><div class="desc">Advanced, inject your own CSS to restyle any part of the browser interface. Applies live as you type; leave blank to disable. Targets the chrome (toolbar, tabs, menus), not page content.</div></div>
@@ -1218,10 +1721,6 @@
           <div class="row">
             <div><div class="label">Show Home button</div><div class="desc">Adds a Home button next to Reload in the toolbar.</div></div>
             <label class="switch"><input type="checkbox" id="showHomeButton"><span class="slider"></span></label>
-          </div>
-          <div class="row stack">
-            <div><div class="label">Home page</div><div class="desc">Where the Home button navigates to.</div></div>
-            <input type="text" id="homePage" class="wide" spellcheck="false">
           </div>
           <h3 class="card-subhead">Density</h3>
           <div class="row">
@@ -1239,16 +1738,48 @@
           </div>
         </div>
 
+        <!-- Wallpaper -->
+        <div class="card" id="wallpaper-card">
+          <h3 class="card-subhead">Wallpaper</h3>
+          <div class="row">
+            <div><div class="label">Random wallpaper</div><div class="desc">A different freely licensed photograph behind every new tab, credited to its photographer in the corner. A batch is fetched once an hour and shared across tabs, so ten new tabs is one download, not ten. A wallpaper you choose yourself below always wins.</div></div>
+            <label class="switch"><input type="checkbox" id="ntpRandomWallpaper"><span class="slider"></span></label>
+          </div>
+          <div class="row stack">
+            <div><div class="label">Or choose your own</div><div class="desc">An image or a looping video from this device. Nothing is uploaded — the file is copied into your profile.</div></div>
+            <div class="wp-actions">
+              <button type="button" class="btn" id="wp-choose-image">Choose an image…</button>
+              <button type="button" class="btn" id="wp-choose-live">Choose a video…</button>
+              <button type="button" class="btn" id="wp-clear">No wallpaper</button>
+            </div>
+            <div id="wp-status" class="wp-status"></div>
+          </div>
+          <div class="row stack">
+            <div>
+              <div class="label">Your collection</div>
+              <div class="desc">Wallpapers you have kept, so switching back to one is a click rather than finding the file again. Each is copied into your profile when you add it, so moving or deleting the original does not matter.</div>
+            </div>
+            <div id="wp-lib" class="wp-lib"></div>
+            <div class="wp-actions">
+              <button type="button" class="btn" id="wp-lib-add">Add wallpapers…</button>
+            </div>
+          </div>
+          <div class="row">
+            <div><div class="label">Stretch over the whole browser</div><div class="desc">Run the wallpaper behind the tab strip and toolbar too. They turn to frosted glass over it.</div></div>
+            <label class="switch"><input type="checkbox" id="ntpWallpaperFullBrowser"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Play video wallpaper sound</div><div class="desc">Only applies to a video wallpaper. Off means it plays silently.</div></div>
+            <label class="switch"><input type="checkbox" id="ntpWallpaperSound"><span class="slider"></span></label>
+          </div>
+        </div>
+
         <!-- New tab page -->
         <div class="card">
           <h3 class="card-subhead">New tab page</h3>
           <div class="row">
-            <div><div class="label">Apply Privoo Background</div><div class="desc">Show Privoo's default wallpaper on the new tab page. Turn this off for a plain background, or set your own photo below to override it either way.</div></div>
-            <label class="switch"><input type="checkbox" id="ntpApplyPrivooBackground"><span class="slider"></span></label>
-          </div>
-          <div class="row">
-            <div><div class="label">Animate Wallpaper</div><div class="desc">A slow, subtle breathing motion on the default wave wallpaper.</div></div>
-            <label class="switch"><input type="checkbox" id="ntpWallpaperAnimated"><span class="slider"></span></label>
+            <div><div class="label">Privacy widget</div><div class="desc">Shows a live count of the ads and trackers Privoo has blocked, on the new tab page.</div></div>
+            <label class="switch"><input type="checkbox" id="ntpShowStats"><span class="slider"></span></label>
           </div>
           <div class="row">
             <div><div class="label">Show quick links</div><div class="desc">Display site shortcut tiles on the new tab page.</div></div>
@@ -1262,14 +1793,6 @@
               <input type="url" id="ql-add-url" placeholder="https://example.com" autocomplete="off" spellcheck="false"/>
               <button type="button" class="filter-add-btn" id="ql-add-btn">Add</button>
             </div>
-          </div>
-          <div class="row">
-            <div><div class="label">Show greeting</div><div class="desc">"Good morning / afternoon / evening / night" under the logo, based on the time of day.</div></div>
-            <label class="switch"><input type="checkbox" id="ntpShowGreeting"><span class="slider"></span></label>
-          </div>
-          <div class="row">
-            <div><div class="label">Centre sidebar icons</div><div class="desc">Vertically centre the vertical-tabs icon rail, Opera-style.</div></div>
-            <label class="switch"><input type="checkbox" id="vtabsCenterIcons"><span class="slider"></span></label>
           </div>
           <div class="row">
             <div><div class="label">Privoo News link</div><div class="desc">Show a link on the new tab page to open Privoo News.</div></div>
@@ -1303,6 +1826,13 @@
           <div class="row">
             <div><div class="label">Shortcuts sidebar</div><div class="desc">Pin sites as favicons in a rail on the left side of the window.</div></div>
             <label class="switch"><input type="checkbox" id="showSidebar"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div>
+              <div class="label">Show music in the toolbar</div>
+              <div class="desc">Puts whatever the sidebar player is playing into the toolbar media dropdown, with play, pause and skip. Turn this off to go back to the hover popup on the sidebar icon instead.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="musicInToolbar"><span class="slider"></span></label>
           </div>
           <div class="row">
             <div><div class="label">Translate toolbar button</div><div class="desc">Adds a translate button that sends the current page to Google Translate.</div></div>
@@ -1417,8 +1947,14 @@
             <label class="switch"><input type="checkbox" id="httpsUpgradeShowNotice"><span class="slider"></span></label>
           </div>
           <div class="row">
-            <div><div class="label">Block third-party cookies</div><div class="desc">Reduce cross-site tracking.</div></div>
-            <label class="switch"><input type="checkbox" id="blockThirdPartyCookies"><span class="slider"></span></label>
+            <div>
+              <div class="label">Third-party cookies</div>
+              <div class="desc">Cookies set by a site other than the one you are visiting. Blocking them is the main defence against being followed between sites; allowing them can fix sign-ins and embedded content that break without them.</div>
+            </div>
+            <select id="thirdPartyCookieMode" class="inline-select">
+              <option value="block">Block third-party cookies</option>
+              <option value="allow">Allow third-party cookies</option>
+            </select>
           </div>
           <div class="row">
             <div><div class="label">Encrypted DNS (DNS-over-HTTPS)</div><div class="desc">Encrypts your DNS lookups end-to-end. Strict mode, never falls back to your ISP's plaintext DNS, so no leaks.</div></div>
@@ -1440,6 +1976,14 @@
             <label class="switch"><input type="checkbox" id="adultContentBlocking"><span class="slider"></span></label>
           </div>
           <div class="row">
+            <div><div class="label">Paste protection</div><div class="desc">Check a link before you follow it when you paste one into the address bar. Warns about the handful of tricks used to make an address read as one site while pointing at another — a name hidden before an @, characters that only look like letters, a well-known brand on somebody else's domain.</div></div>
+            <label class="switch"><input type="checkbox" id="pasteProtection"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div><div class="label">Block pop-ups</div><div class="desc">Only let a page open a new tab or window if you just interacted with it. Links, sign-in popups and downloads all follow a click, so they still work; pop-unders and timed ad redirects do not.</div></div>
+            <label class="switch"><input type="checkbox" id="popupBlocking"><span class="slider"></span></label>
+          </div>
+          <div class="row">
             <div><div class="label">Do Not Track</div><div class="desc">Send the DNT request header.</div></div>
             <label class="switch"><input type="checkbox" id="doNotTrack"><span class="slider"></span></label>
           </div>
@@ -1456,7 +2000,7 @@
             <label class="switch"><input type="checkbox" id="webrtcProtection"><span class="slider"></span></label>
           </div>
           <div class="row">
-            <div><div class="label">Stronger tracking protection</div><div class="desc">Strips tracking URL parameters (utm_*, fbclid, etc.), minimises the Referer header on cross-origin requests, and sends the Global Privacy Control signal.</div></div>
+            <div><div class="label">Stronger tracking protection</div><div class="desc">Stops sites recognising you across the web by the link you arrived on. Removes the tracking tags appended to URLs (<code>utm_*</code>, <code>fbclid</code>, <code>gclid</code>), tells a site you came from a domain rather than an exact page, and sends the Global Privacy Control signal. On by default — it costs nothing and breaks nothing.</div></div>
             <label class="switch"><input type="checkbox" id="strongerTrackingProtection"><span class="slider"></span></label>
           </div>
           <div class="row">
@@ -1509,6 +2053,21 @@
               <option value="zh-TW">Chinese (Traditional)</option>
             </select>
           </div>
+          <!-- Region preset. Privoo's defaults assume a network where Google,
+               Cloudflare DNS and friends are reachable. They are not, inside
+               mainland China — and because Privoo never falls back to plaintext
+               DNS, a blocked DoH resolver means pages simply hang. This switches
+               the whole bundle (search + DNS + language) in one go. -->
+          <div class="row">
+            <div>
+              <div class="label">Region</div>
+              <div class="desc" id="region-preset-desc">Sets search, DNS and language together for networks where the defaults don't resolve. Privoo does not operate a VPN or proxy network. To reach sites blocked on your network you still need your own proxy under Privacy → Proxy.</div>
+            </div>
+            <select id="regionPreset" class="inline-select">
+              <option value="">Default (worldwide)</option>
+              <option value="cn">Mainland China</option>
+            </select>
+          </div>
         </div>
       </section>
 
@@ -1546,6 +2105,7 @@
             <div class="check-row">
               <label><input type="checkbox" id="import-bookmarks" checked>Bookmarks</label>
               <label><input type="checkbox" id="import-history" checked>History</label>
+              <label title="Carries your signed-in sessions across. Off by default."><input type="checkbox" id="import-cookies">Cookies &amp; sessions</label>
             </div>
             <div class="profiles" id="profiles"></div>
             <div class="control-row">
@@ -1579,7 +2139,7 @@
         </div>
       </section>
 
-      <section id="media" data-keywords="media video ytdlp downloader music audio background">
+      <section id="media" data-keywords="media video ytdlp downloader music audio background spotify youtube music apple tidal deezer soundcloud sidebar player">
         <h2>Media</h2>
         <div class="card">
           <div class="row">
@@ -1590,28 +2150,109 @@
             <div><div class="label">Lucid Mode</div><div class="desc">Hover the top of any video for a star that boosts contrast, saturation and brightness on the fly.</div></div>
             <label class="switch"><input type="checkbox" id="lucidMode"><span class="slider"></span></label>
           </div>
+          <div class="row">
+            <div><div class="label">Sidebar music player</div><div class="desc">Which service the Music shortcut in the sidebar opens. You can also change it from the panel header, or by right-clicking the sidebar icon.</div></div>
+            <select id="sidebarMusicPlayer" class="inline-select">
+              <option value="">Ask me each time</option>
+              <option value="spotify">Spotify</option>
+              <option value="ytmusic">YouTube Music</option>
+              <option value="apple">Apple Music</option>
+              <option value="amazon">Amazon Music</option>
+              <option value="deezer">Deezer</option>
+              <option value="tidal">Tidal</option>
+              <option value="soundcloud">SoundCloud</option>
+            </select>
+          </div>
         </div>
 
-        <h2 style="margin-top:28px">Background Music</h2>
+      </section>
+
+      <section id="protection" data-keywords="guard privoo guard antivirus virus malware threat scan scanner clamav quarantine protection security">
+        <h2>Privoo Guard</h2>
         <div class="card">
-          <div class="row">
-            <div><div class="label">Enable background music</div><div class="desc">Play your own .mp3 while browsing. Music loops continuously.</div></div>
-            <label class="switch"><input type="checkbox" id="musicEnabled"><span class="slider"></span></label>
+          <div class="row stack">
+            <div>
+              <div class="label">On-demand malware scanning</div>
+              <div class="desc">Privoo Guard scans files with <b>ClamAV</b>, an open-source antivirus engine. It is a separate optional component: Privoo does not bundle it, because the engine and its signature database are large and GPL-licensed. Install it once and Privoo will drive it from here.</div>
+            </div>
+            <div id="prot-status" class="prot-status">Checking…</div>
           </div>
           <div class="row">
-            <div><div class="label">Music file</div><div class="desc path" id="music-path-display">No file selected.</div></div>
+            <div><div class="label">Enable Privoo Guard</div><div class="desc">Show scanning controls and let Privoo run ClamAV. Off by default.</div></div>
+            <label class="switch"><input type="checkbox" id="protectionEnabled"><span class="slider"></span></label>
+          </div>
+          <div class="row" id="prot-install-row">
+            <div>
+              <div class="label">Install ClamAV</div>
+              <div class="desc" id="prot-install-desc">Privoo will download the portable ClamAV engine and its virus signatures in the background. Nothing is installed system-wide and no administrator rights are needed. It all lives in your Privoo profile folder. The signature database is a few hundred megabytes, so the first run takes a while.</div>
+            </div>
             <div class="control-row">
-              <button class="btn" id="choose-music">Browse</button>
-              <button class="btn" id="clear-music">Clear</button>
+              <button class="btn primary" id="prot-install">Install</button>
+              <button class="btn" id="prot-check">Check for an existing install</button>
+              <button class="btn" id="prot-locate">Locate…</button>
             </div>
           </div>
-          <div class="row">
-            <div><div class="label">Volume</div><div class="desc">Adjust background music volume.</div></div>
-            <div class="vol-row">
-              <input type="range" id="musicVolume" class="vol-range" min="0" max="100" value="50"/>
-              <span id="music-vol-label" class="vol-label">50%</span>
+          <div class="row" id="prot-installing-row" style="display:none">
+            <div>
+              <div class="label">Installing</div>
+              <div class="desc" id="prot-install-progress">Starting…</div>
             </div>
           </div>
+          <div class="row" id="prot-manage-row" style="display:none">
+            <div><div class="label">Signatures</div><div class="desc">Virus definitions update from ClamAV’s mirrors. Refresh them before an important scan.</div></div>
+            <div class="control-row">
+              <button class="btn" id="prot-update-sigs">Update signatures</button>
+              <button class="btn danger" id="prot-uninstall">Remove</button>
+            </div>
+          </div>
+          <div class="row" id="prot-remove-row" style="display:none">
+            <div><div class="label">Remove</div><div class="desc" id="prot-remove-desc">Delete the copy of ClamAV that Privoo downloaded, including its signature database.</div></div>
+            <div class="control-row">
+              <button class="btn danger" id="prot-remove-btn">Remove</button>
+            </div>
+          </div>
+          <div class="row" id="prot-scan-row">
+            <div><div class="label">Run a scan</div><div class="desc"><b>Quick</b> checks Downloads, Desktop and temporary files, which is where drive-by downloads land. <b>Full</b> checks your whole user folder and takes considerably longer. You can also point it at a single folder or one file, which is the fastest way to check something you have just downloaded.</div></div>
+            <div class="control-row">
+              <button class="btn" id="prot-quick">Quick scan</button>
+              <button class="btn" id="prot-full">Full scan</button>
+              <button class="btn" id="prot-folder">Scan a folder…</button>
+              <button class="btn" id="prot-file">Scan a file…</button>
+              <button class="btn danger" id="prot-cancel" style="display:none">Stop</button>
+            </div>
+          </div>
+          <div class="row stack" id="prot-results-row" style="display:none">
+            <div>
+              <div class="label">Results</div>
+              <div class="desc" id="prot-progress">Idle.</div>
+            </div>
+            <div class="prot-progress-wrap" id="prot-progress-wrap">
+              <div class="prot-bar-track"><div id="prot-bar" class="prot-bar indeterminate"></div></div>
+              <div class="prot-progress-line">
+                <span id="prot-progress-pct">…</span>
+                <span id="prot-progress-count"></span>
+              </div>
+              <div class="prot-progress-file" id="prot-progress-file"></div>
+            </div>
+            <div class="prot-bulk" id="prot-bulk" style="display:none">
+              <button type="button" id="prot-quarantine-all">Quarantine all</button>
+              <button type="button" id="prot-remove-all" class="danger">Remove all</button>
+            </div>
+            <div id="prot-threats" class="prot-threats"></div>
+          </div>
+          <div class="row stack" id="prot-quarantine-row" style="display:none">
+            <div>
+              <div class="label">Quarantine</div>
+              <div class="desc">Files Privoo Guard has moved out of harm&rsquo;s way. They cannot run from here. Restore one if you are confident the detection was wrong, or delete it for good.</div>
+            </div>
+            <div class="control-row">
+              <button class="btn" id="prot-q-open">Open folder</button>
+              <button class="btn" id="prot-q-refresh">Refresh</button>
+              <button class="btn danger" id="prot-q-empty">Empty quarantine</button>
+            </div>
+            <div id="prot-quarantine-list" class="prot-quarantine"></div>
+          </div>
+          <div class="row"><div><div class="label">Legal</div><div class="desc">Read the privacy policy and terms for this build.</div></div><div class="control-row"><button class="btn credit-link" data-url="privoo://privacy/">Privacy Policy</button><button class="btn credit-link" data-url="privoo://terms/">Terms</button></div></div>
         </div>
       </section>
 
@@ -1710,9 +2351,36 @@
         </div>
       </section>
 
-      <section id="performance" data-keywords="hardware acceleration gpu performance smooth video low end discord rpc">
+      <section id="performance" data-keywords="hardware acceleration gpu performance smooth video low end discord rpc memory ram tab snooze sleep discard">
         <h2>Performance</h2>
+
         <div class="card">
+          <h3 class="card-subhead">Memory</h3>
+          <div class="row">
+            <div>
+              <div class="label">Tab Snooze</div>
+              <div class="desc">Let a tab you have not looked at in a while release its page and keep only its title and address. Clicking it loads the page back. Privoo never snoozes a tab that is playing audio, one you pinned, or one with something typed into a form.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="tabSnooze"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div>
+              <div class="label">Snooze after</div>
+              <div class="desc">How long a tab sits untouched before it goes to sleep.</div>
+            </div>
+            <select class="inline-select" id="tabSnoozeMinutes">
+              <option value="5">5 minutes</option>
+              <option value="15">15 minutes</option>
+              <option value="30">30 minutes</option>
+              <option value="60">1 hour</option>
+              <option value="120">2 hours</option>
+              <option value="360">6 hours</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-subhead">Graphics</h3>
           <div class="row">
             <div>
               <div class="label">Hardware acceleration</div>
@@ -1722,8 +2390,15 @@
           </div>
           <div class="row">
             <div>
+              <div class="label">Video compatibility mode</div>
+              <div class="desc">Draws video through normal GPU compositing instead of a hardware overlay. Leave this on if video ever plays with sound but a black picture. That is what the overlay path does on some NVIDIA drivers. Requires a restart.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="videoOverlayCompat"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div>
               <div class="label">Low-end device mode</div>
-              <div class="desc">Disables heavy GPU rasterization paths and CSS transitions so the browser stays responsive on weaker hardware. Requires a restart to take full effect.</div>
+              <div class="desc">Turns off blur, shadows, animations and heavy GPU paths so the interface stays responsive on older hardware. Restart to apply it fully.</div>
             </div>
             <label class="switch"><input type="checkbox" id="lowEndDevice"><span class="slider"></span></label>
           </div>
@@ -1794,6 +2469,273 @@
             <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" fill="currentColor"/></svg>
             <div class="pw-empty-title">No saved passwords yet</div>
             <div class="pw-empty-sub">Sign in to any website and Privoo will offer to save the login.</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="vision" data-keywords="accessibility vision sight partially sighted eyesight contrast large text bigger font readable focus motion underline links low vision impaired blind speak speech read aloud text to speech voice narrator screen reader night light blue light eye strain shortsighted myopia breaks">
+        <h2>Accessibility</h2>
+
+        <div class="card">
+          <h3 class="card-subhead">Seeing the browser</h3>
+          <div class="row">
+            <div>
+              <div class="label">Interface size</div>
+              <div class="desc">Scales the tab strip, toolbar and panels. It leaves web pages alone, because those have their own zoom on <b>Ctrl +</b> and <b>Ctrl &minus;</b>.</div>
+            </div>
+            <select class="inline-select" id="visionUiScale">
+              <option value="100">Normal</option>
+              <option value="115">Large</option>
+              <option value="130">Larger</option>
+              <option value="150">Largest</option>
+            </select>
+          </div>
+          <div class="row">
+            <div>
+              <div class="label">Higher contrast</div>
+              <div class="desc">Takes the greys out of the interface. Secondary text becomes full strength, and every hairline gets darker. Transparency is switched off while this is on, since a wash over text works against reading it.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="visionHighContrast"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div>
+              <div class="label">Heavier text</div>
+              <div class="desc">Thickens the interface text without enlarging it. A heavier stroke is often easier to read than a bigger one, so this is separate from Interface size and the two can be used apart.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="visionBoldText"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div>
+              <div class="label">Always show the focus outline</div>
+              <div class="desc">Normally the outline only appears when you move with the keyboard. With this on it appears whenever anything is focused, so it is always clear where you are.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="visionFocusRings"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div>
+              <div class="label">Stop interface animation</div>
+              <div class="desc">Nothing in the browser fades, slides or scales. Separate from the system setting, so you can have a still browser without a still computer.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="visionReduceMotion"><span class="slider"></span></label>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-subhead">Seeing web pages</h3>
+          <div class="row">
+            <div>
+              <div class="label">Minimum text size</div>
+              <div class="desc">A floor, not a zoom. Text already larger than this is left as it is, so a page keeps its own headings and hierarchy and only the small print grows.</div>
+            </div>
+            <select class="inline-select" id="visionMinFontSize">
+              <option value="0">Off</option>
+              <option value="14">14 pixels</option>
+              <option value="16">16 pixels</option>
+              <option value="18">18 pixels</option>
+              <option value="20">20 pixels</option>
+            </select>
+          </div>
+          <div class="row">
+            <div>
+              <div class="label">Underline every link</div>
+              <div class="desc">Many sites mark links with colour alone, which does not help if colours are hard to tell apart. This underlines them everywhere.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="visionUnderlineLinks"><span class="slider"></span></label>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-subhead">Read aloud</h3>
+          <div class="row">
+            <div>
+              <div class="label">Read text under the pointer</div>
+              <div class="desc">Rest on a paragraph, a heading, a link or a button and Privoo speaks it. It works on web pages and on Privoo itself, so a tab title and a toolbar button are read the same way a paragraph is.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="readAloud"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div>
+              <div class="label">Move through the page with the keyboard</div>
+              <div class="desc">Hold <b>Alt</b> and press the down or up arrow to step through a page one block at a time, each one read out and scrolled into view. <b>Alt</b> and <b>Space</b> repeats the current one, and <b>Escape</b> stops. No pointer needed.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="readAloudKeys"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div>
+              <div class="label">Speaking speed</div>
+              <div class="desc">Uses whichever voice Windows is already set to, so it matches the rest of the system rather than introducing a different one.</div>
+            </div>
+            <select class="inline-select" id="readAloudRate">
+              <option value="75">Slower</option>
+              <option value="100">Normal</option>
+              <option value="125">Faster</option>
+              <option value="150">Fastest</option>
+            </select>
+          </div>
+          <div class="row">
+            <div>
+              <div class="desc">Worth being straight about who this helps. Reading on hover means aiming a pointer at text you can already see well enough to aim at, so it is at its best for low vision, or for anyone who finds long stretches of reading hard. If you cannot see the screen at all, the keyboard stepping above is the part built for you, and a real screen reader is still better than this: Narrator, NVDA and VoiceOver announce controls, states, tables and page landmarks, and they do it in every application rather than only in the browser. Privoo works alongside all of them, and this can be left off if you use one.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-subhead">Night light</h3>
+          <div class="row">
+            <div>
+              <div class="label">Warm the screen</div>
+              <div class="desc">Takes the blue out of the whole window, the toolbar and tab strip included, not just the page. Blue light late in the evening is the part that keeps you awake, and a warm screen is easier to read against a dark room.</div>
+            </div>
+            <select class="inline-select" id="nightLight">
+              <option value="0">Off</option>
+              <option value="1">Low</option>
+              <option value="2">Medium</option>
+              <option value="3">High</option>
+            </select>
+          </div>
+          <div class="row">
+            <div>
+              <div class="label">Only in the evening</div>
+              <div class="desc">Switches itself on and off at the hours below. Privoo uses the clock rather than the real sunset, because working out sunset means knowing where you are, and Privoo does not ask.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="nightLightAuto"><span class="slider"></span></label>
+          </div>
+          <div class="row">
+            <div>
+              <div class="label">From</div>
+            </div>
+            <select class="inline-select" id="nightLightFrom">
+              <option value="0">12 midnight</option>
+              <option value="1">1 am</option>
+              <option value="2">2 am</option>
+              <option value="3">3 am</option>
+              <option value="4">4 am</option>
+              <option value="5">5 am</option>
+              <option value="6">6 am</option>
+              <option value="7">7 am</option>
+              <option value="8">8 am</option>
+              <option value="9">9 am</option>
+              <option value="10">10 am</option>
+              <option value="11">11 am</option>
+              <option value="12">12 noon</option>
+              <option value="13">1 pm</option>
+              <option value="14">2 pm</option>
+              <option value="15">3 pm</option>
+              <option value="16">4 pm</option>
+              <option value="17">5 pm</option>
+              <option value="18">6 pm</option>
+              <option value="19">7 pm</option>
+              <option value="20">8 pm</option>
+              <option value="21" selected>9 pm</option>
+              <option value="22">10 pm</option>
+              <option value="23">11 pm</option>
+            </select>
+          </div>
+          <div class="row">
+            <div>
+              <div class="label">Until</div>
+            </div>
+            <select class="inline-select" id="nightLightTo">
+              <option value="0">12 midnight</option>
+              <option value="1">1 am</option>
+              <option value="2">2 am</option>
+              <option value="3">3 am</option>
+              <option value="4">4 am</option>
+              <option value="5">5 am</option>
+              <option value="6">6 am</option>
+              <option value="7" selected>7 am</option>
+              <option value="8">8 am</option>
+              <option value="9">9 am</option>
+              <option value="10">10 am</option>
+              <option value="11">11 am</option>
+              <option value="12">12 noon</option>
+              <option value="13">1 pm</option>
+              <option value="14">2 pm</option>
+              <option value="15">3 pm</option>
+              <option value="16">4 pm</option>
+              <option value="17">5 pm</option>
+              <option value="18">6 pm</option>
+              <option value="19">7 pm</option>
+              <option value="20">8 pm</option>
+              <option value="21">9 pm</option>
+              <option value="22">10 pm</option>
+              <option value="23">11 pm</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-subhead">Distance breaks</h3>
+          <div class="row">
+            <div>
+              <div class="label">Remind me to look away</div>
+              <div class="desc">A small card in the corner every so often, asking you to focus on something far off for twenty seconds. It never covers the page and it never takes the keyboard, and it goes away on its own if you ignore it.</div>
+            </div>
+            <select class="inline-select" id="eyeBreakMinutes">
+              <option value="0">Off</option>
+              <option value="20">Every 20 minutes</option>
+              <option value="30">Every 30 minutes</option>
+              <option value="45">Every 45 minutes</option>
+              <option value="60">Every hour</option>
+            </select>
+          </div>
+          <div class="row">
+            <div>
+              <div class="desc">To be straight about what this is: no browser setting can prevent shortsightedness, and one claiming to would be lying to you. What research does support is not holding a single close focus for hours at a time, which is the twenty twenty twenty rule, and time spent outside in daylight, which matters more than anything on this page and is not something software can give you. Privoo can do the one part it is placed to do, which is notice that you have been reading for an hour and say so.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="row">
+            <div>
+              <div class="label">Screen readers and magnifiers</div>
+              <div class="desc">Privoo deliberately does not include its own. Windows Narrator and Magnifier, VoiceOver on macOS, and Orca on Linux are better than anything that could be built into one application, and Privoo works with all of them. A worse copy of a system feature would not be a kindness.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- A placeholder, not a settings page. Nothing here reads or writes a
+           setting; the switches are decoration and refuse on purpose. When
+           these ship they become ordinary rows in their real sections and
+           this whole block goes. -->
+      <section id="beta" data-keywords="beta features experimental early access preview coming soon labs">
+        <h2>Beta Features</h2>
+
+        <div class="beta-stage">
+          <div class="beta-eyes" aria-hidden="true">👀</div>
+          <div class="beta-headline">Nothing is here yet…</div>
+          <p class="beta-sub">
+            Three things are being built. They are not ready, they are not
+            switchable, and the names are staying covered until they are.
+          </p>
+        </div>
+
+        <div class="beta-list" role="list">
+          <div class="beta-item" role="listitem" style="--n:0">
+            <span class="beta-num">01</span>
+            <span class="beta-lines">
+              <span class="beta-blur beta-blur-title">Parallel session isolation</span>
+              <span class="beta-blur beta-blur-desc">Runs each identity in its own network stack so two accounts on one site never see each other.</span>
+            </span>
+            <label class="switch beta-switch"><input type="checkbox" class="beta-toggle"><span class="slider"></span></label>
+          </div>
+          <div class="beta-item" role="listitem" style="--n:1">
+            <span class="beta-num">02</span>
+            <span class="beta-lines">
+              <span class="beta-blur beta-blur-title">Local page summarisation</span>
+              <span class="beta-blur beta-blur-desc">Reads and condenses a page entirely on this machine, with no request leaving it at all.</span>
+            </span>
+            <label class="switch beta-switch"><input type="checkbox" class="beta-toggle"><span class="slider"></span></label>
+          </div>
+          <div class="beta-item" role="listitem" style="--n:2">
+            <span class="beta-num">03</span>
+            <span class="beta-lines">
+              <span class="beta-blur beta-blur-title">Encrypted device sync</span>
+              <span class="beta-blur beta-blur-desc">Moves tabs between your own machines directly, with no server holding the key.</span>
+            </span>
+            <label class="switch beta-switch"><input type="checkbox" class="beta-toggle"><span class="slider"></span></label>
           </div>
         </div>
       </section>
@@ -1921,21 +2863,145 @@
 <script>
 const api = window.privooInternal;
 const TOGGLES = [
-  'verticalTabs', 'vtabsIntegrated', 'vtabsSearchPopup', 'searchPopupGlass', 'uiSounds', 'newTabBtnCircle', 'vtabsCenterIcons', 'darkMode', 'forceDarkMode', 'showHomeButton', 'showBookmarksBar',
-  'ntpShowWeather', 'ntpShowClock', 'ntpFocusedSearch', 'ntpShowQuickLinks', 'ntpShowGreeting', 'ntpNewsLink', 'ntpApplyPrivooBackground', 'ntpWallpaperAnimated', 'cryptojackingProtection', 'easyFilesEnabled', 'clearDataOnExit', 'downloadBoosterEnabled',
-  'increaseTransparency', 'aeroGradient', 'vibeEnabled', 'vibeOverPages', 'themeAutoVibe', 'compactMode', 'searchSuggestions',
-  'askDownloadPath', 'adBlocking', 'httpsUpgrade', 'httpsUpgradeShowNotice', 'blockThirdPartyCookies',
+  'verticalTabs', 'vtabsSearchPopup', 'searchPopupGlass', 'uiSounds', 'darkMode', 'forceDarkMode', 'showHomeButton', 'showBookmarksBar',
+  'ntpShowWeather', 'ntpShowClock', 'ntpShowStats', 'ntpFocusedSearch', 'ntpShowQuickLinks', 'ntpNewsLink', 'cryptojackingProtection', 'easyFilesEnabled', 'clearDataOnExit', 'downloadBoosterEnabled',
+  'ntpWallpaperFullBrowser', 'ntpWallpaperSound', 'ntpRandomWallpaper',
+  'vibeEnabled', 'vibeOverPages', 'compactMode', 'searchSuggestions',
+  'askDownloadPath', 'adBlocking', 'httpsUpgrade', 'httpsUpgradeShowNotice',
   'dnsOverHttps', 'adultContentBlocking', 'spoofUserAgent', 'canvasSpoofing', 'webrtcProtection',
   'doNotTrack', 'allowGeolocation', 'videoPopOut', 'lucidMode', 'strongerTrackingProtection',
-  'wobblyWindows',
-  'showSidebar', 'showTranslateButton', 'passwordManagerEnabled', 'preferPasswordLogin',
+  'pasteProtection', 'popupBlocking', 'tabHoverPreview', 'tabSnooze',
+  'visionHighContrast', 'visionBoldText', 'visionFocusRings', 'visionReduceMotion',
+  'visionUnderlineLinks', 'nightLightAuto', 'readAloud', 'readAloudKeys',
+  'wobblyWindows', 'semiTransparent',
+  'showSidebar', 'musicInToolbar', 'showTranslateButton', 'passwordManagerEnabled', 'preferPasswordLogin',
   'identityAutofillEnabled',
-  'musicEnabled',
-  'blockAdultSites', 'safeMode',
-  'hardwareAcceleration', 'lowEndDevice', 'discordRpc', 'syncDiscordTheme',
+  'blockAdultSites', 'safeMode', 'protectionEnabled',
+  'hardwareAcceleration', 'videoOverlayCompat', 'lowEndDevice', 'discordRpc', 'syncDiscordTheme',
   'minimizeToTray', 'restoreTabsOnLaunch', 'autoUpdates',
 ];
 let currentSettings = {};
+
+/* ── Wallpaper status ────────────────────────────────────────────────────
+   There is no gallery any more: a wallpaper is either a random photo, a file
+   the user picked, or nothing. This line just says which. */
+function paintWpSelection() {
+  const st = document.getElementById('wp-status');
+  if (!st) return;
+  const p = currentSettings.ntpWallpaperPath;
+  if (p) {
+    st.textContent = currentSettings.ntpWallpaperType === 'video'
+      ? 'Using your own video.'
+      : 'Using your own image.';
+  } else if (currentSettings.ntpRandomWallpaper) {
+    st.textContent = 'Using a random photo on each new tab.';
+  } else {
+    st.textContent = 'No wallpaper — the new tab uses a plain background.';
+  }
+}
+
+/* ── The collection ──────────────────────────────────────────────────────
+   Tiles are drawn from what main reports, not from a copy kept here: it
+   prunes entries whose file has gone, so anything it does not return is
+   something that would have been a tile opening nothing. */
+let _wpLib = [];
+
+function paintWpLibrary() {
+  const grid = document.getElementById('wp-lib');
+  if (!grid) return;
+  grid.innerHTML = '';
+  if (!_wpLib.length) {
+    const p = document.createElement('div');
+    p.className = 'wp-lib-empty';
+    p.textContent = 'Nothing kept yet. Add a few and they will appear here.';
+    grid.appendChild(p);
+    return;
+  }
+  for (const w of _wpLib) {
+    const tile = document.createElement('button');
+    tile.type = 'button';
+    tile.className = 'wp-tile' + (w.id === currentSettings.ntpWallpaperActiveId ? ' in-use' : '');
+    tile.title = w.name || 'Wallpaper';
+
+    // Served rather than read as a data URL: ten multi-megabyte photographs
+    // inlined into this page to draw ten thumbnails would be absurd.
+    const src = 'privoo://newtab/wallpaper/' + w.id;
+    if (w.type === 'video') {
+      const v = document.createElement('video');
+      v.src = src; v.muted = true; v.preload = 'metadata';
+      tile.appendChild(v);
+      const tag = document.createElement('span');
+      tag.className = 'wp-vid';
+      tag.textContent = 'VIDEO';
+      tile.appendChild(tag);
+    } else {
+      const img = document.createElement('img');
+      img.src = src; img.alt = '';
+      img.loading = 'lazy';
+      tile.appendChild(img);
+    }
+
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'wp-del';
+    del.title = 'Remove from collection';
+    del.setAttribute('aria-label', 'Remove from collection');
+    del.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6.2 4.8 4.8 6.2 10.6 12l-5.8 5.8 1.4 1.4L12 13.4l5.8 5.8 1.4-1.4L13.4 12l5.8-5.8-1.4-1.4L12 10.6z"/></svg>';
+    del.addEventListener('click', async (e) => {
+      // Without this the click also lands on the tile and sets the wallpaper
+      // you were in the middle of deleting.
+      e.preventDefault();
+      e.stopPropagation();
+      try { _wpLib = await api.wallpaperLibRemove(w.id); } catch { return; }
+      if (currentSettings.ntpWallpaperActiveId === w.id) {
+        currentSettings.ntpWallpaperActiveId = '';
+        currentSettings.ntpWallpaperPath = '';
+      }
+      paintWpLibrary();
+      paintWpSelection();
+      showToast('Removed from your collection');
+    });
+    tile.appendChild(del);
+
+    tile.addEventListener('click', async () => {
+      try { await api.wallpaperLibUse(w.id); } catch { return; }
+      currentSettings.ntpWallpaperActiveId = w.id;
+      currentSettings.ntpWallpaperPath = 'set';
+      currentSettings.ntpWallpaperType = w.type;
+      paintWpLibrary();
+      paintWpSelection();
+      showToast('Wallpaper changed');
+    });
+    grid.appendChild(tile);
+  }
+}
+
+async function loadWpLibrary() {
+  if (!api?.wallpaperLibList) return;
+  try { _wpLib = await api.wallpaperLibList(); } catch { _wpLib = []; }
+  paintWpLibrary();
+}
+
+document.getElementById('wp-lib-add')?.addEventListener('click', async () => {
+  if (!api?.wallpaperLibAdd) return;
+  try { _wpLib = await api.wallpaperLibAdd(); } catch { return; }
+  paintWpLibrary();
+});
+
+document.getElementById('wp-choose-image')?.addEventListener('click', async () => {
+  try { await api?.chooseNtpWallpaper?.(); } catch { /* cancelled */ }
+});
+document.getElementById('wp-choose-live')?.addEventListener('click', async () => {
+  try { await api?.chooseNtpLiveWallpaper?.(); } catch { /* cancelled */ }
+});
+document.getElementById('wp-clear')?.addEventListener('click', async () => {
+  try { await api?.clearNtpWallpaper?.(); } catch { /* ignore */ }
+  currentSettings.ntpWallpaperPath = '';
+  currentSettings.ntpWallpaperActiveId = '';
+  paintWpSelection();
+  paintWpLibrary();
+});
+
 let chosenProfile = '';
 let toastTimer = null;
 
@@ -1962,23 +3028,30 @@ function showLongToast(text) {
 
 function applyTheme(settings = currentSettings) {
   document.body.classList.toggle('dark', !!settings.darkMode);
-  document.body.classList.toggle('transparent-ui', !!settings.increaseTransparency);
   applyAccent(settings.accentColor);
 }
 
-// Default accent is the signature indigo unless the user picked a swatch or
-// a Theme retuned it to that theme's colour — matches applyAccentTriad() in
-// renderer.js so Settings previews the real accent.
+// Mirrors applyAccentTriad() in renderer.js exactly, so Settings previews the
+// real accent instead of its own idea of one. Two things it must get right:
+//   - '#ffffff' is the adaptive "Mono" accent, not literally white. Left
+//     unmapped it painted white toggles on a white card in light mode, which
+//     is how the switches became invisible.
+//   - --on-accent has to be derived from the accent's luminance, so whatever
+//     sits ON the accent (a toggle knob, button text) always contrasts with it.
 function applyAccent(themeHex) {
   const root = document.documentElement;
-  const fallback = document.body.classList.contains('dark') ? '#948ef2' : '#4f46e5';
-  const hex = (themeHex && /^#[0-9a-f]{6}$/i.test(themeHex)) ? themeHex : fallback;
+  const isDark = document.body.classList.contains('dark');
+  let hex = (themeHex && /^#[0-9a-f]{6}$/i.test(themeHex)) ? themeHex : (isDark ? '#ffffff' : '#101014');
+  if (hex.toLowerCase() === '#ffffff' && !isDark) hex = '#101014';
   root.style.setProperty('--accent', hex);
-  const m = hex.replace('#','').match(/.{2}/g);
-  const [r,g,b] = m.map(x=>parseInt(x,16));
-  const h = `rgb(${Math.min(255,Math.round(r+(255-r)*.18))},${Math.min(255,Math.round(g+(255-g)*.18))},${Math.min(255,Math.round(b+(255-b)*.18))})`;
-  root.style.setProperty('--accent-hover', h);
-  root.style.setProperty('--accent-soft', `rgba(${r},${g},${b},.18)`);
+  const [r,g,b] = hex.replace('#','').match(/.{2}/g).map(x=>parseInt(x,16));
+  const lum = (0.2126*r + 0.7152*g + 0.0722*b) / 255;
+  // A near-white accent has no headroom to brighten into, so hover darkens.
+  const mix = lum > 0.72 ? 0 : 255, k = lum > 0.72 ? 0.12 : 0.18;
+  root.style.setProperty('--accent-hover',
+    `rgb(${Math.round(r+(mix-r)*k)},${Math.round(g+(mix-g)*k)},${Math.round(b+(mix-b)*k)})`);
+  root.style.setProperty('--on-accent', lum > 0.6 ? '#1b1b1e' : '#ffffff');
+  root.style.setProperty('--accent-soft', `rgba(${r},${g},${b},${isDark ? '.16' : '.13'})`);
 }
 
 async function savePatch(patch, message = 'Settings saved') {
@@ -2067,12 +3140,23 @@ function renderThemeGallery(settings) {
   off.type = 'button';
   off.className = 'theme-card theme-off' + (!on ? ' active' : '');
   off.innerHTML = '<span>Off</span>';
-  off.addEventListener('click', async () => { await savePatch({ ntpWaveEnabled: false, vibeEnabled: false, ntpThemeMusic: 'none', ntpThemeId: '' }, 'Theme turned off'); renderThemeGallery(currentSettings); });
+  off.addEventListener('click', async () => {
+    const patch = { ntpWaveEnabled: false, vibeEnabled: false, ntpThemeMusic: 'none', ntpThemeId: '' };
+    // A theme may have retuned the accent — put back whatever was in use
+    // before it, so turning the theme off really does undo the theme.
+    if (currentSettings.accentBeforeTheme) {
+      patch.accentColor = currentSettings.accentBeforeTheme;
+      patch.accentBeforeTheme = '';
+    }
+    await savePatch(patch, 'Theme turned off');
+    renderAccentSwatches(currentSettings.accentColor);
+    renderThemeGallery(currentSettings);
+  });
   THEME_PRESETS.forEach(p => {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'theme-card' + (on && _sameColors(cur, p.colors) ? ' active' : '');
-    b.style.background = "url('privoo://newtab/themes/" + p.id + ".png') center/cover no-repeat, linear-gradient(135deg," + p.colors.join(',') + ")";
+    b.style.background = "linear-gradient(135deg," + p.colors.join(',') + ")";
     b.title = p.name;
     b.innerHTML = '<span>' + p.name + '</span>';
     b.addEventListener('click', async () => {
@@ -2099,7 +3183,6 @@ function renderThemeGallery(settings) {
 
 function updatePathDisplays(settings, downloadPath) {
   $('dl-path-display').textContent = downloadPath || '-';
-  $('homePage').value = settings.homePage || 'privoo://newtab/';
   renderAccentSwatches(settings.accentColor);
   const fss = $('fontSizeScale');
   if (fss) {
@@ -2340,6 +3423,7 @@ function importOptions(profilePath, kind) {
     kind,
     includeBookmarks: $('import-bookmarks').checked,
     includeHistory: $('import-history').checked,
+    includeCookies: !!$('import-cookies')?.checked,
   };
 }
 
@@ -2349,7 +3433,15 @@ async function runImport(profile) {
     showToast(result?.error || 'Import failed');
     return;
   }
-  showToast(`Imported ${result.bookmarksImported || 0} bookmarks and ${result.historyImported || 0} history items`);
+  const parts = [];
+  if (result.bookmarksImported) parts.push(result.bookmarksImported + " bookmarks");
+  if (result.historyImported)   parts.push(result.historyImported + " history items");
+  if (result.cookiesImported)   parts.push(result.cookiesImported + " cookies");
+  // Being explicit about skipped cookies matters: an undecryptable cookie is
+  // silently dropped, and without this the count would just look wrong.
+  let msg = parts.length ? ("Imported " + parts.join(", ")) : "Nothing new to import";
+  if (result.cookiesSkipped) msg += " (" + result.cookiesSkipped + " cookies could not be read)";
+  showToast(msg);
   await refreshSummary();
 }
 
@@ -2503,10 +3595,81 @@ async function init() {
   } catch {}
   const data = await api.getSettings();
   currentSettings = data.settings;
+  // The generated theme system and its background audio have been retired.
+  // Preserve personal wallpaper, dark mode and accent choices while clearing
+  // any legacy theme selection from older profiles.
+  if (currentSettings.ntpWaveEnabled || (currentSettings.ntpThemeMusic && currentSettings.ntpThemeMusic !== 'none') || currentSettings.accentBeforeTheme) {
+    currentSettings = await api.setSettings({
+      ntpWaveEnabled: false, ntpThemeId: '', ntpThemeMusic: 'none', vibeEnabled: false,
+      accentColor: currentSettings.accentBeforeTheme || currentSettings.accentColor,
+      accentBeforeTheme: '',
+    });
+  }
   // Cache provider catalog from main so the dropdown can populate.
   providersData = data.dohProviders || null;
   applyTheme(currentSettings);
   updatePathDisplays(currentSettings, data.downloadPath);
+
+  /* Beta toggles refuse, in place. Nothing here is bound to a setting —
+     nothing is read, nothing is written, and the switch never moves. The
+     refusal covers the row rather than being appended under it, so the list
+     does not jump while you are looking at it. */
+  // Which rows have been tried, across launches. Wrapped both ways: in a
+  // private window localStorage throws on access rather than coming back
+  // empty, and an easter egg is not worth an exception.
+  const POKED = 'privoo-beta-poked';
+  const pokedSet = () => {
+    try { return new Set(JSON.parse(localStorage.getItem(POKED) || '[]')); }
+    catch { return new Set(); }
+  };
+  const rememberPoke = (n) => {
+    try {
+      const set = pokedSet();
+      set.add(n);
+      localStorage.setItem(POKED, JSON.stringify([...set]));
+      return set;
+    } catch { return new Set([n]); }
+  };
+
+  const betaRows = [...document.querySelectorAll('.beta-item')];
+
+  for (const box of document.querySelectorAll('.beta-toggle')) {
+    box.addEventListener('click', (e) => {
+      e.preventDefault();
+      const row = box.closest('.beta-item');
+      if (!row || row.querySelector('.beta-nope')) return;
+      // The row shakes its head. Removed on animationend rather than on a
+      // timer, so pressing again straight away re-triggers it instead of
+      // doing nothing because the class had not come off yet.
+      row.classList.add('refused');
+      row.addEventListener('animationend', function off() {
+        row.classList.remove('refused');
+        row.removeEventListener('animationend', off);
+      });
+      // All three tried, at any point, on any launch: the page drops the
+      // polite version.
+      const seen = rememberPoke(betaRows.indexOf(row));
+      const allThree = betaRows.length > 0 && seen.size >= betaRows.length;
+
+      const nope = document.createElement('div');
+      nope.className = 'beta-nope' + (allThree ? ' cheeky' : '');
+      nope.innerHTML = allThree
+        ? '<b>Nice try lol \uD83D\uDE02</b><span>Still not ready. Still not switchable.</span>'
+        : '<b>Oops…</b><span>You can\u2019t do this yet.</span>';
+      row.appendChild(nope);
+      setTimeout(() => nope.remove(), 2400);
+    });
+  }
+
+  // One-time privacy note. Persisted the moment it is shown, not when it is
+  // dismissed: if the window is closed while it is on screen it has still
+  // been seen, and showing it again would make it a recurring message.
+  const privacyNote = $('privacy-note');
+  if (privacyNote && !currentSettings.settingsPrivacyNote1Seen) {
+    privacyNote.hidden = false;
+    api.setSettings({ settingsPrivacyNote1Seen: true });
+    $('privacy-note-x')?.addEventListener('click', () => { privacyNote.hidden = true; });
+  }
 
   // One-time notice: several features moved into the Extensions page.
   const moveNotice = $('ext-move-notice');
@@ -2543,18 +3706,31 @@ async function init() {
     $('ntpThemeMusicVolume').value = Math.round((currentSettings.ntpThemeMusicVolume ?? 0.4) * 100);
     $('ntpThemeMusicVolume').addEventListener('change', () => savePatch({ ntpThemeMusicVolume: (+$('ntpThemeMusicVolume').value) / 100 }, 'Music volume saved'));
   }
-  if ($('transparencyStyle')) {
-    $('transparencyStyle').value = currentSettings.transparencyStyle || 'frosted';
-    $('transparencyStyle').addEventListener('change', () => savePatch({ transparencyStyle: $('transparencyStyle').value }, 'Glass style updated'));
-  }
   if ($('searchBarStyle')) {
     $('searchBarStyle').value = currentSettings.searchBarStyle || (currentSettings.newSearchBarStyle ? 'soft' : 'classic');
     $('searchBarStyle').addEventListener('change', () => savePatch({ searchBarStyle: $('searchBarStyle').value }, 'Search bar style updated'));
   }
-  if ($('uiRoundness')) {
-    $('uiRoundness').value = currentSettings.uiRoundness || 'default';
-    $('uiRoundness').addEventListener('change', () => savePatch({ uiRoundness: $('uiRoundness').value }, 'Corner style updated'));
+  if ($('cursorStyle')) {
+    const row = $('cursor-custom-row');
+    const sync = () => { if (row) row.style.display = $('cursorStyle').value === 'custom' ? '' : 'none'; };
+    $('cursorStyle').value = currentSettings.cursorStyle || 'system';
+    sync();
+    $('cursorStyle').addEventListener('change', () => {
+      savePatch({ cursorStyle: $('cursorStyle').value }, 'Pointer updated');
+      sync();
+    });
+    $('cursor-pick')?.addEventListener('click', async () => {
+      try {
+        const res = await api.chooseCursorImage();
+        if (res && res.error) { showToast(res.error); return; }
+        if (res && res.path) showToast('Pointer updated');
+      } catch { showToast('Could not use that image'); }
+    });
+    $('cursor-clear')?.addEventListener('click', async () => {
+      try { await api.clearCursorImage(); $('cursorStyle').value = 'system'; sync(); showToast('Pointer reset'); } catch {}
+    });
   }
+
   if ($('customChromeCss')) {
     $('customChromeCss').value = currentSettings.customChromeCss || '';
     let _ccTimer;
@@ -2571,6 +3747,38 @@ async function init() {
     option.textContent = engine.name;
     searchSelect.appendChild(option);
   }
+  // How long before a tab goes to sleep. The switch above is the on/off; this
+  // is only the delay, so it stays enabled and simply has no effect while the
+  // switch is off — greying it out would hide the setting you came to change.
+  // The two vision dropdowns. Both are numbers, so they are read back as
+  // numbers rather than the strings a <select> hands over.
+  for (const [id, fallback] of [['visionUiScale', 100], ['visionMinFontSize', 0],
+                               ['nightLight', 0], ['nightLightFrom', 21],
+                               ['nightLightTo', 7], ['eyeBreakMinutes', 0],
+                               ['readAloudRate', 100]]) {
+    const sel = $(id);
+    if (!sel) continue;
+    sel.value = String(currentSettings[id] ?? fallback);
+    sel.addEventListener('change', () => {
+      const what = id.startsWith('nightLight') ? 'Night light updated'
+        : id === 'eyeBreakMinutes' ? 'Break reminders updated'
+        : id.startsWith('readAloud') ? 'Read aloud updated'
+        : 'Accessibility updated';
+      // || fallback is wrong for a genuine zero, and every one of these has
+      // 0 as a real value meaning "off". Number() first, then check.
+      const n = Number(sel.value);
+      savePatch({ [id]: Number.isFinite(n) ? n : fallback }, what);
+    });
+  }
+
+  const snoozeSel = $('tabSnoozeMinutes');
+  if (snoozeSel) {
+    snoozeSel.value = String(currentSettings.tabSnoozeMinutes ?? 30);
+    snoozeSel.addEventListener('change', () => {
+      savePatch({ tabSnoozeMinutes: Number(snoozeSel.value) || 30 }, 'Snooze delay updated');
+    });
+  }
+
   searchSelect.value = currentSettings.searchEngine || 'google';
   const customSearchRow = $('custom-search-row');
   const customSearchInp = $('customSearchUrl');
@@ -2589,14 +3797,68 @@ async function init() {
     });
   }
 
+  // Region preset — writes the individual settings it bundles, then refreshes
+  // the controls that show them so Search/DNS/Language visibly move too.
+  const REGION_PRESETS = {
+    cn: {
+      searchEngine: 'baidu',
+      dnsOverHttps: true,
+      dohProvider: 'alidns',
+      preferredLanguage: 'zh-CN',
+    },
+  };
+  // Third-party cookies. Backed by the same `blockThirdPartyCookies` boolean the
+  // network layer already checks - this is purely a clearer way to say it, since
+  // a switch labelled "block" leaves it ambiguous which way is which.
+  const tpcSelect = $('thirdPartyCookieMode');
+  if (tpcSelect) {
+    tpcSelect.value = currentSettings.blockThirdPartyCookies === false ? 'allow' : 'block';
+    tpcSelect.addEventListener('change', () => {
+      const block = tpcSelect.value !== 'allow';
+      currentSettings.blockThirdPartyCookies = block;
+      savePatch({ blockThirdPartyCookies: block });
+    });
+  }
+
+  const regionSelect = $('regionPreset');
+  if (regionSelect) {
+    regionSelect.value = currentSettings.regionPreset || '';
+    regionSelect.addEventListener('change', () => {
+      const key = regionSelect.value;
+      const preset = REGION_PRESETS[key];
+      // Switching back to Default deliberately changes nothing else: the user
+      // may have hand-tuned search or DNS since, and silently reverting those
+      // would be worse than leaving them where they are.
+      const patch = { regionPreset: key, ...(preset || {}) };
+      savePatch(patch);
+      Object.assign(currentSettings, patch);
+      if (preset) {
+        if (searchSelect) { searchSelect.value = preset.searchEngine; syncCustomSearchRow(); }
+        const langSel = $('preferredLanguage');
+        if (langSel) langSel.value = preset.preferredLanguage;
+        const dohToggle = $('dnsOverHttps');
+        if (dohToggle) dohToggle.checked = true;
+        if ($('dohProvider') && providersData) populateDohProviders(currentSettings);
+        updateDohServerRow(currentSettings);
+      }
+    });
+  }
+
   // These settings default to ON when unset — treat undefined as true.
-  const DEFAULT_ON = new Set(['restoreTabsOnLaunch', 'autoUpdates', 'adBlocking', 'httpsUpgrade', 'passwordManagerEnabled', 'syncDiscordTheme', 'vibeOverPages', 'ntpShowGreeting', 'cryptojackingProtection', 'easyFilesEnabled']);
+  const DEFAULT_ON = new Set(['restoreTabsOnLaunch', 'autoUpdates', 'adBlocking', 'httpsUpgrade', 'passwordManagerEnabled', 'syncDiscordTheme', 'vibeOverPages', 'cryptojackingProtection', 'easyFilesEnabled', 'videoOverlayCompat', 'musicInToolbar']);
 
   const ollamaModelInp = $('ollamaModel');
   if (ollamaModelInp) {
     ollamaModelInp.value = currentSettings.ollamaModel || 'llama3.2';
     ollamaModelInp.addEventListener('change', () => {
       savePatch({ ollamaModel: ollamaModelInp.value.trim() || 'llama3.2' });
+    });
+  }
+  const musicPlayerSel = $('sidebarMusicPlayer');
+  if (musicPlayerSel) {
+    musicPlayerSel.value = currentSettings.sidebarMusicPlayer || '';
+    musicPlayerSel.addEventListener('change', () => {
+      savePatch({ sidebarMusicPlayer: musicPlayerSel.value });
     });
   }
   const mobileDeviceSel = $('mobileEmulationDevice');
@@ -2619,7 +3881,18 @@ async function init() {
     const input = $(id);
     if (!input) continue;
     input.checked = id in currentSettings ? !!currentSettings[id] : DEFAULT_ON.has(id);
+    // The rail's real source of truth is sidebarMode ('on'|'off'|'hover') —
+    // showSidebar alone is a legacy mirror the browser ignores, so reflect
+    // and write both or the toggle does nothing.
+    if (id === 'showSidebar') {
+      const mode = currentSettings.sidebarMode || (currentSettings.showSidebar === false ? 'off' : 'on');
+      input.checked = mode !== 'off';
+    }
     input.addEventListener('change', () => {
+      if (id === 'showSidebar') {
+        savePatch({ showSidebar: input.checked, sidebarMode: input.checked ? 'on' : 'off' });
+        return;
+      }
       // 18+ blocker: every time the user flips it ON, surface a real modal
       // disclaimer. No public blocklist is perfect — we want to set
       // expectations honestly before they rely on it. The modal also gives
@@ -2642,7 +3915,7 @@ async function init() {
         const row = $('ollama-model-row');
         if (row) row.style.display = input.checked ? '' : 'none';
       }
-      if (id === 'hardwareAcceleration' || id === 'lowEndDevice' || id === 'cryptojackingProtection') showToast('Restart Privoo to apply this change');
+      if (id === 'hardwareAcceleration' || id === 'lowEndDevice' || id === 'cryptojackingProtection' || id === 'videoOverlayCompat') showToast('Restart Privoo to apply this change');
     });
   }
 
@@ -2761,10 +4034,6 @@ async function init() {
     });
   }
 
-  $('homePage').addEventListener('change', () => {
-    const value = $('homePage').value.trim() || 'privoo://newtab/';
-    savePatch({ homePage: value });
-  });
 
   if ($('fontSizeScale')) {
     $('fontSizeScale').addEventListener('change', () => {
@@ -2843,25 +4112,6 @@ async function init() {
 
   // yt-dlp path picker removed — auto-installer handles binary + updates.
 
-  $('choose-music').addEventListener('click', async () => {
-    const path = await api.chooseMusicFile();
-    if (path) {
-      const fresh = await api.getSettings();
-      currentSettings = fresh.settings;
-      updatePathDisplays(currentSettings, fresh.downloadPath);
-      showToast('Music file selected');
-    }
-  });
-  $('clear-music').addEventListener('click', () => {
-    savePatch({ musicPath: null, musicEnabled: false }, 'Music cleared');
-    if ($('musicEnabled')) $('musicEnabled').checked = false;
-    if ($('music-path-display')) $('music-path-display').textContent = 'No file selected.';
-  });
-  $('musicVolume')?.addEventListener('input', function() {
-    const vol = parseInt(this.value, 10) / 100;
-    if ($('music-vol-label')) $('music-vol-label').textContent = this.value + '%';
-    savePatch({ musicVolume: vol });
-  });
 
   $('open-clear').addEventListener('click', openClearModal);
 
@@ -2944,13 +4194,36 @@ async function init() {
 
   renderProfiles(await api.listBrowserProfiles());
   await refreshSummary();
+  paintWpSelection();
+  loadWpLibrary();
+
+  // Deep link: privoo://settings#wallpaper-card scrolls straight to a card.
+  // Used by the "Choose a wallpaper" row in the Customize panel, so that
+  // opening Settings from there lands on the thing you asked for.
+  if (location.hash) {
+    const target = document.querySelector(location.hash);
+    if (target) {
+      const section = target.closest('section');
+      if (section) setActive(section.id);
+      // Wait a frame so the card has laid out and the scroll lands on its
+      // real position rather than its pre-paint one.
+      requestAnimationFrame(() => target.scrollIntoView({ block: 'start', behavior: 'smooth' }));
+    }
+  }
 
   api.onSettingsChanged?.((settings) => {
     try {
       currentSettings = settings;
       applyTheme(settings);
+      paintWpSelection();
       for (const id of TOGGLES) {
-        if ($(id)) $(id).checked = !!settings[id];
+        if (!$(id)) continue;
+        if (id === 'showSidebar') {
+          const mode = settings.sidebarMode || (settings.showSidebar === false ? 'off' : 'on');
+          $(id).checked = mode !== 'off';
+        } else {
+          $(id).checked = !!settings[id];
+        }
       }
       syncVibeControls(settings);
       updatePathDisplays(settings, $('dl-path-display').textContent);
@@ -3220,6 +4493,10 @@ function enhanceSelect(select) {
       list.appendChild(item);
     });
   }
+  // EVERY coordinate is rounded. A fixed-position popup on a half pixel has
+  // its text rasterised off the pixel grid, which is what "fuzzy" was: the
+  // list opens upward whenever there is not room below it — most of them, on
+  // a page this long — and `bottom` was the one value left unrounded.
   function positionList() {
     const r = trigger.getBoundingClientRect();
     const maxHeight = 280;
@@ -3229,7 +4506,7 @@ function enhanceSelect(select) {
     list.style.minWidth = Math.round(r.width) + 'px';
     if (openUpward) {
       list.style.top = '';
-      list.style.bottom = (window.innerHeight - r.top + 6) + 'px';
+      list.style.bottom = Math.round(window.innerHeight - r.top + 6) + 'px';
     } else {
       list.style.bottom = '';
       list.style.top = Math.round(r.bottom + 6) + 'px';
@@ -3278,6 +4555,470 @@ function enhanceSelect(select) {
 document.querySelectorAll('select').forEach(enhanceSelect);
 
 init();
+
+// ── Privoo Guard ──────────────────────────────────────────────────────
+// Everything here degrades gracefully when ClamAV is absent: the section still
+// renders, it just tells you what to install and hides the scan controls.
+(function initProtection() {
+  const $$ = (id) => document.getElementById(id);
+  const statusEl  = $$("prot-status");
+  const installRow= $$("prot-install-row");
+  const scanRow   = $$("prot-scan-row");
+  const resultsRow= $$("prot-results-row");
+  const progress  = $$("prot-progress");
+  const threatsEl = $$("prot-threats");
+  const cancelBtn = $$("prot-cancel");
+  const barEl     = $$("prot-bar");
+  const pctEl     = $$("prot-progress-pct");
+  const countEl   = $$("prot-progress-count");
+  const fileEl    = $$("prot-progress-file");
+  const bulkEl    = $$("prot-bulk");
+  const quarRow   = $$("prot-quarantine-row");
+  const quarListEl= $$("prot-quarantine-list");
+  if (!statusEl) return;
+
+  let installed = false;
+
+  let installing = false;
+
+  // Threats from the scan that is running (or last ran), keyed by path so a
+  // bulk action and a per-row action cannot disagree about what is left.
+  const threatRows = new Map();
+
+  // pct === null means the file count is still being worked out, so there is
+  // no honest percentage to draw yet.
+  function setProgressBar(pct, state) {
+    if (!barEl) return;
+    barEl.classList.toggle("indeterminate", pct === null);
+    barEl.classList.toggle("done", state === "done");
+    barEl.classList.toggle("found", state === "found");
+    if (pct === null) barEl.style.width = "";
+    else barEl.style.width = pct + "%";
+    if (pctEl) pctEl.textContent = pct === null ? "Counting files…" : pct + "%";
+  }
+  function resetProgress() {
+    threatRows.clear();
+    threatsEl.innerHTML = "";
+    if (bulkEl) bulkEl.style.display = "none";
+    setProgressBar(null, null);
+    if (countEl) countEl.textContent = "";
+    if (fileEl) fileEl.textContent = "";
+  }
+  function elapsed(ms) {
+    const s = Math.floor(Number(ms || 0) / 1000);
+    if (s < 1) return "";
+    if (s < 60) return s + "s elapsed";
+    return Math.floor(s / 60) + "m " + (s % 60) + "s elapsed";
+  }
+  // Only offer the bulk buttons once there is more than one thing to act on.
+  function paintBulk() {
+    if (!bulkEl) return;
+    const pending = [...threatRows.values()].filter((r) => !r.settled).length;
+    bulkEl.style.display = pending > 1 ? "" : "none";
+  }
+
+  async function refresh() {
+    let st = null;
+    try { st = await api.protectionStatus(); } catch { /* IPC unavailable */ }
+    installed = !!(st && st.installed);
+    installing = !!(st && st.installing);
+    const on = !!(currentSettings && currentSettings.protectionEnabled);
+    const managed = !!(st && st.managed);
+    const sigs = !!(st && st.hasDatabase);
+
+    if (!st) {
+      statusEl.textContent = "Unavailable.";
+      statusEl.className = "prot-status";
+    } else if (installed && (!managed || sigs)) {
+      const v = (st.version || "").split("/")[0].trim();
+      statusEl.textContent = v ? ("Ready — " + v) : "Ready.";
+      statusEl.className = "prot-status ok";
+    } else if (installed && managed && !sigs) {
+      statusEl.textContent = "Installed, signatures missing.";
+      statusEl.className = "prot-status missing";
+    } else {
+      statusEl.textContent = "Not installed.";
+      statusEl.className = "prot-status missing";
+    }
+
+    // Install controls while missing; scan controls once present AND enabled;
+    // signature management only for an install Privoo owns.
+    if (installRow) installRow.style.display = (installed || installing) ? "none" : "";
+    const iRow = $("prot-installing-row");
+    if (iRow) iRow.style.display = installing ? "" : "none";
+    const mRow = $("prot-manage-row");
+    if (mRow) mRow.style.display = (managed && !installing) ? "" : "none";
+    if (scanRow) scanRow.style.display = (installed && on && (!managed || sigs)) ? "" : "none";
+
+    const rmRow = $("prot-remove-row");
+    if (rmRow) rmRow.style.display = (installed && !installing) ? "" : "none";
+    const rmDesc = $("prot-remove-desc");
+    if (rmDesc) {
+      rmDesc.textContent = managed
+        ? "Delete the copy of ClamAV that Privoo downloaded, including its signature database."
+        : "Stop using this ClamAV install. Privoo did not install it, so the program itself is left alone.";
+    }
+    const rmBtn = $("prot-remove-btn");
+    if (rmBtn) rmBtn.textContent = managed ? "Remove" : "Stop using it";
+    if (quarRow) quarRow.style.display = (installed && on) ? "" : "none";
+    if (installed && on) refreshQuarantine();
+
+    const noAuto = st && st.canAutoInstall === false;
+    const desc = $("prot-install-desc");
+    const btn = $("prot-install");
+    if (noAuto && desc && btn) {
+      desc.textContent = "Automatic install is Windows-only. Install ClamAV with your package manager (brew, apt or dnf), then use Locate to point Privoo at clamscan.";
+      btn.style.display = "none";
+    }
+  }
+
+  const installProgress = () => $("prot-install-progress");
+
+  $("prot-install")?.addEventListener("click", async () => {
+    const pr = installProgress();
+    if (pr) pr.textContent = "Starting…";
+    const iRow = $("prot-installing-row");
+    if (iRow) iRow.style.display = "";
+    if (installRow) installRow.style.display = "none";
+    try {
+      await api.protectionInstall();
+    } catch {
+      if (pr) pr.textContent = "Install failed.";
+    }
+    refresh();
+  });
+
+  $("prot-check")?.addEventListener("click", async () => {
+    const desc = $("prot-install-desc");
+    const previous = desc ? desc.textContent : "";
+    if (desc) desc.textContent = "Looking for ClamAV on this computer…";
+    try {
+      const res = await api.protectionDetect();
+      if (res && res.found) {
+        showToast("Found ClamAV at " + res.path);
+        refresh();
+      } else {
+        if (desc) desc.textContent = "No existing ClamAV found. Install it below, or use Locate if you know where it is.";
+      }
+    } catch {
+      if (desc) desc.textContent = previous;
+      showToast("Could not check for an install");
+    }
+  });
+
+  $("prot-remove-btn")?.addEventListener("click", async () => {
+    try {
+      await api.protectionUninstall();
+      showToast("Privoo Guard removed");
+    } catch {}
+    refresh();
+  });
+
+  $("prot-update-sigs")?.addEventListener("click", async () => {
+    const iRow = $("prot-installing-row");
+    if (iRow) iRow.style.display = "";
+    const pr = installProgress();
+    if (pr) pr.textContent = "Updating signatures…";
+    try { await api.protectionUpdateSignatures(); } catch {}
+    refresh();
+  });
+
+  $("prot-uninstall")?.addEventListener("click", async () => {
+    try { await api.protectionUninstall(); showToast("Privoo Guard removed"); } catch {}
+    refresh();
+  });
+
+  // Live progress from the background install.
+  api.onProtectionInstallEvent?.((ev) => {
+    const pr = installProgress();
+    if (!ev || !pr) return;
+    if (ev.type === "progress") {
+      const pct = (typeof ev.percent === "number" && ev.phase === "engine") ? (" " + ev.percent + "%") : "";
+      pr.textContent = (ev.message || "Working…") + pct;
+    } else if (ev.type === "done") {
+      pr.textContent = "Installed.";
+      showToast("Privoo Guard ready");
+      refresh();
+    } else if (ev.type === "error") {
+      pr.textContent = ev.message || "Install failed.";
+      refresh();
+    }
+  });
+
+  $$("prot-locate")?.addEventListener("click", async () => {
+    try {
+      const chosen = await api.protectionLocate();
+      if (chosen) { showToast("ClamAV located"); refresh(); }
+    } catch { showToast("Could not set that path"); }
+  });
+
+  // The scan progress toast lives in the browser window and is driven by the
+  // app-wide protection-scan-event broadcast, so nothing is needed here. These
+  // exist so the call sites read clearly.
+  function showScanToast() { /* handled by the main renderer */ }
+  function hideScanToast() { /* handled by the main renderer */ }
+
+  function startScan(kind) {
+    if (!installed) return;
+    resetProgress();
+    resultsRow.style.display = "";
+    progress.textContent = "Scanning…";
+    cancelBtn.style.display = "";
+    api.protectionScan({ kind }).then((r) => {
+      if (r && r.ok === false) { progress.textContent = r.error || "Could not start."; cancelBtn.style.display = "none"; }
+    }).catch(() => { progress.textContent = "Could not start."; cancelBtn.style.display = "none"; });
+  }
+  $("prot-quick")?.addEventListener("click", () => startScan("quick"));
+  async function startCustomScan(mode) {
+    if (!installed) return;
+    let target = null;
+    try { target = await api.protectionPickTarget(mode); } catch { /* cancelled */ }
+    if (!target) return;
+    resetProgress();
+    resultsRow.style.display = "";
+    progress.textContent = "Scanning…";
+    cancelBtn.style.display = "";
+    showScanToast(target);
+    api.protectionScan({ kind: "custom", paths: [target] }).then((r) => {
+      if (r && r.ok === false) {
+        progress.textContent = r.error || "Could not start.";
+        cancelBtn.style.display = "none";
+        hideScanToast();
+      }
+    }).catch(() => {
+      progress.textContent = "Could not start.";
+      cancelBtn.style.display = "none";
+      hideScanToast();
+    });
+  }
+  $("prot-folder")?.addEventListener("click", () => startCustomScan("folder"));
+  $("prot-file")?.addEventListener("click", () => startCustomScan("file"));
+  $$("prot-full") ?.addEventListener("click", () => startScan("full"));
+  cancelBtn?.addEventListener("click", () => {
+    api.protectionCancel();
+    progress.textContent = "Stopped.";
+    cancelBtn.style.display = "none";
+    // Freeze the bar where it is rather than leaving it sweeping forever.
+    if (barEl) {
+      if (barEl.classList.contains("indeterminate")) barEl.style.width = "0%";
+      barEl.classList.remove("indeterminate");
+    }
+    if (fileEl) fileEl.textContent = "";
+  });
+
+  // Build one detection's row. Every action is offered here rather than in a
+  // dialog, because deciding what to do about a hit is the whole point of the
+  // results list: look at it, quarantine it, delete it, or decide it is fine.
+  function addThreatRow(ev) {
+    if (!ev.path || threatRows.has(ev.path)) return;
+
+    const row = document.createElement("div");
+    row.className = "prot-threat";
+    const b = document.createElement("b"); b.textContent = ev.threat || "Threat";
+    const sp = document.createElement("span"); sp.textContent = ev.path || "";
+    const actions = document.createElement("div"); actions.className = "prot-threat-actions";
+
+    const quarantine = document.createElement("button"); quarantine.textContent = "Quarantine";
+    const remove = document.createElement("button"); remove.textContent = "Remove"; remove.className = "danger";
+    const reveal = document.createElement("button"); reveal.textContent = "Show in folder";
+    const ignore = document.createElement("button"); ignore.textContent = "Ignore";
+
+    const state = { settled: false, path: ev.path, threat: ev.threat || "" };
+    threatRows.set(ev.path, state);
+
+    function busy(on) { for (const el of [quarantine, remove, reveal, ignore]) el.disabled = on; }
+    // "Settled" means this row no longer needs a decision, so it drops out of
+    // the bulk actions and stops looking like an open alarm.
+    function settle(label) {
+      state.settled = true;
+      row.classList.add("settled");
+      actions.innerHTML = "";
+      const done = document.createElement("span");
+      done.className = "prot-threat-done";
+      done.textContent = label;
+      actions.appendChild(done);
+      paintBulk();
+      refreshQuarantine();
+    }
+    state.settle = settle;
+
+    quarantine.addEventListener("click", async () => {
+      busy(true);
+      const r = await api.protectionQuarantineThreat?.(ev.path, ev.threat);
+      if (r?.ok) { settle("Quarantined"); showToast("Threat quarantined"); }
+      else { busy(false); if (!r?.canceled) showToast(r?.error || "Could not quarantine file"); }
+    });
+    remove.addEventListener("click", async () => {
+      busy(true);
+      const r = await api.protectionRemoveThreat?.(ev.path);
+      if (r?.ok) { settle("Removed"); showToast("Threat removed"); }
+      else { busy(false); if (!r?.canceled) showToast(r?.error || "Could not remove file"); }
+    });
+    reveal.addEventListener("click", async () => {
+      const r = await api.protectionRevealThreat?.(ev.path);
+      if (r && r.ok === false) showToast(r.error || "Could not open that folder");
+    });
+    ignore.addEventListener("click", () => settle("Ignored"));
+
+    actions.append(quarantine, remove, reveal, ignore);
+    row.append(b, sp, actions);
+    threatsEl.appendChild(row);
+    paintBulk();
+  }
+
+  async function bulkAct(action) {
+    const items = [...threatRows.values()]
+      .filter((r) => !r.settled)
+      .map((r) => ({ path: r.path, threat: r.threat }));
+    if (!items.length) return;
+    const r = await api.protectionActOnThreats?.(action, items);
+    if (!r || r.ok === false) {
+      if (!r?.canceled) showToast(r?.error || "Could not complete that");
+      return;
+    }
+    const label = action === "remove" ? "Removed" : "Quarantined";
+    let failed = 0;
+    for (const res of r.results || []) {
+      const state = threatRows.get(res.path);
+      if (res.ok) state?.settle?.(label);
+      else failed++;
+    }
+    showToast(failed
+      ? (r.done + " done, " + failed + " failed")
+      : (r.done + " threat" + (r.done === 1 ? "" : "s") + " " + label.toLowerCase()));
+  }
+  $("prot-quarantine-all")?.addEventListener("click", () => bulkAct("quarantine"));
+  $("prot-remove-all")?.addEventListener("click", () => bulkAct("remove"));
+
+  api.onProtectionScanEvent?.((ev) => {
+    if (!ev) return;
+    if (ev.type === "start") {
+      resetProgress();
+      progress.textContent = "Scanning…";
+    } else if (ev.type === "progress") {
+      // ev.counting is true while the file count is still a rising lower
+      // bound; dividing by it then would show a percentage that overshoots
+      // and falls back, so the count itself is the live figure until it
+      // settles.
+      const total = Number(ev.total || 0);
+      const scanned = Number(ev.scanned || 0);
+      const loading = ev.phase === "loading";
+      const known = total > 0 && !ev.counting && !loading;
+      const pct = known ? Math.min(99, Math.round((scanned / total) * 100)) : null;
+      setProgressBar(pct, null);
+      if (loading) {
+        // ClamAV loads its whole signature database before it looks at a
+        // single file. That pause used to look like a hang.
+        progress.textContent = "Loading virus definitions…";
+        if (countEl) countEl.textContent = elapsed(ev.elapsedMs);
+      } else {
+        progress.textContent = known
+          ? ("Scanning… " + pct + "%")
+          : "Scanning… working out how many files there are";
+        if (countEl) {
+          countEl.textContent = known
+            ? (scanned.toLocaleString() + " of " + total.toLocaleString() + " files")
+            : (total > 0
+                ? (scanned.toLocaleString() + " checked, " + total.toLocaleString() + " found so far")
+                : scanned.toLocaleString() + " checked");
+        }
+      }
+      if (fileEl) fileEl.textContent = loading
+        ? "First run takes longest — the definitions are several hundred megabytes."
+        : (ev.path || "");
+    } else if (ev.type === "threat") {
+      addThreatRow(ev);
+    } else if (ev.type === "done") {
+      cancelBtn.style.display = "none";
+      setProgressBar(100, ev.infected ? "found" : "done");
+      if (fileEl) fileEl.textContent = "";
+      if (countEl) countEl.textContent = Number(ev.scanned || 0).toLocaleString() + " files checked";
+      progress.textContent = ev.infected
+        ? (ev.infected + " threat" + (ev.infected === 1 ? "" : "s") + " found across " + ev.scanned + " files.")
+        : ("No threats found. " + ev.scanned + " files checked.");
+      // A scan that ran elsewhere still has to populate this list.
+      for (const t of ev.threats || []) addThreatRow(t);
+      paintBulk();
+    } else if (ev.type === "error") {
+      cancelBtn.style.display = "none";
+      if (barEl) {
+        if (barEl.classList.contains("indeterminate")) barEl.style.width = "0%";
+        barEl.classList.remove("indeterminate");
+      }
+      if (fileEl) fileEl.textContent = "";
+      progress.textContent = ev.message || "Scan failed.";
+    }
+  });
+
+  // ── Quarantine list ──────────────────────────────────────────────────────
+  async function refreshQuarantine() {
+    if (!quarListEl) return;
+    let items = [];
+    try {
+      const r = await api.protectionQuarantineList?.();
+      items = (r && r.items) || [];
+    } catch { /* bridge unavailable */ }
+
+    const on = !!(currentSettings && currentSettings.protectionEnabled);
+    if (quarRow) quarRow.style.display = (installed && on) ? "" : "none";
+
+    quarListEl.innerHTML = "";
+    if (!items.length) {
+      const empty = document.createElement("div");
+      empty.className = "prot-q-empty";
+      empty.textContent = "Nothing in quarantine.";
+      quarListEl.appendChild(empty);
+      return;
+    }
+    for (const item of items) {
+      const el = document.createElement("div");
+      el.className = "prot-q-item";
+      const name = document.createElement("div");
+      name.className = "prot-q-name";
+      name.textContent = item.name || item.id;
+      const meta = document.createElement("div");
+      meta.className = "prot-q-meta";
+      const when = item.at ? new Date(item.at).toLocaleString() : "";
+      meta.textContent = [item.threat, item.original, when].filter(Boolean).join(" · ");
+      const actions = document.createElement("div");
+      actions.className = "prot-threat-actions";
+      const restore = document.createElement("button"); restore.textContent = "Restore";
+      const del = document.createElement("button"); del.textContent = "Delete"; del.className = "danger";
+      restore.addEventListener("click", async () => {
+        restore.disabled = del.disabled = true;
+        const r = await api.protectionQuarantineRestore?.(item.id);
+        if (r?.ok) { showToast("File restored"); refreshQuarantine(); }
+        else { restore.disabled = del.disabled = false; if (!r?.canceled) showToast(r?.error || "Could not restore"); }
+      });
+      del.addEventListener("click", async () => {
+        restore.disabled = del.disabled = true;
+        const r = await api.protectionQuarantineDelete?.(item.id);
+        if (r?.ok) { showToast("Deleted"); refreshQuarantine(); }
+        else { restore.disabled = del.disabled = false; if (!r?.canceled) showToast(r?.error || "Could not delete"); }
+      });
+      actions.append(restore, del);
+      el.append(name, meta, actions);
+      quarListEl.appendChild(el);
+    }
+  }
+
+  $("prot-q-refresh")?.addEventListener("click", refreshQuarantine);
+  $("prot-q-open")?.addEventListener("click", async () => {
+    const r = await api.protectionQuarantineOpen?.();
+    if (r && r.ok === false) showToast(r.error || "Could not open the folder");
+  });
+  $("prot-q-empty")?.addEventListener("click", async () => {
+    const r = await api.protectionQuarantineEmpty?.();
+    if (r?.ok) { showToast(r.removed ? (r.removed + " file" + (r.removed === 1 ? "" : "s") + " deleted") : "Quarantine already empty"); refreshQuarantine(); }
+    else if (!r?.canceled) showToast(r?.error || "Could not empty the quarantine");
+  });
+
+  // Flipping the toggle should reveal/hide the scan controls immediately.
+  $$("protectionEnabled")?.addEventListener("change", () => setTimeout(refresh, 60));
+
+  refresh();
+})();
+
 </script>
 
 <!-- ── What's New: Your Vibe popup ── -->

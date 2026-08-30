@@ -8,7 +8,7 @@
 *{box-sizing:border-box;margin:0;padding:0;font-family:"Inter","Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
 html{height:100%;background:transparent}
 body{height:100%;background:#f2f1f9;color:#26243a;user-select:none;display:flex;flex-direction:column}
-body.dark{background:#202124;color:#eceaf6;color-scheme:dark}
+body.dark{background:#1e1e21;color:#eceaf6;color-scheme:dark}
 button,input{font:inherit}
 button{cursor:default;border:none;background:transparent;color:inherit}
 
@@ -17,29 +17,29 @@ header{
   padding:16px 28px;display:flex;align-items:center;gap:12px;
   position:sticky;top:0;z-index:10;flex-shrink:0;flex-wrap:wrap
 }
-body.dark header{background:#202124;border-bottom-color:#5f6368}
+body.dark header{background:#1e1e21;border-bottom-color:#4d4d57}
 h1{font-size:20px;font-weight:500;margin-right:auto}
 .ollama-badge{
   display:flex;align-items:center;gap:6px;font-size:12px;color:#6d6a85;
   padding:5px 10px;border-radius:999px;background:#ece9f7;
   white-space:nowrap;flex-shrink:0
 }
-body.dark .ollama-badge{background:#303134;color:#9aa0a6}
-.ollama-dot{width:7px;height:7px;border-radius:50%;background:#9aa0a6;flex-shrink:0}
+body.dark .ollama-badge{background:#37373f;color:#b0b0b8}
+.ollama-dot{width:7px;height:7px;border-radius:50%;background:#b0b0b8;flex-shrink:0}
 .ollama-badge.on .ollama-dot{background:#34a853}
 .toolbar-btn{
   height:32px;padding:0 14px;border-radius:999px;border:none;
-  font-size:13px;color:#fff;background:var(--accent,#4f46e5);
+  font-size:13px;color:#fff;background:var(--accent,#ffffff);
   box-shadow:0 2px 8px rgba(79,70,229,.35)
 }
 .toolbar-btn:hover{filter:brightness(1.06)}
 
 main{flex:1;min-height:0;max-width:760px;margin:0 auto;width:100%;padding:20px 20px 32px;overflow-y:auto}
 #empty{text-align:center;padding:80px 20px;color:#6d6a85}
-body.dark #empty{color:#9aa0a6}
+body.dark #empty{color:#b0b0b8}
 #empty svg{width:64px;height:64px;fill:#e3e1ef;margin-bottom:16px}
-body.dark #empty svg{fill:#5f6368}
-#empty h2{font-size:18px;font-weight:400;margin-bottom:8px;color:#5f6368}
+body.dark #empty svg{fill:#4d4d57}
+#empty h2{font-size:18px;font-weight:400;margin-bottom:8px;color:#4d4d57}
 body.dark #empty h2{color:#eceaf6}
 
 #list{display:flex;flex-direction:column;gap:10px}
@@ -50,21 +50,21 @@ body.dark #empty h2{color:#eceaf6}
   border:1px solid #e3e1ef;background:#fff;
   transition:background .1s,border-color .1s
 }
-.id-card:hover{border-color:var(--accent,#4f46e5)}
-body.dark .id-card{background:#303134;border-color:#5f6368}
+.id-card:hover{border-color:var(--accent,#ffffff)}
+body.dark .id-card{background:#37373f;border-color:#4d4d57}
 
 .id-dot{
   width:36px;height:36px;border-radius:12px;
-  background:var(--accent-soft,rgba(79,70,229,.18));color:var(--accent,#4f46e5);
+  background:var(--accent-soft,rgba(79,70,229,.18));color:var(--accent,#ffffff);
   display:flex;align-items:center;justify-content:center;
   font-size:14px;font-weight:700;flex-shrink:0
 }
 .id-info{flex:1;min-width:0}
 .id-name{font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:8px}
 .id-meta{font-size:11.5px;color:#6d6a85;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
-body.dark .id-meta{color:#9aa0a6}
+body.dark .id-meta{color:#b0b0b8}
 .id-default-pill{
-  font-size:10px;font-weight:600;color:var(--accent,#4f46e5);
+  font-size:10px;font-weight:600;color:var(--accent,#ffffff);
   background:var(--accent-soft,rgba(79,70,229,.18));
   padding:2px 8px;border-radius:999px
 }
@@ -75,7 +75,7 @@ body.dark .id-meta{color:#9aa0a6}
   color:#6d6a85
 }
 .id-btn:hover{background:rgba(0,0,0,.06)}
-body.dark .id-btn{color:#9aa0a6}
+body.dark .id-btn{color:#b0b0b8}
 body.dark .id-btn:hover{background:rgba(255,255,255,.08)}
 .id-btn.danger:hover{color:#d93025;background:rgba(217,48,37,.1)}
 
@@ -90,27 +90,30 @@ body.dark .id-btn:hover{background:rgba(255,255,255,.08)}
   background:#fff;border-radius:20px;padding:24px;
   box-shadow:0 24px 60px -12px rgba(38,36,58,.35)
 }
-body.dark #modal{background:#202124}
+body.dark #modal{background:#1e1e21}
 #modal h2{font-size:16px;font-weight:600;margin-bottom:16px}
 .field-row{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
 .field-row.two{flex-direction:row;gap:10px}
 .field-row.two > div{flex:1;display:flex;flex-direction:column;gap:5px}
 .field-row label{font-size:11.5px;color:#6d6a85}
-body.dark .field-row label{color:#9aa0a6}
+body.dark .field-row label{color:#b0b0b8}
 .field-row input{
   border:1px solid #e3e1ef;border-radius:10px;padding:8px 12px;
   font-size:13px;outline:none;background:#f9f8fd
 }
-.field-row input:focus{border-color:var(--accent,#4f46e5)}
-body.dark .field-row input{background:#303134;border-color:#5f6368;color:#eceaf6}
+.field-row input:focus{border-color:var(--accent,#ffffff)}
+body.dark .field-row input{background:#37373f;border-color:#4d4d57;color:#eceaf6}
 .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
 .modal-btn{
   height:34px;padding:0 16px;border-radius:999px;font-size:13px
 }
-.modal-btn.primary{color:#fff;background:var(--accent,#4f46e5)}
+.modal-btn.primary{color:#fff;background:var(--accent,#ffffff)}
 .modal-btn.secondary{color:#6d6a85;background:#ece9f7}
-body.dark .modal-btn.secondary{background:#303134;color:#9aa0a6}
+body.dark .modal-btn.secondary{background:#37373f;color:#b0b0b8}
 </style>
+<!-- Shared finish pass: one palette across every Privoo page. Loads last so
+     it wins on order; the block above still owns this page's layout. -->
+<link rel="stylesheet" href="page-theme.css" />
 </head>
 <body>
 <header>
@@ -167,12 +170,22 @@ body.dark .modal-btn.secondary{background:#303134;color:#9aa0a6}
 
   function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+  // Mirrors applyAccentTriad() in renderer.js. '#ffffff' is the adaptive
+  // "Mono" accent, not literally white, and --on-accent has to come from the
+  // accent's luminance so a label sitting on it always contrasts.
   function applyAccent(hex){
-    const r=document.documentElement;
-    if(!hex){ r.style.removeProperty('--accent'); r.style.removeProperty('--accent-soft'); return; }
-    r.style.setProperty('--accent',hex);
-    const m=hex.replace('#','').match(/.{2}/g);
-    if(m){ const[rv,g,b]=m.map(x=>parseInt(x,16)); r.style.setProperty('--accent-soft',`rgba(${rv},${g},${b},.18)`); }
+    const r = document.documentElement;
+    const isDark = document.body.classList.contains('dark');
+    let c = (hex && /^#[0-9a-f]{6}$/i.test(hex)) ? hex : (isDark ? '#ffffff' : '#101014');
+    if (c.toLowerCase() === '#ffffff' && !isDark) c = '#101014';
+    r.style.setProperty('--accent', c);
+    const [rv, g, b] = c.replace('#','').match(/.{2}/g).map(x => parseInt(x, 16));
+    const lum = (0.2126*rv + 0.7152*g + 0.0722*b) / 255;
+    const mix = lum > 0.72 ? 0 : 255, k = lum > 0.72 ? 0.12 : 0.18;
+    r.style.setProperty('--accent-hover',
+      `rgb(${Math.round(rv+(mix-rv)*k)},${Math.round(g+(mix-g)*k)},${Math.round(b+(mix-b)*k)})`);
+    r.style.setProperty('--on-accent', lum > 0.6 ? '#1b1b1e' : '#ffffff');
+    r.style.setProperty('--accent-soft', `rgba(${rv},${g},${b},${isDark ? '.16' : '.13'})`);
   }
 
   async function load(){

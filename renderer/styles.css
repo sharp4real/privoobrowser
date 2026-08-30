@@ -1,121 +1,147 @@
-/* ─── Design tokens ─────────────────────────────────────────────────
-   A quiet, premium studio look: soft neutral surfaces, one confident
-   indigo accent used sparingly, generous radii, layered soft shadows —
-   closer to Linear/Arc than a stock browser skin.
+/* ─── Design tokens ──────────────────────────────────────
+   A comfortable, neutral dark mode — the kind of grey Firefox and Brave
+   settle on, not a pure-black one. Black chrome sounds striking and is
+   miserable to sit in front of: every page and popover becomes a glaring
+   white rectangle cut out of a void, and the UI has no room left to show
+   depth, because there is nothing below #000 to step down to.
+
+   So the ladder starts at a dark neutral grey and climbs in small, even
+   steps. The tab strip is the floor, the toolbar sits on it, menus and
+   panels float above that, and fields are recessed back down. Four levels,
+   each clearly distinguishable, none of them harsh.
+
+   Grey here means grey: no blue or purple cast. A tinted "dark" theme
+   fights every favicon and screenshot on the page.
+
    Every component keys off these — change them here, not per-component. */
 :root {
   /* Typography */
   --font:        "Inter", "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
 
-  /* Surfaces */
-  --strip:       #f3f3f7;                    /* window / titlebar wash          */
-  --strip-focus: #ececf2;
+  /* Surfaces — light mode. Kept genuinely light (paper, not grey) so the
+     two modes are opposites rather than two shades of the same thing. */
+  --strip:       #ebebef;                    /* window / titlebar wash          */
+  --strip-focus: #e2e2e8;
   --tab-active:  #ffffff;                    /* active tab                      */
   --tab-width:   220px;
-  --tab-hover:   rgba(23,23,31,.045);
+  --tab-hover:   rgba(16,16,20,.055);
   --toolbar:     #ffffff;                    /* main bar + popover surface      */
-  --omni-bg:     #f1f1f6;
-  --omni-hover:  #e9e9f0;
-  --glass:       rgba(255,255,255,.72);      /* frosted panel fill              */
-  --glass-blur:  saturate(1.4) blur(18px);
+  --surface-1:   #ffffff;                    /* raised: popovers, menus, panels */
+  --surface-2:   #f6f6f8;                    /* recessed: fields, wells, rows   */
+  --omni-bg:     #f0f0f3;
+  --omni-hover:  #e8e8ee;
+  --glass:       rgba(255,255,255,.78);      /* frosted panel fill              */
+  --glass-blur:  saturate(1.5) blur(22px);
 
   /* Ink */
-  --text:        #17171f;
-  --muted:       #6c6c78;
+  --text:        #101014;
+  --muted:       #64646f;
+  --faint:       #9a9aa6;
 
-  /* Signature indigo accent — buttons, toggles, focus rings, active states */
-  --accent:      #4f46e5;
-  --accent-hover:#6058ea;
+  /* Accent. Monochrome by default — JS resolves the "mono" sentinel to
+     white on black / near-black on white, and recomputes --on-accent from
+     the chosen colour's luminance so a light accent never gets light text. */
+  --accent:      #101014;
+  --accent-hover:#2a2a34;
   --on-accent:   #ffffff;
-  --accent-soft: rgba(79,70,229,.13);
-  --status-on:   #26243a;
-  --green:       #26243a;
+  --accent-soft: rgba(16,16,20,.09);
+  --status-on:   #101014;
+  --green:       #17803d;
   --red:         #d93025;
 
   /* Lines & states */
-  --border:      rgba(23,23,31,.09);
-  --hover:       rgba(23,23,31,.05);
+  --border:      rgba(16,16,20,.10);
+  --border-strong: rgba(16,16,20,.18);
+  --hover:       rgba(16,16,20,.055);
+  --active:      rgba(16,16,20,.10);
 
   /* Geometry & elevation */
+  --r-xs:        7px;
   --r-sm:        10px;
   --r-md:        14px;
   --r-lg:        20px;
-  --shadow:      0 1px 2px rgba(23,23,31,.05), 0 3px 10px rgba(23,23,31,.06);
-  --panel-shadow:0 26px 64px -20px rgba(23,23,31,.30), 0 6px 18px rgba(23,23,31,.10);
+  --shadow:      0 1px 2px rgba(16,16,20,.06), 0 4px 12px -2px rgba(16,16,20,.07);
+  --panel-shadow:0 24px 60px -18px rgba(16,16,20,.28), 0 4px 14px rgba(16,16,20,.10);
+  --ring:        0 0 0 2px var(--accent-soft);
 
   /* Motion */
   --ease:        cubic-bezier(.2,.8,.25,1);
-  --t-fast:      .14s;
-  --t-med:       .24s;
+  --ease-out:    cubic-bezier(.16,1,.3,1);
+  --t-fast:      .13s;
+  --t-med:       .22s;
 }
 
 body.dark {
-  --strip:       #17181c;
-  --strip-focus: #1d1e23;
-  --tab-active:  #232429;
-  --tab-hover:   rgba(255,255,255,.06);
-  --toolbar:     #1b1c20;
-  --omni-bg:     rgba(255,255,255,.055);
-  --omni-hover:  rgba(255,255,255,.09);
-  --glass:       rgba(23,24,28,.78);
-  --text:        #f1f1f4;
-  --muted:       #97979f;
-  --border:      rgba(255,255,255,.08);
-  --hover:       rgba(255,255,255,.06);
-  --shadow:      0 1px 3px rgba(0,0,0,.45);
-  --panel-shadow:0 28px 70px -20px rgba(0,0,0,.65), 0 6px 18px rgba(0,0,0,.4);
+  /* The dark ladder. Each step is ~6-8% lighter than the one below, which
+     is enough to read as a separate plane without any surface needing a
+     border to prove it exists. */
+  --strip:       #202024;                    /* window / tab strip — the floor */
+  --strip-focus: #282830;
+  --tab-active:  #43434c;                    /* lifted well clear of the strip */
+  --tab-hover:   rgba(255,255,255,.07);
+  --toolbar:     #2d2d33;
+  --surface-1:   #37373f;                    /* raised: popovers, menus, panels */
+  --surface-2:   #26262b;                    /* recessed: fields, wells, rows   */
+  --omni-bg:     #26262b;
+  --omni-hover:  #2f2f36;
+  --glass:       rgba(45,45,51,.86);
+  --text:        #ededf0;
+  --muted:       #b0b0b8;
+  --faint:       #85858e;
+  --border:      rgba(255,255,255,.10);
+  --border-strong: rgba(255,255,255,.20);
+  --hover:       rgba(255,255,255,.07);
+  --active:      rgba(255,255,255,.13);
+  --shadow:      0 1px 3px rgba(0,0,0,.35);
+  --panel-shadow:0 12px 32px -8px rgba(0,0,0,.55), 0 2px 8px rgba(0,0,0,.35);
   /* Accent values are declared once on :root above and shared between
      light/dark. Re-declaring them on body.dark would shadow the JS-set
      custom accent (which lives on documentElement), so we don't. */
-  --status-on:   #f1f1f4;
-  --green:       #f1f1f4;
+  --status-on:   #ededf0;
+  --green:       #4ade80;
   color-scheme: dark;
-  background: #17181c !important;
-  color: #f1f1f4 !important;
+  background: #202024 !important;
+  color: #ededf0 !important;
 }
+
+/* Bundled colour themes and ambient soundtrack were retired in favour of
+   simple wallpapers, a personal accent and normal light/dark mode. */
+#wave-popup,
+#theme-picker-popover,
+#theme-grid,
+#theme-pad,
+#theme-cust-toggle,
+#theme-cust,
+#theme-sound { display: none !important; }
+
+/* A quieter, more deliberate Customize panel: clear section rhythm, generous
+   hit targets and no floating-card clutter. */
+.customize-panel { width: 350px; background: var(--toolbar); border-left: 1px solid var(--border); box-shadow: -18px 0 38px rgba(0,0,0,.10); }
+.cp-header { min-height: 58px; padding: 0 18px; background: var(--toolbar); }
+.cp-header h2 { font-size: 15px; letter-spacing: -.01em; }
+.cp-body { padding: 8px 0 20px; }
+.cp-section { padding: 18px; margin: 0; border-bottom: 1px solid var(--border); }
+.cp-section-title { margin: 0 0 13px; font-size: 11px; letter-spacing: .075em; color: var(--muted); }
+.cp-theme-row { gap: 10px; }
+.cp-theme-btn { min-height: 72px; padding: 9px; border: 1px solid var(--border); background: transparent; }
+.cp-row { min-height: 44px; padding: 9px 0; }
+body.dark .customize-panel, body.dark .cp-header { background: var(--surface-1); }
 
 body.dark .strip-btn:hover,
-body.dark .win-ctrl:hover { background: rgba(255,255,255,.07); }
-body.dark .tab:hover:not(.active) { background: rgba(255,255,255,.06); }
-body.dark .tab .tab-close:hover { background: rgba(255,255,255,.11); }
-body.dark #omnibox::placeholder { color: #97979f; }
-body.dark .dl-progress { background: #33343a; }
-body.dark .menu-item { color: #f1f1f4; }
+body.dark .win-ctrl:hover { background: var(--hover); }
+body.dark .tab:hover:not(.active) { background: var(--tab-hover); }
+body.dark .tab .tab-close:hover { background: var(--active); }
+body.dark #omnibox::placeholder { color: var(--faint); }
+body.dark .dl-progress { background: rgba(255,255,255,.12); }
+body.dark .menu-item { color: var(--text); }
 /* Dark mode — keep button icons bright, not muted grey. */
-body.dark .tb-btn { color: #f1f1f4; }
-body.dark .nav-btn { color: #f1f1f4; }
-body.dark #titlebar { background: #17181c; }
-body.dark #toolbar { background: #1b1c20; border-bottom-color: #2a2b31; }
-body.dark #bookmarks-bar { background: #1b1c20; border-bottom-color: #2a2b31; }
-body.dark .tab { color: #a3a3ad; }
-body.dark .tab.active { background: #232429; color: #f1f1f4; }
-
-/* ─── Increase Transparency ─────────────────────────────────────────
-   When the user enables "Increase Transparency" in Settings the main
-   process sets `transparent: true` on the BrowserWindow plus
-   backgroundMaterial: 'acrylic' (Win11) / vibrancy: 'sidebar' (macOS).
-   The renderer then flips body.transparent-ui and EVERY container
-   surface drops its solid fill so the OS material is visible through
-   the whole chrome — not just the top strip. Only the visible widgets
-   (titlebar / toolbar / bookmarks bar / active tab / omnibox) keep a
-   translucent rgba() fill so their text stays legible. */
-
-/* Strip every container fill so the OS material shows through. Note: the
-   <html> element is handled separately via html.transparent-ui-host — it
-   can't be reached with a `body.transparent-ui html` descendant selector. */
-html.transparent-ui-host { background: transparent !important; }
-body.transparent-ui,
-body.transparent-ui #shell,
-body.transparent-ui .browser-column,
-body.transparent-ui #views-wrap,
-body.transparent-ui #views,
-body.transparent-ui #views webview,
-body.transparent-ui #bookmarks-bar:empty {
-  background: transparent !important;
-}
-/* body.dark sets `background: #202124 !important` higher in the file —
-   reassert with the same !important AND higher specificity so it wins. */
-body.dark.transparent-ui { background: transparent !important; }
+body.dark .tb-btn { color: var(--text); }
+body.dark .nav-btn { color: var(--text); }
+body.dark #titlebar { background: var(--strip); }
+body.dark #toolbar { background: var(--toolbar); border-bottom-color: var(--border); }
+body.dark #bookmarks-bar { background: var(--toolbar); border-bottom-color: var(--border); }
+body.dark .tab { color: var(--muted); }
+body.dark .tab.active { background: var(--tab-active); color: var(--text); }
 
 /* ─── Full-browser wallpaper ("Stretch over whole browser") ───────────────
    A fixed layer behind all chrome, revealed by a translucent title/tab strip +
@@ -129,7 +155,9 @@ body.dark.transparent-ui { background: transparent !important; }
   pointer-events: none; display: none;
 }
 #chrome-wallpaper { background-size: cover; background-position: center; background-repeat: no-repeat; }
-#chrome-wallpaper-video { width: 100%; height: 100%; object-fit: cover; background: #000; }
+/* No black fill: while the video buffers or re-loads, an opaque black element
+   sitting behind the whole window is exactly the flash we're trying to remove. */
+#chrome-wallpaper-video { width: 100%; height: 100%; object-fit: cover; background: transparent; }
 html.wallpaper-chrome-host { background: transparent !important; }
 body.wallpaper-chrome,
 body.wallpaper-chrome #shell,
@@ -168,6 +196,37 @@ body.wallpaper-chrome.themed.dark #bookmarks-bar {
   -webkit-backdrop-filter: blur(6px) saturate(140%);
 }
 
+html.semi-transparent-host { background: transparent !important; }
+body.semi-transparent,
+body.semi-transparent #shell,
+body.semi-transparent .browser-column,
+body.semi-transparent #views-wrap,
+body.semi-transparent #views,
+body.semi-transparent .app-sidebar {
+  background: transparent !important;
+}
+body.semi-transparent.dark { background: transparent !important; }
+body.semi-transparent:not(.wallpaper-chrome) #titlebar,
+body.semi-transparent:not(.wallpaper-chrome) #toolbar,
+body.semi-transparent:not(.wallpaper-chrome) #bookmarks-bar {
+  background-color: rgba(255,255,255,.44) !important;
+  background-image: none;
+}
+body.semi-transparent.dark:not(.wallpaper-chrome) #titlebar,
+body.semi-transparent.dark:not(.wallpaper-chrome) #toolbar,
+body.semi-transparent.dark:not(.wallpaper-chrome) #bookmarks-bar {
+  background-color: rgba(26,26,26,.44) !important;
+}
+body.semi-transparent #views,
+body.semi-transparent #views webview:not(.first-paint) {
+  background: transparent !important;
+}
+body.semi-transparent:not(.wallpaper-chrome) .tab.active {
+  background: rgba(255,255,255,.62);
+}
+body.semi-transparent.dark:not(.wallpaper-chrome) .tab.active {
+  background: rgba(48,48,48,.62);
+}
 /* ─── Themed mode ─── derive the whole top-chrome palette from the active
    theme's hue, so the tab strip, tabs, toolbar and address bar all colour
    themselves automatically (no need to fiddle with transparency). */
@@ -264,14 +323,14 @@ body.wallpaper-chrome.wallpaper-chrome-wave #chrome-wave { display: block; }
 .wave-card {
   position: relative; width: min(640px, calc(100vw - 32px)); max-height: min(760px, calc(100vh - 32px));
   display: flex; flex-direction: column;
-  background: var(--toolbar, #fff); color: var(--text, #202124);
+  background: var(--toolbar, #fff); color: var(--text, #202020);
   font-family: var(--font);
   border: 1px solid rgba(255,255,255,.14); border-radius: 16px;
   box-shadow: 0 30px 90px rgba(0,0,0,.5), 0 2px 8px rgba(0,0,0,.2); overflow: hidden;
   animation: wave-pop .22s cubic-bezier(.2,.8,.2,1);
 }
 @keyframes wave-pop { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: none; } }
-body.dark .wave-card { background: #202124; color: #e8eaed; border-color: rgba(255,255,255,.08); }
+body.dark .wave-card { background: var(--surface-1); color: var(--text); border-color: rgba(255,255,255,.08); }
 
 /* Animated gradient hero with the title overlaid */
 .wave-hero { position: relative; height: 154px; flex: 0 0 auto; }
@@ -613,177 +672,6 @@ body.dark .wave-btn.ghost:hover { background: rgba(255,255,255,.07); }
   .theme-vol { width: 100%; }
 }
 
-/* Visible widget surfaces — genuine frosted glass over the OS acrylic/
-   vibrancy material. A real blur radius (not a token 3px) so the desktop
-   behind actually reads as frosted, plus a hairline inner highlight for
-   the same sense of depth the Liquid/Acrylic styles already have. */
-body.transparent-ui #titlebar {
-  background: rgba(255,255,255,.22) !important;
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.4);
-}
-body.transparent-ui #toolbar {
-  background: rgba(255,255,255,.22) !important;
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.4);
-}
-body.transparent-ui #bookmarks-bar {
-  background: rgba(255,255,255,.18) !important;
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-}
-body.transparent-ui .tab.active {
-  background: rgba(255,255,255,.55) !important;
-}
-
-/* ─── Transparency styles (Settings → Layout → Glass style) ───────────────
-   "frosted" is the default look above. These override the chrome surfaces with
-   a different glass treatment. Higher specificity (extra .tstyle-* class) so
-   they win over the base transparent-ui rules. */
-/* Liquid Glass — heavy gloss blur with a bright inner highlight */
-body.transparent-ui.tstyle-liquid #titlebar,
-body.transparent-ui.tstyle-liquid #toolbar,
-body.transparent-ui.tstyle-liquid #bookmarks-bar {
-  background: rgba(255,255,255,.10) !important;
-  backdrop-filter: blur(24px) saturate(185%) brightness(1.07);
-  -webkit-backdrop-filter: blur(24px) saturate(185%) brightness(1.07);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.45);
-}
-body.transparent-ui.tstyle-liquid #omnibox-wrap {
-  background: rgba(255,255,255,.16) !important;
-  backdrop-filter: blur(16px) saturate(170%);
-  -webkit-backdrop-filter: blur(16px) saturate(170%);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 2px 12px rgba(0,0,0,.06);
-}
-body.transparent-ui.tstyle-liquid.dark #titlebar,
-body.transparent-ui.tstyle-liquid.dark #toolbar,
-body.transparent-ui.tstyle-liquid.dark #bookmarks-bar {
-  background: rgba(35,36,41,.24) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.14);
-}
-body.transparent-ui.tstyle-liquid.dark #omnibox-wrap {
-  background: rgba(255,255,255,.08) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.16);
-}
-/* Acrylic — Windows-style frosted, more tinted/opaque */
-body.transparent-ui.tstyle-acrylic #titlebar,
-body.transparent-ui.tstyle-acrylic #toolbar,
-body.transparent-ui.tstyle-acrylic #bookmarks-bar {
-  background: rgba(244,245,250,.55) !important;
-  backdrop-filter: blur(34px) saturate(125%);
-  -webkit-backdrop-filter: blur(34px) saturate(125%);
-}
-body.transparent-ui.tstyle-acrylic.dark #titlebar,
-body.transparent-ui.tstyle-acrylic.dark #toolbar,
-body.transparent-ui.tstyle-acrylic.dark #bookmarks-bar {
-  background: rgba(26,27,32,.6) !important;
-}
-/* Clear — barely-there, maximum see-through */
-body.transparent-ui.tstyle-clear #titlebar,
-body.transparent-ui.tstyle-clear #toolbar,
-body.transparent-ui.tstyle-clear #bookmarks-bar {
-  background: rgba(255,255,255,.05) !important;
-  backdrop-filter: blur(2px) saturate(115%);
-  -webkit-backdrop-filter: blur(2px) saturate(115%);
-}
-body.transparent-ui.tstyle-clear.dark #titlebar,
-body.transparent-ui.tstyle-clear.dark #toolbar,
-body.transparent-ui.tstyle-clear.dark #bookmarks-bar {
-  background: rgba(20,21,26,.18) !important;
-}
-/* Omnibox — frosted pill sitting inside the already-blurred toolbar.
-   No separate backdrop-filter needed (it inherits the toolbar blur);
-   a light tint + border delineates the pill. Semi-transparent on focus
-   so the frosted look is preserved while text stays readable. */
-body.transparent-ui #omnibox-wrap {
-  background: rgba(255, 255, 255, .22) !important;
-  border-color: rgba(255, 255, 255, .38) !important;
-}
-body.transparent-ui #omnibox-wrap:hover { background: rgba(255, 255, 255, .30) !important; }
-body.transparent-ui #omnibox-wrap:focus-within {
-  background: rgba(255, 255, 255, .40) !important;
-  border-color: rgba(255, 255, 255, .5) !important;
-}
-body.transparent-ui #omnibox        { background: transparent !important; }
-/* Tab strip — same frosted layer as the titlebar; no extra blur needed. */
-body.transparent-ui .strip          { background: rgba(255, 255, 255, .16) !important; }
-
-/* Light + transparency: the frosted veil sits over the desktop and the
-   default --muted (#5f6368) tab/icon text can be hard to read on bright
-   backgrounds. Darken chrome text on the light translucent veil. */
-body.transparent-ui:not(.dark) .tab           { color: #2a2c30; }
-body.transparent-ui:not(.dark) .tab.active    { color: #14161a; }
-body.transparent-ui:not(.dark) .tab .tab-title { color: inherit; }
-body.transparent-ui:not(.dark) .bookmark-chip { color: #1f1f1f; }
-body.transparent-ui:not(.dark) .tb-btn        { color: #3c4043; }
-body.transparent-ui:not(.dark) .nav-btn       { color: #3c4043; }
-body.transparent-ui:not(.dark) .strip-btn     { color: #3c4043; }
-body.transparent-ui:not(.dark) #omnibox       { color: #1f1f1f; }
-body.transparent-ui:not(.dark) .menu-item     { color: #1f1f1f; }
-body.transparent-ui:not(.dark) .ctx-item      { color: #1f1f1f; }
-body.transparent-ui:not(.dark) .suggestion    { color: #1f1f1f; }
-body.transparent-ui:not(.dark) .popover       { color: #1f1f1f; }
-body.transparent-ui:not(.dark) .toolbar-popover { color: #1f1f1f; }
-
-body.transparent-ui.dark #titlebar {
-  background: rgba(15,16,19,.42) !important;
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
-}
-body.transparent-ui.dark #toolbar {
-  background: rgba(17,18,21,.42) !important;
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
-}
-body.transparent-ui.dark #bookmarks-bar {
-  background: rgba(15,16,19,.36) !important;
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
-}
-body.transparent-ui.dark .tab.active {
-  background: rgba(255,255,255,.14) !important;
-}
-body.transparent-ui.dark #omnibox-wrap {
-  background: rgba(255, 255, 255, .10) !important;
-  border-color: rgba(255, 255, 255, .16) !important;
-}
-body.transparent-ui.dark #omnibox-wrap:hover { background: rgba(255, 255, 255, .16) !important; }
-body.transparent-ui.dark #omnibox-wrap:focus-within {
-  background: rgba(255, 255, 255, .20) !important;
-  border-color: rgba(255, 255, 255, .28) !important;
-}
-body.transparent-ui.dark .strip         { background: rgba(28, 29, 33, .18) !important; }
-
-/* ── Optional Aero gradient overlay — only kicks in when BOTH transparency
-   and aeroGradient are on. A soft colored gradient layer drifts behind the
-   chrome to give the window the classic Aero / colour-acrylic feel. */
-body.transparent-ui.aero-ui::before {
-  content: "";
-  position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background:
-    radial-gradient(60% 50% at 18% 12%, rgba(120, 175, 255, .32), transparent 65%),
-    radial-gradient(55% 45% at 92% 88%, rgba(180, 130, 255, .26), transparent 65%),
-    linear-gradient(135deg, rgba(140, 190, 255, .14), rgba(220, 180, 255, .10));
-  animation: aero-drift 22s ease-in-out infinite alternate;
-}
-body.transparent-ui.aero-ui.dark::before {
-  background:
-    radial-gradient(60% 50% at 18% 12%, rgba(60, 110, 200, .42), transparent 65%),
-    radial-gradient(55% 45% at 92% 88%, rgba(110, 70, 180, .36), transparent 65%),
-    linear-gradient(135deg, rgba(40, 60, 110, .25), rgba(70, 50, 110, .20));
-}
-/* The gradient sits at z-index 0 so all chrome (titlebar, toolbar, tabs,
-   views, popovers) — which is positioned/z-indexed — naturally floats above
-   it. The frosted RGBA backgrounds let the colour show through. */
-@keyframes aero-drift {
-  from { background-position: -4% -3%, 4% 3%, 0 0; }
-  to   { background-position: 5% 4%, -4% -3%, 0 0; }
-}
-
 /* ── Your Vibe — ambient gradient behind the browser chrome ──────────────────
    Four styles (glow/flow/aura/edge) controlled by body class.
    --vibe-hue (0-360) set by applyAppSettings. All use CSS Color Level 4
@@ -847,9 +735,7 @@ body.has-vibe.vibe-edge::after {
 body.has-vibe.vibe-chrome-only::after { content: none; }
 /* ── Vibe chrome tinting — applies the hue directly to the UI surfaces ───────
    background-image layers sit on top of the element's background-color so
-   the solid toolbar fill stays intact while a coloured gradient washes over
-   it. Using background-image (not background shorthand) avoids touching the
-   transparent-ui gradient layers. */
+   the solid toolbar fill stays intact while a coloured gradient washes over it. */
 body.has-vibe #titlebar,
 body.has-vibe #toolbar {
   background-image:
@@ -902,116 +788,11 @@ body.has-vibe #omnibox-wrap:focus-within {
    glass look. backdrop-filter is only applied to elements that appear OUTSIDE
    the already-blurred toolbar layer; elements inside it (#suggestions) skip
    the nested backdrop-filter to prevent ghost GPU-layer artefacts. */
-body.transparent-ui .popover,
-body.transparent-ui .toolbar-popover,
-body.transparent-ui #shield-panel,
-body.transparent-ui #menu,
-body.transparent-ui #dl-popover,
-body.transparent-ui #ytdlp-popover,
-body.transparent-ui #geo-popover,
-body.transparent-ui #audio-popover,
-body.transparent-ui #notes-popover,
-body.transparent-ui #translate-popover,
-body.transparent-ui .context-menu,
-body.transparent-ui #wv-context-menu,
-body.transparent-ui #tab-context-menu {
-  background: rgba(250, 250, 252, .94) !important;
-  color: #1f1f1f !important;
-}
 /* These popovers are DOM-nested inside the already-blurred toolbar, so giving
    them their own backdrop-filter composites into a dark muddy ghost layer.
    Use a clean high-opacity fill instead — the toolbar provides the frost. */
-body.transparent-ui #suggestions {
-  background: rgba(250, 250, 252, .95) !important;
-  color: #1f1f1f !important;
-}
-body.transparent-ui #emoji-picker {
-  background: rgba(255, 255, 255, .52) !important;
-  color: #1f1f1f !important;
-  backdrop-filter: blur(11px) saturate(180%);
-  -webkit-backdrop-filter: blur(11px) saturate(180%);
-}
-body.transparent-ui #emoji-search {
-  background: rgba(255, 255, 255, .28) !important;
-  border-color: rgba(0, 0, 0, .15) !important;
-}
-body.transparent-ui .ep-header,
-body.transparent-ui #emoji-categories {
-  border-color: rgba(0, 0, 0, .10) !important;
-}
-body.transparent-ui.dark .popover,
-body.transparent-ui.dark .toolbar-popover,
-body.transparent-ui.dark #shield-panel,
-body.transparent-ui.dark #menu,
-body.transparent-ui.dark #dl-popover,
-body.transparent-ui.dark #ytdlp-popover,
-body.transparent-ui.dark #geo-popover,
-body.transparent-ui.dark #audio-popover,
-body.transparent-ui.dark #notes-popover,
-body.transparent-ui.dark #translate-popover,
-body.transparent-ui.dark .context-menu,
-body.transparent-ui.dark #wv-context-menu,
-body.transparent-ui.dark #tab-context-menu {
-  background: rgba(34, 36, 41, .95) !important;
-  color: #e8eaed !important;
-}
-body.transparent-ui.dark #suggestions {
-  background: rgba(34, 36, 41, .96) !important;
-  color: #e8eaed !important;
-}
-body.transparent-ui .context-menu,
-body.transparent-ui #wv-context-menu,
-body.transparent-ui #tab-context-menu {
-  background: rgba(255, 255, 255, .72) !important;
-  backdrop-filter: blur(22px) saturate(190%);
-  -webkit-backdrop-filter: blur(22px) saturate(190%);
-}
-body.transparent-ui.dark .context-menu,
-body.transparent-ui.dark #wv-context-menu,
-body.transparent-ui.dark #tab-context-menu {
-  background: rgba(42, 44, 50, .64) !important;
-}
-body.transparent-ui.dark #emoji-picker {
-  background: rgba(28, 29, 33, .52) !important;
-  color: #e8eaed !important;
-  backdrop-filter: blur(11px) saturate(160%);
-  -webkit-backdrop-filter: blur(11px) saturate(160%);
-}
-body.transparent-ui.dark #emoji-search {
-  background: rgba(255, 255, 255, .10) !important;
-  border-color: rgba(255, 255, 255, .15) !important;
-}
-body.transparent-ui.dark .ep-header,
-body.transparent-ui.dark #emoji-categories {
-  border-color: rgba(255, 255, 255, .08) !important;
-}
-/* vpn-pop inner hero section has its own --omni-bg background; clear it in
-   transparent mode so the outer popover's frosted look shows through. */
-body.transparent-ui .vpn-pop-hero { background: transparent !important; }
-body.transparent-ui .vpn-input,
-body.transparent-ui .vpn-select   { background: rgba(255,255,255,.28) !important; border-color: rgba(0,0,0,.12) !important; }
-body.transparent-ui.dark .vpn-input,
-body.transparent-ui.dark .vpn-select { background: rgba(255,255,255,.08) !important; border-color: rgba(255,255,255,.12) !important; }
-/* vtab panel — all hover/interactive states use translucent tints so the
-   frosted panel stays glassy instead of showing opaque solid strips. */
-body.transparent-ui .vtab:hover                    { background: rgba(0,0,0,.08) !important; }
-body.transparent-ui.dark .vtab:hover               { background: rgba(255,255,255,.10) !important; }
-body.transparent-ui .vtabs-new-btn:hover           { background: rgba(0,0,0,.08) !important; color: var(--text) !important; }
-body.transparent-ui.dark .vtabs-new-btn:hover      { background: rgba(255,255,255,.10) !important; color: var(--text) !important; }
-body.transparent-ui .vtabs-collapse-btn:hover      { background: rgba(0,0,0,.08) !important; }
-body.transparent-ui.dark .vtabs-collapse-btn:hover { background: rgba(255,255,255,.10) !important; }
-body.transparent-ui .vtf-integrated-slot { background: rgba(0,0,0,.06) !important; }
-body.transparent-ui.dark .vtf-integrated-slot { background: rgba(255,255,255,.07) !important; }
-body.transparent-ui .vtf-integrated-slot .tb-btn:hover { background: rgba(0,0,0,.08) !important; }
-body.transparent-ui.dark .vtf-integrated-slot .tb-btn:hover { background: rgba(255,255,255,.10) !important; }
-/* Mobile disclaimer card */
-body.transparent-ui .mdisc-card { background: rgba(255,255,255,.72) !important; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-body.transparent-ui.dark .mdisc-card { background: rgba(32,33,36,.72) !important; }
-/* ── Vibe popover tinting — gradient overlay placed AFTER transparent-ui rules.
-   background-image wins over the shorthand reset from transparent-ui when
-   equal specificity + later source position. Keeps the popup's own solid/
-   frosted background-color intact and just layers a matching gradient wash,
-   so the popup feels continuous with the rest of the vibe chrome. */
+/* ── Vibe popover tinting — gradient overlay layered on top of the popup's
+   own solid background so the popup feels continuous with the vibe chrome. */
 body.has-vibe .toolbar-popover,
 body.has-vibe .popover,
 body.has-vibe #menu,
@@ -1040,46 +821,10 @@ body.dark.has-vibe #emoji-picker {
 /* Extension toolbar is just a flex container holding icon buttons — it
    must never paint a background of its own (that would draw a visible
    square strip behind the icons). */
-body.transparent-ui #ext-toolbar,
 #ext-toolbar { background: transparent !important; }
 /* Customize Privoo side panel — translucent frosted surface so the OS
    material shows through it like the rest of the chrome. */
-body.transparent-ui .customize-panel {
-  background: rgba(255, 255, 255, .70) !important;
-  backdrop-filter: blur(9px) saturate(160%);
-  -webkit-backdrop-filter: blur(9px) saturate(160%);
-  border-left-color: rgba(255, 255, 255, .25) !important;
-}
-body.transparent-ui.dark .customize-panel {
-  background: rgba(32, 33, 36, .68) !important;
-  border-left-color: rgba(255, 255, 255, .08) !important;
-}
-body.transparent-ui .cp-header,
-body.transparent-ui .cp-section {
-  border-color: rgba(0, 0, 0, .06) !important;
-}
-body.transparent-ui.dark .cp-header,
-body.transparent-ui.dark .cp-section {
-  border-color: rgba(255, 255, 255, .07) !important;
-}
-
 /* Setup wizard backdrop also picks up the look. */
-body.transparent-ui .setup-overlay {
-  background: rgba(0, 0, 0, .25) !important;
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-}
-body.transparent-ui .sw-card {
-  background: rgba(255, 255, 255, .85);
-  backdrop-filter: blur(5px) saturate(160%);
-  -webkit-backdrop-filter: blur(5px) saturate(160%);
-}
-body.transparent-ui.dark .sw-card {
-  background: rgba(32, 33, 36, .82);
-  backdrop-filter: blur(5px) saturate(140%);
-  -webkit-backdrop-filter: blur(5px) saturate(140%);
-}
-
 /* ─── Reset ─────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; overflow: hidden; user-select: none; color: var(--text); }
@@ -1147,10 +892,19 @@ svg { fill: currentColor; display: block; flex-shrink: 0; }
 
 /* Tabs fill the available strip width; trailing spacer is a fixed drag region. */
 #tabs-scroll {
-  /* Sizes to its tabs (not the whole strip) so the "+" — which sits right after
-     this container — hugs the last tab instead of being flung to the far right.
-     When there are too many tabs to shrink further, it caps + scrolls. Its
-     width isn't a stable reference, so resizeTabs() measures the strip instead. */
+  /* `0 1 auto` — grow OFF, shrink ON — is what keeps the "+" (which sits right
+     after this container) pinned to the last tab.
+
+     With grow on, this box and #titlebar-trailing-spacer both had flex-grow:1,
+     so they split the leftover strip width between them and the "+" drifted
+     into the middle of the empty space. The drift scaled with the free space,
+     which is why it appeared when tabs were CLOSED: fewer tabs, more slack,
+     bigger offset (measured: a 7px gap at 10 tabs became 232px at 4).
+
+     Shrink stays on so that once the tabs stop fitting this becomes the scroll
+     viewport, rather than the last tab being clipped by the "+" or the window
+     controls. Its width still isn't a stable reference, so resizeTabs()
+     measures the strip instead. */
   flex: 0 1 auto;
   min-width: 0;
   overflow-x: auto;
@@ -1162,6 +916,7 @@ svg { fill: currentColor; display: block; flex-shrink: 0; }
   scrollbar-width: none;
 }
 #tabs-scroll::-webkit-scrollbar { display: none; }
+#tabs-scroll { scroll-padding-inline: 8px; overscroll-behavior-x: contain; }
 
 /* Grows to absorb the empty space after the tabs and "+", keeping them left-
    aligned while the rest of the bar stays a draggable region. */
@@ -1190,7 +945,7 @@ svg { fill: currentColor; display: block; flex-shrink: 0; }
   gap: 7px;
   flex: 0 0 160px;
   width: auto;
-  min-width: 76px;
+  min-width: 88px;
   max-width: 240px;
   height: 32px;
   /* Grounded at the bottom of the strip, rounded top only — reads as a
@@ -1338,7 +1093,7 @@ svg { fill: currentColor; display: block; flex-shrink: 0; }
   z-index: 2;
 }
 body.dark .tab.active {
-  background: #34324a;
+  background: var(--tab-active);
   box-shadow: var(--shadow);
 }
 /* The old trapezoid "merge with toolbar" corner curves are gone — pills float. */
@@ -1384,14 +1139,6 @@ body.dark .tab.active {
 .tab .tab-close:active { transform: scale(.9); transition-duration: .04s; }
 .tab.active .tab-close:hover { background: var(--hover); }
 .tab.dragging { opacity: .55; }
-
-
-/* New-tab "+" button — circular variant (Settings → Layout, off by default). */
-body.newtab-circle #new-tab {
-  border-radius: 50%; width: 26px; height: 26px; margin: 0 5px 1px 5px; flex: 0 0 26px;
-  background: var(--tab-hover); align-self: flex-end;
-}
-body.newtab-circle #new-tab:hover { background: var(--strip-focus); }
 
 /* Closing tab — collapses its width while fading + shrinking so the
    neighbouring tabs glide over to fill the gap (Chrome-style). */
@@ -1470,8 +1217,6 @@ body.platform-mac #window-controls { display: none !important; }
   height: 52px;
   min-height: 52px;
   padding: 0 10px;
-  /* Flat white bar, Opera-style. Frosted only when the user enables
-     transparency (body.transparent-ui overrides below). */
   background: var(--toolbar);
   border-bottom: 1px solid var(--border);
   position: relative;
@@ -1669,10 +1414,10 @@ body.search-pill #omnibox-wrap {
   border: 1.5px solid var(--border, rgba(0,0,0,.16));
 }
 body.search-pill #omnibox-wrap:hover { background: var(--omni-hover); }
-body.search-pill #omnibox-wrap:focus-within { background: var(--toolbar); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+body.search-pill #omnibox-wrap:focus-within { background: var(--toolbar); border-color: var(--border-strong); box-shadow: none; }
 body.search-pill.dark #omnibox-wrap { border-color: rgba(255,255,255,.18); }
 body.search-square #omnibox-wrap { border-radius: 10px; }
-body.search-square #omnibox-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+body.search-square #omnibox-wrap:focus-within { border-color: var(--border-strong); box-shadow: none; }
 .site-icon {
   display: flex;
   align-items: center;
@@ -2083,6 +1828,11 @@ body.ui-compact .vtabs-new-btn { height: 28px; }
   font-variant-numeric: tabular-nums;
 }
 
+/* Ad blocking switched off — desaturate the hero so the panel doesn't read as
+   an all-clear while the main protection is disabled. */
+.sp-hero.sp-hero-off .sp-hero-shield { filter: grayscale(1); opacity: .6; }
+.sp-hero.sp-hero-off .sp-hero-check { display: none; }
+
 .sp-settings-link-full {
   display: block;
   width: 100%;
@@ -2154,13 +1904,13 @@ body.ui-compact .vtabs-new-btn { height: 28px; }
   overflow: hidden;
   background: #ffffff;
 }
-body.dark #views { background: #202124; }
+body.dark #views { background: #33333b; }
 #views webview {
   position: absolute; inset: 0; width: 100%; height: 100%;
   border: none;
   background: #ffffff;
 }
-body.dark #views webview { background: #202124; }
+body.dark #views webview { background: #33333b; }
 
 .split-dropzones {
   position: absolute;
@@ -2196,19 +1946,52 @@ body.tab-dragging .split-dropzones { display: flex; }
 }
 .split-dz.drop-active .split-dz-hint { opacity: 1; transform: none; }
 #views webview.inactive { visibility: hidden; pointer-events: none; }
+/* The outgoing page, held visible beneath a still-loading incoming one. It must
+   not take input, and it must sit BELOW the new webview — the webviews are all
+   position:absolute siblings, so without explicit stacking the DOM order (not
+   the activation order) would decide which is on top. */
+#views webview.underlay {
+  visibility: visible;
+  pointer-events: none;
+  z-index: 0;
+}
+#views webview:not(.inactive):not(.underlay) { z-index: 1; }
 /* Pre-paint flash protection — a fully OPAQUE theme-colored fill covers the
    empty webview frame until the page has actually painted. Must stay opaque
    even in transparency mode, otherwise the desktop/material flickers
    through the un-painted frame on every new tab. */
-#views webview.first-paint,
-body.transparent-ui #views webview.first-paint { background: #ffffff !important; }
-body.dark #views webview.first-paint,
-body.transparent-ui.dark #views webview.first-paint { background: #202124 !important; }
+#views webview.first-paint { background: #ffffff !important; }
+body.dark #views webview.first-paint { background: #33333b !important; }
 /* privoo:// pages (new tab, settings) load from the local protocol and are
    near-instant, but there is still a single-frame gap before first paint.
    Keep the webview invisible (opacity 0) until dom-ready rather than using
    a solid fill, so transparent-mode windows never flash an opaque panel. */
 #views webview.ntp-loading { opacity: 0; }
+/* Fade the page in rather than snapping it on. Without this the switch from
+   opacity 0 to 1 lands as a hard cut, which reads as a flash. */
+#views webview { transition: opacity .14s ease; }
+body.low-end-device #views webview { transition: none; }
+
+/* ── Live / full-browser wallpaper: no black frame on a new tab ──
+   The wallpaper video is painted behind the whole window (z-index -1), but the
+   webview element itself still carried an OPAQUE dark fill. On a new tab that
+   fill covered the wallpaper for the frame or two before the page painted —
+   the "black flash". With the wallpaper on there is always something behind
+   the webview, so the fill is unnecessary and the frame stays on the wallpaper. */
+body.wallpaper-chrome #views webview,
+body.wallpaper-chrome #views webview.first-paint,
+body.dark.wallpaper-chrome #views webview,
+body.dark.wallpaper-chrome #views webview.first-paint {
+  background: transparent !important;
+}
+/* Wallpaper set but NOT stretched over the chrome: there is nothing painted
+   behind the webview, so it still needs a fill — just not a near-black one.
+   A theme surface colour reads as a soft gap rather than a black flash. */
+body.ntp-has-wallpaper:not(.wallpaper-chrome) #views,
+body.ntp-has-wallpaper:not(.wallpaper-chrome) #views webview,
+body.ntp-has-wallpaper:not(.wallpaper-chrome) #views webview.first-paint {
+  background: var(--toolbar) !important;
+}
 
 /* ─── First-run setup wizard ─────────────────────────────────── */
 .setup-overlay {
@@ -2247,18 +2030,20 @@ body.dark .setup-overlay { background: rgba(32, 33, 36, .68); }
   position: absolute;
   inset: 0;
   pointer-events: none;
+  /* Neutral shading, not a hue — this keeps the depth the drifting gradient
+     gave the screen without tinting the whole first-run experience blue. */
   background:
-    radial-gradient(46% 50% at 22% 22%, rgba(79,70,229,.44), transparent 72%),
-    radial-gradient(42% 46% at 78% 74%, rgba(124,92,247,.34), transparent 72%),
-    radial-gradient(60% 60% at 50% 100%, rgba(79,70,229,.15), transparent 70%);
+    radial-gradient(46% 50% at 22% 22%, rgba(0,0,0,.05), transparent 72%),
+    radial-gradient(42% 46% at 78% 74%, rgba(0,0,0,.035), transparent 72%),
+    radial-gradient(60% 60% at 50% 100%, rgba(0,0,0,.03), transparent 70%);
   background-repeat: no-repeat;
   animation: sw-glow 18s ease-in-out infinite alternate;
 }
 body.dark .setup-overlay::before {
   background:
-    radial-gradient(46% 50% at 22% 22%, rgba(79,70,229,.30), transparent 72%),
-    radial-gradient(42% 46% at 78% 74%, rgba(124,92,247,.24), transparent 72%),
-    radial-gradient(60% 60% at 50% 100%, rgba(79,70,229,.11), transparent 70%);
+    radial-gradient(46% 50% at 22% 22%, rgba(255,255,255,.05), transparent 72%),
+    radial-gradient(42% 46% at 78% 74%, rgba(255,255,255,.035), transparent 72%),
+    radial-gradient(60% 60% at 50% 100%, rgba(255,255,255,.022), transparent 70%);
 }
 @keyframes sw-glow {
   from { background-position: -4% -3%, 4% 3%; }
@@ -2371,7 +2156,6 @@ body.dark .sw-card {
   box-shadow: 0 1px 7px var(--accent-soft);
 }
 
-
 /* Headlines & subtitles */
 .sw-headline {
   font-size: 24px; font-weight: 650; line-height: 1.25; margin: 0 0 9px;
@@ -2475,7 +2259,7 @@ body.dark .sw-card {
 .sw-engine-tick {
   flex-shrink: 0; width: 22px; height: 22px; border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
-  background: var(--accent); color: #10160f;
+  background: var(--accent); color: var(--on-accent);
   opacity: 0; transform: scale(.6); transition: opacity .16s ease, transform .16s cubic-bezier(.2,1.4,.4,1);
 }
 .sw-engine-row.selected .sw-engine-tick { opacity: 1; transform: scale(1); }
@@ -2687,7 +2471,7 @@ body.dark .cp-body::-webkit-scrollbar-thumb { background: #5f6368; }
   border: 1px solid var(--border);
 }
 .cp-theme-light { background: linear-gradient(180deg, #ece9f7 0 14px, #ffffff 14px); }
-.cp-theme-dark  { background: linear-gradient(180deg, #202124 0 14px, #303134 14px); }
+.cp-theme-dark  { background: linear-gradient(180deg, #202024 0 14px, #2d2d33 14px); }
 
 /* Accent color swatches */
 .cp-accent-row {
@@ -2717,12 +2501,8 @@ body.dark .cp-body::-webkit-scrollbar-thumb { background: #5f6368; }
   border: 2px solid var(--toolbar);
 }
 
-/* Wallpaper action card buttons */
-.cp-wp-row {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+/* (The Customize panel's wallpaper tiles lived here. Wallpapers moved to
+   Settings, so the tiles and their styles went with them.) */
 .cp-card-btn {
   display: flex;
   align-items: center;
@@ -2762,7 +2542,7 @@ body.dark .cp-body::-webkit-scrollbar-thumb { background: #5f6368; }
   cursor: default; transition: background .15s ease, color .15s ease;
 }
 .cp-seg-btn:hover { color: var(--text); }
-.cp-seg-btn.active { background: var(--accent); color: #fff; }
+.cp-seg-btn.active { background: var(--accent); color: var(--on-accent); }
 .cp-row .switch {
   position: relative;
   width: 36px;
@@ -2909,7 +2689,6 @@ body.dark .cp-row input:checked + .slider { background: var(--accent); }
 }
 .sw-terms-agree input[type="checkbox"] {
   width: 18px; height: 18px;
-  accent-color: var(--accent);
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -2971,7 +2750,7 @@ body.dark .cp-row input:checked + .slider { background: var(--accent); }
   height: 22px; display: flex; align-items: flex-end; padding: 0 6px; gap: 4px;
 }
 .light-mock .sw-mock-strip { background: #dee1e6; }
-.dark-mock  .sw-mock-strip { background: #202124; }
+.dark-mock  .sw-mock-strip { background: #202024; }
 
 .sw-mock-tab {
   height: 17px; width: 52px; border-radius: 10px 6px 0 0;
@@ -2991,7 +2770,7 @@ body.dark .cp-row input:checked + .slider { background: var(--accent); }
   flex: 1; padding: 8px 10px; display: flex; flex-direction: column; gap: 5px;
 }
 .light-mock .sw-mock-body { background: #ffffff; }
-.dark-mock  .sw-mock-body { background: #202124; }
+.dark-mock  .sw-mock-body { background: #2d2d33; }
 
 .sw-mock-line {
   height: 7px; border-radius: 3px;
@@ -3098,7 +2877,7 @@ body.dark .sw-disc-icon { background: rgba(249,171,0,.14); border-color: rgba(24
   border-bottom: 1px solid rgba(0,0,0,.07);
 }
 .sw-disc-para:last-child { border-bottom: none; padding-bottom: 4px; }
-body.dark .sw-disc-para { color: #e8eaed; border-color: rgba(255,255,255,.08); }
+body.dark .sw-disc-para { color: var(--text); border-color: rgba(255,255,255,.08); }
 
 /* Actions row */
 .sw-actions {
@@ -3129,7 +2908,7 @@ body.dark .sw-disc-para { color: #e8eaed; border-color: rgba(255,255,255,.08); }
 }
 .sw-btn:hover { background: var(--hover); }
 .sw-btn.primary {
-  background: var(--accent); border-color: var(--accent); color: #10160f;
+  background: var(--accent); border-color: var(--accent); color: var(--on-accent);
 }
 .sw-btn.primary:hover { background: var(--accent); filter: brightness(1.06); }
 .sw-btn.ghost {
@@ -3154,7 +2933,6 @@ body.dark .sw-disc-para { color: #e8eaed; border-color: rgba(255,255,255,.08); }
     animation-iteration-count: 1 !important;
   }
 }
-
 
 /* ─── Sidebar (favicon shortcuts rail) ────────────────────────── */
 .app-sidebar {
@@ -3210,16 +2988,6 @@ body.sidebar-hover-mode:has(.sb-customize-pop) .app-sidebar {
   padding: 12px 0 14px !important;
   border-right-width: 1px !important;
   opacity: 1 !important;
-}
-body.transparent-ui .app-sidebar {
-  background: rgba(255,255,255,.22) !important;
-  backdrop-filter: blur(11px) saturate(150%);
-  -webkit-backdrop-filter: blur(11px) saturate(150%);
-}
-body.transparent-ui.dark .app-sidebar {
-  background: rgba(32,33,36,.32) !important;
-  backdrop-filter: blur(11px) saturate(140%);
-  -webkit-backdrop-filter: blur(11px) saturate(140%);
 }
 .sidebar-rail {
   display: flex;
@@ -3314,8 +3082,8 @@ body.transparent-ui.dark .app-sidebar {
   z-index: 100;
   display: flex;
   flex-direction: column;
-  width: 420px;
-  min-width: 220px;
+  width: 880px;
+  min-width: 260px;
   max-width: calc(100% - 64px);
   background: var(--toolbar);
   box-shadow: 4px 0 28px rgba(0,0,0,.16), 1px 0 0 var(--border);
@@ -3323,6 +3091,19 @@ body.transparent-ui.dark .app-sidebar {
 }
 #sidebar-panel[hidden] { display: none !important; }
 #sidebar-panel.sp-enter { animation: sp-slide-in .18s cubic-bezier(.4,0,.2,1) both; }
+/* Dismissed state. Deliberately NOT display:none / [hidden] / visibility:hidden:
+   any of those detach the <webview> guest, which tore down the media session and
+   stopped Spotify the instant you clicked away from the panel. Sliding it out of
+   view keeps the guest attached and its audio running. */
+#sidebar-panel.sp-tucked {
+  transform: translateX(-101%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform .18s cubic-bezier(.4,0,.2,1), opacity .14s ease;
+}
+/* The panel is absolutely positioned inside .shell — clip it so the tucked
+   copy can never widen the window or raise a scrollbar. */
+.shell { overflow: clip; }
 
 /* Transparent backdrop — captures clicks outside the panel to dismiss it */
 .sidebar-overlay {
@@ -3336,24 +3117,6 @@ body.transparent-ui.dark .app-sidebar {
   cursor: default;
 }
 .sidebar-overlay.hidden { display: none; }
-body.transparent-ui #sidebar-panel {
-  background: rgba(255,255,255,.28) !important;
-  backdrop-filter: blur(11px) saturate(150%);
-  -webkit-backdrop-filter: blur(11px) saturate(150%);
-}
-body.transparent-ui .sidebar-panel-header {
-  background: transparent !important;
-  border-color: rgba(0,0,0,.10) !important;
-}
-body.transparent-ui.dark #sidebar-panel {
-  background: rgba(32,33,36,.36) !important;
-  backdrop-filter: blur(11px) saturate(140%);
-  -webkit-backdrop-filter: blur(11px) saturate(140%);
-}
-body.transparent-ui.dark .sidebar-panel-header {
-  background: transparent !important;
-  border-color: rgba(255,255,255,.08) !important;
-}
 .sidebar-panel-header {
   height: 38px;
   flex-shrink: 0;
@@ -3364,16 +3127,8 @@ body.transparent-ui.dark .sidebar-panel-header {
   background: var(--strip);
   border-bottom: 1px solid var(--border);
 }
-.sidebar-panel-title {
-  flex: 1;
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  padding: 0 4px;
-}
+.sidebar-panel-title { display: none; }
+.sidebar-panel-header > .sidebar-panel-nav:nth-of-type(2) { margin-left: auto; }
 .sidebar-panel-nav {
   width: 28px; height: 28px;
   border-radius: 10px;
@@ -3389,7 +3144,7 @@ body.transparent-ui.dark .sidebar-panel-header {
   min-height: 0;
   background: #fff;
 }
-body.dark .sidebar-wv { background: #202124; }
+body.dark .sidebar-wv { background: #33333b; }
 /* Drag-to-resize handle on the right edge */
 .sidebar-resize {
   position: absolute;
@@ -3868,21 +3623,23 @@ body.dark #emoji-grid::-webkit-scrollbar-thumb { background: #5f6368; }
   outline: none;
   appearance: none;
   -webkit-appearance: none;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235f6368'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' fill='none' stroke='%235f6368' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 8px center;
-  background-size: 16px 16px;
+  background-position: right 10px center;
+  background-size: 13px 13px;
   transition: border-color .15s;
 }
+/* No accent ring. Every other field in the browser had this removed; this
+   one was missed because it lives inside a popover. */
 .translate-select:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
+  border-color: var(--border-strong);
+  box-shadow: none;
 }
 body.dark .translate-select {
   color-scheme: dark;
   background-color: var(--omni-bg);
   color: var(--text);
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239aa0a6'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' fill='none' stroke='%239aa0a6' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 .translate-go-btn {
   height: 34px;
@@ -3930,26 +3687,50 @@ body.dark .translate-select {
 /* ─── Toolbar anchored popovers ────────────────────────────────── */
 .toolbar-anchor { position: relative; flex-shrink: 0; }
 /* ── Calculator popover ── */
-.toolbar-popover.calc-pop { width: 232px; padding: 10px; }
+.toolbar-popover.calc-pop { width: 262px; padding: 12px; }
+.calc-screen {
+  margin-bottom: 10px; padding: 10px 14px 12px;
+  background: linear-gradient(180deg, var(--omni-bg), color-mix(in srgb, var(--omni-bg) 65%, transparent));
+  border: 1px solid var(--border); border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.5);
+}
+body.dark .calc-screen { box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
+.calc-expr {
+  height: 15px; text-align: right;
+  font-size: 12px; font-weight: 500; color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  opacity: .9;
+}
 .calc-display {
-  height: 52px; margin-bottom: 8px; padding: 0 12px;
-  display: flex; align-items: center; justify-content: flex-end;
-  background: var(--omni-bg); border: 1px solid var(--border); border-radius: 12px;
-  font-size: 26px; font-weight: 600; color: var(--text);
-  font-variant-numeric: tabular-nums; overflow: hidden;
+  display: block; width: 100%; padding: 0; border: none; background: none;
+  text-align: right; cursor: pointer;
+  font-family: inherit; font-size: 30px; font-weight: 650; line-height: 1.25;
+  letter-spacing: -.01em; color: var(--text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: color .12s ease;
 }
-.calc-keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.calc-display:hover { color: var(--accent); }
+.calc-display.copied { color: var(--accent); }
+.calc-keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
 .calc-key {
-  height: 44px; border: none; border-radius: 12px; cursor: pointer;
-  font-family: inherit; font-size: 16px; font-weight: 600;
+  height: 44px; border: none; border-radius: 13px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-family: inherit; font-size: 16.5px; font-weight: 600;
   background: var(--omni-bg); color: var(--text);
-  transition: filter .1s ease, background .1s ease;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.45);
+  transition: background .12s ease, transform .08s ease, filter .1s ease;
 }
+body.dark .calc-key { box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
 .calc-key:hover { background: var(--hover); }
-.calc-key:active { filter: brightness(.92); }
-.calc-key.calc-fn { background: var(--hover); color: var(--muted); }
-.calc-key.calc-op { background: var(--accent-soft); color: var(--accent); }
-.calc-key.calc-eq { background: var(--accent); color: #10160f; }
+.calc-key:active, .calc-key.pressed { transform: scale(.95); filter: brightness(.94); }
+.calc-key.calc-fn { background: var(--hover); color: var(--muted); font-size: 15px; }
+.calc-key.calc-fn:hover { color: var(--text); }
+.calc-key.calc-op { background: var(--accent-soft); color: var(--accent); font-size: 18px; }
+.calc-key.calc-op.armed { background: var(--accent); color: var(--on-accent); }
+.calc-key.calc-eq { background: var(--accent); color: var(--on-accent); grid-column: span 4; height: 42px; }
+.calc-key.calc-eq:hover { background: var(--accent-hover); }
 .calc-key.calc-zero { grid-column: span 2; }
 
 .toolbar-popover {
@@ -3995,6 +3776,15 @@ body.dark .translate-select {
   border-bottom: 1px solid var(--border);
   background: var(--omni-bg);
 }
+/* ── The media downloader panel ──────────────────────────────────────
+   Built the way the VPN panel is: picture, then one body holding the title,
+   the line under it and the fields. No band of its own colour in between —
+   three stacked strips before the first field read as three headers. */
+#ytdlp-popover .vpn-pop-body { padding: 15px 16px 16px; gap: 11px; }
+/* The title block is part of the body, so it gets the body's left edge and
+   the fields line up under it. */
+.md-head { margin-bottom: 1px; }
+.md-head .vpn-form-desc { margin-bottom: 0; }
 .vpn-pop-icon {
   width: 42px; height: 42px;
   border-radius: 12px;
@@ -4014,7 +3804,11 @@ body.dark .translate-select {
   border-radius: 12px;
   padding: 0 12px;
   font-size: 13px;
-  background: var(--omni-bg);
+  /* background-COLOR. The chevron's image, repeat, position and size are set
+     in the .vpn-select rule below, and the shorthand here resets all four.
+     It happened to survive on rule order alone — same specificity, later
+     rule wins — which is not a thing to rely on. */
+  background-color: var(--omni-bg);
   color: var(--text);
   outline: none;
   user-select: text;
@@ -4026,7 +3820,7 @@ body.dark .translate-select {
   -webkit-appearance: none;
   -moz-appearance: none;
   padding-right: 32px;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235f6368'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' fill='none' stroke='%235f6368' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 8px center;
   background-size: 16px 16px;
@@ -4037,7 +3831,7 @@ body.dark .translate-select {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 body.dark .vpn-select { color-scheme: dark; background-color: var(--omni-bg); color: var(--text);
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239aa0a6'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' fill='none' stroke='%239aa0a6' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 body.dark .vpn-input { background: var(--omni-bg); color: var(--text); }
 
@@ -4050,25 +3844,39 @@ body.dark .vpn-input { background: var(--omni-bg); color: var(--text); }
   display: flex; align-items: center; width: 100%;
   font-family: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.csel-trigger.open { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent); }
+/* Open firms the hairline. No accent ring — the same change every other
+   control in the browser already had. */
+.csel-trigger.open { border-color: var(--border-strong); box-shadow: none; }
+/* Fixed, and placed by positionList(). It used to be absolute inside the
+   control's wrapper, which put it inside a .toolbar-popover — and a popover
+   is overflow:hidden, so the list was clipped by the panel it opened in.
+
+   z-index above the popover (12000) because it is no longer inside it, and
+   below the context menu (15000) because a right-click should still come out
+   on top of an open dropdown. */
 .csel-list {
-  position: absolute; top: calc(100% + 6px); left: 0; right: 0; min-width: 100%;
+  position: fixed; top: 0; left: 0;
   max-height: 240px; overflow-y: auto;
   background: var(--toolbar); border: 1px solid var(--border); border-radius: 12px;
   box-shadow: var(--panel-shadow);
-  padding: 6px; z-index: 400;
+  padding: 6px; z-index: 13000;
   display: none;
   animation: csel-pop .15s cubic-bezier(.2,.8,.25,1) both;
 }
 .csel-list.open { display: block; }
-@keyframes csel-pop { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: none; } }
+/* Translate and fade only. A scale rasterises the glyphs at the scaled size
+   on the way in and Chromium often keeps that layer, so the list reads soft
+   for as long as it is open. */
+@keyframes csel-pop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 .csel-item {
   padding: 8px 12px; border-radius: 9px; font-size: 13px; cursor: default;
   color: var(--text); transition: background .12s ease;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .csel-item:hover { background: var(--hover); }
-.csel-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+/* The chosen row is marked by weight and the page's own ink. As an accent
+   wash it was white text on a white block whenever the accent was Mono. */
+.csel-item.active { background: transparent; color: var(--text); font-weight: 600; }
 .vpn-pop-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
 .vpn-btn {
   height: 34px; padding: 0 16px;
@@ -4094,7 +3902,7 @@ body.dark .vpn-input { background: var(--omni-bg); color: var(--text); }
   display: inline-flex; align-items: center; gap: 5px;
   height: 22px; padding: 0 9px; margin-right: 2px;
   border: none; border-radius: 10px;
-  background: var(--accent); color: #10160f;
+  background: var(--accent); color: var(--on-accent);
   font-family: inherit; font-size: 11px; font-weight: 700; letter-spacing: .02em;
   cursor: pointer; flex-shrink: 0; -webkit-app-region: no-drag;
   transition: filter .12s ease;
@@ -4105,7 +3913,7 @@ body.dark .vpn-input { background: var(--omni-bg); color: var(--text); }
 #geo-anchor .toolbar-popover { left: 0; right: auto; transform-origin: top left; }
 /* VPN-style primary action + the "not a VPN" disclaimer. */
 .vpn-pop .vpn-btn.primary {
-  background: var(--accent); color: #10160f; border-color: var(--accent);
+  background: var(--accent); color: var(--on-accent); border-color: var(--accent);
   width: 100%; font-weight: 600;
 }
 .vpn-pop .vpn-pop-actions { margin-top: 8px; }
@@ -4128,7 +3936,24 @@ body.dark .vpn-input { background: var(--omni-bg); color: var(--text); }
 .vpn-panel { width: 340px; max-width: min(340px, calc(100vw - 24px)); padding: 0; }
 .vpn-view.hidden { display: none; }
 .vpn-view-body { padding: 16px 18px 18px; }
-.vpn-promo-img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: contain; background: var(--toolbar); }
+/* The panel clips with overflow:hidden, which rounds these on its own — but
+   only while nothing inside the panel gains a stacking context or a
+   transform, either of which makes the corner clip stop applying and paints
+   square edges under the round ones. The radius is on the image so the
+   corners are right because the image is round, not because something above
+   it happens to be cutting it.
+
+   One pixel less than the panel's, since the panel's border sits outside
+   this and a radius that matches exactly leaves a hairline of background
+   showing through the curve. */
+.vpn-promo-img, .vpn-banner-img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: var(--toolbar);
+  border-radius: calc(var(--r-lg) - 1px) calc(var(--r-lg) - 1px) 0 0;
+}
 .vpn-intro-title { font-size: 16px; font-weight: 700; letter-spacing: -.01em; margin-bottom: 6px; color: var(--text); }
 .vpn-beta-badge {
   display: inline-block; vertical-align: middle;
@@ -4144,7 +3969,7 @@ body.dark .vpn-beta-badge { color: #fbbf24; background: rgba(245,158,11,.14); bo
   font-size: 11.5px; line-height: 1.5; color: var(--muted);
   margin-bottom: 14px; cursor: default;
 }
-.vpn-terms-row input { margin-top: 2px; accent-color: var(--accent); flex-shrink: 0; }
+.vpn-terms-row input { margin-top: 2px; flex-shrink: 0; }
 .vpn-terms-row b { color: var(--text); font-weight: 600; }
 .vpn-btn-primary {
   width: 100%; height: 38px; border-radius: 12px; border: none;
@@ -4169,7 +3994,7 @@ body.dark .vpn-beta-badge { color: #fbbf24; background: rgba(245,158,11,.14); bo
 .vpn-field-row { display: flex; gap: 8px; margin-bottom: 10px; }
 .vpn-field-row select, .vpn-field-row input {
   height: 34px; border-radius: 10px; border: 1px solid var(--border);
-  background: var(--toolbar); color: var(--text);
+  background-color: var(--toolbar); color: var(--text);
   padding: 0 10px; font-size: 12.5px; flex: 1; min-width: 0; outline: none;
 }
 .vpn-field-row select {
@@ -4177,7 +4002,7 @@ body.dark .vpn-beta-badge { color: #fbbf24; background: rgba(245,158,11,.14); bo
   -webkit-appearance: none;
   -moz-appearance: none;
   padding-right: 26px;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235f6368'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' fill='none' stroke='%235f6368' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 6px center;
   background-size: 15px 15px;
@@ -4186,7 +4011,7 @@ body.dark .vpn-beta-badge { color: #fbbf24; background: rgba(245,158,11,.14); bo
 }
 body.dark .vpn-field-row select {
   color-scheme: dark;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239aa0a6'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' fill='none' stroke='%239aa0a6' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 .vpn-field-row select:focus, .vpn-field-row input:focus { border-color: var(--accent); }
 .vpn-form-err { font-size: 11.5px; color: #ef4444; margin: -2px 0 10px; line-height: 1.4; }
@@ -4200,7 +4025,6 @@ body.dark .vpn-field-row select {
 .vpn-btn-ghost.vpn-btn-danger { color: #ef4444; }
 .vpn-btn-ghost.vpn-btn-danger:hover { background: rgba(239,68,68,.1); }
 
-.vpn-banner-img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: contain; background: var(--toolbar); }
 
 /* Big centered power indicator — the classic "VPN app" visual anchor.
    Grey/outline when idle, green + pulsing ring once connected. */
@@ -4441,11 +4265,22 @@ body.dark .dl-pop-action-btn:hover svg {
   font-family: var(--font);
 }
 .context-menu.hidden { display: none; }
+.context-menu { animation: ctx-pop .13s cubic-bezier(.2,.8,.25,1) both; }
+/* Translate and fade. No scale: it rasterises the labels at the scaled size
+   on the way in and Chromium tends to keep that layer, leaving the whole menu
+   soft for as long as it is open. */
+@keyframes ctx-pop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .context-menu { animation: none; } }
+
+/* Inset, so the highlight is a rounded row like every other list in the
+   browser rather than a bar running edge to edge. */
+.context-menu { padding: 6px; }
 .ctx-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 7px 14px;
+  padding: 7px 10px;
+  border-radius: 8px;
   cursor: default;
   color: var(--text);
   line-height: 1.3;
@@ -4461,11 +4296,13 @@ body.dark .dl-pop-action-btn:hover svg {
   font-size: 11.5px;
   flex-shrink: 0;
 }
-.ctx-item:hover:not(.disabled) { background: var(--hover); }
+/* One highlight, whether the pointer or the keyboard put it there. */
+.ctx-item:hover:not(.disabled),
+.ctx-item.sel:not(.disabled) { background: var(--hover); }
 .ctx-item.ctx-submenu-open { background: var(--hover); }
 .ctx-item.disabled { color: var(--muted); opacity: .55; }
 .ctx-item.muted { color: var(--muted); font-size: 11px; pointer-events: none; padding: 6px 14px 4px; }
-.ctx-sep { height: 1px; background: var(--border); margin: 5px 0; }
+.ctx-sep { height: 1px; background: var(--border); margin: 5px 6px; }
 
 /* Transparent backdrop that sits above webviews so HTML context menus can
    receive mouse events and dismiss on outside clicks. */
@@ -4738,7 +4575,7 @@ body.dark .dl-pop-action-btn:hover svg {
   border: none;
   background: #ffffff;
 }
-body.dark #devtools-view { background: #202124; }
+body.dark #devtools-view { background: #26262b; }
 
 .password-save-bar {
   position: fixed;
@@ -4925,54 +4762,76 @@ body.dark .tab-audio-ind:hover { background: rgba(255,255,255,.12); }
 .tab-search {
   position: fixed; inset: 0; z-index: 400;
   display: flex; align-items: flex-start; justify-content: center;
-  padding-top: 88px;
-  background: rgba(14, 13, 11, .4);
+  padding-top: 84px;
+  background: rgba(10, 10, 12, .42);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 .tab-search.hidden { display: none; }
 .ts-box {
-  width: min(560px, calc(100vw - 48px));
-  background: var(--toolbar); border-radius: 12px; overflow: hidden;
+  width: min(600px, calc(100vw - 48px));
+  background: var(--toolbar); border-radius: 14px; overflow: hidden;
   border: 1px solid var(--border);
-  box-shadow: 0 24px 60px -18px rgba(0, 0, 0, .55);
-  animation: ts-pop .14s ease both;
+  box-shadow: 0 28px 64px -20px rgba(0, 0, 0, .6), 0 3px 10px rgba(0,0,0,.18);
+  animation: ts-pop .16s cubic-bezier(.2,.9,.3,1) backwards;
 }
-@keyframes ts-pop { from { opacity: 0; transform: translateY(-8px) scale(.98); } }
+@keyframes ts-pop { from { opacity: 0; transform: translateY(-10px) scale(.985); } }
 .ts-search {
-  display: flex; align-items: center; gap: 10px;
-  padding: 13px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 11px;
+  padding: 14px 16px; border-bottom: 1px solid var(--border);
 }
 .ts-search svg { color: var(--muted); flex-shrink: 0; }
 #ts-input {
   flex: 1; border: none; outline: none; background: transparent;
-  font-size: 15px; color: var(--text);
+  font-size: 15px; color: var(--text); font-family: inherit;
 }
 #ts-input::placeholder { color: var(--muted); }
-.ts-list { max-height: 348px; overflow-y: auto; padding: 6px; }
+.ts-list { max-height: 352px; overflow-y: auto; padding: 6px; }
+.ts-list::-webkit-scrollbar { width: 9px; }
+.ts-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 9px; }
 .ts-item {
+  position: relative;
   display: flex; align-items: center; gap: 11px;
-  padding: 9px 11px; border-radius: 10px; cursor: default;
+  padding: 9px 11px; border-radius: 9px; cursor: default;
+  transition: background .1s ease;
 }
-.ts-item.sel { background: var(--accent-soft); }
+.ts-item:hover { background: var(--hover); }
+.ts-item.sel { background: var(--hover); }
+.ts-item.sel::before {
+  content: ""; position: absolute; left: 3px; top: 9px; bottom: 9px;
+  width: 3px; border-radius: 3px; background: var(--accent);
+}
 .ts-fav {
-  width: 18px; height: 18px; flex-shrink: 0; border-radius: 8px;
+  width: 18px; height: 18px; flex-shrink: 0; border-radius: 5px;
   background-size: cover; background-position: center;
   background-color: var(--hover);
 }
 .ts-meta { flex: 1; min-width: 0; }
 .ts-title {
-  font-size: 13.5px; color: var(--text);
+  font-size: 13px; color: var(--text); font-weight: 500;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .ts-url {
-  font-size: 11.5px; color: var(--muted);
+  font-size: 11px; color: var(--muted);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .ts-badge {
-  font-size: 10px; font-weight: 600; flex-shrink: 0;
-  color: var(--accent); background: var(--accent-soft);
-  border-radius: 8px; padding: 2px 6px;
+  font-size: 9.5px; font-weight: 650; flex-shrink: 0; letter-spacing: .03em;
+  color: var(--muted); background: var(--hover);
+  border-radius: 6px; padding: 2px 6px; text-transform: uppercase;
 }
-.ts-empty { padding: 26px; text-align: center; color: var(--muted); font-size: 13px; }
+.ts-empty { padding: 30px; text-align: center; color: var(--muted); font-size: 13px; }
+.ts-foot {
+  display: flex; align-items: center; gap: 14px;
+  padding: 9px 14px; border-top: 1px solid var(--border);
+  font-size: 11px; color: var(--muted);
+}
+.ts-foot kbd {
+  display: inline-block; min-width: 16px; text-align: center;
+  padding: 1px 5px; margin-right: 4px;
+  border: 1px solid var(--border); border-radius: 4px;
+  background: var(--hover); font-family: inherit; font-size: 10px;
+}
 
 /* ─── Split view ─────────────────────────────────────────────────────── */
 #split-divider {
@@ -4985,7 +4844,7 @@ body.dark .tab-audio-ind:hover { background: rgba(255,255,255,.12); }
   width: 2px; background: #dadce0;
 }
 body.dark #split-divider::before { background: #3c4043; }
-#split-divider:hover::before { background: var(--accent, #8ab4f8); width: 3px; left: 2.5px; }
+#split-divider:hover::before { background: var(--accent,#ffffff); width: 3px; left: 2.5px; }
 /* In split mode both panes stay visible — overrides webview.inactive. */
 #views.split webview.split-pane { visibility: visible !important; pointer-events: auto !important; }
 /* The focused pane (the one the address bar drives) gets an accent ring;
@@ -5033,27 +4892,23 @@ body.vertical-tabs #tabs-scroll { display: none !important; }
 body.vertical-tabs #titlebar-trailing-spacer { flex: 1; }
 
 /* Transparent mode */
-body.transparent-ui #vtabs-panel {
-  background: rgba(255,255,255,.15) !important;
-  backdrop-filter: blur(4px) saturate(150%);
-  -webkit-backdrop-filter: blur(4px) saturate(150%);
-  box-shadow: 1px 0 0 rgba(0,0,0,.06);
-}
-body.transparent-ui.dark #vtabs-panel {
-  background: rgba(24,25,29,.22) !important;
-  backdrop-filter: blur(4px) saturate(130%);
-  -webkit-backdrop-filter: blur(4px) saturate(130%);
-  box-shadow: 1px 0 0 rgba(255,255,255,.06);
-}
-
-/* Collapsed: favicon-only rail */
-/* !important so it beats the inline width the drag-to-resize feature sets. */
-body.vtabs-collapsed #vtabs-panel { width: 52px !important; }
+/* Collapsed: favicon-only rail.
+   !important so it beats the inline width drag-to-resize sets.
+   NOTE: a second rule further down this file also set this width, to a
+   different number. Both carried !important and the later one silently won,
+   so this value was decoration. There is one now — see the block near the
+   Zen section. */
 body.vtabs-collapsed .vtabs-header-title,
 body.vtabs-collapsed .vtabs-new-label,
 body.vtabs-collapsed .vtab-title { display: none; }
 body.vtabs-collapsed .vtab-close { display: none !important; }
-body.vtabs-collapsed .vtabs-collapse-btn svg { transform: rotate(180deg); }
+/* #vtabs-collapse, not .vtabs-collapse-btn. The search button carries that
+   same class — it was written when the collapse button was the only thing in
+   the header — so this flipped the magnifying glass upside down along with
+   the chevron every time the panel was collapsed. Only the chevron means
+   anything by its direction. */
+#vtabs-collapse svg { transition: transform .22s cubic-bezier(.4,0,.2,1); }
+body.vtabs-collapsed #vtabs-collapse svg { transform: rotate(180deg); }
 body.vtabs-collapsed .vtab { justify-content: center; padding: 0 !important; }
 body.vtabs-collapsed .vtabs-header { padding: 0; justify-content: center; }
 
@@ -5103,10 +4958,6 @@ body.vtabs-collapsed .vtabs-header { padding: 0; justify-content: center; }
   flex-direction: column;
   gap: 1px;
 }
-/* Settings → Appearance: vertically centre the sidebar icon rail (Opera-style) */
-body.vtabs-centered .vtabs-list {
-  justify-content: center;
-}
 .vtabs-list::-webkit-scrollbar { width: 3px; }
 .vtabs-list::-webkit-scrollbar-thumb { background: transparent; border-radius: 2px; }
 .vtabs-list:hover { scrollbar-width: thin; }
@@ -5152,16 +5003,13 @@ body.dark .vtab.active {
 .vtab-favicon {
   width: 15px; height: 15px;
   flex-shrink: 0;
-  object-fit: contain;
   border-radius: 3px;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
 }
-.vtab-favicon.spin {
-  border-radius: 50%;
-  border: 2px solid var(--border);
-  border-top-color: var(--text);
-  animation: _spin .6s linear infinite;
-  width: 13px; height: 13px;
-}
+/* Superseded by the shared rule in theme.css — .vtab-favicon is a span with
+   a background now, so it takes the same treatment as .tab .favicon. */
 
 /* ── Title ── */
 .vtab-title {
@@ -5223,58 +5071,6 @@ body.vtabs-collapsed .vtabs-new-btn {
 }
 body.vtabs-collapsed .vtabs-new-btn:hover { background: var(--hover); }
 
-/* ── Vtabs integrated toolbar slot ── */
-.vtf-integrated-slot { display: none; }
-body.vtabs-integrated .vtf-integrated-slot {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  padding: 7px 6px;
-  margin: 0 6px 6px;
-  border-radius: 12px;
-  background: var(--omni-bg);
-  flex-shrink: 0;
-  position: relative;
-}
-body.vtabs-integrated .vtf-integrated-slot #toolbar-actions {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  flex-wrap: wrap;
-  width: 100%;
-}
-body.vtabs-integrated .vtf-integrated-slot .tb-btn { background: transparent; }
-body.vtabs-integrated .vtf-integrated-slot .tb-btn:hover { background: var(--hover); }
-body.vtabs-integrated #vtabs-panel { overflow: visible; z-index: 50; }
-body.vtabs-integrated.vtabs-collapsed .vtf-integrated-slot,
-body.vtabs-integrated.vtabs-collapsed .vtf-integrated-slot #toolbar-actions {
-  flex-direction: column;
-  flex-wrap: nowrap;
-  margin-left: 4px;
-  margin-right: 4px;
-}
-body.vtabs-integrated .vtf-integrated-slot .toolbar-anchor { position: static; }
-/* Popovers keep their natural size and open upward from the slot, spilling
-   over the page. The panel's raised z-index keeps them above the webview. */
-body.vtabs-integrated .vtf-integrated-slot .toolbar-popover,
-body.vtabs-integrated .vtf-integrated-slot .popover {
-  position: absolute;
-  top: auto;
-  bottom: calc(100% + 8px);
-  left: 0;
-  right: auto;
-  max-height: calc(100vh - 140px);
-  overflow-y: auto;
-  transform-origin: bottom left;
-  animation: sp-pop-up .18s cubic-bezier(.16, 1, .3, 1);
-  z-index: 13000;
-}
-@keyframes sp-pop-up {
-  from { opacity: 0; transform: translateY(10px) scale(.97); }
-  to   { opacity: 1; transform: none; }
-}
 /* ── Drag-to-resize handle on the right edge of the vtabs panel ── */
 .vtabs-resize {
   position: absolute;
@@ -5371,32 +5167,6 @@ body.vtabs-integrated .vtf-integrated-slot .popover {
 }
 
 /* ── AI panel transparency ── */
-body.transparent-ui #ai-panel {
-  background: rgba(255,255,255,.26) !important;
-  backdrop-filter: blur(13px) saturate(160%);
-  -webkit-backdrop-filter: blur(13px) saturate(160%);
-}
-body.transparent-ui .ai-panel-header,
-body.transparent-ui .ai-bar {
-  background: rgba(255,255,255,.20) !important;
-}
-body.transparent-ui .ai-composer {
-  background: rgba(255,255,255,.16) !important;
-}
-body.transparent-ui.dark #ai-panel {
-  background: rgba(32,33,36,.38) !important;
-  backdrop-filter: blur(13px) saturate(140%);
-  -webkit-backdrop-filter: blur(13px) saturate(140%);
-}
-body.transparent-ui.dark .ai-panel-header,
-body.transparent-ui.dark .ai-bar {
-  background: rgba(28,29,33,.30) !important;
-}
-body.transparent-ui.dark .ai-composer {
-  background: rgba(28,29,33,.26) !important;
-}
-
-
 /* ── Inline AI side panel ───────────────────────────────────────── */
 #ai-panel {
   width: 480px;
@@ -5421,7 +5191,7 @@ body.transparent-ui.dark .ai-composer {
   margin: 10px 10px 6px; height: 34px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center; gap: 6px;
   border: 1px solid var(--border); border-radius: 9px;
-  background: var(--toolbar); color: var(--text);
+  background-color: var(--toolbar); color: var(--text);
   font-size: 12px; font-weight: 600; font-family: inherit; cursor: default;
 }
 .ai-side-new:hover { background: var(--hover); border-color: var(--accent); }
@@ -5586,7 +5356,36 @@ body.dark .ai-pill-ok .ai-dot { background: #81c995; }
   box-shadow: 0 2px 10px rgba(0,0,0,.05);
   transition: border-color .14s, box-shadow .14s;
 }
-.ai-composer-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft), 0 4px 14px rgba(0,0,0,.06); }
+/* The composer is the one control in the panel — a ring here would flash on
+   every single message. The hairline firming is the whole signal. */
+.ai-composer-box:focus-within { border-color: var(--border-strong); box-shadow: 0 4px 14px rgba(0,0,0,.06); }
+.ai-composer-box.dropping { border-color: var(--accent); background: var(--accent-soft); }
+.ai-attach-btn {
+  width: 28px; height: 28px; flex-shrink: 0; align-self: flex-end;
+  margin: 0 0 2px -6px; border: none; border-radius: 50%;
+  background: transparent; color: var(--muted); cursor: default;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .12s, color .12s;
+}
+.ai-attach-btn:hover { background: var(--hover); color: var(--text); }
+.ai-attach-btn:disabled { opacity: .4; }
+/* Attached files sit above the box, one chip each, removable. */
+.ai-attachments { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 7px; }
+.ai-attachments[hidden] { display: none; }
+.ai-att-chip {
+  display: flex; align-items: center; gap: 6px; max-width: 100%;
+  padding: 4px 6px 4px 8px; border-radius: 8px;
+  background: var(--hover); font-size: 11.5px; color: var(--text);
+}
+.ai-att-chip.error { background: rgba(200,70,60,.16); }
+.ai-att-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 550; }
+.ai-att-meta { flex-shrink: 0; opacity: .6; font-variant-numeric: tabular-nums; }
+.ai-att-x {
+  flex-shrink: 0; width: 16px; height: 16px; border: none; border-radius: 4px;
+  background: none; color: inherit; opacity: .6; cursor: default;
+  display: grid; place-items: center; font-size: 13px; line-height: 1;
+}
+.ai-att-x:hover { opacity: 1; background: rgba(127,127,127,.2); }
 #ai-input {
   flex: 1; border: none; outline: none; background: transparent; resize: none;
   font-size: 13px; line-height: 1.5; color: var(--text);
@@ -5633,11 +5432,11 @@ body.dark .ai-warn { background: rgba(252,213,99,.10); border-color: rgba(252,21
 .ai-field label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 4px; color: var(--text); }
 .ai-field select, .ai-field input {
   width: 100%; height: 34px; border-radius: 12px;
-  border: 1px solid var(--border); background: var(--omni-bg); color: var(--text);
+  border: 1px solid var(--border); background-color: var(--omni-bg); color: var(--text);
   padding: 0 10px; font-size: 12px; outline: none; user-select: text;
   font-family: inherit;
 }
-.ai-field select:focus, .ai-field input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.ai-field select:focus, .ai-field input:focus { border-color: var(--border-strong); box-shadow: none; }
 body.dark .ai-field select { color-scheme: dark; }
 .ai-hint { font-size: 10px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
 .ai-hint b { color: var(--accent); font-weight: 600; }
@@ -5720,10 +5519,10 @@ body.dark .ai-field select { color-scheme: dark; }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #eeecf9;
+  background: #f3f3f7;
   animation: upd-fadein .22s ease;
 }
-body.dark .updating-overlay { background: #17161f; }
+body.dark .updating-overlay { background: #202024; }
 .updating-overlay[hidden] { display: none !important; }
 @keyframes upd-fadein { from { opacity: 0; } to { opacity: 1; } }
 .updating-card {
@@ -5775,7 +5574,7 @@ body.dark .updating-overlay { background: #17161f; }
   margin-top: 8px;
   align-self: stretch;
   background: var(--accent);
-  color: #10160f;
+  color: var(--on-accent);
   border: none;
   border-radius: 12px;
   padding: 12px 20px;
@@ -6074,11 +5873,16 @@ body.low-end-device *::after {
   transition: none !important;
   animation: none !important;
 }
-body.low-end-device #titlebar,
-body.low-end-device #toolbar {
+/* Blur is the single biggest GPU cost in the interface, and it was only being
+   stripped from two elements. On a weak machine none of it is worth paying for. */
+body.low-end-device *,
+body.low-end-device *::before,
+body.low-end-device *::after {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
 }
+body.low-end-device #views webview { will-change: auto !important; }
 
 .search-popup {
   position: fixed;
@@ -6089,7 +5893,7 @@ body.low-end-device #toolbar {
   justify-content: center;
   padding: 24px;
   background: rgba(8, 10, 15, .3);
-  animation: sp-fade .2s ease both;
+  animation: sp-fade .2s ease backwards;
 }
 .search-popup.hidden { display: none; }
 @keyframes sp-fade { from { opacity: 0; } to { opacity: 1; } }
@@ -6108,7 +5912,7 @@ body.low-end-device #toolbar {
   border-radius: 16px;
   box-shadow: 0 24px 70px rgba(0, 0, 0, .34);
   overflow: hidden;
-  animation: sp-rise .26s cubic-bezier(.16, 1, .3, 1) both;
+  animation: sp-rise .26s cubic-bezier(.16, 1, .3, 1) backwards;
 }
 @keyframes sp-rise {
   from { opacity: 0; transform: translateY(16px) scale(.97); }
@@ -6142,7 +5946,7 @@ body.low-end-device #toolbar {
   overflow-y: auto;
   padding: 8px;
   min-height: 0;
-  animation: sp-sug-in .2s cubic-bezier(.16, 1, .3, 1) both;
+  animation: sp-sug-in .2s cubic-bezier(.16, 1, .3, 1) backwards;
 }
 @keyframes sp-sug-in {
   from { opacity: 0; transform: translateY(-8px); }
@@ -6203,25 +6007,9 @@ body.low-end-device #toolbar {
   margin-top: 1px;
 }
 
-body.transparent-ui .search-popup { background: rgba(8, 10, 15, .26); }
-body.transparent-ui .search-popup-card {
-  background: rgba(250, 250, 252, .86);
-  backdrop-filter: blur(21px) saturate(180%);
-  -webkit-backdrop-filter: blur(21px) saturate(180%);
-}
-body.transparent-ui.dark .search-popup-card {
-  background: rgba(32, 34, 40, .86);
-}
-body.transparent-ui .search-popup-suggestions { border-top-color: rgba(0,0,0,.1); }
-body.transparent-ui.dark .search-popup-suggestions { border-top-color: rgba(255,255,255,.12); }
-body.transparent-ui .sp-sug-item:hover { background: rgba(0, 0, 0, .06); }
-body.transparent-ui.dark .sp-sug-item:hover { background: rgba(255, 255, 255, .08); }
-
 body.has-vibe .search-popup-card { background-image: none !important; }
 
-/* User turned ON "Transparent search popup" — give the popup a frosted-glass
-   look even when global Increase Transparency is OFF. (When global transparency
-   is on, the body.transparent-ui rules above already cover this.) */
+/* User turned ON "Transparent search popup" — give the popup a frosted-glass look. */
 body.sp-glass .search-popup { background: rgba(8, 10, 15, .32); }
 body.sp-glass .search-popup-card {
   background: rgba(250, 250, 252, .82);
@@ -6236,11 +6024,14 @@ body.sp-glass.dark .sp-sug-item:hover { background: rgba(255, 255, 255, .08); }
 
 /* User opted out of glass on the search popup — keep it solid even when the
    rest of the UI is translucent. */
+body.sp-no-glass .search-popup { background: rgba(8, 10, 15, .14); }
 body.sp-no-glass .search-popup-card {
   background: var(--toolbar) !important;
+  border: 1px solid var(--border);
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
+body.sp-no-glass.dark .search-popup-card { background: #23242a !important; }
 
 .discord-popup {
   position: fixed;
@@ -6300,13 +6091,6 @@ body.sp-no-glass .search-popup-card {
 .discord-btn-secondary:hover { filter: brightness(.95); }
 .discord-btn-primary { background: #5865f2; color: #fff; }
 .discord-btn-primary:hover { filter: brightness(1.1); }
-body.transparent-ui .discord-card {
-  background: rgba(250, 250, 252, .88);
-  backdrop-filter: blur(21px) saturate(180%);
-  -webkit-backdrop-filter: blur(21px) saturate(180%);
-}
-body.transparent-ui.dark .discord-card { background: rgba(32, 34, 40, .88); }
-
 /* ── Thank-you popup (one-time) ─────────────────────────────────────────── */
 .ty-popup {
   position: fixed;
@@ -6381,52 +6165,6 @@ body.transparent-ui.dark .discord-card { background: rgba(32, 34, 40, .88); }
 }
 .ty-btn-secondary:hover { filter: brightness(.95); }
 .ty-btn-secondary:active { filter: brightness(.9); }
-body.transparent-ui .ty-card {
-  background: rgba(250, 250, 252, .9);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-}
-body.transparent-ui.dark .ty-card { background: rgba(30, 32, 38, .9); }
-
-/* ─── UI roundness (Settings → Appearance → Corner style) ───────────────────
-   A single global control over how rounded the whole chrome looks. "sharp"
-   squares everything off; "round" exaggerates the radii. Targets the main
-   interactive surfaces; !important so it overrides each element's own radius. */
-body.ui-sharp #omnibox,
-body.ui-sharp .tb-btn,
-body.ui-sharp .nav-btn,
-body.ui-sharp .strip-btn,
-body.ui-sharp .menu,
-body.ui-sharp .menu-item,
-body.ui-sharp .tab,
-body.ui-sharp .suggestions,
-body.ui-sharp .sugg-item,
-body.ui-sharp .bookmark,
-body.ui-sharp .bm-item,
-body.ui-sharp .panel,
-body.ui-sharp .card,
-body.ui-sharp button,
-body.ui-sharp input,
-body.ui-sharp .vtab,
-body.ui-sharp .toast { border-radius: 3px !important; }
-
-body.ui-round #omnibox,
-body.ui-round .strip-btn,
-body.ui-round .menu,
-body.ui-round .suggestions,
-body.ui-round .bookmark,
-body.ui-round .bm-item,
-body.ui-round .panel,
-body.ui-round .card,
-body.ui-round .vtab,
-body.ui-round .toast { border-radius: 18px !important; }
-body.ui-round .tb-btn,
-body.ui-round .nav-btn,
-body.ui-round button,
-body.ui-round input { border-radius: 14px !important; }
-body.ui-round .menu-item,
-body.ui-round .sugg-item { border-radius: 11px !important; }
-body.ui-round .tab { border-radius: 14px 14px 6px 6px !important; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Opera One-style skin
@@ -6452,9 +6190,9 @@ body.ui-round .tab { border-radius: 14px 14px 6px 6px !important; }
    applyAccentTriad()'s JS override landed (or as a bare fallback) got a
    mismatched green tint next to a lavender accent. */
 :root {
-  --accent: #4f46e5;
-  --accent-hover: #6058ea;
-  --accent-soft: rgba(79, 70, 229, .13);
+  --accent: #101014;
+  --accent-hover: #2a2a34;
+  --accent-soft: rgba(16, 16, 20, .09);
 }
 body.privoo-one {
   --pv-mono: ui-monospace, "Cascadia Code", "SF Mono", "JetBrains Mono", Consolas, monospace;
@@ -6465,33 +6203,47 @@ body.privoo-one {
    (--tab-active, --tab-hover, --border, --muted, --text, --pv-rail — the
    sidebar rail) the JS accent code never touches at all. */
 body.privoo-one:not(.dark) {
-  --strip: #f3f3f7;
-  --strip-focus: #ececf2;
+  --strip: #ebebef;
+  --strip-focus: #e2e2e8;
   --tab-active: #ffffff;
-  --tab-hover: rgba(23,23,31,.045);
+  --tab-hover: rgba(16,16,20,.055);
   --toolbar: #ffffff;
-  --omni-bg: #f1f1f6;
-  --omni-hover: #e9e9f0;
-  --text: #17171f;
-  --muted: #6c6c78;
-  --border: rgba(23,23,31,.09);
-  --hover: rgba(23,23,31,.05);
-  --pv-rail: #ececf2;
+  --surface-1: #ffffff;
+  --surface-2: #f6f6f8;
+  --omni-bg: #f0f0f3;
+  --omni-hover: #e8e8ee;
+  --text: #101014;
+  --muted: #64646f;
+  --faint: #9a9aa6;
+  --border: rgba(16,16,20,.10);
+  --border-strong: rgba(16,16,20,.18);
+  --hover: rgba(16,16,20,.055);
+  --active: rgba(16,16,20,.10);
+  --pv-rail: #f4f4f6;
 }
-/* Dark — rich graphite, not tinted black. */
+/* Dark. Mirrors the :root/body.dark ladder exactly; it is repeated at
+   this specificity only because `body.privoo-one.dark` (two classes) would
+   otherwise lose to nothing and win over the base block, which is how the
+   palette used to drift graphite regardless of what the tokens at the top of
+   this file said. One ladder, declared twice, never two ladders. */
 body.privoo-one.dark {
-  --strip: #17181c;
-  --strip-focus: #1d1e23;
-  --tab-active: #232429;
-  --tab-hover: rgba(255,255,255,.06);
-  --toolbar: #1b1c20;
-  --omni-bg: rgba(255,255,255,.055);
-  --omni-hover: rgba(255,255,255,.09);
-  --text: #f1f1f4;
-  --muted: #97979f;
-  --border: rgba(255,255,255,.08);
-  --hover: rgba(255,255,255,.06);
-  --pv-rail: #17181c;
+  --strip: #202024;
+  --strip-focus: #282830;
+  --tab-active: #43434c;
+  --tab-hover: rgba(255,255,255,.07);
+  --toolbar: #2d2d33;
+  --surface-1: #37373f;
+  --surface-2: #26262b;
+  --omni-bg: #26262b;
+  --omni-hover: #2f2f36;
+  --text: #ededf0;
+  --muted: #b0b0b8;
+  --faint: #85858e;
+  --border: rgba(255,255,255,.10);
+  --border-strong: rgba(255,255,255,.20);
+  --hover: rgba(255,255,255,.07);
+  --active: rgba(255,255,255,.13);
+  --pv-rail: #2d2d33;
 }
 
 /* Chrome surfaces — flat, separated by a single hairline (not shadow). */
@@ -6536,13 +6288,16 @@ body.privoo-one .tab.active {
   color: var(--text);
   position: relative;
 }
-body.privoo-one .tab.active::after {
+/* No accent underline on the active tab: the raised surface already says which
+   tab is active, and stacking a coloured bar on top of it read as a leftover
+   element rather than an indicator. Grouped tabs keep a bar, because there the
+   colour carries real information (which group) rather than repeating state. */
+body.privoo-one .tab.grouped.active::after {
   content: "";
   position: absolute; left: 10px; right: 10px; bottom: 4px;
   height: 2px; border-radius: 2px;
-  background: var(--accent);
+  background: var(--group-color, var(--accent));
 }
-body.privoo-one .tab.grouped.active::after { background: var(--group-color, var(--accent)); }
 /* Close button only on hover / active. */
 body.privoo-one .tab .tab-close { opacity: 0; transition: opacity .12s ease; border-radius: 7px; }
 body.privoo-one .tab:hover .tab-close,
@@ -6555,8 +6310,6 @@ body.privoo-one #new-tab.strip-btn {
   transition: background var(--t-fast) ease;
 }
 body.privoo-one #new-tab.strip-btn:hover { background: var(--tab-hover); }
-body.privoo-one.newtab-circle #new-tab,
-body.privoo-one.newtab-circle #new-tab.strip-btn { border-radius: 50%; width: 28px; height: 28px; }
 
 /* Toolbar buttons — squared. */
 body.privoo-one .tb-btn.round,
@@ -6607,7 +6360,7 @@ body.privoo-one .customize-panel button { border-radius: 10px; }
 body.privoo-one .cp-theme-btn { border-radius: 10px; }
 body.privoo-one .cp-theme-swatch { border-radius: 8px; border-color: var(--border); }
 body.privoo-one .cp-theme-light { background: linear-gradient(180deg, #ece9f7 0 14px, #ffffff 14px); }
-body.privoo-one .cp-theme-dark  { background: linear-gradient(180deg, #202124 0 14px, #303134 14px); }
+body.privoo-one .cp-theme-dark  { background: linear-gradient(180deg, #202024 0 14px, #2d2d33 14px); }
 
 /* Accent swatches — squared, matching the Settings page swatches. */
 body.privoo-one .cp-accent-swatch { border-radius: 10px; }
@@ -6628,7 +6381,7 @@ body.privoo-one .ty-logo { border-radius: 10px; }
 body.privoo-one .ty-btn,
 body.privoo-one .ty-btn-secondary { border-radius: 10px; }
 body.privoo-one .ty-btn-secondary { background: var(--hover); color: var(--text); }
-body.privoo-one .ty-btn { background: var(--accent); color: #10160f; }
+body.privoo-one .ty-btn { background: var(--accent); color: var(--on-accent); }
 
 /* ── Hover flyout panels (sidebar shortcut / bookmark preview) — squared ── */
 body.privoo-one .sidebar-flyout {
@@ -6646,7 +6399,7 @@ body.privoo-one .sb-modal-card {
 }
 body.privoo-one .sb-field input { border-radius: 10px; }
 body.privoo-one .sb-modal-actions button { border-radius: 10px; }
-body.privoo-one .sb-modal-actions button.primary { color: #10160f; }
+body.privoo-one .sb-modal-actions button.primary { color: var(--on-accent); }
 
 /* ── Bookmark chips stay ROUNDED — the hover highlight reads soft, not boxy ── */
 body.privoo-one .bookmark-chip { border-radius: 13px; }
@@ -6843,12 +6596,12 @@ body.privoo-one.incognito #toolbar { box-shadow: inset 0 -1px 0 var(--accent); }
    below is pure gradient art on an opaque layer, so it's free to be as rich
    as we like without that problem — only the previous pass over-corrected
    and killed it too, via `display:none !important`. */
-.setup-overlay { background: #17161f !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
-body:not(.dark) .setup-overlay { background: #eeecf9 !important; }
-body.setup-mode { background: #17161f !important; }
-html:has(body.setup-mode) { background: #17161f !important; }
-body:not(.dark).setup-mode { background: #eeecf9 !important; }
-html:has(body:not(.dark).setup-mode) { background: #eeecf9 !important; }
+.setup-overlay { background: #202024 !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+body:not(.dark) .setup-overlay { background: #f3f3f7 !important; }
+body.setup-mode { background: #202024 !important; }
+html:has(body.setup-mode) { background: #202024 !important; }
+body:not(.dark).setup-mode { background: #f3f3f7 !important; }
+html:has(body:not(.dark).setup-mode) { background: #f3f3f7 !important; }
 /* ── Two-panel frame: a persistent pine brand rail + a content stage where the
    step cards swap. Replaces the single floating card. ── */
 .sw-frame {
@@ -6864,7 +6617,7 @@ html:has(body:not(.dark).setup-mode) { background: #eeecf9 !important; }
   animation: sw-frame-in .5s cubic-bezier(.16,.84,.44,1) both;
 }
 body.dark .sw-frame {
-  background: #17181c;
+  background: #2d2d33;
   border-color: rgba(255,255,255,.09);
   box-shadow: 0 24px 60px -24px rgba(0,0,0,.6);
 }
@@ -6974,7 +6727,7 @@ body.privoo-one .sw-card {
 .sw-choice-card span, .sw-choice-card b { color: inherit; }
 .sw-terms-box { background: var(--omni-bg) !important; border: 1px solid var(--border) !important; border-radius: 12px !important; }
 .sw-btn.primary {
-  background: var(--accent) !important; color: #fff !important; border: none !important;
+  background: var(--accent) !important; color: var(--on-accent) !important; border: none !important;
   box-shadow: none !important;
 }
 .sw-btn.primary:hover { filter: brightness(1.07); }
@@ -7017,7 +6770,7 @@ body.privoo-one .sw-card {
   padding: 0 !important; gap: 0 !important; align-items: center !important; justify-content: center !important;
 }
 .sw-theme-toggle .sw-theme-card.selected,
-.sw-theme-toggle .sw-choice-card.selected { color: #10160f !important; }
+.sw-theme-toggle .sw-choice-card.selected { color: var(--on-accent) !important; }
 .sw-theme-toggle .sw-choice-card:hover { transform: none !important; }
 .sw-theme-toggle-thumb {
   position: absolute; top: 4px; left: 4px; width: calc(50% - 4px); height: calc(100% - 8px);
@@ -7025,11 +6778,10 @@ body.privoo-one .sw-card {
 }
 .sw-theme-toggle-thumb.is-dark { transform: translateX(100%); }
 
-
 /* ── Done step — accent-filled circle with the halo pulse restored ── */
 .sw-done-ring {
   width: 68px; height: 68px; border-radius: 50% !important;
-  background: var(--accent) !important; color: #fff !important;
+  background: var(--accent) !important; color: var(--on-accent) !important;
   display: flex; align-items: center; justify-content: center;
   margin: 0 auto 20px;
   box-shadow: 0 12px 30px -8px color-mix(in srgb, var(--accent) 55%, transparent) !important;
@@ -7070,7 +6822,6 @@ body.privoo-one .sw-disc-icon { background: var(--accent-soft); border-color: tr
    wordmark, the setup side-panel footer). Functional headings, section
    titles, buttons and body copy all keep their normal casing. */
 
-
 /* ── Sidebar micro-interactions + customize popover + now-playing flyout ── */
 
 .fp-pop {
@@ -7102,99 +6853,887 @@ body.privoo-one .sw-disc-icon { background: var(--accent-soft); border-color: tr
 
 .sb-customize-pop {
   position: fixed; left: 62px; bottom: 12px; z-index: 14000;
-  width: 250px; padding: 12px;
+  width: 278px; padding: 0;
   background: var(--toolbar);
-  border: 1px solid var(--border); border-radius: var(--r-lg);
+  border: 1px solid var(--border); border-radius: 14px;
   box-shadow: var(--panel-shadow);
   animation: pop-in .2s cubic-bezier(.16,.84,.44,1);
   transform-origin: bottom left;
   font-size: 13px; color: var(--text);
+  overflow: hidden;
 }
-.sb-customize-pop h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 2px 4px 8px; }
-.sb-cz-row { display: flex; align-items: center; gap: 10px; padding: 8px 9px; border-radius: 12px; cursor: default;
-  transition: background var(--t-fast) ease; }
+.sb-cz-head {
+  padding: 13px 14px 11px;
+  border-bottom: 1px solid var(--border);
+}
+.sb-cz-head-title { font-size: 13.5px; font-weight: 600; letter-spacing: -.01em; }
+.sb-cz-head-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.sb-cz-body { padding: 10px; max-height: 60vh; overflow-y: auto; }
+.sb-cz-body::-webkit-scrollbar { width: 8px; }
+.sb-cz-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
+.sb-customize-pop h4 {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .07em;
+  color: var(--muted); margin: 4px 4px 6px; font-weight: 600;
+}
+.sb-cz-row {
+  display: flex; align-items: center; gap: 10px; padding: 7px 8px;
+  border-radius: 9px; cursor: default;
+  transition: background var(--t-fast) ease;
+}
 .sb-cz-row:hover { background: var(--hover); }
-.sb-cz-fav { width: 20px; height: 20px; border-radius: 6px; flex-shrink: 0; object-fit: contain;
+.sb-cz-fav { width: 19px; height: 19px; border-radius: 5px; flex-shrink: 0; object-fit: contain;
   display: inline-flex; }
-.sb-cz-fav svg { width: 20px; height: 20px; border-radius: 6px; display: block; }
+.sb-cz-fav svg { width: 19px; height: 19px; border-radius: 5px; display: block; }
 .sb-cz-letter { display: flex; align-items: center; justify-content: center;
-  background: var(--accent-soft); color: var(--accent); font-size: 11px; font-weight: 700; }
-.sb-cz-name { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.25;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  background: var(--hover); color: var(--muted); font-size: 10.5px; font-weight: 700; }
+.sb-cz-name { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.3;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; }
 .sb-cz-name small { color: var(--muted); font-size: 10.5px; font-weight: 400; }
 /* mini pill switch */
-.sb-cz-sw { position: relative; width: 32px; height: 18px; flex-shrink: 0; }
+.sb-cz-sw { position: relative; width: 30px; height: 17px; flex-shrink: 0; }
 .sb-cz-sw input { position: absolute; opacity: 0; width: 0; height: 0; }
 .sb-cz-sw i { position: absolute; inset: 0; border-radius: 999px; background: rgba(38,36,58,.16);
   transition: background .18s ease; }
-.sb-cz-sw i::before { content: ""; position: absolute; width: 14px; height: 14px; left: 2px; top: 2px;
+.sb-cz-sw i::before { content: ""; position: absolute; width: 13px; height: 13px; left: 2px; top: 2px;
   border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(38,36,58,.3);
   transition: transform .18s cubic-bezier(.2,.8,.25,1); }
 .sb-cz-sw input:checked + i { background: var(--accent); }
-.sb-cz-sw input:checked + i::before { transform: translateX(14px); }
+.sb-cz-sw input:checked + i::before { transform: translateX(13px); }
 body.dark .sb-cz-sw i { background: rgba(255,255,255,.14); }
+.sb-cz-foot { padding: 9px 10px; border-top: 1px solid var(--border); }
 .sb-cz-add {
-  display: block; width: 100%; margin-top: 8px; padding: 8px 0;
-  border: 1px dashed color-mix(in srgb, var(--accent) 45%, transparent);
-  border-radius: 10px; background: var(--accent-soft); color: var(--accent);
-  font: inherit; font-weight: 600; cursor: pointer;
-  transition: background var(--t-fast) ease;
+  display: block; width: 100%; padding: 8px 0;
+  border: 1px solid var(--border);
+  border-radius: 9px; background: transparent; color: var(--text);
+  font: inherit; font-size: 12.5px; font-weight: 550; cursor: pointer;
+  transition: background var(--t-fast) ease, border-color var(--t-fast) ease;
 }
-.sb-cz-add:hover { background: color-mix(in srgb, var(--accent) 24%, transparent); }
+.sb-cz-add:hover { background: var(--hover); border-color: var(--muted); }
 
-/* Off / Always on / On hover — visibility mode picker at the top of the
-   sidebar's own Customize popover. */
+/* Visibility mode picker at the top of the sidebar's Customize popover. */
 .sb-cz-modes {
-  display: flex; gap: 3px; padding: 3px; margin-bottom: 10px;
-  border-radius: 11px; background: var(--hover);
+  display: flex; gap: 2px; padding: 2px; margin: 10px 0 4px;
+  border-radius: 9px; background: var(--hover);
 }
 .sb-cz-mode-btn {
   flex: 1; border: none; background: transparent; color: var(--muted);
-  font: inherit; font-size: 11.5px; font-weight: 600; padding: 7px 4px;
-  border-radius: 8px; cursor: pointer;
+  font: inherit; font-size: 11.5px; font-weight: 600; padding: 6px 4px;
+  border-radius: 7px; cursor: pointer;
   transition: background .15s ease, color .15s ease;
 }
 .sb-cz-mode-btn:hover { color: var(--text); }
-.sb-cz-mode-btn.active { background: var(--accent); color: #fff; }
+.sb-cz-mode-btn.active { background: var(--accent); color: var(--on-accent); }
 
+/* One opaque surface, one hairline, one modest shadow. The previous version
+   stacked two gradients, a 24px backdrop-blur, two inset highlights and a large
+   coloured drop shadow on a 300px tooltip — which is what made it read as a
+   demo of CSS effects rather than a part of the browser. */
 .sb-nowplaying {
   position: fixed; z-index: 14000; left: 62px;
   display: flex; align-items: center; gap: 10px;
-  padding: 9px 12px; max-width: 260px;
+  padding: 9px 10px; width: 284px;
+  border-radius: 10px;
   background: var(--toolbar);
-  border: 1px solid var(--border); border-radius: 999px;
-  box-shadow: var(--panel-shadow);
-  animation: pop-in .18s cubic-bezier(.16,.84,.44,1);
-  transform-origin: center left;
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 20px -6px rgba(16,18,28,.28);
+  animation: sb-np-in .12s ease-out;
   font-size: 12.5px; color: var(--text);
 }
-.sb-np-badge {
-  flex-shrink: 0; padding: 3px 9px; border-radius: 999px;
-  background: var(--accent-soft); color: var(--accent);
-  font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-  animation: np-pulse 2.2s ease-in-out infinite;
+@keyframes sb-np-in {
+  from { opacity: 0; transform: translateX(-4px); }
+  to   { opacity: 1; transform: none; }
 }
-@keyframes np-pulse { 0%,100% { opacity: 1; } 50% { opacity: .55; } }
-.sb-np-title { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+@media (prefers-reduced-motion: reduce) { .sb-nowplaying { animation: none; } }
+body.dark .sb-nowplaying {
+  box-shadow: 0 8px 24px -6px rgba(0,0,0,.6);
+}
+.sb-np-art {
+  flex-shrink: 0; width: 38px; height: 38px; border-radius: 6px; object-fit: cover;
+  background: var(--hover);
+}
+.sb-np-art-ph {
+  display: grid; place-items: center;
+  background: var(--hover); color: var(--muted);
+}
+.sb-np-art-ph svg { width: 17px; height: 17px; }
+.sb-np-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.sb-np-title {
+  min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-weight: 550; font-size: 12.5px; line-height: 1.35;
+}
+.sb-np-artist {
+  min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: 11px; color: var(--muted); line-height: 1.35;
+}
+/* Transport controls are plain glyphs, not accent-filled circles. They sit
+   quiet until hovered, the way media controls do in a real player. */
+.sb-np-controls { flex-shrink: 0; display: flex; align-items: center; gap: 1px; }
 .sb-np-btn {
-  flex-shrink: 0; width: 26px; height: 26px; border: none; border-radius: 50%;
-  background: var(--accent); color: var(--on-accent);
+  flex-shrink: 0; width: 26px; height: 26px; border: none; border-radius: 6px;
+  background: none; color: var(--muted);
   display: flex; align-items: center; justify-content: center; cursor: pointer;
+  transition: background .12s ease, color .12s ease;
+}
+.sb-np-btn:hover { background: var(--hover); color: var(--text); }
+.sb-np-btn[data-np="toggle"] { color: var(--text); }
+.sb-np-btn svg { width: 14px; height: 14px; fill: currentColor; }
+.sb-np-btn.ghost svg { width: 12px; height: 12px; }
+/* Nothing currently playing — the pill still appears so hovering never feels
+   dead, it just has nothing to control. */
+.sb-nowplaying.is-idle .sb-np-controls { display: none; }
+
+.sb-music-btn { position: relative; }
+.sb-music-cog {
+  position: absolute; right: -1px; bottom: -1px;
+  width: 15px; height: 15px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--toolbar); color: var(--muted);
+  box-shadow: 0 1px 4px rgba(0,0,0,.28), inset 0 0 0 1px var(--border);
+  opacity: 0; transform: scale(.7);
+  transition: opacity .13s ease, transform .13s ease, color .13s ease;
+}
+.sb-music-cog svg { width: 9px; height: 9px; }
+.sidebar-rail-btn:hover .sb-music-cog { opacity: 1; transform: scale(1); }
+.sb-music-cog:hover { color: var(--accent); }
+
+/* Invisible click-catcher for the music picker. It must sit ABOVE the page
+   area: a <webview> never forwards mouse events to this document, so without
+   it a click on the page left the picker open. */
+.music-pick-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 14500;
+  background: transparent;
+}
+.music-pick {
+  position: fixed; z-index: 15000; width: 234px; padding: 12px;
+  border-radius: 16px;
+  background: var(--toolbar);
+  border: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.6), var(--panel-shadow);
+  animation: pop-in .16s cubic-bezier(.16,.84,.44,1);
+  transform-origin: top left;
+}
+body.dark .music-pick { box-shadow: inset 0 1px 0 rgba(255,255,255,.07), var(--panel-shadow); }
+.music-pick-head {
+  font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--muted); margin: 0 2px 9px;
+}
+.music-pick-grid { display: flex; flex-direction: column; gap: 2px; }
+.music-pick-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 9px; border: none; border-radius: 11px;
+  background: transparent; color: var(--text);
+  font: inherit; font-size: 13px; font-weight: 550; text-align: left; cursor: pointer;
   transition: background var(--t-fast) ease;
 }
-.sb-np-btn:hover { background: var(--accent-hover); }
-.sb-np-btn svg { width: 13px; height: 13px; fill: currentColor; }
-
+.music-pick-item:hover { background: var(--hover); }
+.music-pick-item.active { background: var(--accent-soft); color: var(--accent); }
+.music-pick-ico { flex-shrink: 0; width: 22px; height: 22px; display: block; }
+.music-pick-ico svg { width: 22px; height: 22px; display: block; border-radius: 6px; }
+.music-pick-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ── Gloss layer ──────────────────────────────────────────────────────────
    A single restrained treatment shared by every floating surface: a 1px
    inset top-light that reads as a polished glass edge. Applied via
    box-shadow so it stacks with each surface's existing elevation. */
 .popover, .toolbar-popover, .context-menu, #suggestions,
-.sb-customize-pop, .sb-nowplaying {
+.sb-customize-pop {
   box-shadow: inset 0 1px 0 rgba(255,255,255,.6), var(--panel-shadow);
 }
 body.dark .popover, body.dark .toolbar-popover, body.dark .context-menu,
-body.dark #suggestions, body.dark .sb-customize-pop, body.dark .sb-nowplaying {
+body.dark #suggestions, body.dark .sb-customize-pop {
   box-shadow: inset 0 1px 0 rgba(255,255,255,.07), var(--panel-shadow);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Quiet — the calm default chrome. A near-white strip, one unobtrusive
+   address field, monochrome icons that only gain a background on hover, and
+   hairline separators instead of borders. Light mode is retuned at the token
+   level so every component inherits it; dark mode keeps its own palette and
+   only picks up the flattening rules below.
+   ══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --strip:       #f6f7fa;
+  --strip-focus: #f1f3f7;
+  --tab-active:  #ffffff;
+  --tab-hover:   rgba(24,34,47,.045);
+  --toolbar:     #ffffff;
+  --omni-bg:     #f4f6fa;
+  --omni-hover:  #eef1f7;
+  --glass:       rgba(255,255,255,.78);
+  --text:        #18222f;
+  --muted:       #6a7684;
+  --accent:      #5b7fb9;
+  --accent-hover:#4f74b1;
+  --accent-soft: rgba(91,127,185,.12);
+  --border:      rgba(24,34,47,.07);
+  --hover:       rgba(24,34,47,.045);
+  --shadow:      0 1px 2px rgba(24,34,47,.04);
+  --panel-shadow:0 18px 44px -22px rgba(24,34,47,.30), 0 2px 8px rgba(24,34,47,.05);
+}
+
+/* Flat surfaces — the inset "gloss" highlight is dropped everywhere. */
+.popover, .toolbar-popover, .context-menu, #suggestions, .sb-customize-pop {
+  box-shadow: var(--panel-shadow);
+}
+.calc-screen, .calc-key { box-shadow: none; }
+
+/* Tab strip + toolbar: one continuous quiet field, separated by a hairline. */
+body:not(.dark):not(.themed):not(.wallpaper-chrome):not(.semi-transparent) #titlebar {
+  background: var(--strip);
+  background-image: none;
+  border-bottom: none;
+}
+body:not(.dark):not(.themed):not(.wallpaper-chrome):not(.semi-transparent) #toolbar,
+body:not(.dark):not(.themed):not(.wallpaper-chrome):not(.semi-transparent) #bookmarks-bar {
+  background: var(--toolbar);
+  border-bottom: 1px solid var(--border);
+}
+.tab {
+  font-weight: 500;
+  color: var(--muted);
+  transition: background .17s ease, color .17s ease;
+}
+.tab.active { color: var(--text); font-weight: 550; box-shadow: none; }
+
+/* Utility icons: no chrome at rest, a soft square on hover. */
+.tb-btn, .strip-btn, .sidebar-rail-btn {
+  border-radius: 10px;
+  transition: background .17s ease, color .17s ease, opacity .17s ease;
+}
+.tb-btn:active:not(:disabled) { transform: none; background: var(--hover); }
+/* Window controls keep the platform geometry: full-height, flush right,
+   square, 46px wide — only their colour is quieted. */
+#window-controls { gap: 0; padding: 0; align-self: stretch; }
+.win-ctrl { width: 46px; height: 100%; border-radius: 0; color: var(--muted); }
+.win-ctrl:hover { background: var(--hover); color: var(--text); }
+
+/* Address field — wide, flat, borderless until you touch it. */
+#omnibox-wrap {
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: var(--omni-bg);
+}
+#omnibox-wrap:hover { background: var(--omni-hover); border-color: transparent; }
+/* No ring, no accent flash on click — focus just settles the field. */
+#omnibox-wrap:focus-within {
+  background: var(--omni-bg);
+  border-color: transparent;
+  box-shadow: none;
+}
+#omnibox { font-size: 13.5px; }
+.site-icon { color: var(--muted); }
+
+/* Sidebar — narrow, off-white, generous vertical rhythm, no icon boxes. */
+body:not(.dark):not(.incognito) .app-sidebar {
+  background: #fbfcfe;
+  border-right: 1px solid var(--border);
+}
+.app-sidebar { width: 54px; padding: 14px 0 16px; gap: 8px; }
+.sidebar-rail { gap: 8px; }
+.sidebar-rail-btn { width: 38px; height: 38px; border-radius: 11px; }
+.sidebar-rail-btn:hover { background: var(--hover); }
+.sidebar-quick-btn { color: var(--muted); }
+.sidebar-quick-btn:hover { color: var(--text); }
+.sidebar-rail-divider { opacity: .5; }
+
+/* Focus states: a single quiet ring, never a colour flood. */
+.tb-btn:focus-visible, .strip-btn:focus-visible, .sidebar-rail-btn:focus-visible,
+.win-ctrl:focus-visible, .ql-item:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+/* ── Quiet proportions ────────────────────────────────────────────────────
+   Taller, airier chrome: a roomy tab strip, a 56px toolbar whose address
+   field reads as plain text until touched, and a wider sidebar with real
+   breathing room between icons. */
+#tabs-strip { padding: 0 6px; }
+.tab {
+  max-width: 220px;
+  align-self: center;
+  margin: 0 3px;
+  padding: 0 8px 0 11px;
+  gap: 9px;
+  font-size: 12.5px;
+}
+body:not(.dark):not(.themed):not(.wallpaper-chrome) .tab.active {
+  background: var(--tab-active);
+  box-shadow: 0 1px 2px rgba(24,34,47,.05);
+}
+.tab .tab-close { border-radius: 7px; }
+#new-tab, #tab-search-btn { border-radius: 10px; color: var(--muted); }
+#new-tab:hover, #tab-search-btn:hover { background: var(--hover); color: var(--text); }
+
+#nav-btns { gap: 2px; }
+#toolbar-actions { gap: 2px; }
+
+/* The address field is the calm middle of the bar — no box until you use it. */
+body:not(.dark):not(.themed):not(.wallpaper-chrome):not(.semi-transparent) #omnibox-wrap {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+body:not(.dark):not(.themed):not(.wallpaper-chrome):not(.semi-transparent) #omnibox-wrap:hover {
+  background: var(--omni-bg);
+}
+#omnibox::placeholder { color: var(--muted); opacity: .85; }
+
+/* Sidebar — wider, quieter, evenly spaced, pale-blue active state. */
+.app-sidebar { width: 64px; padding: 12px 0 14px; gap: 10px; }
+.sidebar-rail { gap: 12px; }
+.sidebar-rail-btn { width: 40px; height: 40px; border-radius: 12px; }
+.sidebar-rail-btn.active,
+.sidebar-quick-btn.active { background: var(--accent-soft); color: var(--accent); }
+.sidebar-rail-divider { width: 22px; margin: 3px auto; }
+#sidebar-add { width: 40px; height: 40px; border-radius: 12px; color: var(--muted); }
+#sidebar-add:hover { background: var(--hover); color: var(--text); }
+
+/* Tighter chrome — the strip and bar sit close together, separated only by a
+   hairline, with thin line icons that never gain a heavy background. */
+#titlebar { height: 42px; min-height: 42px; }
+.tab { height: 31px; border-radius: 9px; font-size: 12px; flex-basis: 190px; }
+#new-tab, #tab-search-btn { width: 30px; height: 30px; }
+#toolbar { height: 46px; min-height: 46px; gap: 6px; padding: 0 12px; }
+.tb-btn { min-width: 32px; height: 32px; }
+.tb-btn svg, .strip-btn svg, .win-ctrl svg, .sidebar-quick-btn svg { stroke-width: 1.7; }
+#omnibox-wrap { height: 32px; border-radius: 10px; padding: 0 10px 0 12px; gap: 8px; }
+#omnibox { font-size: 13px; }
+.site-icon { width: 20px; height: 20px; background: none; color: var(--muted); }
+.site-icon.secure, .site-icon.internal, .site-icon.insecure { background: none; }
+#profile-avatar-btn { background: transparent !important; }
+#profile-avatar-btn .pp-glyph { display: block; }
+.win-ctrl.close:hover { background: #c42b1c; color: #fff; }
+#titlebar-trailing-spacer { min-width: 8px; }
+
+/* Focusing the address bar must not flash an accent ring — this kills the
+   effect for every address-bar style variant, light and dark. */
+#omnibox-wrap:focus-within,
+body.dark #omnibox-wrap:focus-within,
+body.new-search-bar #omnibox-wrap:focus-within,
+body.new-search-bar.dark #omnibox-wrap:focus-within,
+body.search-pill #omnibox-wrap:focus-within,
+body.search-square #omnibox-wrap:focus-within,
+body.vertical-tabs #omnibox-wrap:focus-within,
+body.vertical-tabs.dark #omnibox-wrap:focus-within,
+body.themed #omnibox-wrap:focus-within {
+  border-color: transparent;
+  box-shadow: none;
+}
+body:not(.dark) #omnibox-wrap:focus-within { background: var(--omni-bg); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ZEN
+   A quiet, compact chrome inspired by Zen Browser. Three independent layers,
+   in this order:
+     1. base      — always on: slim bars, pill address field, soft webview
+     2. .vertical-tabs   — only when the Vertical Tabs setting is on
+     3. .semi-transparent — only when the Transparent Mode setting is on
+   Nothing here forces either setting on; with both off the chrome is a plain
+   opaque theme, and each can be toggled live without touching the other.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Palette ───────────────────────────────────────────────────────
+   Zen used to redeclare the whole dark palette here in charcoal, which — as
+   the last `body.dark {}` block in the file — is what actually painted the
+   browser, no matter what the design tokens at the top said. The palette now
+   has exactly one definition (see the top of this file); Zen only keeps the
+   surface bindings, so its layout can change without forking the colours. */
+body.dark #titlebar { background: var(--strip); }
+body.dark #toolbar,
+body.dark #bookmarks-bar { background: var(--toolbar); border-bottom-color: var(--border); }
+body.dark .tab.active { background: var(--tab-active); color: var(--text); }
+body.dark #views { background: #33333b; }
+
+/* ── 2. Slim chrome ───────────────────────────────────────────────────── */
+#titlebar { height: 38px; min-height: 38px; }
+.tab { height: 28px; border-radius: 8px; font-size: 12px; gap: 8px; padding: 0 6px 0 10px; }
+#new-tab, #tab-search-btn { width: 28px; height: 28px; border-radius: 8px; }
+.win-ctrl { width: 44px; }
+
+#toolbar { height: 40px; min-height: 40px; gap: 4px; padding: 0 8px; }
+#nav-btns { gap: 0; }
+.tb-btn { min-width: 30px; height: 30px; border-radius: 8px; }
+.tb-btn svg { width: 16px; height: 16px; }
+#omnibox-outer { margin: 0 6px; }
+#omnibox-wrap {
+  height: 30px;
+  border-radius: 15px;
+  padding: 0 10px 0 11px;
+  gap: 7px;
+  border: 1px solid transparent;
+}
+#omnibox { font-size: 12.5px; letter-spacing: .005em; }
+.site-icon { width: 18px; height: 18px; }
+#bookmarks-bar { min-height: 30px; }
+.bookmark-chip { height: 24px; font-size: 12px; border-radius: 7px; }
+
+/* Spacious content: the page floats as a rounded panel inside the chrome. */
+#views {
+  margin: 0 6px 6px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.10);
+}
+body.dark #views { box-shadow: 0 1px 3px rgba(0,0,0,.45); }
+#views webview { border-radius: 12px; }
+
+/* ── 3. Vertical Tabs (setting: verticalTabs) ─────────────────────────── */
+body.vertical-tabs #views { margin-left: 0; }
+body.vertical-tabs #vtabs-panel {
+  width: 218px;
+  background: transparent;
+  box-shadow: none;
+  border-right: none;
+  padding: 4px 6px 6px;
+}
+body.vertical-tabs .vtabs-header { height: 30px; padding: 0 4px 0 8px; }
+/* The .vtabs-header-title element is gone — the panel does not need a
+   caption saying it holds tabs. This rule is left as a note about why the
+   one that replaced it in theme.css never worked: at (0,2,0) this beat
+   theme.css's (0,1,0) despite loading first, so the label stayed at .45
+   opacity and the comment there claiming it had been fixed was wrong. */
+body.vertical-tabs .vtabs-list { gap: 2px; padding: 3px 0; }
+body.vertical-tabs .vtab {
+  height: 38px;
+  gap: 10px;
+  padding: 0 8px 0 10px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  opacity: .8;
+  transition: background .16s ease, opacity .16s ease, box-shadow .16s ease;
+}
+body.vertical-tabs .vtab:hover { background: var(--hover); opacity: 1; }
+/* Zen's active row is a raised surface, not a coloured flood. */
+body.vertical-tabs .vtab.active,
+body.vertical-tabs.dark .vtab.active {
+  background: var(--tab-active);
+  box-shadow: none;
+  font-weight: 500;
+  opacity: 1;
+}
+body:not(.dark).vertical-tabs .vtab.active {
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(24,34,47,.07);
+}
+body.vertical-tabs .vtab-favicon { width: 16px; height: 16px; }
+body.vertical-tabs .vtab-title { font-size: 13.5px; }
+body.vertical-tabs .vtab-close { width: 20px; height: 20px; border-radius: 6px; }
+/* Small, quiet new-tab control. */
+body.vertical-tabs .vtabs-new-btn {
+  height: 36px;
+  border-radius: 10px;
+  font-size: 13px;
+  opacity: .55;
+  margin: 0 0 2px;
+  width: 100%;
+}
+body.vertical-tabs .vtabs-new-btn:hover { opacity: 1; }
+/* The single collapsed width. 52px, not 46: the rail holds a 36px row plus
+   the panel's own padding, and at 46 there was one pixel either side of it. */
+body.vtabs-collapsed #vtabs-panel { width: 52px !important; padding: 4px 0; }
+
+/* ── 4. Transparent Mode (setting: semiTransparent) ───────────────────── */
+/* Glass only while the setting is on; with it off every surface above stays
+   fully opaque, so the fallback needs no rules of its own. */
+body.semi-transparent:not(.wallpaper-chrome) #titlebar,
+body.semi-transparent:not(.wallpaper-chrome) #toolbar,
+body.semi-transparent:not(.wallpaper-chrome) #bookmarks-bar {
+  backdrop-filter: blur(22px) saturate(150%);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  border-bottom-color: rgba(255,255,255,.06);
+}
+body.semi-transparent.dark:not(.wallpaper-chrome) #titlebar,
+body.semi-transparent.dark:not(.wallpaper-chrome) #toolbar,
+body.semi-transparent.dark:not(.wallpaper-chrome) #bookmarks-bar {
+  background-color: rgba(26,26,29,.55) !important;
+}
+body.semi-transparent:not(.wallpaper-chrome) #omnibox-wrap {
+  background: rgba(255,255,255,.34);
+  border-color: rgba(255,255,255,.28);
+}
+body.semi-transparent.dark:not(.wallpaper-chrome) #omnibox-wrap {
+  background: rgba(255,255,255,.07);
+  border-color: rgba(255,255,255,.09);
+}
+/* The page itself is never see-through — only the chrome around it. */
+body.semi-transparent #views webview:not(.first-paint) { border-radius: 12px; }
+
+/* The shortcuts rail widened to 64px in this design — keep the panel and its
+   click-catching overlay anchored to its real right edge. */
+#sidebar-panel, .sidebar-overlay { left: 64px; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ADDRESS BAR — quieter, final layer
+   The field had accumulated four permanently-visible controls (lock, shield,
+   bookmark star, zoom) sitting on top of a bordered, shadowed, inset-highlighted
+   box. This strips it back to the text: the field is a single soft surface with
+   no border at rest, and the trailing controls only appear when they have
+   something to say (blocks on this page, page is bookmarked, zoom is not 100%)
+   or when the pointer is actually in the bar.
+   ══════════════════════════════════════════════════════════════════════════ */
+#omnibox-wrap {
+  gap: 7px;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  background: var(--omni-bg);
+  transition: background .15s ease;
+}
+#omnibox-wrap:hover { background: var(--omni-hover); }
+/* Focus reads as "this field is live" through contrast alone — no ring. */
+#omnibox-wrap:focus-within { background: var(--omni-hover); }
+body.dark #omnibox-wrap:focus-within { background: var(--omni-hover); }
+
+#omnibox { font-weight: 400; letter-spacing: .002em; }
+#omnibox::placeholder { color: var(--muted); opacity: .7; }
+
+/* Leading site icon: present but recessive, and never a filled chip. */
+#omnibox-wrap .site-icon {
+  background: none !important;
+  opacity: .55;
+  transition: opacity .14s ease;
+}
+#omnibox-wrap:hover .site-icon,
+#omnibox-wrap:focus-within .site-icon { opacity: .9; }
+#omnibox-wrap .site-icon.insecure { opacity: 1; }
+
+/* Trailing controls fade in on demand. They keep their layout box so the text
+   never reflows as they appear — only their opacity changes. */
+/* The bookmark star stays visible. Hiding it until hover made a control
+   people use constantly feel like it had gone missing. Only the per-page
+   shield fades, because a zero count really is noise. */
+#page-shield {
+  opacity: 0;
+  transition: opacity .14s ease, color .14s ease;
+}
+#bookmark-btn {
+  opacity: 1;
+  transition: opacity .14s ease, color .14s ease;
+}
+#bookmark-btn:hover { opacity: 1; }
+#omnibox-outer:hover #page-shield,
+#omnibox-wrap:focus-within #page-shield,
+#page-shield.has-blocks,
+#page-shield[aria-expanded="true"],
+#page-shield:focus-visible,
+#bookmark-btn.active,
+#bookmark-btn:focus-visible {
+  opacity: 1;
+}
+/* The bookmark star is a plain toolbar button, so shrink it to match the other
+   in-field glyphs rather than sitting in the field as a full-size round button. */
+#omnibox-wrap #bookmark-btn {
+  min-width: 24px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+}
+/* 100% zoom is the norm — the renderer already hides the chip then, but keep it
+   visually quiet when it is showing. */
+.zoom-indicator { opacity: .75; }
+.zoom-indicator:hover { opacity: 1; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   VERTICAL TABS — toolbar alignment
+   The toolbar is a full-width sibling ABOVE #views-wrap, so its controls began
+   at x=0, in the column occupied by the tabs panel below. This indents the
+   toolbar contents to line up with the content area instead.
+
+   Deliberately limited to padding: every surface keeps its own background,
+   border and shadow, so the chrome is otherwise untouched.
+
+   --vtabs-w is published by the renderer from the panel's measured width, so
+   the indent tracks collapse and drag-to-resize rather than guessing.
+   ══════════════════════════════════════════════════════════════════════════ */
+body.vertical-tabs {
+  /* Only used for the frame before the ResizeObserver publishes the real
+     width. 260px because that is what #vtabs-panel is; at 218 the toolbar
+     visibly stepped right on every launch. */
+  --vtabs-w: 260px;
+}
+/* The indent is written inline by syncVtabsToolbarIndent() in renderer.js —
+   see the note in theme.css. This rule never applied anyway: the `padding`
+   shorthand on `body.privoo-one #toolbar` is more specific and loads later. */
+
+/* Transparent mode.
+   The window chrome is the glass. The web page itself always stays opaque so
+   the desktop never shows through a site. */
+
+body.semi-transparent #views,
+body.semi-transparent #views webview,
+body.semi-transparent #views webview:not(.first-paint) {
+  background: #ffffff !important;
+}
+body.semi-transparent.dark #views,
+body.semi-transparent.dark #views webview,
+body.semi-transparent.dark #views webview:not(.first-paint) {
+  background: #26262b !important;
+}
+
+/* Everything behind the chrome stays clear so the acrylic reads through. */
+html.semi-transparent-host { background: transparent !important; }
+body.semi-transparent,
+body.semi-transparent #shell,
+body.semi-transparent .browser-column,
+body.semi-transparent #views-wrap,
+body.semi-transparent .app-sidebar {
+  background: transparent !important;
+}
+
+/* Light chrome is tinted white rather than left clear, so text keeps contrast
+   against whatever sits behind the window. */
+body.semi-transparent:not(.dark):not(.wallpaper-chrome) #titlebar,
+body.semi-transparent:not(.dark):not(.wallpaper-chrome) #toolbar,
+body.semi-transparent:not(.dark):not(.wallpaper-chrome) #bookmarks-bar {
+  background-color: rgba(255,255,255,.72) !important;
+  background-image: none !important;
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+}
+body.semi-transparent.dark:not(.wallpaper-chrome) #titlebar,
+body.semi-transparent.dark:not(.wallpaper-chrome) #toolbar,
+body.semi-transparent.dark:not(.wallpaper-chrome) #bookmarks-bar {
+  background-color: rgba(26,26,26,.62) !important;
+  background-image: none !important;
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+}
+
+body.semi-transparent:not(.dark):not(.wallpaper-chrome) .tab.active {
+  background: rgba(255,255,255,.92);
+}
+body.semi-transparent.dark:not(.wallpaper-chrome) .tab.active {
+  background: rgba(48,48,48,.86);
+}
+body.semi-transparent:not(.dark):not(.wallpaper-chrome) #omnibox-wrap {
+  background: rgba(255,255,255,.78);
+  border-color: rgba(0,0,0,.08);
+}
+body.semi-transparent.dark:not(.wallpaper-chrome) #omnibox-wrap {
+  background: rgba(255,255,255,.10);
+  border-color: rgba(255,255,255,.12);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   FORM CONTROLS INHERIT THE INTERFACE FONT
+   Browsers do NOT inherit font-family into <input>, <button>, <select> or
+   <textarea> — those fall back to a UA default (Arial-ish) unless told
+   otherwise. The codebase had been patching this element by element, roughly
+   twenty times, and anything added since was missed: #ts-input in the tab
+   search popup was still rendering in the UA font while its placeholder,
+   icon and surrounding chrome used --font. That mismatch in metrics is what
+   makes the caret and text look a pixel out against the search icon.
+
+   One rule at element specificity (0-0-1) fixes the whole class of bug. Every
+   existing class-based rule, including the monospace ones for URLs and
+   keyboard shortcuts, still outranks it.
+   ══════════════════════════════════════════════════════════════════════════ */
+input, button, select, textarea, optgroup {
+  font-family: inherit;
+}
+
+/* The tab-search field specifically: strip the UA's default input padding so
+   the text starts flush against the icon beside it.
+
+   The height is NOT pinned. It used to be 22px with 15px text, and a fixed
+   height smaller than the font's own line box is exactly what pushes the
+   caret and the first character a pixel or two off the icon's centre. Let
+   the line box size itself and let the row's flex centring place it. */
+#ts-input {
+  padding: 0;
+  margin: 0;
+  height: auto;
+  line-height: 1.4;
+  min-width: 0;
+}
+
+/* Align the vertical-tabs search field's baseline with its panel. */
+.search-popup-input {
+  height: 26px;
+  line-height: 26px;
+  margin: 0;
+  padding: 0;
+  vertical-align: middle;
+}
+
+/* (A third copy of the dark palette lived here, in graphite. Removed — the
+   palette is defined once, at the top of this file.) */
+
+/* ── Music player switcher, in the sidebar panel header ──
+   Replaces the cog that used to appear when hovering the sidebar icon. It
+   only shows while the panel is displaying the music player. */
+.sidebar-music-switch {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: auto;
+  padding: 0 8px;
+  height: 26px;
+  border-radius: 7px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.sidebar-music-switch[hidden] { display: none !important; }
+.sidebar-music-switch:hover { background: var(--hover); }
+.sb-ms-ico { width: 15px; height: 15px; display: block; flex-shrink: 0; }
+.sb-ms-ico svg { width: 15px; height: 15px; display: block; border-radius: 4px; }
+.sb-ms-name { white-space: nowrap; }
+.sb-ms-caret { opacity: .6; flex-shrink: 0; }
+
+/* ── Media downloader progress ── */
+.ytdlp-progress-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+.ytdlp-progress-wrap[hidden] { display: none !important; }
+.ytdlp-title {
+  font-size: 12px;
+  font-weight: 550;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ytdlp-bar-track {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--hover);
+  overflow: hidden;
+}
+.ytdlp-bar {
+  height: 100%;
+  width: 0%;
+  border-radius: 3px;
+  background: var(--accent);
+  transition: width .18s ease;
+}
+/* Indeterminate: merging/extracting reports no percentage. */
+.ytdlp-bar.indeterminate {
+  width: 35%;
+  animation: ytdlp-slide 1.1s ease-in-out infinite;
+}
+@keyframes ytdlp-slide {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(340%); }
+}
+.ytdlp-meta {
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Recent-files picker: icon rows ──
+   The list used to be name + timestamp only, which made it hard to pick the
+   right file at a glance. Each row now leads with a type glyph and shows size
+   alongside the time. Colours are per-category so images, video and documents
+   are distinguishable without reading the filename. */
+.fp-item {
+  justify-content: flex-start;
+}
+.fp-item-ico {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  background: var(--hover);
+  color: var(--muted);
+}
+.fp-item-ico svg { width: 16px; height: 16px; fill: currentColor; display: block; }
+.fp-item-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.fp-item-name {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12.5px;
+  line-height: 1.3;
+}
+.fp-item-meta {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+}
+/* Per-type tinting. Muted on purpose: this is a hint, not a highlight. */
+.fp-k-image   { color: #3f8f5c; background: rgba(63,143,92,.12); }
+.fp-k-video   { color: #a2543f; background: rgba(162,84,63,.12); }
+.fp-k-audio   { color: #7a5bb5; background: rgba(122,91,181,.12); }
+.fp-k-pdf     { color: #b0453c; background: rgba(176,69,60,.12); }
+.fp-k-doc     { color: #3f6fa2; background: rgba(63,111,162,.12); }
+.fp-k-sheet   { color: #3f8f5c; background: rgba(63,143,92,.12); }
+.fp-k-slides  { color: #b3762e; background: rgba(179,118,46,.12); }
+.fp-k-archive { color: #8a7a3f; background: rgba(138,122,63,.12); }
+.fp-k-code    { color: #4a7fa5; background: rgba(74,127,165,.12); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PRIVOO PROTECTION — scan progress toast
+   Bottom-right, non-modal, dismissible. A scan can run for many minutes, so it
+   must never take over the window; the copy says as much.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Pointer styles.
+   Applied to the chrome document only. Web pages keep their own cursors. */
+body.cursor-large,
+body.cursor-large * {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cpath d='M6 3l24 15-10 2 6 11-5 3-6-11-9 7z' fill='%23fff' stroke='%23000' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E") 5 3, auto;
+}
+body.cursor-large a,
+body.cursor-large button,
+body.cursor-large .tab,
+body.cursor-large [role="button"] {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cpath d='M14 4c1.7 0 3 1.3 3 3v11h1.5v-3c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5v3H25v-2c0-1.4 1.1-2.5 2.5-2.5S30 14.6 30 16v9c0 5-3 9-9 9h-3c-5 0-8-4-9-8l-2-8c-.4-1.5.4-2.8 1.8-3.2 1.4-.4 2.6.3 3.2 1.7V7c0-1.7 1.3-3 3-3z' fill='%23fff' stroke='%23000' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 12 4, pointer;
+}
+
+body.cursor-precise,
+body.cursor-precise * {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'%3E%3Cg stroke='%23000' stroke-width='3'%3E%3Cpath d='M13 1v9M13 16v9M1 13h9M16 13h9'/%3E%3C/g%3E%3Cg stroke='%23fff' stroke-width='1.4'%3E%3Cpath d='M13 1v9M13 16v9M1 13h9M16 13h9'/%3E%3C/g%3E%3C/svg%3E") 13 13, crosshair;
+}
+
+/* The custom image is injected as a CSS variable by the renderer. */
+body.cursor-custom,
+body.cursor-custom * {
+  cursor: var(--privoo-cursor, auto);
+}
+
+/* Media downloader popover. Grouped fields with a single primary action. */
+.md-body { display: flex; flex-direction: column; gap: 12px; }
+.md-field { display: flex; flex-direction: column; gap: 5px; }
+.md-field .mini-label { margin: 0; }
+.md-url-row { display: flex; gap: 6px; align-items: stretch; }
+.md-url-row .vpn-input { flex: 1; min-width: 0; }
+.md-inline-btn {
+  flex-shrink: 0; padding: 0 11px; border-radius: 8px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--muted); font: inherit; font-size: 11.5px; font-weight: 550;
+  cursor: pointer; white-space: nowrap;
+  transition: background .12s, color .12s, border-color .12s;
+}
+.md-inline-btn:hover { background: var(--hover); color: var(--text); border-color: var(--muted); }
+.md-actions { display: flex; gap: 8px; margin-top: 2px; }
+.md-primary { flex: 1; }
+
+/* Reduced motion, and a floor for weak hardware.
+   The looping wallpaper animations and the blur layers are the two things that
+   cost the most on an old GPU, so both go when the system asks for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+  #ntp-bg, .theme-layer, .ts-waves { animation: none !important; }
 }

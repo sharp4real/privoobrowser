@@ -1,555 +1,263 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Privoo Desktop</title>
-<meta name="description" content="Privoo Desktop is a free and open-source privacy-focused web browser built on Chromium and Electron, with ad blocking, anti-fingerprinting and anonymous Tor hosting enabled by default.">
+<title>Privoo, a browser that keeps your browsing to itself</title>
+<meta name="description" content="Privoo is a free, open source browser built on Chromium. Ads and trackers are blocked from the first tab. No account, no sync server, no telemetry. Everything stays on your device.">
 <link rel="icon" href="./logo.png">
+<meta property="og:title" content="Privoo, a browser that keeps your browsing to itself">
+<meta property="og:description" content="Ads and trackers blocked out of the box. No account, no sync server, no telemetry.">
+<meta property="og:image" content="./PrivooNewTabPage.png">
+<meta name="theme-color" content="#18181b">
+<!-- Runs before first paint, so the page never flashes the wrong theme. -->
 <script>try{var t=localStorage.getItem('privoo-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;}catch(e){}</script>
 <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
 
-<header class="topbar">
-  <a class="brand" href="./index.html">
-    <img src="./logo.png" alt="" width="24" height="24">
-    <b>Privoo</b>
-    <span class="ver">reference</span>
-  </a>
-  <div class="topbar-right">
-    <a href="https://github.com/sharp4real/privoobrowser/releases/latest">Download</a>
-    <a href="https://github.com/sharp4real/privoobrowser">Source</a>
-    <a href="https://discord.gg/WweUzF3YCQ">Discord</a>
-    <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch to dark mode" aria-pressed="false">☾ Dark</button>
-    <button class="menu-btn" id="menu-btn" aria-label="Menu">☰</button>
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="./index.html">
+      <img src="./logo.png" alt="">
+      <span>Privoo</span>
+      <span class="tag">6.0.4</span>
+    </a>
+    <nav class="nav" id="nav">
+      <a href="./features.html">Features</a>
+      <a href="./privacy.html">Privacy</a>
+      <a href="./shortcuts.html">Shortcuts</a>
+      <a href="./faq.html">FAQ</a>
+      <a href="https://github.com/sharp4real/privoobrowser">Source</a>
+      <a class="btn btn-primary btn-sm" href="./download.html">Download</a>
+    </nav>
+    <button class="icon-btn" id="theme-btn" type="button" aria-label="Switch theme">
+      <svg class="moon" viewBox="0 0 24 24"><path d="M12.3 3a9 9 0 1 0 8.7 11.3A7.4 7.4 0 0 1 12.3 3z"/></svg>
+      <svg class="sun" viewBox="0 0 24 24"><path d="M12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-13.4V1h0v2.6zM12 23v-2.6 2.6zM3.6 12H1h2.6zM23 12h-2.6H23zM5.2 5.2 3.4 3.4l1.8 1.8zm15.4 15.4-1.8-1.8 1.8 1.8zM5.2 18.8l-1.8 1.8 1.8-1.8zM20.6 3.4l-1.8 1.8 1.8-1.8z"/></svg>
+    </button>
+    <button class="icon-btn menu-btn" id="menu-btn" type="button" aria-label="Menu" aria-expanded="false">
+      <svg viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </button>
   </div>
 </header>
 
-<div class="shell">
-  <aside class="sidebar" id="sidebar">
-    <h4>Article</h4>
-    <a href="./index.html" class="active">Privoo Desktop</a>
-    <a href="./install.html">Installation</a>
-    <h4>Protection</h4>
-    <a href="./privacy.html">Privacy and security</a>
-    <a href="./mariana.html">.mariana hosting</a>
-    <h4>Using Privoo Desktop</h4>
-    <a href="./tools.html">Built-in tools</a>
-    <a href="./ai.html">Privoo AI</a>
-    <a href="./browsing.html">Browsing</a>
-    <a href="./appearance.html">Appearance</a>
-    <h4>Other products</h4>
-    <a href="./android.html">Privoo for Android</a>
-    <a href="./coder.html">Privoo Coder</a>
-    <h4>Reference</h4>
-    <a href="./shortcuts.html">Keyboard shortcuts</a>
-    <a href="./faq.html">FAQ and troubleshooting</a>
-  </aside>
-
-  <main class="doc">
-    <h1>Privoo Desktop</h1>
-    <p class="subtitle">From the Privoo reference. This article covers the browser as of version 6.0.3.</p>
-    <p class="hatnote">This article is about the desktop browser. For the Android browser, see <a href="./android.html">Privoo for Android</a>. For the coding IDE, see <a href="./coder.html">Privoo Coder</a>.</p>
-
-    <aside class="infobox">
-      <div class="ib-head">
-        <div class="ib-title">Privoo Desktop</div>
-        <img src="./logo.png" alt="Privoo logo" width="72" height="72">
-        <div class="cap">The Privoo logo</div>
-      </div>
-      <table>
-        <tbody><tr><th>Developer</th><td>Independent project (<code>sharp4real</code>)</td></tr>
-        <tr><th>Initial release</th><td>23 May 2026; beta v1.00</td></tr>
-        <tr><th>Stable release</th><td>6.0.3 / August 2026</td></tr>
-        <tr><th>Repository</th><td><a href="https://github.com/sharp4real/privoobrowser">github.com/sharp4real/privoobrowser</a></td></tr>
-        <tr><th>Written in</th><td>JavaScript, HTML, CSS</td></tr>
-        <tr><th>Engine</th><td>Blink (Chromium 148), V8</td></tr>
-        <tr><th>Framework</th><td>Electron 42.3.3 (castLabs <code>wvcus</code> build)</td></tr>
-        <tr><th>Operating system</th><td>Windows, macOS, Linux</td></tr>
-        <tr><th>Platform</th><td>x64; macOS also arm64</td></tr>
-        <tr><th>Type</th><td>Web browser</td></tr>
-        <tr><th>License</th><td>MIT</td></tr>
-        <tr class="ib-sec"><td colspan="2">Defaults</td></tr>
-        <tr><th>Ad blocking</th><td>Enabled</td></tr>
-        <tr><th>Encrypted DNS</th><td>Enabled (Cloudflare)</td></tr>
-        <tr><th>Search engine</th><td>Brave Search</td></tr>
-        <tr><th>Telemetry</th><td>None</td></tr>
-        <tr><th>User accounts</th><td>None</td></tr>
-      </tbody></table>
-    </aside>
-
-    <p class="lead">
-      <b>Privoo Desktop</b> is a free and open-source web browser for Windows, macOS and
-      Linux, built on Chromium and Electron. It is distinguished from mainstream Chromium
-      browsers primarily by its defaults: content blocking, encrypted DNS, third-party
-      cookie blocking and fingerprint protection are active on first launch rather than
-      offered as opt-in settings. The browser has no user account system, no
-      synchronisation server, and collects no telemetry.
+<!-- ── Hero ───────────────────────────────────────────────────────────── -->
+<div class="hero">
+  <div class="wrap">
+    <a class="eyebrow" href="./features.html"><b>New in 6.0.4</b> &nbsp;Tab previews, paste protection, pop&#8209;up blocking</a>
+    <h1>A browser that keeps your browsing to itself.</h1>
+    <p class="lede">
+      Ads and trackers are blocked from the very first tab. Everything you do
+      stays on your own machine, because there is no account to make and no
+      server to sync to.
     </p>
-    <p>
-      Development began in May 2026 and the project reached version 6.0.3 by August 2026,
-      across more than sixty tagged releases. It is maintained as an independent project
-      under the MIT license rather than by a company, a fact its documentation cites as
-      the reason its privacy defaults are not constrained by an advertising business
-      model.<sup class="ref"><a href="./#ref-1">[1]</a></sup>
-    </p>
-    <p>
-      Version 5.0.5 introduced <b>.mariana</b>, a feature that publishes a local folder
-      as a Tor hidden service from within the browser, with an optional post-quantum
-      encryption layer applied between two Privoo Desktop instances.
-    </p>
-    <p>
-      Privoo Desktop is one of three applications sharing the Privoo name. The others are
-      <a href="./android.html">Privoo for Android</a>, a native mobile browser, and
-      <a href="./coder.html">Privoo Coder</a>, a coding IDE. Both are closed source and are
-      distributed differently; see <a href="./#family">Privoo product family</a> below.
-      Statements in this article about licensing, telemetry and updates apply to Privoo
-      Desktop only.
-    </p>
-
-    <div class="btn-row">
-      <a class="lbtn primary" href="https://github.com/sharp4real/privoobrowser/releases/latest"><span class="ico">↓</span> Download latest release</a>
-      <a class="lbtn" href="https://github.com/sharp4real/privoobrowser">Source code</a>
-      <a class="lbtn" href="https://github.com/sharp4real/privoobrowser/releases">All releases</a>
-      <a class="lbtn" href="https://github.com/sharp4real/privoobrowser/issues">Report an issue</a>
-      <a class="lbtn" href="https://discord.gg/WweUzF3YCQ">Discord community</a>
+    <div class="cta">
+      <a class="btn btn-primary" href="./download.html">
+        <svg viewBox="0 0 24 24"><path d="M12 16 6 10h4V3h4v7h4l-6 6zM5 19h14v2H5z"/></svg>
+        Download for Windows
+      </a>
+      <a class="btn btn-ghost" href="./features.html">See what it does</a>
     </div>
+    <p class="cta-note">Free and MIT licensed. No account. No telemetry.</p>
 
-    <nav class="toc">
-      <div class="toc-title">Contents</div>
-      <ol>
-        <li><a href="./#overview">Overview</a></li>
-        <li><a href="./#history">History</a>
-          <ol>
-            <li><a href="./#history-early">Early releases</a></li>
-            <li><a href="./#history-versions">Version history</a></li>
-          </ol>
-        </li>
-        <li><a href="./#defaults">Default configuration</a></li>
-        <li><a href="./#features">Features</a>
-          <ol>
-            <li><a href="./#f-privacy">Privacy and security</a></li>
-            <li><a href="./#f-mariana">Anonymous hosting</a></li>
-            <li><a href="./#f-tools">Built-in tools</a></li>
-            <li><a href="./#f-browsing">Browsing and interface</a></li>
-          </ol>
-        </li>
-        <li><a href="./#architecture">Architecture</a>
-          <ol>
-            <li><a href="./#a-process">Process model</a></li>
-            <li><a href="./#a-protocol">Internal protocol</a></li>
-            <li><a href="./#a-storage">Data storage</a></li>
-          </ol>
-        </li>
-        <li><a href="./#privacy-model">Privacy model</a></li>
-        <li><a href="./#family">Privoo product family</a></li>
-        <li><a href="./#limitations">Limitations and criticism</a></li>
-        <li><a href="./#see-also">See also</a></li>
-        <li><a href="./#references">References</a></li>
-        <li><a href="./#external">External links</a></li>
-      </ol>
-    </nav>
-
-    <h2 id="overview">Overview</h2>
-
-    <figure class="thumb">
-      <img src="./screenshot.png" alt="Privoo Desktop&#39;s New Tab page, showing the ghost mascot, a greeting and the search field over a wave background." width="1562" height="969">
-      <figcaption>
-        Privoo Desktop 6.0.3 on Windows, showing the New Tab page in the
-        default dark theme. This is a fresh install with no configuration performed: the
-        privacy shield sits in the toolbar and the search field already defaults to a
-        non-profiling engine.
-      </figcaption>
-    </figure>
-
-    <p>
-      Privoo Desktop is built on Chromium, so its web compatibility and rendering
-      behaviour are those of Chromium: pages that work in Google Chrome generally work
-      here unchanged. What differs is the layer above the engine, which comprises the
-      content blocker, the privacy defaults, the user interface, a set of first-party
-      tools, and several internal pages served over a custom <code>privoo://</code> URL
-      scheme.
-    </p>
-    <p>
-      The project's stated rationale is that mainstream browsers are funded, directly or
-      indirectly, by the advertising industry, and therefore ship privacy features that
-      are switched off, difficult to find, or scoped so as not to affect that revenue.
-      Privoo has no advertising revenue, and consequently enables its protections by
-      default.<sup class="ref"><a href="./#ref-1">[1]</a></sup>
-    </p>
-    <p>
-      A secondary effect of blocking at the network layer is performance. Requests for
-      advertising and tracking resources are cancelled before they are issued, so the
-      associated bytes are never transferred and the associated scripts never execute.
-      The project describes this as being fast "because it is doing less work", rather
-      than through engine-level optimisation.
-    </p>
-
-    <h2 id="history">History</h2>
-
-    <h3 id="history-early">Early releases</h3>
-    <p>
-      The first commit, labelled <i>Beta v1.00 — initial release</i>, is dated
-      23 May 2026.<sup class="ref"><a href="./#ref-2">[2]</a></sup> The earliest releases
-      were dominated by distribution and update-mechanism problems rather than browser
-      features: the 1.0.x series contains repeated fixes to the auto-updater, including
-      a stall at 100% completion, a SHA-512 hash mismatch between the built installer and
-      the copy served by the release CDN, and a macOS-specific failure caused by Squirrel
-      rejecting unsigned builds.
-    </p>
-    <p>
-      Feature work began in earnest with the 2.x series in late May 2026, which
-      introduced interface customisation ("Your Vibe"), and continued through 3.x
-      (June 2026) and 4.x (July 2026). The 5.x series, beginning 14 July 2026,
-      accompanied a visual redesign in which a single configurable accent colour was
-      propagated through the entire interface.
-    </p>
-    <p>
-      Widevine DRM support has been a recurring theme. Privoo builds against the castLabs
-      Electron distribution rather than upstream Electron, and the release pipeline
-      performs Verified Media Path signing; the project notes that two earlier releases
-      (4.0.3 and 4.0.4) shipped with unverifiable DRM because signing silently skipped,
-      after which the build was changed to fail rather than publish in that state.
-    </p>
-
-    <h3 id="history-versions">Version history</h3>
-    <p>
-      Major series and their first tagged release:
-    </p>
-    <div class="table-wrap">
-      <table>
-        <caption>Major version series</caption>
-        <thead><tr><th>Series</th><th>First release</th><th>Notable changes</th></tr></thead>
-        <tbody>
-          <tr><td>1.x</td><td>23 May 2026</td><td>Initial public beta. Auto-updater and release-pipeline stabilisation; YouTube playback and ad-blocking fixes.</td></tr>
-          <tr><td>2.x</td><td>29 May 2026</td><td>Interface work: "Your Vibe" tinting, emoji handling, macOS vibrancy, DevTools and mobile-view fixes.</td></tr>
-          <tr><td>3.x</td><td>9 June 2026</td><td>Continued feature expansion.</td></tr>
-          <tr><td>4.x</td><td>4 July 2026</td><td>Widevine VMP signing enforced in CI; Spotify library and brand-icon fixes; cookie durability fixes.</td></tr>
-          <tr><td>5.0.0</td><td>14 July 2026</td><td>Search bar and suggestion fixes, wave settings, logo default.</td></tr>
-          <tr><td>5.0.3</td><td>14 July 2026</td><td>Whole-browser accent theming; fully custom dropdown controls.</td></tr>
-          <tr><td>5.0.4</td><td>15 July 2026</td><td>Multi-identity autofill, mobile view, native tray menu, ad-block live-toggle fix.</td></tr>
-          <tr><td>5.0.5</td><td>15 July 2026</td><td>.mariana anonymous Tor hosting with a post-quantum layer.</td></tr>
-          <tr><td>5.0.6</td><td>17 July 2026</td><td>Identity autofill made opt-in; shield block-count fix; icon-only toolbar shield; YouTube ad-strip and TikTok login fixes; sidebar sites render as desktop.</td></tr>
-          <tr><td>5.0.7</td><td>August 2026</td><td>Full design refresh: a signature indigo accent, redesigned incognito windows, real frosted-glass transparency, a simplified New Tab page.</td></tr>
-          <tr><td>5.0.8</td><td>August 2026</td><td>Privoo VPN introduced (experimental, user-configured proxy tunnel); default wallpapers for New Tab and Incognito; accent-colour picker fixed to apply outside of Themes; simplified first-run screen.</td></tr>
-          <tr><td>5.0.9</td><td>August 2026</td><td>Privoo VPN popup redesign; Shield popup simplified; a Theme no longer overwrites "Your Vibe" unless opted in; assorted UI and search-suggestion fixes.</td></tr>
-          <tr><td>6.0.0</td><td>August 2026</td><td>Stopped the first-run window from requesting a transparent, acrylic-backed surface, which could fail to composite on some Windows 11 builds. A partial fix for the transparent-first-run issue — see 6.0.3.</td></tr>
-          <tr><td>6.0.1</td><td>August 2026</td><td><b>Fix:</b> the "Restart &amp; Update" button could get stuck disabled with no feedback if the downloaded installer went missing (antivirus quarantine, cleared temp files). It now reports the failure and recovers instead of hanging indefinitely.</td></tr>
-          <tr><td>6.0.3</td><td>August 2026</td><td><b>Critical fix:</b> the first-run terms/disclaimer card had a leftover class mismatch from the wizard simplification in 5.0.8, so its base "hidden by default" CSS rule never matched and the card never rendered at all &mdash; only the atmospheric background behind it, which read as a blank or "transparent" window with no visible content or button. The card now displays correctly. Also restyled the disclaimer card and the thank-you popup to drop leftover glossy touches (a bouncy pill button, a toggle-styled agreement checkbox, a coloured logo glow).</td></tr>
-        </tbody>
-      </table>
+    <div class="shot">
+      <img src="./PrivooNewTabPage.png" width="1568" height="934" alt="The Privoo new tab page, showing a search bar, a weather pill in the corner and shortcut tiles." fetchpriority="high" decoding="async">
     </div>
-    <p>
-      As of version 6.0.3 the repository contains 188 commits across 73 tagged
-      releases.<sup class="ref"><a href="./#ref-2">[2]</a></sup> Releases are built and
-      published automatically by GitHub Actions for Windows, macOS and Linux when a
-      version tag is pushed.
-    </p>
-
-    <h2 id="defaults">Default configuration</h2>
-    <p>
-      The following are active on a new installation with no user configuration. Values
-      are those defined in the browser's settings store.<sup class="ref"><a href="./#ref-3">[3]</a></sup>
-    </p>
-    <div class="table-wrap">
-      <table>
-        <caption>Selected defaults in version 6.0.3</caption>
-        <thead><tr><th>Setting</th><th>Value</th><th>Effect</th></tr></thead>
-        <tbody>
-          <tr><td>Ad and tracker blocking</td><td>Enabled</td><td>EasyList, EasyPrivacy and uBlock Origin rules applied at the network layer</td></tr>
-          <tr><td>Force HTTPS</td><td>Enabled</td><td>Insecure <code>http://</code> navigations upgraded</td></tr>
-          <tr><td>Third-party cookies</td><td>Blocked</td><td>Cross-site <code>Cookie</code> and <code>Set-Cookie</code> headers stripped</td></tr>
-          <tr><td>DNS-over-HTTPS</td><td>Enabled</td><td>Strict mode; Cloudflare by default; no plaintext fallback</td></tr>
-          <tr><td>Canvas protection</td><td>Enabled</td><td>Deterministic per-origin noise on canvas reads</td></tr>
-          <tr><td>WebRTC protection</td><td>Enabled</td><td>IP-handling policy restricted to the public interface</td></tr>
-          <tr><td>Do Not Track</td><td>Enabled</td><td><code>DNT</code> header sent</td></tr>
-          <tr><td>Cryptojacking protection</td><td>Enabled</td><td>Known in-browser mining scripts blocked</td></tr>
-          <tr><td>Search engine</td><td>Brave Search</td><td>A non-profiling default</td></tr>
-          <tr><td>Dark mode</td><td>Enabled</td><td>Light theme available</td></tr>
-          <tr><td>Accent colour</td><td><code>#8b7cf7</code></td><td>Lavender; propagates through the whole interface</td></tr>
-          <tr><td>UI sounds</td><td>Disabled</td><td>Typing/click/tab blips; off by default as of 5.0.9</td></tr>
-          <tr><td>Privoo VPN</td><td>Not configured</td><td>Experimental, user-supplied proxy tunnel; requires accepting terms before use</td></tr>
-          <tr><td>Automatic updates</td><td>Enabled</td><td>Checked against the GitHub release feed</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <h2 id="features">Features</h2>
-
-    <h3 id="f-privacy">Privacy and security</h3>
-    <p class="hatnote">Main article: <a href="./privacy.html">Privacy and security</a></p>
-    <p>
-      Content blocking uses Ghostery's <code>adblocker-electron</code> engine
-      (version 2.5.x) with the EasyList, EasyPrivacy and uBlock Origin filter lists,
-      compiled at launch and cached. Users may disable any built-in list or add
-      arbitrary list URLs. Blocking is enforced in the request pipeline, so blocked
-      resources are never fetched.
-    </p>
-    <p>
-      Fingerprint resistance comprises deterministic per-origin canvas noise, User-Agent
-      normalisation to a common Chrome identity, and WebRTC IP-leak protection. An
-      optional stronger mode additionally strips tracking parameters such as
-      <code>utm_*</code>, <code>fbclid</code> and <code>gclid</code>, reduces the
-      <code>Referer</code> header on cross-origin requests to the origin only, and sends
-      the Global Privacy Control (<code>Sec-GPC</code>) signal.
-    </p>
-    <p>
-      Traffic may be routed through a manual proxy or a bundled Tor circuit.
-      Independently of that setting, <code>.onion</code> addresses are always routed over
-      Tor via a proxy auto-configuration rule, with the Tor process started on demand.
-      ENS (<code>.eth</code>) and Unstoppable Domains names resolve through a public
-      gateway, and <code>ipfs://</code> and <code>ipns://</code> URLs are redirected to an
-      IPFS gateway.
-    </p>
-
-    <h3 id="f-mariana">Anonymous hosting</h3>
-    <p class="hatnote">Main article: <a href="./mariana.html">.mariana hosting</a></p>
-    <p>
-      Introduced in 5.0.5, the <code>.mariana</code> feature publishes a local directory
-      as a Tor v3 hidden service. The browser starts a loopback-bound HTTP server for the
-      directory and instructs Tor, over its control port, to create an ephemeral onion
-      service mapped to it. The resulting share link embeds the 56-character onion
-      address, which is self-authenticating.
-    </p>
-    <p>
-      When both the host and the visitor are running Privoo Desktop, an additional
-      encryption layer is negotiated using ML-KEM-768, a post-quantum key encapsulation
-      mechanism, with the resulting shared secret used for AES-256-GCM encryption of the
-      response body. The layer is opportunistic: a visitor using a conventional Tor
-      browser receives the site over Tor alone.
-    </p>
-
-    <h3 id="f-tools">Built-in tools</h3>
-    <p class="hatnote">Main articles: <a href="./tools.html">Built-in tools</a> and <a href="./ai.html">Privoo AI</a></p>
-    <p>
-      Privoo ships first-party equivalents of commonly installed extensions, on the
-      stated reasoning that each third-party extension is an additional party granted
-      permission to read and modify every page visited. These include a password vault
-      (encrypted, local-only), a download manager, an AI assistant that operates against
-      a user-supplied API key or a local Ollama model, a media downloader based on
-      <code>yt-dlp</code>, a parallel-connection download accelerator, a video
-      enhancement filter, and identity autofill. Third-party <code>.crx</code> and
-      unpacked extensions can also be loaded, with partial API support.
-    </p>
-
-    <h3 id="f-browsing">Browsing and interface</h3>
-    <p class="hatnote">Main articles: <a href="./browsing.html">Browsing</a> and <a href="./appearance.html">Appearance</a></p>
-    <p>
-      The interface provides tab groups, drag-to-reorder tabs, a split view for two
-      simultaneous pages, vertical tabs with a collapsible icon rail, isolated browser
-      profiles, a guest session, incognito windows, a command palette bound to
-      <kbd>Ctrl</kbd> <kbd>K</kbd>, reader and focus modes, and mobile device emulation.
-      A configurable New Tab page supports image, video and animated
-      backgrounds, and the Incognito window has its own dedicated purple palette
-      and wallpaper distinct from normal browsing.
-    </p>
-
-    <div class="cards">
-      <a class="card" href="./privacy.html"><h3>Privacy and security</h3><p>Every protection, what it does, and which setting controls it.</p></a>
-      <a class="card" href="./mariana.html"><h3>.mariana hosting</h3><p>Tor hidden services and the post-quantum layer, in detail.</p></a>
-      <a class="card" href="./tools.html"><h3>Built-in tools</h3><p>The first-party tools shipped inside the browser.</p></a>
-      <a class="card" href="./ai.html"><h3>Privoo AI</h3><p>The built-in assistant: your own key, or a local model via Ollama.</p></a>
-      <a class="card" href="./browsing.html"><h3>Browsing</h3><p>Tabs, split view, profiles and the address bar.</p></a>
-      <a class="card" href="./appearance.html"><h3>Appearance</h3><p>Accent colour, themes, glass effects and layout.</p></a>
-    </div>
-
-    <h2 id="architecture">Architecture</h2>
-
-    <h3 id="a-process">Process model</h3>
-    <p>
-      Privoo follows Electron's split between a main process and renderer processes. The
-      main process (<code>main.js</code>) owns window management, the request pipeline
-      and blocking, the <code>privoo://</code> and <code>mariana://</code> protocol
-      handlers, session hardening, proxy and Tor control, downloads, and inter-process
-      communication. Page content is rendered inside <code>&lt;webview&gt;</code> guests
-      rather than in the host renderer, which keeps site content isolated from the
-      browser's own interface.
-    </p>
-    <p>
-      Two preload bridges expose a restricted API surface: <code>preload.js</code>
-      provides <code>window.privoo</code> to the browser interface, and
-      <code>webview-preload.js</code> provides <code>window.privooInternal</code> to the
-      internal pages. Privileged operations occur only in the main process, behind
-      explicit IPC channels.
-    </p>
-    <p>
-      Because Privoo uses the castLabs Electron distribution, the bundled Chromium
-      includes the Widevine Content Decryption Module, which is what permits playback of
-      DRM-protected services such as Spotify and Netflix. Release builds are signed for
-      Verified Media Path in continuous integration; the build fails rather than publish
-      if that signing step does not complete.
-    </p>
-
-    <h3 id="a-protocol">Internal protocol</h3>
-    <p>
-      Privoo registers <code>privoo://</code> as a privileged, standard, secure scheme
-      and serves its internal pages from it. Registering the scheme as standard gives
-      those pages a normal origin, which is what allows them to use ordinary web APIs.
-      A second scheme, <code>mariana://</code>, is registered on the same terms and is
-      handled by a main-process handler that fetches over Tor and decrypts.
-    </p>
-    <div class="table-wrap">
-      <table>
-        <caption>Internal pages</caption>
-        <thead><tr><th>URL</th><th>Page</th></tr></thead>
-        <tbody>
-          <tr><td><code>privoo://newtab</code></td><td>New Tab page</td></tr>
-          <tr><td><code>privoo://settings</code></td><td>Settings</td></tr>
-          <tr><td><code>privoo://extensions</code></td><td>Built-in and installed tools</td></tr>
-          <tr><td><code>privoo://mariana</code></td><td>Anonymous hosting management</td></tr>
-          <tr><td><code>privoo://identities</code></td><td>Saved identities for autofill</td></tr>
-          <tr><td><code>privoo://history</code></td><td>History</td></tr>
-          <tr><td><code>privoo://bookmarks</code></td><td>Bookmarks</td></tr>
-          <tr><td><code>privoo://downloads</code></td><td>Downloads</td></tr>
-          <tr><td><code>privoo://ai</code></td><td>Privoo AI</td></tr>
-          <tr><td><code>privoo://news</code></td><td>Release notes, rendered locally</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <h3 id="a-storage">Data storage</h3>
-    <p>
-      All state is stored in a single directory on the local filesystem, with no remote
-      component. Settings are held as human-readable JSON in
-      <code>privoo-settings.json</code>; history, downloads, bookmarks, saved identities
-      and <code>.mariana</code> site keys are stored alongside it. Saved passwords are
-      encrypted. Browser profiles are implemented by redirecting Chromium's entire
-      userData directory at process start, which isolates cookies, cache, storage and
-      history between profiles at the filesystem level.
-    </p>
-    <div class="table-wrap">
-      <table>
-        <caption>Configuration directory by platform</caption>
-        <thead><tr><th>Platform</th><th>Path</th></tr></thead>
-        <tbody>
-          <tr><td>Windows</td><td><code>%APPDATA%/privoo/</code></td></tr>
-          <tr><td>macOS</td><td><code>~/Library/Application Support/privoo/</code></td></tr>
-          <tr><td>Linux</td><td><code>~/.config/privoo/</code></td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <h2 id="privacy-model">Privacy model</h2>
-    <p>
-      Privoo's privacy position rests on the absence of infrastructure rather than on
-      policy. There is no account system, no synchronisation server, and no analytics
-      endpoint; the project's claim is therefore that user data cannot be breached,
-      subpoenaed or sold from a server that does not exist. Privacy statistics shown in
-      the browser's shield interface are computed and stored locally. The release notes
-      page is rendered from the local build and issues no network request.
-    </p>
-    <p>
-      The browser does make two categories of outbound request on its own behalf: update
-      checks against the GitHub release feed, and periodic filter-list updates. Neither
-      carries a user identifier. The project's documentation states these explicitly
-      rather than claiming zero network activity.
-    </p>
-    <p>
-      The corresponding cost is stated plainly in the same documentation: because no sync
-      server exists, bookmarks and passwords do not propagate between devices, and moving
-      them requires copying the profile directory manually.
-    </p>
-
-    <h2 id="family">Privoo product family</h2>
-    <p>
-      Three applications share the Privoo name and visual identity. They are separate
-      programs with separate codebases, and they differ substantially in licensing,
-      distribution and update behaviour. The distinction matters because the properties
-      most often associated with Privoo, namely that it is open source, auditable and
-      updates itself, are properties of <b>Privoo Desktop</b> specifically.
-    </p>
-    <div class="table-wrap">
-      <table>
-        <caption>The Privoo applications compared</caption>
-        <thead><tr><th>Aspect</th><th>Privoo Desktop</th><th>Privoo for Android</th><th>Privoo Coder</th></tr></thead>
-        <tbody>
-          <tr><td>Type</td><td>Web browser</td><td>Web browser</td><td>AI coding IDE</td></tr>
-          <tr><td>Platforms</td><td>Windows, macOS, Linux</td><td>Android 10 and later</td><td>Windows</td></tr>
-          <tr><td>Built with</td><td>Electron, Chromium</td><td>Kotlin, Jetpack Compose, Android WebView</td><td>Electron, Monaco</td></tr>
-          <tr><td>Source</td><td><b>MIT licensed, public</b></td><td><b>Closed source</b></td><td><b>Closed source</b></td></tr>
-          <tr><td>Distribution</td><td>GitHub Releases, public</td><td>APK on Proton Drive, link in Discord</td><td>Proton Drive, link in Discord</td></tr>
-          <tr><td>Access requirement</td><td>None</td><td>Discord membership</td><td>Discord membership and the <b>Contributor</b> role</td></tr>
-          <tr><td>Account</td><td>None</td><td>None</td><td>Discord sign-in required</td></tr>
-          <tr><td>Updates</td><td>Automatic</td><td><b>None</b>; manual reinstall</td><td>Manual</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="note warn">
-      <span class="label">Scope of this reference</span>
-      <p>
-        Only Privoo Desktop is open source. Claims made about the two closed-source
-        applications, including their privacy behaviour, rest on the project's own
-        documentation and cannot be verified by reading their code, which is the standard
-        this reference otherwise applies to Privoo Desktop. Privoo for Android also has no
-        update mechanism, so an installed copy does not become current on its own.
-      </p>
-    </div>
-    <div class="cards">
-      <a class="card" href="./android.html"><h3>Privoo for Android</h3><p>Native Kotlin and Jetpack Compose mobile browser. Closed source, sideloaded, no automatic updates.</p></a>
-      <a class="card" href="./coder.html"><h3>Privoo Coder</h3><p>AI agent coding IDE on Electron and Monaco. Closed source, Windows, Contributor role required.</p></a>
-    </div>
-
-    <h2 id="limitations">Limitations and criticism</h2>
-    <p>
-      Several limitations are acknowledged by the project itself:
-    </p>
-    <ul>
-      <li><b>Partial extension support.</b> Electron implements a subset of Chrome's extension APIs. Extensions relying on <code>contextMenus</code>, <code>privacy</code>, <code>webNavigation</code> and other advanced APIs may be limited or inert. Full CRX support remains an open roadmap item.</li>
-      <li><b>Unnotarised macOS builds.</b> Release builds are produced without Apple notarisation, so Gatekeeper warns on first launch. This follows from the project not holding a paid Apple developer account.</li>
-      <li><b>No synchronisation.</b> A deliberate consequence of having no server, but a functional regression relative to mainstream browsers.</li>
-      <li><b>Anonymity scope.</b> The documentation states that no browser makes a user anonymous, and directs users whose threat model involves a state adversary to Tor Browser rather than Privoo.<sup class="ref"><a href="./#ref-1">[1]</a></sup></li>
-      <li><b>Post-quantum layer is bounded.</b> The <code>.mariana</code> post-quantum layer applies only between two Privoo Desktop instances and protects the transport only. The project explicitly declines to describe it as unbreakable.</li>
-    </ul>
-    <p>
-      As an independent project maintained outside a company, Privoo also carries the
-      support and continuity characteristics of such projects: there is no support
-      contract, and no guarantee of maintenance.
-    </p>
-
-    <h2 id="see-also" class="nonum">See also</h2>
-    <ul>
-      <li><a href="./privacy.html">Privoo Desktop: Privacy and security</a></li>
-      <li><a href="./mariana.html">Privoo Desktop: .mariana hosting</a></li>
-      <li><a href="./tools.html">Privoo Desktop: Built-in tools</a></li>
-      <li><a href="./ai.html">Privoo Desktop: Privoo AI</a></li>
-      <li><a href="./install.html">Privoo Desktop: Installation</a></li>
-      <li><a href="./faq.html">Privoo Desktop: FAQ and troubleshooting</a></li>
-      <li><a href="./android.html">Privoo for Android</a></li>
-      <li><a href="./coder.html">Privoo Coder</a></li>
-    </ul>
-
-    <h2 id="references" class="nonum">References</h2>
-    <ol class="refs">
-      <li id="ref-1"><a href="https://github.com/sharp4real/privoobrowser#readme">Privoo Browser README</a>. Project repository. Retrieved 16 July 2026.</li>
-      <li id="ref-2"><a href="https://github.com/sharp4real/privoobrowser/releases">Release history and tags</a>. Project repository. 73 tags, 188 commits as of v6.0.3.</li>
-      <li id="ref-3"><code>settings-store.js</code>, default settings object. Project repository, version 6.0.3.</li>
-      <li id="ref-4"><a href="https://github.com/ghostery/adblocker">Ghostery adblocker engine</a>, used via <code>@ghostery/adblocker-electron</code> 2.5.x.</li>
-      <li id="ref-5"><a href="https://github.com/castlabs/electron-releases">castLabs Electron releases</a>, providing the Widevine-enabled Electron 42.3.3 build.</li>
-    </ol>
-
-    <h2 id="external" class="nonum">External links</h2>
-    <div class="btn-row">
-      <a class="lbtn primary" href="https://github.com/sharp4real/privoobrowser/releases/latest">Download Privoo Desktop</a>
-      <a class="lbtn" href="https://github.com/sharp4real/privoobrowser">Repository</a>
-      <a class="lbtn" href="https://github.com/sharp4real/privoobrowser/releases">Releases</a>
-      <a class="lbtn" href="https://github.com/sharp4real/privoobrowser/issues">Issue tracker</a>
-      <a class="lbtn" href="https://github.com/sharp4real/privoobrowser/discussions">Discussions</a>
-      <a class="lbtn" href="https://discord.gg/WweUzF3YCQ">Discord</a>
-      <a class="lbtn" href="https://github.com/sharp4real/privoobrowser/blob/main/LICENSE">MIT License</a>
-    </div>
-
-    <nav class="pager">
-      <a class="next" href="./install.html" style="margin-left:auto"><span>Next article</span><b>Installation ›</b></a>
-    </nav>
-  </main>
+  </div>
 </div>
 
-<footer class="foot">
-  <span>Privoo is an independent project. No telemetry, no tracking, no data collection.</span>
-  <span>Content describes Privoo Desktop 6.0.3 · MIT licensed</span>
+<!-- ── The claim, stated plainly ──────────────────────────────────────── -->
+<section>
+  <div class="wrap">
+    <div class="sec-head center">
+      <div class="kicker">The short version</div>
+      <h2>Private by default, not by configuration.</h2>
+      <p>
+        Most browsers ship the protections and leave them switched off. Privoo
+        turns them on before you open the first tab. There is nothing to opt
+        out of, because there is nothing collecting anything.
+      </p>
+    </div>
+
+    <div class="grid grid-3">
+      <div class="card">
+        <h3>Blocked at the network layer</h3>
+        <p>
+          EasyList, EasyPrivacy and the uBlock Origin lists, enforced before a
+          request ever leaves the machine. Pages load less, so they load
+          faster. The speed is a side effect of the blocking rather than a
+          separate feature.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Nothing leaves the device</h3>
+        <p>
+          History, bookmarks, passwords, AI conversations and settings are all
+          files on your own disk. There is no Privoo account, no sync service
+          and no analytics endpoint, so there is nowhere for any of it to go.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Harder to identify</h3>
+        <p>
+          Deterministic canvas noise, a normalised user agent, WebRTC leak
+          protection, encrypted DNS, and tracking parameters stripped out of
+          links before you follow them.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── What it is actually like to use ────────────────────────────────── -->
+<section class="tight">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">Day to day</div>
+      <h2>Built for people who keep forty tabs open.</h2>
+      <p>Privacy is the reason to switch. The tab strip is the reason to stay.</p>
+    </div>
+
+    <div class="row">
+      <div class="row-text">
+        <h3>Find the tab you meant</h3>
+        <p>
+          Nine tabs on the same site all say the same thing. Privoo gives you
+          five ways out of that, and none of them involve clicking through
+          them one at a time.
+        </p>
+        <ul class="row-list">
+          <li><b>Hover previews.</b> Rest on a tab and a thumbnail of that page appears underneath it.</li>
+          <li><b>Reactions.</b> Pin an emoji to a tab so one of twenty is findable at a glance.</li>
+          <li><b>Islands.</b> Tabs from the same site gather together on their own.</li>
+          <li><b>Vertical tabs.</b> A collapsible side panel with a spotlight style search over it.</li>
+          <li><b>Tab Snooze.</b> A tab you have not looked at in a while lets go of its page and keeps its place.</li>
+        </ul>
+      </div>
+      <div class="row-art">
+        <img class="row-img" src="./PrivooEmojiTabReaction.png" width="1571" height="941" alt="A row of Privoo tabs, one of them marked with an emoji reaction." loading="lazy" decoding="async">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row-text">
+        <h3>Everything is a switch, and it is already on</h3>
+        <p>
+          Nothing in Settings needs turning on to be private. The blocking,
+          the HTTPS upgrades, the encrypted DNS and the fingerprint protection
+          are all running before you open the first tab. The page is there for
+          changing your mind, not for switching privacy on.
+        </p>
+        <ul class="row-list">
+          <li>Search across every setting, not just the section names.</li>
+          <li>Custom filter lists, your own DNS resolver, per&#8209;site exceptions.</li>
+          <li>Nothing on the page reports anything anywhere.</li>
+        </ul>
+      </div>
+      <div class="row-art">
+        <img class="row-img" src="./PrivooSettingsPage.png" width="1568" height="934" alt="Privoo settings, showing the sections list on the left and switches on the right." loading="lazy" decoding="async">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row-text">
+        <h3>An assistant on your own key</h3>
+        <p>
+          Privoo AI runs against whichever provider you already pay for, be
+          that Anthropic, OpenAI, Gemini or DeepSeek. It will also run against
+          a model on your own machine through Ollama, in which case nothing
+          leaves it at all. Privoo is never in the middle, and your key is
+          encrypted on disk.
+        </p>
+        <ul class="row-list">
+          <li>An inline panel beside the page, or a window of its own.</li>
+          <li>Chat history kept locally. Searchable, and deletable.</li>
+          <li>Attach a file and only the text inside it is sent.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row-text">
+        <h3>Publish a folder over Tor</h3>
+        <p>
+          <b>.mariana</b> turns a directory on your computer into a website
+          reachable over the Tor network. No server, no domain, no port
+          forwarding. The browser is the host, and it stops when you close it.
+        </p>
+        <ul class="row-list">
+          <li>Nothing is uploaded anywhere. The files stay where they are.</li>
+          <li>The address is a Tor hidden service, reachable from any Tor browser.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── The honest bit ─────────────────────────────────────────────────── -->
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">Where the line falls</div>
+      <h2>What a private browser can and cannot do.</h2>
+      <p>
+        Every browser makes this list. Most of them only publish the left hand
+        column. Both matter, so both are here.
+      </p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Privoo handles</th><th>Privoo does not</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Ads, trackers and third party cookies</td>
+            <td class="muted">Hide which sites you visit from your internet provider, unless you turn on the VPN or Tor</td>
+          </tr>
+          <tr>
+            <td>Fingerprinting via canvas, user agent and WebRTC</td>
+            <td class="muted">Stop a site you sign in to from knowing it is you</td>
+          </tr>
+          <tr>
+            <td>DNS queries, encrypted over HTTPS</td>
+            <td class="muted">Protect you from a compromised machine or a keylogger</td>
+          </tr>
+          <tr>
+            <td>Links that pretend to be somewhere else, when you paste them</td>
+            <td class="muted">Judge whether a site is trustworthy once you are on it</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:18px"><a class="btn btn-ghost" href="./privacy.html">Read the full privacy page</a></p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="brand" href="./index.html"><img src="./logo.png" alt=""><span>Privoo</span></a>
+      </div>
+      <div class="foot-col">
+        <h4>Links</h4>
+        <a href="./features.html">Features</a>
+        <a href="./privacy.html">Privacy</a>
+        <a href="./download.html">Download</a>
+        <a href="./shortcuts.html">Shortcuts</a>
+        <a href="./faq.html">FAQ</a>
+        <a href="https://github.com/sharp4real/privoobrowser">GitHub</a>
+        <a href="https://discord.gg/WweUzF3YCQ">Discord</a>
+      </div>
+    </div>
+    <div class="foot-base">
+      <span>MIT licensed. No telemetry, no tracking, no data collection.</span>
+      <span>6.0.4</span>
+    </div>
+  </div>
 </footer>
 
-<script src="./nav.js"></script>
-
-
-</body></html>
+<script src="./site.js"></script>
+</body>
+</html>

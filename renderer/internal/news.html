@@ -5,254 +5,94 @@
 <title>Privoo News</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%234f46e5' d='M18 11v2h4v-2h-4zm-2 6.61c.96.71 2.21 1.65 3.2 2.39.4-.53.8-1.07 1.2-1.6-.99-.74-2.24-1.68-3.2-2.4-.4.54-.8 1.08-1.2 1.61zM20.4 5.6c-.4-.53-.8-1.07-1.2-1.6-.99.74-2.24 1.68-3.2 2.4.4.53.8 1.07 1.2 1.6.96-.72 2.21-1.65 3.2-2.4zM4 9c-1.1 0-2 .9-2 2v2c0 1.1.9 2 2 2h1v4h2v-4h1l5 3V6L8 9H4zm11.5 3c0-1.33-.58-2.53-1.5-3.35v6.69c.92-.81 1.5-2.01 1.5-3.34z'/%3E%3C/svg%3E"/>
 <style>
+/* One sentence and a button. The page used to be a changelog; the releases
+   are on GitHub now, so this points at them and gets out of the way. */
 *{box-sizing:border-box;margin:0;padding:0;font-family:"Inter","Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
-/* Accent vars live ONLY on :root so the inline accent set by JS propagates. */
-:root{
-  --accent:#4f46e5; --accent-soft:rgba(79,70,229,.13);
-  --bg:#f3f3f7; --text:#17171f; --muted:#6c6c78; --border:rgba(23,23,31,.09);
+html,body{height:100%;background:var(--o-bg,#f2f2f4);color:var(--o-text,#101014);user-select:none;}
+.wrap{
+  min-height:100%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;
+  padding:40px 28px 72px;
 }
-:root.dark{
-  --accent:#948ef2; --accent-soft:rgba(148,142,242,.18);
-  --bg:#17181c; --text:#f1f1f4; --muted:#97979f; --border:rgba(255,255,255,.08);
-  color-scheme:dark;
+.mark{
+  width:46px;height:46px;margin-bottom:20px;
+  display:grid;place-items:center;
+  border-radius:14px;
+  background:var(--o-surface,#fff);
+  border:1px solid var(--o-line,rgba(16,16,20,.1));
+  color:var(--o-muted,#64646f);
 }
-html,body{min-height:100%;background:var(--bg);color:var(--text);user-select:none;}
-
-/* Custom scrollbar — matches the rest of the app */
-html::-webkit-scrollbar{width:12px;height:12px}
-html::-webkit-scrollbar-track{background:transparent}
-html::-webkit-scrollbar-thumb{background:#dadce0;border-radius:12px;border:3px solid transparent;background-clip:padding-box}
-html::-webkit-scrollbar-thumb:hover{background:#bdc1c6;background-clip:padding-box;border:3px solid transparent}
-:root.dark::-webkit-scrollbar-thumb{background:#5f6368;background-clip:padding-box;border:3px solid transparent}
-
-/* ── Header — plain, no card, no image, no glow ── */
-.wrap{max-width:640px;margin:0 auto;padding:64px 24px 80px;}
-.eyebrow{
-  font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
-  color:var(--accent);margin-bottom:10px;
+.mark svg{width:23px;height:23px;fill:currentColor}
+h1{font-size:24px;font-weight:640;letter-spacing:-.025em;margin-bottom:9px;}
+p{font-size:14px;line-height:1.6;color:var(--o-muted,#64646f);max-width:40ch;margin-bottom:24px;}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  height:38px;padding:0 18px;
+  border-radius:10px;border:1px solid var(--o-line,rgba(16,16,20,.1));
+  background:var(--o-surface,#fff);
+  color:var(--o-text,#101014);
+  font-size:13.5px;font-weight:550;
+  text-decoration:none;cursor:pointer;
+  transition:border-color .13s ease,box-shadow .13s ease;
 }
-.brand-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-.brand-badge{
-  width:30px;height:30px;border-radius:9px;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  background:var(--accent-soft);color:var(--accent);
+.btn:hover{
+  border-color:var(--o-line-2,rgba(16,16,20,.18));
+  box-shadow:0 1px 2px rgba(0,0,0,.05),0 8px 22px -14px rgba(0,0,0,.5);
 }
-.brand-badge svg{width:17px;height:17px;fill:currentColor;}
-h1{font-size:26px;font-weight:650;letter-spacing:-.02em;margin:0;}
-.lede{font-size:13.5px;line-height:1.6;color:var(--muted);max-width:48ch;margin-bottom:40px;}
-
-/* ── Feed — a plain list, hairline dividers, no card boxes ── */
-.item{
-  display:flex;gap:14px;
-  padding:18px 0;border-top:1px solid var(--border);
-}
-.item:last-of-type{padding-bottom:0;}
-.ico{
-  width:20px;height:20px;flex-shrink:0;margin-top:2px;
-  color:var(--accent);
-}
-.ico svg{width:100%;height:100%;fill:currentColor;}
-.kicker{
-  font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
-  color:var(--accent);margin-bottom:6px;
-}
-.title{font-size:14.5px;font-weight:600;letter-spacing:-.005em;margin-bottom:5px;}
-.body{font-size:13px;line-height:1.6;color:var(--muted);}
-.body b{color:var(--text);font-weight:600;}
-
-.foot{
-  margin-top:32px;padding-top:18px;border-top:1px solid var(--border);
-  font-size:12px;color:var(--muted);
-}
+.btn svg{width:16px;height:16px;fill:currentColor}
+.ver{margin-top:20px;font-size:12px;color:var(--o-faint,#9a9aa6);}
 </style>
+<!-- Shared finish pass: one palette across every Privoo page. -->
+<link rel="stylesheet" href="page-theme.css"/>
 </head>
 <body>
-
 <main class="wrap">
-  <div class="eyebrow" id="ver-text">What's new</div>
-  <div class="brand-row">
-    <div class="brand-badge"><svg viewBox="0 0 24 24"><path d="M18 11v2h4v-2h-4zm-2 6.61c.96.71 2.21 1.65 3.2 2.39.4-.53.8-1.07 1.2-1.6-.99-.74-2.24-1.68-3.2-2.4-.4.54-.8 1.08-1.2 1.61zM20.4 5.6c-.4-.53-.8-1.07-1.2-1.6-.99.74-2.24 1.68-3.2 2.4.4.53.8 1.07 1.2 1.6.96-.72 2.21-1.65 3.2-2.4zM4 9c-1.1 0-2 .9-2 2v2c0 1.1.9 2 2 2h1v4h2v-4h1l5 3V6L8 9H4zm11.5 3c0-1.33-.58-2.53-1.5-3.35v6.69c.92-.81 1.5-2.01 1.5-3.34z"/></svg></div>
-    <h1>Privoo News</h1>
+  <div class="mark" aria-hidden="true">
+    <svg viewBox="0 0 24 24"><path d="M18 11v2h4v-2h-4zm-2 6.61c.96.71 2.21 1.65 3.2 2.39.4-.53.8-1.07 1.2-1.6-.99-.74-2.24-1.68-3.2-2.4-.4.54-.8 1.08-1.2 1.61zM20.4 5.6c-.4-.53-.8-1.07-1.2-1.6-.99.74-2.24 1.68-3.2 2.4.4.53.8 1.07 1.2 1.6.96-.72 2.21-1.65 3.2-2.4zM4 9c-1.1 0-2 .9-2 2v2c0 1.1.9 2 2 2h1v4h2v-4h1l5 3V6L8 9H4zm11.5 3c0-1.33-.58-2.53-1.5-3.35v6.69c.92-.81 1.5-2.01 1.5-3.34z"/></svg>
   </div>
-  <p class="lede">Every improvement, shipped straight to your browser. Rendered locally from this build — nothing is ever fetched, logged, or tracked.</p>
-
-  <article class="item">
-    <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3zm-1 14-4-4 1.4-1.4L11 13.2l5.6-5.6L18 9l-7 7z"/></svg></div>
-    <div>
-      <div class="kicker">Fixed &middot; 5.0.8</div>
-      <div class="title">Your accent colour actually sticks now</div>
-      <p class="body">Picking a swatch in <b>Settings → Appearance</b> saved correctly but silently did nothing to the browser itself, an old wave-theme check meant only a colourful <b>Theme</b> could change the accent. Manually picked colours now apply immediately, everywhere: the toolbar, tabs, Settings, and Extensions.</p>
-    </div>
-  </article>
-
-  <article class="item">
-    <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z" opacity="0"/><path d="M4 4h7v7H4zm9 0h7v7h-7zM4 13h7v7H4zm9 0h7v7h-7z"/></svg></div>
-    <div>
-      <div class="kicker">New &middot; 5.0.8</div>
-      <div class="title">A default background for the new tab page</div>
-      <p class="body">Privoo now ships with its own default new-tab wallpaper. Turn it off any time in <b>Settings → Appearance → New tab page → Apply Privoo Background</b>, or set your own photo instead, either way it takes priority over the default.</p>
-    </div>
-  </article>
-
-  <article class="item">
-    <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 4h7v7H4zm9 0h7v7h-7zM4 13h7v7H4zm9 0h7v7h-7z"/></svg></div>
-    <div>
-      <div class="kicker">Improved &middot; 5.0.8</div>
-      <div class="title">A wider, more comfortable sidebar panel</div>
-      <p class="body">Sidebar apps (WhatsApp, Spotify, Discord, and the rest) open in a noticeably wider panel by default now. Drag its left edge any time to resize it to whatever width fits your screen.</p>
-    </div>
-  </article>
-
-  <article class="item">
-    <div class="ico"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2zm-3 0H9V6a3 3 0 0 1 6 0z"/></svg></div>
-    <div>
-      <div class="kicker">Changed &middot; 5.0.8</div>
-      <div class="title">Quieter by default</div>
-      <p class="body">UI sounds (typing and click blips) now ship off by default instead of on, turn them back on in <b>Settings → Sounds</b> if you liked them. The new-tab page's shortcut grid is also just called <b>New Tab</b> now.</p>
-    </div>
-  </article>
-
-  <article class="item">
-    <div class="ico"><svg viewBox="0 0 24 24"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11z"/></svg></div>
-    <div>
-      <div class="kicker">Improved &middot; 5.0.8</div>
-      <div class="title">A calmer Extensions page</div>
-      <p class="body">Cleaned up spacing and contrast on <b>privoo://extensions</b>, cards now pick up a soft accent-tinted edge on hover, and the "Add extension" button no longer risks unreadable text if you're using a very dark custom accent colour.</p>
-    </div>
-  </article>
-
-  <article class="item">
-    <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3z"/></svg></div>
-    <div>
-      <div class="kicker">Design &middot; 5.0.7</div>
-      <div class="title">A quieter, more considered interface</div>
-      <p class="body">A full pass over the whole browser: one signature indigo accent instead of a scattered palette, calmer tabs and address bar with no bounce or glow, and popups (menu, downloads, shield, right-click) that finally look like part of the same app instead of a leftover skin. Selecting a colourful <b>Theme</b> still retunes the accent to match — it just isn't manually pickable any more.</p>
-    </div>
-  </article>
-
-  <article class="item">
-    <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 2C7.59 2 4 5.59 4 10v11l3.5-3.5 3.5 3.5 3.5-3.5 3.5 3.5V10c0-4.41-3.59-8-8-8zm0 2c3.31 0 6 2.69 6 6v8.09l-1.5-1.5-3.5 3.5-3.5-3.5L8 18.09V10c0-3.31 2.69-6 4-6zm-2 5.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm4 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></svg></div>
-    <div>
-      <div class="kicker">Changed &middot; Incognito</div>
-      <div class="title">A private window that actually looks private</div>
-      <p class="body">Incognito windows moved off the old purple-navy chrome onto a true near-black, and the "you're browsing privately" tab is a plain, calm page now, no glowing background, no boxed-in cards.</p>
-    </div>
-  </article>
-
-  <article class="item">
-    <div class="ico"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2zm-3 0H9V6a3 3 0 0 1 6 0z"/></svg></div>
-    <div>
-      <div class="kicker">Improved &middot; Transparency</div>
-      <div class="title">Increase Transparency actually looks frosted now</div>
-      <p class="body">The default glass style was blurring the desktop behind the toolbar by all of 3 pixels, barely visible. It's a real frosted-glass blur now, in both light and dark, with the mismatched blue tint on Liquid Glass dark mode fixed too.</p>
-    </div>
-  </article>
-
-  <article class="item">
-    <div class="ico"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></div>
-    <div>
-      <div class="kicker">Changed &middot; New tab page</div>
-      <div class="title">Adding a shortcut moved to Settings</div>
-      <p class="body">The floating "+" button in the top-right of the new tab page is gone. Add, rename or remove shortcuts from <b>Settings → Appearance → New tab page → Shortcuts</b> instead — existing shortcuts on the page still open and remove exactly as before.</p>
-    </div>
-  </article>
-
-  <article class="item">
-    <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3zm-1 14-4-4 1.4-1.4L11 13.2l5.6-5.6L18 9l-7 7z"/></svg></div>
-    <div>
-      <div class="kicker">New &middot; .mariana</div>
-      <div class="title">Host your own anonymous site in one click</div>
-      <p class="body">Open <b>privoo://mariana</b>, pick a folder with an <b>index.html</b>, and Privoo publishes it as a <b>.mariana</b> site served over Tor straight from your PC, no server, no domain, no port forwarding. Share the link and anyone can visit anonymously. When both people use Privoo, the page gets a second layer of <b>post-quantum (ML-KEM-768)</b> encryption on top of Tor. It's a real extra layer against future quantum attacks, and any Tor browser can still open the site over plain Tor.</p>
-    </div>
-  </article>
-
-  <article class="item">
-    <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
-    <div>
-      <div class="kicker">New &middot; Identities</div>
-      <div class="title">Autofill that learns your details, not your data</div>
-      <p class="body">Save one or more identities, name, address, phone, email, in <b>Settings → Identities</b> or <b>privoo://identities</b>, then right-click any form field and choose <b>Autofill identity</b>. Common fields fill instantly; a local Ollama model (nothing leaves your device) steps in only for unusual field labels the fast path can't recognise.</p>
-    </div>
-  </article>
-
-  <article class="item">
-    <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3zm0 4.5A3.5 3.5 0 1 1 8.5 10 3.5 3.5 0 0 1 12 6.5zm0 11c-2.3 0-4.3-1.2-5.5-3 .03-1.8 3.7-2.8 5.5-2.8s5.47 1 5.5 2.8c-1.2 1.8-3.2 3-5.5 3z"/></svg></div>
-    <div>
-      <div class="kicker">New &middot; Decentralised web</div>
-      <div class="title">.onion, .eth, and IPFS just work</div>
-      <p class="body">Type a <b>.onion</b> address and Privoo brings up its own Tor circuit for it automatically, nothing else is rerouted. ENS (<b>.eth</b>) and Unstoppable Domains names resolve through a public gateway, and <b>ipfs://</b> / <b>ipns://</b> links open directly, no extension required.</p>
-    </div>
-  </article>
-
-  <article class="item">
-    <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 4h7v7H4zm9 0h7v7h-7zM4 13h7v7H4zm9 0h7v7h-7z"/></svg></div>
-    <div>
-      <div class="kicker">Improved &middot; Sidebar</div>
-      <div class="title">Hover mode now truly gets out of the way</div>
-      <p class="body">Set the shortcuts sidebar to <b>Hover</b> in Customize Privoo and it disappears completely, zero width, no leftover gap, until your cursor touches the left edge of the window.</p>
-    </div>
-  </article>
-
-  <article class="item">
-    <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 4h7v7H4zm9 0h7v7h-7zM4 13h7v7H4zm9 0h7v7h-7z"/></svg></div>
-    <div>
-      <div class="kicker">New &middot; Sidebar apps</div>
-      <div class="title">Your apps, one hover away</div>
-      <p class="body">Pin WhatsApp, Spotify, Discord, Instagram and more to the sidebar and open them in a proper mobile-sized panel, no more sites clipped to a tiny strip. Hovering an app that's playing audio now shows what's playing, with a pause button right there.</p>
-    </div>
-  </article>
-
-  <article class="item">
-    <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1.4 14.4L7.4 12.2l1.3-1.3 1.9 1.9 4-4 1.3 1.3z"/></svg></div>
-    <div>
-      <div class="kicker">Fixed</div>
-      <div class="title">Turning off ad &amp; tracker blocking now actually stops it</div>
-      <p class="body">The shield's ad-blocking engine only checked the setting once, at startup, so switching it off in Settings didn't do anything until you restarted. It's now checked live on every request, so the toggle takes effect immediately in both directions.</p>
-    </div>
-  </article>
-
-  <article class="item">
-    <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 10.6 4.6-1.2 8-5.6 8-10.6V5l-8-3zm-1 14-4-4 1.4-1.4L11 13.2l5.6-5.6L18 9l-7 7z"/></svg></div>
-    <div>
-      <div class="kicker">Fixed</div>
-      <div class="title">New tab page polish</div>
-      <p class="body">Cleaned up several small rendering glitches on the new tab search bar, a stray white outline that could show up over a custom wallpaper, quick-link text turning the wrong colour on hover, and a rendering seam that briefly appeared on new tab or hover.</p>
-    </div>
-  </article>
-
-  <article class="item">
-    <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 4h7v7H4zm9 0h7v7h-7zM4 13h7v7H4zm9 0h7v7h-7z"/></svg></div>
-    <div>
-      <div class="kicker">Changed</div>
-      <div class="title">System tray, back to the native menu</div>
-      <p class="body">The tray icon's right-click menu is back to your OS's native context menu, now with more in it: new tab, new incognito window, downloads, history, bookmarks, settings, a minimize-to-tray toggle, and check for updates.</p>
-    </div>
-  </article>
-
-  <div class="foot">Rendered locally from this version of Privoo. No requests, no tracking, no telemetry.</div>
+  <h1>Privoo News</h1>
+  <p>Everything about each release lives on GitHub, alongside the source it describes.</p>
+  <a class="btn" id="gh" href="https://github.com/sharp4real/privoobrowser/releases">
+    <svg viewBox="0 0 24 24"><path d="M12 2A10 10 0 0 0 8.84 21.5c.5.09.68-.22.68-.48v-1.7C6.73 19.91 6.14 18 6.14 18c-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.36 1.09 2.94.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z"/></svg>
+    Open the releases on GitHub
+  </a>
+  <div class="ver" id="ver"></div>
 </main>
-
 <script>
-(function(){
-  const api = window.privooInternal;
-  function applyAccent(themeHex){
-    const r=document.documentElement;
-    const fallback = r.classList.contains('dark') ? '#948ef2' : '#4f46e5';
-    const hex = (themeHex && /^#[0-9a-f]{6}$/i.test(themeHex)) ? themeHex : fallback;
-    r.style.setProperty('--accent',hex);
-    const m=hex.replace('#','').match(/.{2}/g);
-    const[rv,g,b]=m.map(x=>parseInt(x,16));
-    r.style.setProperty('--accent-soft',`rgba(${rv},${g},${b},.16)`);
+(function () {
+  var api = window.privooInternal;
+
+  // Dark mode, the same way every other internal page does it.
+  function apply(s) {
+    var dark = !!(s && s.darkMode);
+    document.body.classList.toggle('dark', dark);
+    document.documentElement.classList.toggle('dark', dark);
   }
-  function apply(s){
-    document.documentElement.classList.toggle('dark', !!s?.darkMode);
-    applyAccent(s?.accentColor);
-    if (s?.newsSeenVersion) {
-      document.getElementById('ver-text').textContent = 'Version ' + s.newsSeenVersion;
-    }
+  if (api && api.getSettings) {
+    api.getSettings().then(function (d) { apply((d && d.settings) || d); }).catch(function () {});
   }
-  api?.getSettings?.().then(d => apply(d?.settings || d)).catch(()=>{});
-  api?.onSettingsChanged?.(s => apply(s?.settings || s));
+  if (api && api.onSettingsChanged) {
+    api.onSettingsChanged(function (s) { apply((s && s.settings) || s); });
+  }
+
+  // Which build this is. Not a claim about what changed in it — just the
+  // number you would want when reading a release note.
+  if (api && api.getAppVersion) {
+    api.getAppVersion().then(function (v) {
+      if (v) document.getElementById('ver').textContent = 'You are on ' + v;
+    }).catch(function () {});
+  }
+
+  // An <a> inside a guest navigates the guest, which would leave Privoo's own
+  // page sitting on github.com. Hand it to the host as a new tab instead.
+  var gh = document.getElementById('gh');
+  if (gh && api && api.openTab) {
+    gh.addEventListener('click', function (e) {
+      e.preventDefault();
+      api.openTab(gh.href);
+    });
+  }
 })();
 </script>
 </body>
