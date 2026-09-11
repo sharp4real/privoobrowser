@@ -4314,40 +4314,6 @@ body.dark .dl-pop-action-btn:hover svg {
 }
 .ctx-backdrop.hidden { display: none; }
 
-/* Chrome-style emoji row at the top of right-click menus on editable fields */
-.ctx-emoji-row {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 6px 8px;
-}
-.ctx-emoji {
-  flex: 1;
-  height: 32px;
-  border: none;
-  background: transparent;
-  border-radius: 10px;
-  cursor: pointer;
-  /* Native color emoji — same stack as the standalone picker. */
-  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", emoji, sans-serif;
-  font-variant-emoji: emoji;
-  font-size: 19px;
-  line-height: 1;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background .08s, transform .06s;
-}
-.ctx-emoji:hover  { background: var(--hover); }
-.ctx-emoji:active { transform: scale(.9); }
-.ctx-emoji-more {
-  font-family: inherit;
-  font-size: 18px;
-  font-weight: 500;
-  color: var(--muted);
-}
-
 /* ── Overlay banner (welcome / leaving Privoo / etc.) ─────────────
    Floats above the active webview at the bottom; the page renders
    normally behind it. Single instance, contents swapped via JS. */

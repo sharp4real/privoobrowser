@@ -3268,38 +3268,6 @@ function _closeCtxMenu(chosen = null) {
 function _buildCtxRows(container, items) {
   container.innerHTML = '';
   for (const item of items) {
-    /* A strip of quick emoji across the top, the way Chrome does on a text
-       field. The stylesheet has had rules for this since before the item was
-       taken out; this is the code that draws them. */
-    if (item.type === 'emoji') {
-      const row = document.createElement('div');
-      row.className = 'ctx-emoji-row';
-      const pick = (fn) => (e) => {
-        // mousedown, not click: the backdrop dismisses the menu on mousedown,
-        // so a click handler here would never see its own press.
-        e.preventDefault(); e.stopPropagation();
-        _closeCtxMenu(null);
-        try { fn(); } catch { /* the field went away */ }
-      };
-      for (const glyph of QUICK_REACTIONS) {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'ctx-emoji';
-        b.textContent = glyph;
-        b.title = glyph;
-        b.addEventListener('mousedown', pick(() => item.onPick(glyph)));
-        row.appendChild(b);
-      }
-      const more = document.createElement('button');
-      more.type = 'button';
-      more.className = 'ctx-emoji ctx-emoji-more';
-      more.textContent = '\u22ef';
-      more.title = 'All emoji';
-      more.addEventListener('mousedown', pick(() => item.onMore()));
-      row.appendChild(more);
-      container.appendChild(row);
-      continue;
-    }
     if (item.type === 'separator') {
       const s = document.createElement('div');
       s.className = 'ctx-sep';
@@ -6162,15 +6130,7 @@ async function showWvContextMenu(tab, params, vx = 200, vy = 200) {
         '(function(){var el=document.activeElement;if(el&&el!==document.body&&el!==document.documentElement)window.__privooEmojiTarget=el;})();'
       ).catch(() => {});
     } catch { /* the tab went away */ }
-    // Quick emoji across the top, the way Chrome does on a text field. This
-    // does not replace the Windows panel on Win+period — but a shortcut you
-    // may not know, that this menu has no way to mention, is not an answer to
-    // right-clicking a text box.
-    items.push({
-      type: 'emoji',
-      onPick: (glyph) => insertEmojiInWebview(wv, glyph),
-      onMore: () => openEmojiPicker(wv, null, null),
-    });
+    add('Emojis', () => openEmojiPicker(wv, null, null));
     sep();
     if (settings?.identityAutofillEnabled === true) {
       add('Autofill identity', () => requestIdentityAutofill(tab));
@@ -9646,18 +9606,8 @@ function wireFieldContextMenu(input, opts = {}) {
     let clip = '';
     try { clip = await navigator.clipboard.readText(); } catch {}
 
-    // Inserts at the cursor without opening the full picker — the same
-    // instant-glyph behaviour the webview page-content menu already has.
-    const insertGlyph = (glyph) => {
-      input.focus();
-      const s = input.selectionStart ?? input.value.length;
-      const en = input.selectionEnd ?? input.value.length;
-      input.setRangeText(glyph, s, en, 'end');
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    };
-
     const items = [
-      { type: 'emoji', onPick: insertGlyph, onMore: () => openEmojiPicker(null, input) },
+      { id: 'emoji', label: 'Emojis' },
       { type: 'separator' },
     ];
     if (opts.undo) items.push({ id: 'undo', label: 'Undo' }, { type: 'separator' });
@@ -9671,6 +9621,7 @@ function wireFieldContextMenu(input, opts = {}) {
 
     const action = await showHtmlMenu(items, e.clientX, e.clientY);
     if (!action) return;
+    if (action === 'emoji') { openEmojiPicker(null, input); return; }
     input.focus();
     const s = input.selectionStart ?? input.value.length;
     const en = input.selectionEnd ?? input.value.length;
