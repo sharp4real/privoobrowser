@@ -181,7 +181,12 @@ function buildGoogleSpoofScript(opts) {
   try { delete _win.opr; } catch(e) {}
   try { delete _win.brave; } catch(e) {}
   try { delete _win.safari; } catch(e) {}
-  // window.external must exist on Chrome (Microsoft sites check this)
+  // window.external must exist on Chrome (Microsoft sites check this).
+  // Skipped on TikTok and Google sign-in: the replacement's methods are JS
+  // functions, so window.external.AddSearchProvider.toString() no longer
+  // reports native code. Electron already provides window.external, and
+  // Google's sign-in integrity check reads exactly this class of signal.
+  if (_isTikTok || _isGoogleAuth) {} else
   try {
     if (!_win.external || typeof _win.external.AddSearchProvider !== 'function') {
       Object.defineProperty(_win, 'external', {
@@ -218,9 +223,18 @@ function buildGoogleSpoofScript(opts) {
   } catch(e) {}
 
   // ── window.chrome (Google checks for this object) ─────────────────────────
-  // Skipped on TikTok: a hand-built chrome.runtime whose methods aren't native
-  // is a tamper tell. Electron's real window.chrome is left untouched there.
-  if (_isTikTok) {} else
+  // Skipped on TikTok AND Google sign-in: a hand-built chrome.runtime whose
+  // methods aren't native is a tamper tell. Electron's real window.chrome is
+  // left untouched there.
+  //
+  // Google sign-in joined the skip list because it was the last thing still
+  // installing non-native functions on accounts.google.com, and that is
+  // precisely what raises "This browser or app may not be secure" — same cause
+  // and same symptom as the navigator.permissions wrapper noted further up.
+  // Real Chrome has no chrome.runtime on a page no extension is talking to, so
+  // synthesising one was never what got us past Google; the clean User-Agent
+  // and the native client hints pushed over CDP are.
+  if (_isTikTok || _isGoogleAuth) {} else
   try {
     var cr = _win.chrome || {};
     if (!cr.runtime) {
@@ -243,9 +257,11 @@ function buildGoogleSpoofScript(opts) {
   } catch(e) {}
 
   // ── Plugins (empty plugins list is a red flag) ────────────────────────────
-  // Skipped on TikTok: the synthetic PluginArray differs from a real one under
-  // close inspection. Electron ships the genuine Chromium PDF plugins anyway.
-  if (_isTikTok) {} else
+  // Skipped on TikTok AND Google sign-in: the synthetic PluginArray differs
+  // from a real one under close inspection. Electron ships the genuine
+  // Chromium PDF plugins anyway, so this branch is dead weight on exactly the
+  // hosts that bother to inspect it closely.
+  if (_isTikTok || _isGoogleAuth) {} else
   try {
     if (!_nav.plugins || _nav.plugins.length === 0) {
       var fakePlugins = [

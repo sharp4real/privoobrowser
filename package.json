@@ -7,7 +7,7 @@
     "postinstall": "node scripts/verify-electron.js",
     "start": "electron .",
     "dev": "electron . --privoo-profile=dev --privoo-skip-picker",
-    "verify": "node scripts/verify-release.js",
+    "verify": "node scripts/verify-release.js && node scripts/verify-spoof.js",
     "predist": "npm run verify",
     "predist:mac": "npm run verify",
     "predist:linux": "npm run verify",
