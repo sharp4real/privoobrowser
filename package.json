@@ -4,6 +4,7 @@
   "description": "Privacy focused browser built on Chromium.",
   "main": "main.js",
   "scripts": {
+    "postinstall": "node scripts/verify-electron.js",
     "start": "electron .",
     "dev": "electron . --privoo-profile=dev --privoo-skip-picker",
     "dist": "electron-builder --win --publish never",
