@@ -61,6 +61,12 @@ jobs:
       - name: Download castLabs Electron binary
         run: node node_modules/electron/install.js
 
+      # Fails fast, before the slow multi-platform build even starts, if any file
+      # main.js actually needs at runtime is not listed in package.json's
+      # build.files/extraResources - exactly how v6.0.4 shipped and could not open.
+      - name: Verify packaging
+        run: npm run verify
+
       # Linux needs rpmbuild for .rpm targets; ubuntu-latest doesn't ship it.
       - name: Install rpm tooling (Linux only)
         if: matrix.os == 'ubuntu-latest'

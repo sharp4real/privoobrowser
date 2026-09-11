@@ -32,6 +32,12 @@ jobs:
       - name: Download castLabs Electron binary
         run: node node_modules/electron/install.js
 
+      # Fails fast, before the slow multi-platform build even starts, if any file
+      # main.js actually needs at runtime is not listed in package.json's
+      # build.files/extraResources - exactly how v6.0.4 shipped and could not open.
+      - name: Verify packaging
+        run: npm run verify
+
       - name: Set up Python (for Widevine VMP signing)
         uses: actions/setup-python@v5
         with:
@@ -146,6 +152,12 @@ jobs:
       - name: Download castLabs Electron binary
         run: node node_modules/electron/install.js
 
+      # Fails fast, before the slow multi-platform build even starts, if any file
+      # main.js actually needs at runtime is not listed in package.json's
+      # build.files/extraResources - exactly how v6.0.4 shipped and could not open.
+      - name: Verify packaging
+        run: npm run verify
+
       - name: Build
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
@@ -192,6 +204,12 @@ jobs:
       # electron-builder's electronDist path. Fetch it explicitly.
       - name: Download castLabs Electron binary
         run: node node_modules/electron/install.js
+
+      # Fails fast, before the slow multi-platform build even starts, if any file
+      # main.js actually needs at runtime is not listed in package.json's
+      # build.files/extraResources - exactly how v6.0.4 shipped and could not open.
+      - name: Verify packaging
+        run: npm run verify
 
       - name: Build
         env:
