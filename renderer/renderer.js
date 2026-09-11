@@ -7647,53 +7647,10 @@ omnibox.addEventListener('focus', () => {
   triggerSuggest(val);
 });
 
-// Right-click on the URL bar: a Chrome-style cut/copy/paste menu, anchored
-// at the exact cursor with clientX/Y (DOM CSS pixels — no DPR math, no IPC).
-omnibox.addEventListener('contextmenu', async (e) => {
-  e.preventDefault();
-  const hasSel = omnibox.selectionStart !== omnibox.selectionEnd;
-  let clip = '';
-  try { clip = await navigator.clipboard.readText(); } catch {}
-  const items = [
-    { id: 'undo',  label: 'Undo' },
-    { type: 'separator' },
-    { id: 'cut',   label: 'Cut',   enabled: hasSel },
-    { id: 'copy',  label: 'Copy',  enabled: hasSel },
-    { id: 'paste', label: 'Paste', enabled: !!clip },
-    { id: 'paste-go', label: 'Paste and go', enabled: !!clip },
-    { type: 'separator' },
-    { id: 'select-all', label: 'Select all', enabled: omnibox.value.length > 0 },
-  ];
-  const action = await showHtmlMenu(items, e.clientX, e.clientY);
-  if (!action) return;
-  const start = omnibox.selectionStart || 0;
-  const end   = omnibox.selectionEnd   || 0;
-  switch (action) {
-    case 'undo':
-      try { document.execCommand('undo'); } catch {}
-      break;
-    case 'cut':
-      if (hasSel) {
-        try { await navigator.clipboard.writeText(omnibox.value.slice(start, end)); } catch {}
-        omnibox.setRangeText('', start, end, 'end');
-      }
-      break;
-    case 'copy':
-      if (hasSel) {
-        try { await navigator.clipboard.writeText(omnibox.value.slice(start, end)); } catch {}
-      }
-      break;
-    case 'paste':
-      if (clip) omnibox.setRangeText(clip, start, end, 'end');
-      break;
-    case 'paste-go':
-      if (clip) navigate(clip);
-      break;
-    case 'select-all':
-      omnibox.select();
-      break;
-  }
-});
+// Right-click on the URL bar: wireFieldContextMenu(omnibox, ...) near the
+// bottom of this file wires the actual menu, including the emoji row and
+// Paste and go — kept as one implementation shared with the search popup
+// rather than a second copy here that could drift from it again.
 omnibox.addEventListener('input', (e) => {
   triggerSuggest(e.target.value);
   // Play typing sound if theme UI sounds are enabled
@@ -9668,8 +9625,19 @@ searchPopupEl?.addEventListener('mousedown', (e) => {
   if (e.target === searchPopupEl) hideSearchPopup();
 });
 
-// Right-click edit menu for chrome text inputs (search popup + address bar).
-function wireFieldContextMenu(input) {
+// Right-click edit menu for chrome text inputs — the search popup and the
+// address bar both go through this now. They used to be two separate
+// implementations (the omnibox had its own, older one below this function)
+// and they had quietly drifted apart: this one had a plain "Emojis" menu row,
+// the omnibox had no emoji entry point at all. Two copies of the same menu
+// is exactly how that kind of gap opens up unnoticed, so there is one now.
+//
+// opts:
+//   undo       - include an Undo row (the omnibox wants it; the search popup
+//                does not, since Ctrl+Z there has nothing browser-level to
+//                undo the way the address bar's typed history does).
+//   pasteAndGo - include "Paste and go", calling opts.onPasteGo(text).
+function wireFieldContextMenu(input, opts = {}) {
   if (!input) return;
   input.addEventListener('contextmenu', async (e) => {
     e.preventDefault();
@@ -9677,21 +9645,38 @@ function wireFieldContextMenu(input) {
     const hasSel = input.selectionStart != null && input.selectionStart !== input.selectionEnd;
     let clip = '';
     try { clip = await navigator.clipboard.readText(); } catch {}
-    const action = await showHtmlMenu([
-      { id: 'emoji', label: 'Emojis' },
+
+    // Inserts at the cursor without opening the full picker — the same
+    // instant-glyph behaviour the webview page-content menu already has.
+    const insertGlyph = (glyph) => {
+      input.focus();
+      const s = input.selectionStart ?? input.value.length;
+      const en = input.selectionEnd ?? input.value.length;
+      input.setRangeText(glyph, s, en, 'end');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+
+    const items = [
+      { type: 'emoji', onPick: insertGlyph, onMore: () => openEmojiPicker(null, input) },
       { type: 'separator' },
-      { id: 'cut',   label: 'Cut',        enabled: hasSel },
-      { id: 'copy',  label: 'Copy',       enabled: hasSel },
-      { id: 'paste', label: 'Paste',      enabled: !!clip },
-      { type: 'separator' },
-      { id: 'all',   label: 'Select all', enabled: input.value.length > 0 },
-    ], e.clientX, e.clientY);
+    ];
+    if (opts.undo) items.push({ id: 'undo', label: 'Undo' }, { type: 'separator' });
+    items.push(
+      { id: 'cut',   label: 'Cut',   enabled: hasSel },
+      { id: 'copy',  label: 'Copy',  enabled: hasSel },
+      { id: 'paste', label: 'Paste', enabled: !!clip },
+    );
+    if (opts.pasteAndGo) items.push({ id: 'paste-go', label: 'Paste and go', enabled: !!clip });
+    items.push({ type: 'separator' }, { id: 'all', label: 'Select all', enabled: input.value.length > 0 });
+
+    const action = await showHtmlMenu(items, e.clientX, e.clientY);
     if (!action) return;
-    if (action === 'emoji') { openEmojiPicker(null, input); return; }
     input.focus();
     const s = input.selectionStart ?? input.value.length;
     const en = input.selectionEnd ?? input.value.length;
-    if (action === 'copy' && hasSel) {
+    if (action === 'undo') {
+      try { document.execCommand('undo'); } catch {}
+    } else if (action === 'copy' && hasSel) {
       try { await navigator.clipboard.writeText(input.value.slice(s, en)); } catch {}
     } else if (action === 'cut' && hasSel) {
       try { await navigator.clipboard.writeText(input.value.slice(s, en)); } catch {}
@@ -9703,12 +9688,15 @@ function wireFieldContextMenu(input) {
         input.setRangeText(t, s, en, 'end');
         input.dispatchEvent(new Event('input', { bubbles: true }));
       } catch {}
+    } else if (action === 'paste-go') {
+      if (clip) opts.onPasteGo?.(clip);
     } else if (action === 'all') {
       input.select();
     }
   });
 }
 wireFieldContextMenu(searchPopupInput);
+wireFieldContextMenu(omnibox, { undo: true, pasteAndGo: true, onPasteGo: (clip) => navigate(clip) });
 
 // True while any blocking main-window popup/overlay is on screen — used to
 // keep the one-time popups from stacking on top of each other.
@@ -9988,6 +9976,27 @@ const CHROME_NOTES = [
     holdMs: 8000,
     when: (s) => (Number(s.siteVisitCount) || 0) >= 15 && activeTabIsNewTab(),
     build: async (el) => { el.append('Putting people back in control of their browsing.'); },
+  },
+  {
+    // Gated to the calendar date itself, not just "have you seen this" — the
+    // other notes here are fine to show a late-arriving install whenever they
+    // first use the browser, but "25 years" is a fact about THIS date. Showing
+    // it on any other day, to anyone, would just be wrong. The year is checked
+    // too so a fresh profile on 11 September some later year cannot see this
+    // exact wrong number — once this date has passed for 2026, this note can
+    // never fire again, seen or not.
+    flag: 'note911_25th2026',
+    holdMs: 10000,
+    when: () => {
+      const d = new Date();
+      return d.getMonth() === 8 && d.getDate() === 11 && d.getFullYear() === 2026;
+    },
+    build: async (el) => {
+      el.append('Twenty-five years ago today, nearly three thousand people were killed in '
+        + 'the attacks of September 11, 2001. We remember them, and everyone who lost '
+        + 'someone that day. ');
+      el.insertAdjacentHTML('beforeend', NOTE_HEART);
+    },
   },
 ];
 
