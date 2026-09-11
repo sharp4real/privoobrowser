@@ -734,6 +734,7 @@ let pendingCompat = null;
 
 function applyTheme(settings) {
   document.body.classList.toggle('dark', !!settings?.darkMode);
+  document.documentElement.classList.add('theme-set');
   applyAccent(settings?.accentColor);
 }
 // Mirrors applyAccentTriad() in renderer.js, so this page shows the same

@@ -192,6 +192,7 @@ body.dark .modal-btn.secondary{background:#37373f;color:#b0b0b8}
     const r = await window.privooInternal.getSettings();
     const settings = r?.settings || r;
     document.body.classList.toggle('dark', !!settings?.darkMode);
+    document.documentElement.classList.add('theme-set');
     applyAccent(settings?.accentColor);
 
     identities = await window.privooInternal.identitiesList();
@@ -279,6 +280,7 @@ body.dark .modal-btn.secondary{background:#37373f;color:#b0b0b8}
   window.privooInternal.onSettingsChanged((data) => {
     const s = data?.settings || data;
     document.body.classList.toggle('dark', !!s?.darkMode);
+    document.documentElement.classList.add('theme-set');
     applyAccent(s?.accentColor);
   });
 

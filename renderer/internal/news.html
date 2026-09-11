@@ -67,6 +67,7 @@ p{font-size:14px;line-height:1.6;color:var(--o-muted,#64646f);max-width:40ch;mar
   function apply(s) {
     var dark = !!(s && s.darkMode);
     document.body.classList.toggle('dark', dark);
+    document.documentElement.classList.add('theme-set');
     document.documentElement.classList.toggle('dark', dark);
   }
   if (api && api.getSettings) {

@@ -1061,6 +1061,7 @@ body.dark .composer-box textarea#input:focus{
   function applyTheme(s){
     const isDark = !!s?.darkMode;
     document.body.classList.toggle('dark', isDark);
+    document.documentElement.classList.add('theme-set');
     const r = document.documentElement;
     const raw = s?.accentColor;
     let hex = (raw && /^#[0-9a-f]{6}$/i.test(raw)) ? raw : (isDark ? '#ffffff' : '#101014');

@@ -2138,6 +2138,7 @@ function applyNtpLook(settings) {
   document.body.classList.toggle('ntp-wp', hasWp || isWave);
   document.body.classList.toggle('ntp-quiet', !hasWp && !isWave);
   document.body.classList.toggle('ntp-dark', dark);
+  document.documentElement.classList.add('theme-set');
   // Default ON — toggle in Settings → New tab.
   document.body.classList.toggle('ntp-focused-search-on', settings?.ntpFocusedSearch !== false);
   // Vibe — tint the search bar to match the browser chrome colour.

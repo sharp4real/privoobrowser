@@ -74,7 +74,14 @@ body.ntp-dark,
    place to be referenced by two rules is more indirection than eight
    colours deserve. If you change one ladder, change the other. */
 @media (prefers-color-scheme: dark) {
-  body:not(.dark) {
+  /* html.theme-set is added by each page the moment its settings arrive, so
+     this only ever covers the gap before that.
+
+     Without it, `body:not(.dark)` also matches a page that HAS been told and
+     was told "light" — which made a light browser show dark internal pages
+     permanently, with nothing the user could do about it, because a media
+     query is evaluated live rather than stored anywhere. */
+  html:not(.theme-set) body:not(.dark) {
     --o-bg:        #26262b;
     --o-surface:   #2d2d33;
     --o-surface-2: #202024;

@@ -219,10 +219,12 @@ function applyAccent(hex){
 }
   api?.getSettings?.().then(d => {
     document.body.classList.toggle('dark', !!d?.settings?.darkMode);
+    document.documentElement.classList.add('theme-set');
     applyAccent(d?.settings?.accentColor);
   }).catch(() => {});
   api?.onSettingsChanged?.(s => {
     document.body.classList.toggle('dark', !!s?.darkMode);
+    document.documentElement.classList.add('theme-set');
     applyAccent(s?.accentColor);
   });
 

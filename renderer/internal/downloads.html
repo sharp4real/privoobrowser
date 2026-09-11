@@ -215,6 +215,7 @@ let query = '';
 
 function applyTheme(s){
   document.body.classList.toggle('dark', !!s?.darkMode);
+  document.documentElement.classList.add('theme-set');
   applyAccent(s?.accentColor);
 }
 // Mirrors applyAccentTriad() in renderer.js, so this page shows the same

@@ -228,10 +228,12 @@ body.dark #toast{background:#eceaf6;color:#26243a}
     const r = await api.getSettings();
     const s = r?.settings || r;
     document.body.classList.toggle('dark', !!s?.darkMode);
+    document.documentElement.classList.add('theme-set');
     applyAccent(s?.accentColor);
     api.onSettingsChanged?.((n)=>{
       const ns=n?.settings||n;
       document.body.classList.toggle('dark', !!ns?.darkMode);
+      document.documentElement.classList.add('theme-set');
       applyAccent(ns?.accentColor);
     });
   }

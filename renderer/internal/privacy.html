@@ -172,6 +172,7 @@ h2::before{content:counter(sec) ". ";color:var(--o-faint,#9a9aa6);font-weight:50
   function apply(s){
     var dark = !!(s && s.darkMode);
     document.body.classList.toggle('dark', dark);
+    document.documentElement.classList.add('theme-set');
     document.documentElement.classList.toggle('dark', dark);
   }
   api && api.getSettings && api.getSettings()

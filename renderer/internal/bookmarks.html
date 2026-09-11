@@ -122,6 +122,7 @@ body.dark .bm-del:hover{background:rgba(255,255,255,.08);color:#f28b82}
     const settings = r?.settings || r;
     bookmarks = Array.isArray(settings?.bookmarks) ? settings.bookmarks : [];
     document.body.classList.toggle('dark', !!settings?.darkMode);
+    document.documentElement.classList.add('theme-set');
     applyAccent(settings?.accentColor);
     render(bookmarks);
   }
@@ -219,6 +220,7 @@ function applyAccent(hex){
   window.privooInternal.onSettingsChanged((data)=>{
     const s = data?.settings || data;
     document.body.classList.toggle('dark', !!s?.darkMode);
+    document.documentElement.classList.add('theme-set');
     applyAccent(s?.accentColor);
     bookmarks = Array.isArray(s?.bookmarks) ? s.bookmarks : [];
     const q = document.getElementById('search').value.toLowerCase();
