@@ -462,17 +462,52 @@ function urlFromArgv(argv) {
 // finishes loading.
 let _pendingLaunchUrl = urlFromArgv(process.argv);
 
+// Whether any window has ever actually been shown. Set the moment Electron
+// creates one, from anywhere in the app — this is what tells the crash
+// handler below whether it is looking at a broken FEATURE or a browser that
+// never opened at all.
+let _everShowedWindow = false;
+app.on('browser-window-created', () => { _everShowedWindow = true; });
+
 // Suppress noisy Electron internals:
 //   - "Script failed to execute" — executeJavaScript races during nav
 //   - "ERR_ABORTED (-3)" — our HTTPS-upgrade preventDefault aborts the
 //     original navigation, which is intended (we re-issue as https://)
 //     but Electron logs the aborted IPC call as an error.
-// A throw that reaches the top of the main process takes the whole browser
-// down with every open tab. Log it and stay up: a broken feature is better
-// than losing the window.
+//
+// A throw that reaches the top of the main process AFTER a window exists
+// takes the whole browser down with every open tab if left unhandled — so it
+// is logged and the process stays up; a broken feature is better than losing
+// the window. That was the whole idea here, and it is still right.
+//
+// It stopped being right the moment this handler ended up also covering
+// startup: a throw during the synchronous top-level require()s at the top of
+// this file — e.g. a module missing from a packaged build — was ALSO landing
+// here, being logged, and then... nothing. No window had been created to
+// lose, so "stay up" meant the process sat there forever with no UI, no exit
+// code, and no signal to the user that anything had gone wrong. On Windows
+// that shows up as an invisible, memory-holding zombie process that has to be
+// found in Task Manager and killed by hand — which is exactly what "doesn't
+// open when I click it" looks like from the outside.
+//
+// So: before a window has ever existed, this is fatal by definition. Say so,
+// with the real error, and exit — rather than fail silently in a way that
+// looks identical to nothing having happened at all.
 process.on('uncaughtException', (err) => {
   const msg = (err && (err.stack || err.message)) || String(err);
   console.error('Privoo: uncaught exception in the main process:', msg);
+
+  if (_everShowedWindow) return;   // a feature broke after startup; stay up
+
+  try {
+    dialog.showErrorBox(
+      'Privoo could not start',
+      'Something in the browser itself failed before any window could open, '
+      + 'so it looks like nothing happened when you launched it.\n\n'
+      + 'The actual error, for a bug report:\n' + msg,
+    );
+  } catch { /* even the dialog failed — nothing left to do but exit */ }
+  app.exit(1);
 });
 
 process.on('unhandledRejection', (reason) => {
