@@ -25,7 +25,7 @@ contextBridge.exposeInMainWorld('privoo', {
 
   // Settings
   getSettings:         ()      => ipcRenderer.invoke('get-settings'),
-  captureTabPreview:   (id)    => ipcRenderer.invoke('capture-tab-preview', id),
+  captureTabPreview:   (id, dpr) => ipcRenderer.invoke('capture-tab-preview', id, dpr),
   setSettings:         (patch) => ipcRenderer.invoke('set-settings', patch),
   chooseDownloadPath:  ()      => ipcRenderer.invoke('choose-download-path'),
   chooseFolder:        ()      => ipcRenderer.invoke('choose-folder'),

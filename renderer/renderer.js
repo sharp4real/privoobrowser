@@ -10148,6 +10148,13 @@ function tabForEl(el) {
   return tabs.find((t) => t.tabEl === el) || null;
 }
 
+// The capture is sized in device pixels, the card in CSS pixels. Reading this
+// per capture rather than once at startup keeps the preview sharp after the
+// window is dragged to a monitor with a different scale factor.
+function previewScale() {
+  return Math.min(Math.max(window.devicePixelRatio || 1, 1), 3);
+}
+
 function hideTabPreview() {
   clearTimeout(_tpTimer);
   _tpTimer = null;
@@ -10196,9 +10203,15 @@ async function showTabPreview(tab) {
   // Show the card immediately with whatever shot we already have — waiting on
   // the capture before showing anything makes the whole thing feel broken on
   // the first hover of every tab.
-  const cached = tab._previewShot && (Date.now() - tab._previewShotAt < TAB_PREVIEW_MAX_AGE)
-    ? tab._previewShot : null;
-  paintTabPreviewShot(cached, imgEl, fbEl);
+  //
+  // "Whatever we have" means any shot, not just a fresh one. Treating a shot
+  // older than TAB_PREVIEW_MAX_AGE as no shot at all is what made the preview
+  // seem to lag: hovering a tab you had not touched in half a minute painted
+  // the empty placeholder first and popped the picture in a moment later. An
+  // slightly old picture of the page beats a blank rectangle, so it goes up
+  // straight away and the refresh below replaces it in place.
+  const fresh = tab._previewShot && (Date.now() - tab._previewShotAt < TAB_PREVIEW_MAX_AGE);
+  paintTabPreviewShot(tab._previewShot || null, imgEl, fbEl);
 
   tabPreviewEl.hidden = false;
   placeTabPreview(tab.tabEl);
@@ -10206,13 +10219,17 @@ async function showTabPreview(tab) {
     if (_tpToken === token) tabPreviewEl.classList.add('is-in');
   });
 
-  if (cached) return;
+  if (fresh) return;
+  // warmTabPreview() fires on the same hover and refreshes a stale shot too;
+  // if it is already in flight, let it finish rather than capturing the same
+  // page twice. Its completion handler paints into this card when it lands.
+  if (tab._previewWarming) return;
 
   let wcId = 0;
   try { wcId = tab.wv?.getWebContentsId?.() || 0; } catch {}
   if (!wcId) return;
   let shot = null;
-  try { shot = await window.privoo.captureTabPreview?.(wcId); } catch {}
+  try { shot = await window.privoo.captureTabPreview?.(wcId, previewScale()); } catch {}
   if (_tpToken !== token) return;      // pointer moved on while we waited
   if (!shot) return;
   tab._previewShot = shot;
@@ -10240,15 +10257,18 @@ function paintTabPreviewShot(shot, imgEl, fbEl) {
 // the network-free part of the work to wait for it too.
 function warmTabPreview(tab, force) {
   if (!tab || tab._previewWarming) return;
-  // On hover: keep what we have. On the way out of a tab: take a new one,
-  // because what is on screen has just changed and the old shot is now a
-  // picture of something you were doing a while ago.
-  if (!force && tab._previewShot) return;
+  // On the way out of a tab: always take a new one, because what is on screen
+  // has just changed. On hover: keep what we have while it is still recent,
+  // and re-take it once it isn't — a background tab goes on changing after you
+  // leave it, so past a certain age the stored shot is a picture of something
+  // you were doing a while ago rather than of the page as it stands.
+  if (!force && tab._previewShot
+      && Date.now() - tab._previewShotAt < TAB_PREVIEW_MAX_AGE) return;
   let wcId = 0;
   try { wcId = tab.wv?.getWebContentsId?.() || 0; } catch {}
   if (!wcId) return;
   tab._previewWarming = true;
-  Promise.resolve(window.privoo.captureTabPreview?.(wcId))
+  Promise.resolve(window.privoo.captureTabPreview?.(wcId, previewScale()))
     .then((shot) => {
       tab._previewWarming = false;
       if (!shot) return;

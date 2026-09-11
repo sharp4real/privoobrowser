@@ -4744,8 +4744,16 @@ ipcMain.handle('show-emoji-panel', () => {
    what a preview should show.
 
    The resize happens here rather than in CSS so what crosses the IPC boundary
-   is a ~15KB data URL instead of a full-window PNG. */
-ipcMain.handle('capture-tab-preview', async (_e, guestWcId) => {
+   is a data URL of tens of KB instead of a full-window PNG.
+
+   The renderer passes its devicePixelRatio, and it matters: the card is 260
+   CSS pixels wide, so on a 150%-scaled display it is 390 device pixels and a
+   260-pixel capture gets stretched to fill it. That is the whole reason the
+   preview used to look soft — it was a correctly-made thumbnail at exactly
+   the wrong resolution. */
+const TAB_PREVIEW_CSS_WIDTH = 260;   // .tab-preview width in theme.css
+const TAB_PREVIEW_BOX_HEIGHT = 162;  // .tab-preview-shot height in theme.css
+ipcMain.handle('capture-tab-preview', async (_e, guestWcId, dpr) => {
   try {
     const guest = webContents.fromId(Number(guestWcId));
     if (!guest || guest.isDestroyed()) return null;
@@ -4755,12 +4763,29 @@ ipcMain.handle('capture-tab-preview', async (_e, guestWcId) => {
     if (guest.isLoadingMainFrame() && guest.getURL() === '') return null;
     const img = await guest.capturePage();
     if (!img || img.isEmpty()) return null;
-    // JPEG, not PNG. This is a 260px photograph of a web page — the base64
-    // of a PNG at that size is roughly three times the bytes for no visible
-    // difference, and every one of those bytes crosses an IPC boundary
-    // before the card can be shown.
-    const small = img.resize({ width: 260, quality: 'good' });
-    return 'data:image/jpeg;base64,' + small.toJPEG(70).toString('base64');
+    // Match the card's real device resolution, capped at 3x so a 4K display
+    // can't ask for a capture far larger than anything it can show.
+    const scale = Math.min(Math.max(Number(dpr) || 1, 1), 3);
+    const boxW = Math.round(TAB_PREVIEW_CSS_WIDTH * scale);
+    const boxH = Math.round(TAB_PREVIEW_BOX_HEIGHT * scale);
+    // The card draws this with object-fit: cover, so sizing by width alone is
+    // not enough — a 16:9 page in a 16:10 box gets scaled up to fill the
+    // height and cropped at the sides. Fit to whichever side the crop leaves
+    // short, so the picture is never enlarged after it arrives.
+    const src = img.getSize();
+    const fit = (src.width && src.height && src.width / src.height > boxW / boxH)
+      ? { height: boxH }     // wider than the box: height is the tight side
+      : { width: boxW };
+    // 'best' costs a couple of milliseconds on an image this small and is the
+    // difference between a downscaled screenshot reading as text and reading
+    // as grey mush.
+    const small = img.resize({ ...fit, quality: 'best' });
+    // JPEG, not PNG. This is a photograph of a web page — the base64 of a PNG
+    // at this size is roughly three times the bytes for no visible difference,
+    // and every one of those bytes crosses an IPC boundary before the card can
+    // be shown. 82 rather than 70 because the artefacts JPEG leaves on small
+    // text were plainly visible at the old quality.
+    return 'data:image/jpeg;base64,' + small.toJPEG(82).toString('base64');
   } catch {
     return null;
   }
